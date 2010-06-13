@@ -1,0 +1,2 @@
+SRCS = src/main.c \
+		src/window.c
