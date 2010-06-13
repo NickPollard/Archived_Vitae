@@ -3,5 +3,6 @@
 #include "common.h"
 #include "canvas.h"
 
-// GTK headers
-#include <gtk/gtk.h>
+canvas* canvas_create() {
+	return (canvas*)malloc(sizeof(canvas));
+}

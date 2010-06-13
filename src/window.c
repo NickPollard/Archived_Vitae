@@ -22,6 +22,19 @@ window* window_create(int w, int h) {
 	// Set up event handlers
 	g_signal_connect(win->GTKwindow, "destroy", G_CALLBACK(window_on_exit), NULL);
 
+	win->canv = canvas_create();
+	GtkWidget* drawArea = gtk_drawing_area_new();
+	win->canv->area = (GtkDrawingArea*)drawArea;
+	gtk_widget_set_size_request(drawArea, w, h);
+
+	#define MAX_SPRITES 64
+	win->buffer = spritebuffer_create(MAX_SPRITES);
+
+	renderData* rData = renderData_create(win->buffer, win->canv);
+	g_signal_connect(drawArea, "expose_event", G_CALLBACK(area_on_draw), (gpointer)rData);
+
+	gtk_container_add((GtkContainer*)win->GTKwindow, drawArea);
+
 	return win;
 }
 
@@ -35,4 +48,27 @@ void window_show(window* w) {
 // TAKES a pointer to the window, custom data
 void window_on_exit(GtkWindow* w, gpointer data) {
 	gtk_main_quit();
+}
+
+void area_on_draw(GtkWidget* w, gpointer data) {
+	GdkGC* gc = gdk_gc_new(w->window);
+	GdkColor* black = malloc(sizeof(GdkColor));
+	gdk_color_black(gdk_colormap_get_system(), black);
+	gdk_gc_set_foreground(gc, black);
+	gdk_draw_rectangle(w->window, gc, true, 0, 0, 640, 480);
+
+	spritebuffer* buffer = ((renderData*)data)->buffer;
+	canvas* canv = ((renderData*)data)->canv;
+	printf("area_on_draw buffer = %d\n", (int)buffer);
+	printf("area_on_draw canvas = %d\n", (int)canv);
+	spritebuffer_render_to_canvas(buffer, canv);
+};
+
+renderData* renderData_create(spritebuffer* s, canvas* c) {
+	renderData* r = malloc(sizeof(renderData));
+	r->buffer = s;
+	r->canv = c;
+	printf("RenderData buffer = %d\n", (int)r->buffer);
+	printf("RenderData canvas = %d\n", (int)r->canv);
+	return r;
 }

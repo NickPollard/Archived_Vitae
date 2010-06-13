@@ -4,11 +4,21 @@
 
 #include <gtk/gtk.h>
 
+#include "canvas.h"
+#include "spritebuffer.h"
+
 typedef struct {
 	GtkWindow* GTKwindow;
 	int width;
 	int height;
+	canvas* canv;
+	spritebuffer* buffer;
 } window;
+
+typedef struct {
+	spritebuffer* buffer;
+	canvas* canv;
+} renderData;
 
 // window_create - creates a new window, and allocates memory for it
 // TAKES width and height of the window, as ints
@@ -24,4 +34,7 @@ void window_show(window* w);
 // TAKES a pointer to the window, custom data
 void window_on_exit(GtkWindow* w, gpointer data);
 
+void area_on_draw(GtkWidget* w, gpointer data);
+
+renderData* renderData_create(spritebuffer* s, canvas* c);
 #endif // __WINDOW_H__

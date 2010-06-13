@@ -7,6 +7,7 @@
 
 #include "common.h"
 #include "window.h"
+#include "spritebuffer.h"
 
 // ###################################
 // #
@@ -20,7 +21,12 @@ void init(int argc, char** argv) {
 }
 
 // run - executes the main loop of the engine
-void run() {
+void run(window* rootWindow) {
+	// Sprite test
+	sprite* s = sprite_create_from_bitmap("assets/img/test64.png");
+	spritebuffer_add_sprite(rootWindow->buffer, s);
+	sprite_set_x_y(s, 64, 64);
+
 	gtk_main();
 }
 
@@ -35,7 +41,7 @@ int main(int argc, char** argv) {
 	printf("Window created as (%dx%d).\n", rootWindow->width, rootWindow->height);
 	window_show(rootWindow);
 
-	run();
+	run(rootWindow);
 
 	// Exit Gracefully
 	return 0;
