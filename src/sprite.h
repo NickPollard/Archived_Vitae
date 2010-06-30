@@ -13,7 +13,7 @@ typedef struct {
 	GdkPixbuf*	image;
 } sprite;
 
-void sprite_render_to_canvas(sprite* s, const canvas* c);
+void sprite_render_to_canvas(sprite* s, canvas* c);
 
 sprite* sprite_create_from_bitmap(const char* bitmapName);
 

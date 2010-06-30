@@ -34,7 +34,7 @@ void window_show(window* w);
 // TAKES a pointer to the window, custom data
 void window_on_exit(GtkWindow* w, gpointer data);
 
-void area_on_draw(GtkWidget* w, gpointer data);
+void area_on_draw(GtkWidget* w, GdkEventExpose* e, gpointer data);
 
 renderData* renderData_create(spritebuffer* s, canvas* c);
 #endif // __WINDOW_H__

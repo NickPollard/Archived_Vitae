@@ -25,15 +25,17 @@ window* window_create(int w, int h) {
 	win->canv = canvas_create();
 	GtkWidget* drawArea = gtk_drawing_area_new();
 	win->canv->area = (GtkDrawingArea*)drawArea;
+	printf("Area = %d.\n", (uint)win->canv->area);
 	gtk_widget_set_size_request(drawArea, w, h);
+
+	gtk_container_add((GtkContainer*)win->GTKwindow, drawArea);
 
 	#define MAX_SPRITES 64
 	win->buffer = spritebuffer_create(MAX_SPRITES);
 
 	renderData* rData = renderData_create(win->buffer, win->canv);
-	g_signal_connect(drawArea, "expose_event", G_CALLBACK(area_on_draw), (gpointer)rData);
+	g_signal_connect(G_OBJECT(drawArea), "expose_event", G_CALLBACK(area_on_draw), (gpointer)rData);
 
-	gtk_container_add((GtkContainer*)win->GTKwindow, drawArea);
 
 	return win;
 }
@@ -50,25 +52,29 @@ void window_on_exit(GtkWindow* w, gpointer data) {
 	gtk_main_quit();
 }
 
-void area_on_draw(GtkWidget* w, gpointer data) {
+void area_on_draw(GtkWidget* w, GdkEventExpose* e, gpointer data) {
 	GdkGC* gc = gdk_gc_new(w->window);
+	
+	// Black
 	GdkColor* black = malloc(sizeof(GdkColor));
 	gdk_color_black(gdk_colormap_get_system(), black);
-	gdk_gc_set_foreground(gc, black);
-	gdk_draw_rectangle(w->window, gc, true, 0, 0, 640, 480);
 
-	spritebuffer* buffer = ((renderData*)data)->buffer;
-	canvas* canv = ((renderData*)data)->canv;
-	printf("area_on_draw buffer = %d\n", (int)buffer);
-	printf("area_on_draw canvas = %d\n", (int)canv);
-	spritebuffer_render_to_canvas(buffer, canv);
+	renderData* r = (renderData*)data;
+
+	// Draw black rectangle
+	gdk_gc_set_foreground(gc, black);
+	gdk_draw_rectangle(canvas_get_gdkwindow(r->canv), gc, true, 0, 0, 640, 480);
+
+	// Render all sprites
+	spritebuffer_render_to_canvas(r->buffer, r->canv);
 };
 
 renderData* renderData_create(spritebuffer* s, canvas* c) {
 	renderData* r = malloc(sizeof(renderData));
 	r->buffer = s;
 	r->canv = c;
-	printf("RenderData buffer = %d\n", (int)r->buffer);
-	printf("RenderData canvas = %d\n", (int)r->canv);
+	printf("RenderData = %u\n", (uint)r);
+	printf("RenderData buffer = %u\n", (uint)r->buffer);
+	printf("RenderData canvas = %u\n", (uint)r->canv);
 	return r;
 }

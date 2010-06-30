@@ -20,12 +20,21 @@ void init(int argc, char** argv) {
 	gtk_init(&argc, &argv);
 }
 
+void test_load_and_add_sprite(spritebuffer* b, const char* file, int x, int y) {
+	sprite* s = sprite_create_from_bitmap(file);
+	spritebuffer_add_sprite(b, s);
+	sprite_set_x_y(s, x, y);
+}
+
 // run - executes the main loop of the engine
 void run(window* rootWindow) {
 	// Sprite test
 	sprite* s = sprite_create_from_bitmap("assets/img/test64.png");
 	spritebuffer_add_sprite(rootWindow->buffer, s);
 	sprite_set_x_y(s, 64, 64);
+
+	test_load_and_add_sprite(rootWindow->buffer, "assets/img/test64.png", 0, 128);
+	test_load_and_add_sprite(rootWindow->buffer, "assets/img/test64.png", 300, 300);
 
 	gtk_main();
 }

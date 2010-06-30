@@ -9,4 +9,8 @@ typedef struct {
 } canvas;
 
 canvas* canvas_create();
+
+inline GdkWindow* canvas_get_gdkwindow(const canvas* c) {
+	return ((GtkWidget*)c->area)->window;
+}
 #endif // __CANVAS_H__
