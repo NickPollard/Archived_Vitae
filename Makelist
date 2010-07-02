@@ -1,5 +1,6 @@
-SRCS = src/main.c \
-		src/window.c \
+SRCS = src/canvas.c \
+		src/main.c \
 		src/sprite.c \
 		src/spritebuffer.c \
-		src/canvas.c
+		src/texture.c \
+		src/window.c
