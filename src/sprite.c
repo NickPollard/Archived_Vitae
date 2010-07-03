@@ -18,7 +18,7 @@ void sprite_render_to_canvas(sprite* s, canvas* c) {
 
 sprite* sprite_create_from_bitmap(TextureLibrary* lib, const char* bitmapName) {
 	sprite* s = malloc(sizeof(sprite));
-	s->image = texture_load_by_id(bitmapName);
+	s->image = texture_load_by_id(lib, bitmapName);
 	s->width = gdk_pixbuf_get_height(s->image);
 	s->height = gdk_pixbuf_get_width(s->image);
 	return s;
