@@ -78,3 +78,8 @@ renderData* renderData_create(spritebuffer* s, canvas* c) {
 	printf("RenderData canvas = %u\n", (uint)r->canv);
 	return r;
 }
+
+void tick_window_tick(void* t, float dt) {
+	GtkWidget* w = (GtkWidget*)t;
+	gtk_widget_queue_draw(w);
+}

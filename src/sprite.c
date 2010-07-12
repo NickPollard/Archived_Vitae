@@ -28,3 +28,26 @@ void sprite_set_x_y(sprite* s, int x, int y) {
 	s->x = x;
 	s->y = y;
 }	
+
+//
+// SpriteMover
+//
+
+spritemover* spritemover_create(sprite* spr, float x, float y, float vx, float vy) {
+	spritemover* s = (spritemover*)malloc(sizeof(spritemover));
+	s->s = spr;
+	s->position.x = x;
+	s->position.y = y;
+	s->velocity.x = vx;
+	s->velocity.y = vy;
+	return s;
+}
+
+void spritemover_tick(void* mover, float dt) {
+	spritemover* s = (spritemover*)mover;
+	s->position.x += s->velocity.x * dt;
+	s->position.y += s->velocity.y * dt;
+	s->s->x = (int)s->position.x;
+	s->s->y = (int)s->position.y;
+	printf("spritemover tick! At (%.2f, %.2f), moving (%.2f, %.2f)\n", s->position.x, s->position.y, s->velocity.x, s->velocity.y);
+}

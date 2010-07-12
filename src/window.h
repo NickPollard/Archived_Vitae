@@ -37,4 +37,7 @@ void window_on_exit(GtkWindow* w, gpointer data);
 void area_on_draw(GtkWidget* w, GdkEventExpose* e, gpointer data);
 
 renderData* renderData_create(spritebuffer* s, canvas* c);
+
+void tick_window_tick(void* t, float dt);
+
 #endif // __WINDOW_H__

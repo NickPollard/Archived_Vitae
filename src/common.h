@@ -24,4 +24,9 @@ inline unsigned long long rdtsc()
 	#undef rdtsc
 }
 
+typedef struct vec2_t {
+	float x;
+	float y;
+} vec2;
+
 #endif // __COMMON_H__

@@ -49,4 +49,6 @@ typedef struct tick_tester_t {
 
 void tick_tester_tick(void* t, float dt);
 
+///////////////
+
 #endif // __TICKER_H__

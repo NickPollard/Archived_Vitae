@@ -38,3 +38,5 @@ void tick_tester_tick(void* t, float dt) {
 	tester->tickcount += tester->tickinc;
 	printf("Tick Tester: Tick count is %d.\n", tester->tickcount);
 }
+
+///////////////
