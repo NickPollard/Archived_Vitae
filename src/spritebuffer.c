@@ -6,7 +6,7 @@
 // spritebuffer_render_to_canvas - renders all sprites in the buffer to the canvas
 // TAKES spritebuffer to use, canvas to render to
 void spritebuffer_render_to_canvas(spritebuffer* s, canvas* c) {
-	printf("Rendering %d sprites.\n", s->count);
+//	printf("Rendering %d sprites.\n", s->count);
 	for (int i = 0; i < s->count; i++) {
 		if (s->sprites[i])
 			sprite_render_to_canvas(s->sprites[i], c);

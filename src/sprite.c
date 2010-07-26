@@ -49,5 +49,5 @@ void spritemover_tick(void* mover, float dt) {
 	s->position.y += s->velocity.y * dt;
 	s->s->x = (int)s->position.x;
 	s->s->y = (int)s->position.y;
-	printf("spritemover tick! At (%.2f, %.2f), moving (%.2f, %.2f)\n", s->position.x, s->position.y, s->velocity.x, s->velocity.y);
+//	printf("spritemover tick! At (%.2f, %.2f), moving (%.2f, %.2f)\n", s->position.x, s->position.y, s->velocity.x, s->velocity.y);
 }

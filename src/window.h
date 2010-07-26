@@ -18,7 +18,7 @@ typedef struct {
 typedef struct {
 	spritebuffer* buffer;
 	canvas* canv;
-} renderData;
+} render_data;
 
 // window_create - creates a new window, and allocates memory for it
 // TAKES width and height of the window, as ints
@@ -36,8 +36,8 @@ void window_on_exit(GtkWindow* w, gpointer data);
 
 void area_on_draw(GtkWidget* w, GdkEventExpose* e, gpointer data);
 
-renderData* renderData_create(spritebuffer* s, canvas* c);
+render_data* renderData_create(spritebuffer* s, canvas* c);
 
-void tick_window_tick(void* t, float dt);
+void tick_window_tick(void* widget, float dt);
 
 #endif // __WINDOW_H__

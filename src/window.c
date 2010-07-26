@@ -25,7 +25,6 @@ window* window_create(int w, int h) {
 	win->canv = canvas_create();
 	GtkWidget* drawArea = gtk_drawing_area_new();
 	win->canv->area = (GtkDrawingArea*)drawArea;
-	printf("Area = %d.\n", (uint)win->canv->area);
 	gtk_widget_set_size_request(drawArea, w, h);
 
 	gtk_container_add((GtkContainer*)win->GTKwindow, drawArea);
@@ -33,9 +32,8 @@ window* window_create(int w, int h) {
 	#define MAX_SPRITES 64
 	win->buffer = spritebuffer_create(MAX_SPRITES);
 
-	renderData* rData = renderData_create(win->buffer, win->canv);
-	g_signal_connect(G_OBJECT(drawArea), "expose_event", G_CALLBACK(area_on_draw), (gpointer)rData);
-
+	render_data* r = renderData_create(win->buffer, win->canv);
+	g_signal_connect(G_OBJECT(drawArea), "expose_event", G_CALLBACK(area_on_draw), (gpointer)r);
 
 	return win;
 }
@@ -52,14 +50,14 @@ void window_on_exit(GtkWindow* w, gpointer data) {
 	gtk_main_quit();
 }
 
-void area_on_draw(GtkWidget* w, GdkEventExpose* e, gpointer data) {
+void area_on_draw(GtkWidget* w, GdkEventExpose* e, gpointer renderData) {
 	GdkGC* gc = gdk_gc_new(w->window);
 	
 	// Black
 	GdkColor* black = malloc(sizeof(GdkColor));
 	gdk_color_black(gdk_colormap_get_system(), black);
 
-	renderData* r = (renderData*)data;
+	render_data* r = (render_data*)renderData;
 
 	// Draw black rectangle
 	gdk_gc_set_foreground(gc, black);
@@ -69,17 +67,14 @@ void area_on_draw(GtkWidget* w, GdkEventExpose* e, gpointer data) {
 	spritebuffer_render_to_canvas(r->buffer, r->canv);
 };
 
-renderData* renderData_create(spritebuffer* s, canvas* c) {
-	renderData* r = malloc(sizeof(renderData));
+render_data* renderData_create(spritebuffer* s, canvas* c) {
+	render_data* r = malloc(sizeof(render_data));
 	r->buffer = s;
 	r->canv = c;
-	printf("RenderData = %u\n", (uint)r);
-	printf("RenderData buffer = %u\n", (uint)r->buffer);
-	printf("RenderData canvas = %u\n", (uint)r->canv);
 	return r;
 }
 
-void tick_window_tick(void* t, float dt) {
-	GtkWidget* w = (GtkWidget*)t;
+void tick_window_tick(void* widget, float dt) {
+	GtkWidget* w = (GtkWidget*)widget;
 	gtk_widget_queue_draw(w);
 }

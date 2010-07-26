@@ -5,4 +5,5 @@ SRCS = src/canvas.c \
 		src/spritebuffer.c \
 		src/texture.c \
 		src/ticker.c \
+		src/time.c \
 		src/window.c
