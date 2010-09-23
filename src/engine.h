@@ -5,6 +5,8 @@
 #include "window.h"
 #include "time.h"
 
+extern scene* theScene;
+
 typedef struct {
 	frame_timer* timer;
 } engine;

@@ -8,11 +8,6 @@
 
 #include <GL/glut.h>
 
-void scene_concatenateTransforms(scene* s)
-{
-	// Traverse the transform graph, updating worldspace transforms
-}
-
 void scene_addModel(scene* s, model* m) {
 	s->models[s->modelCount++] = m;
 }
@@ -53,3 +48,20 @@ void drawScene(scene* s) {
 	}
 }
 
+// Make a scene
+scene* scene_createScene() {
+	scene* s = malloc(sizeof(scene));
+	s->modelCount = s->lightCount = s->transformCount = 0;
+	return s;
+}
+
+// Traverse the transform graph, updating worldspace transforms
+void scene_concatenateTransforms(scene* s) {
+	for (int i = 0; i < s->transformCount; i++)
+		transform_concatenate(&s->transforms[i]);
+}
+
+// Update the scene
+void scene_tick(scene* s, float dt) {
+	scene_concatenateTransforms(s);
+}

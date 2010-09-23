@@ -1,6 +1,8 @@
 // Maths.c
 
+#include "common.h"
 #include "maths.h"
+//----------------------
 
 // Vector Addition
 void Add(vector* dst, vector* srcA, vector* srcB) {
@@ -48,14 +50,15 @@ vector Mul(matrix* m, vector* v) {
 	return dst;
 }
 
-void Set(vector* v, float x, float y, float z) {
+void Set(vector* v, float x, float y, float z, float w) {
 	v->coord.x = x;
 	v->coord.y = y;
 	v->coord.z = z;
+	v->coord.w = w;
 }
 
 // Set a row in a matrix to a given vector
-void matrix_setRow(matrix* m, int row, vector* v) {
+void matrix_setRow(matrix* m, int row, const vector* v) {
 	m->val[0][row] = v->val[0];
 	m->val[1][row] = v->val[1];
 	m->val[2][row] = v->val[2];
@@ -63,12 +66,12 @@ void matrix_setRow(matrix* m, int row, vector* v) {
 }
 
 // Set a column in a matrix to a given vector
-void matrix_setColumn(matrix* m, int col, vector* v) {
+void matrix_setColumn(matrix* m, int col, const vector* v) {
 	m->cols[col] = *v;
 }
 
 // Set the translation component of a 4x4 matrix
-void matrix_setTranslation(matrix* m, vector* v) {
+void matrix_setTranslation(matrix* m, const vector* v) {
 	matrix_setColumn(m, 3, v);
 }
 
@@ -90,4 +93,23 @@ void matrix_setIdentity(matrix* m) {
 	m->val[3][1] = 0.f;
 	m->val[3][2] = 0.f;
 	m->val[3][3] = 1.f;
+}
+
+// Convert a V matrix to an OGL matrix
+const GLfloat* matrix_getGlMatrix(const matrix* m) {
+	return (const GLfloat*)m;
+}
+
+// Multiply two matrices together
+matrix matrix_mul(matrix* m1, matrix* m2) {
+	matrix dst;
+	for (int i = 0; i < 4; i++) {
+		for (int j = 0; j < 4; j++) {
+			dst.val[i][j] = m1->val[0][j] * m2->val[i][0]
+						+ m1->val[1][j] * m2->val[i][1]
+						+ m1->val[2][j] * m2->val[i][2]
+						+ m1->val[3][j] * m2->val[i][3];
+		}
+	}
+	return dst;
 }

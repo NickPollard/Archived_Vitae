@@ -1,8 +1,12 @@
 // engine.c
 #include "src/common.h"
 #include "src/engine.h"
+//---------------------
+#include "src/maths.h"
 #include "src/model.h"
+#include "src/scene.h"
 #include "src/ticker.h"
+#include "src/transform.h"
 #include "src/window.h"
 
 #include <GL/glut.h>
@@ -12,15 +16,33 @@
 // Use GTK library
 #define __GTK__
 
-ticklist* test_tickers = NULL;
+model* testModelA = NULL;
+model* testModelB = NULL;
 
-model* testModel = NULL;
+scene* theScene = NULL;
+transform* t2 = NULL;
 
 // tick - process a frame of game update
-void engine_tick(int ei) {
-	engine* e = (engine*)ei;
-	float dt = frame_timer_delta(e->timer);
+void engine_tick(int ePtr) {
+	engine* e = (engine*)ePtr;
+	float dt = timer_getDelta(e->timer);
 	(void)dt;
+
+	static float time = 0.f;
+	time += dt;
+	float period = 2.f;
+	float animate = 2.f * sinf(time * 2 * PI / period);
+
+	// Animate cubes
+	vector translateA = {{ animate, 0.f, 0.f, 1.f}};
+	transform_setLocalTranslation(testModelA->trans, &translateA);
+	vector translateB = {{ 0.f, animate, 0.f, 1.f}};
+	transform_setLocalTranslation(testModelB->trans, &translateB);
+	
+	vector translateC = {{ 0.f, 0.f, animate,  1.f}};
+	transform_setLocalTranslation(t2, &translateC);
+
+	scene_tick(theScene, dt);
 
 	glutPostRedisplay(); // Tell GLUT that the rendering has changed.
 	glutTimerFunc(25, engine_tick, (int)e);
@@ -63,40 +85,6 @@ void drawLighting() {
 	glLightfv(GL_LIGHT0, GL_POSITION, lightPos0);
 }
 
-void drawQuadAsTris(GLfloat* a, GLfloat* b, GLfloat* c, GLfloat* d) {
-	glVertex3fv(a);
-	glVertex3fv(b);
-	glVertex3fv(c);
-
-	glVertex3fv(c);
-	glVertex3fv(d);
-	glVertex3fv(a);
-}
-
-void drawCube() {
-	GLfloat ftl[] = { -0.5f, 0.5f, 0.5f };
-	GLfloat ftr[] = { 0.5f, 0.5f, 0.5f };
-	GLfloat fbl[] = { -0.5f, -0.5f, 0.5f };
-	GLfloat fbr[] = { 0.5f, -0.5f, 0.5f };
-	GLfloat btl[] = { -0.5f, 0.5f, -0.5f };
-	GLfloat btr[] = { 0.5f, 0.5f, -0.5f };
-	GLfloat bbl[] = { -0.5f, -0.5f, -0.5f };
-	GLfloat bbr[] = { 0.5f, -0.5f, -0.5f };
-
-	glNormal3f(0.f, 0.f, 1.f);
-	drawQuadAsTris(ftl, ftr, fbr, fbl);
-	glNormal3f(0.f, 0.f, -1.f);
-	drawQuadAsTris(btl, btr, bbr, bbl);
-	glNormal3f(1.f, 0.f, 0.f);
-	drawQuadAsTris(ftr, fbr, bbr, btr);
-	glNormal3f(-1.f, 0.f, 0.f);
-	drawQuadAsTris(ftl, fbl, bbl, btl);
-	glNormal3f(0.f, 1.f, 0.f);
-	drawQuadAsTris(ftl, ftr, btr, btl);
-	glNormal3f(0.f, -1.f, 0.f);
-	drawQuadAsTris(fbl, fbr, bbr, bbl);
-}
-
 // Draws the 3D scene
 void test_drawScene() {
 	// Clear information from last draw
@@ -109,62 +97,13 @@ void test_drawScene() {
 	glTranslatef(0.f, 0.f, -15.f); // Move forward 5 units
 
 	glPushMatrix();
-	glRotatef(angle, 0.f, 0.f, 1.f);
-	glTranslatef(0.f, -1.f, 0.f); // Move to the center of the Trapezoid
-
-	glBegin(GL_QUADS); // Begin quad coords
-	
-	// Trapezoid
-	glNormal3f(0.f, 0.f, 1.f);
-	glColor3f(0.5f, 0.f, 0.f);
-	glVertex3f(-0.7f, -.5f, 0.f);
-	glColor3f(0.f, 0.5f, 0.f);
-	glVertex3f(0.7f, -.5f, 0.f);
-	glColor3f(0.f, 0.f, 0.5f);
-	glVertex3f(0.4f, 0.5f, 0.f);
-	glColor3f(0.5f, 0.5f, 0.f);
-	glVertex3f(-0.4f, 0.5f, 0.f);
-
-	glEnd(); // End Quads
-
-	glPopMatrix();
-	glPushMatrix();
-	glTranslatef(1.f, 1.f, 0.f); // Move to the center of the pentagon
-
-	glBegin(GL_TRIANGLES); // Begin triangle coords
-
-	//Pentagon
-	glColor3f(0.f, 0.5f, 0.f);
-	glNormal3f(0.f, 0.f, 1.f);
-	glVertex3f(-0.5f, -.5f, 0.f);
-	glVertex3f(0.5f, -.5f, 0.f);
-	glVertex3f(-0.5f, 0.f, 0.f);
-
-	glVertex3f(-0.5f, 0.f, 0.f);
-	glVertex3f(0.5f, -.5f, 0.f);
-	glVertex3f(0.5f, 0.f, 0.f);
-
-	glVertex3f(-0.5f, 0.f, 0.f);
-	glVertex3f(0.5f, 0.f, 0.f);
-	glVertex3f(0.f, 0.5f, 0.f);
-
-	glEnd(); // End Triangles
-
-	glPopMatrix();
-
-	glPushMatrix();
 	glTranslatef(1.f, -1.f, 0.f); // Move to the center of the pentagon
-//	glBegin(GL_TRIANGLES); // Begin triangle coords
-//	drawCube();
-	model_draw(testModel);
-//	glEnd(); // End Triangles
+	model_draw(testModelA);
 	glPopMatrix();
 
 	glPushMatrix();
 	glTranslatef(-1.f, 1.f, 0.f); // Move to the center of the pentagon
-	glBegin(GL_TRIANGLES); // Begin triangle coords
-	drawCube();
-	glEnd(); // End Triangles
+	model_draw(testModelB);
 	glPopMatrix();
 
 	glutSwapBuffers(); // Send the 3d scene to the screen (flips display buffers)
@@ -199,12 +138,20 @@ void init_OpenGL(engine* e, int argc, char** argv) {
 void init(int argc, char** argv) {
 	engine* e = malloc(sizeof(engine));
 	e->timer = malloc(sizeof(frame_timer));
-	frame_timer_init(e->timer);
+	timer_init(e->timer);
 
-	testModel = model_createTestCube();
-
+	theScene = scene_createScene();
+	testModelA = model_createTestCube();
+	testModelB = model_createTestCube();
+	transform* t = transform_createTransform(theScene);
+	testModelA->trans->parent = t;
+	testModelB->trans->parent = t;
+	vector translate = {{ -2.f, 0.f, 0.f, 1.f }};
+	transform_setLocalTranslation(t, &translate);
+	t2 = transform_createTransform(theScene);
+	t->parent = t2;
+	
 	init_OpenGL(e, argc, argv);
-
 }
 
 void run_OpenGL() {

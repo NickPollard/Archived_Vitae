@@ -18,12 +18,22 @@
 #define MAX_LIGHTS 128
 
 // *** Scene ***
-typedef struct scene_s {
+struct scene_s {
 	int			modelCount;
 	model*		models[MAX_MODELS];
 	int			lightCount;
 	light*		lights[MAX_LIGHTS];
 	transform	transforms[MAX_TRANSFORMS];
-} scene;
+	int			transformCount;
+} ;
+
+// Make a Scene
+scene* scene_createScene();
+
+// Traverse the transform graph, updating worldspace transforms
+void scene_concatenateTransforms(scene* s);
+
+// Update the scene
+void scene_tick(scene* s, float dt);
 
 #endif // __SCENE_H__

@@ -5,6 +5,7 @@
 #include <sys/time.h>
 
 #define uSecToSec 0.000001
+#define SecToUSec 1000000
 
 typedef struct timeval time_v;
 
@@ -14,9 +15,12 @@ typedef struct {
 } frame_timer;
 
 // Initialise the timer
-void frame_timer_init(frame_timer* timer);
+void timer_init(frame_timer* timer);
 
 // Get the time since the last frame
-float frame_timer_delta(frame_timer* timer);
+float timer_getDelta(frame_timer* timer);
+
+// Get the time in seconds
+float timer_getTimeSeconds();
 
 #endif // __TIME_H__

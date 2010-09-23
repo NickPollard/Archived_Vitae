@@ -5,25 +5,25 @@
 //-----------------------
 #include "maths.h"
 #include "transform.h"
+#include "engine.h"
 
 #include <GL/glut.h>
 
 void vgl_vertexDraw(vector* v) {
-	printf("Drawing vertex: %.2f, %.2f, %.2f\n", v->val[0], v->val[1], v->val[2]);
 	glVertex3fv((GLfloat*)v);
 }
 
 // Create a test mesh of a cube
 mesh* mesh_createTestCube() {
 	mesh* m = mesh_createMesh(/*verts*/ 8, /*indices*/ 36);
-	Set(&m->verts[0], 1.f,  1.f,  1.f);
-	Set(&m->verts[1], 1.f,  1.f, -1.f);
-	Set(&m->verts[2], 1.f, -1.f,  1.f);
-	Set(&m->verts[3], 1.f, -1.f, -1.f);
-	Set(&m->verts[4],-1.f,  1.f,  1.f);
-	Set(&m->verts[5],-1.f,  1.f, -1.f);
-	Set(&m->verts[6],-1.f, -1.f,  1.f);
-	Set(&m->verts[7],-1.f, -1.f, -1.f);
+	Set(&m->verts[0], 1.f,  1.f,  1.f, 1.f);
+	Set(&m->verts[1], 1.f,  1.f, -1.f, 1.f);
+	Set(&m->verts[2], 1.f, -1.f,  1.f, 1.f);
+	Set(&m->verts[3], 1.f, -1.f, -1.f, 1.f);
+	Set(&m->verts[4],-1.f,  1.f,  1.f, 1.f);
+	Set(&m->verts[5],-1.f,  1.f, -1.f, 1.f);
+	Set(&m->verts[6],-1.f, -1.f,  1.f, 1.f);
+	Set(&m->verts[7],-1.f, -1.f, -1.f, 1.f);
 
 	m->indices[0] = 0;
 	m->indices[1] = 1;
@@ -89,7 +89,7 @@ mesh* mesh_createMesh(int vertCount, int indexCount) {
 model* model_createTestCube() {
 	model* m = model_createModel(/* meshCount */ 1);
 	mesh* me = mesh_createTestCube();
-	m->trans = transform_createTransform();
+	m->trans = transform_createTransform(theScene);
 	m->meshes[0] = me;
 	return m;
 }
@@ -104,7 +104,6 @@ model* model_createModel(int meshCount) {
 
 // Draw the verts of a mesh to the openGL buffer
 void mesh_drawVerts(mesh* m) {
-	printf("draw %d verts.\n", m->vertCount);
 	glBegin(GL_TRIANGLES);
 	for (int i = 0; i < m->indexCount; i += 3) {
 		vgl_vertexDraw(&m->verts[m->indices[i]]);
@@ -121,7 +120,10 @@ mesh* model_getMesh(model* m, int i) {
 
 // Draw each submesh of a model
 void model_draw(model* m) {
+	glPushMatrix();
+	glMultMatrixf(matrix_getGlMatrix(&m->trans->world));
 	for (int i = 0; i < m->meshCount; i++) {
 		mesh_drawVerts(model_getMesh(m, i));
 	}
+	glPopMatrix();
 }

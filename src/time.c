@@ -2,18 +2,18 @@
 #include "src/common.h"
 #include "src/time.h"
 
-void frame_timer_init(frame_timer* timer) {
+void timer_init(frame_timer* timer) {
 	time_v t;
 	gettimeofday(&t, NULL);
-	timer->oldTime = t.tv_sec * 1000000 + t.tv_usec;
+	timer->oldTime = t.tv_sec * SecToUSec + t.tv_usec;
 	timer->fps = 0.f;
 }
 
-float frame_timer_delta(frame_timer* timer) {
+float timer_getDelta(frame_timer* timer) {
 	time_v t;
 	gettimeofday(&t, NULL);
 
-	unsigned long long newTime = t.tv_sec * 1000000 + t.tv_usec;
+	unsigned long long newTime = t.tv_sec * SecToUSec + t.tv_usec;
 	float delta = (float)(newTime - timer->oldTime) * uSecToSec;
 	timer->oldTime = newTime;
 
@@ -22,4 +22,9 @@ float frame_timer_delta(frame_timer* timer) {
 //	printf("fps: %.2f\n", timer->fps);
 
 	return delta;
+}
+
+// Get the time in seconds
+float timer_getTimeSeconds(frame_timer* t) {
+	return ((float)t->oldTime) * uSecToSec;
 }
