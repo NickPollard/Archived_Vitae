@@ -6,4 +6,5 @@ SRCS = src/canvas.c \
 		src/model.c \
 		src/scene.c \
 		src/ticker.c \
-		src/time.c 
+		src/time.c \
+		src/transform.c

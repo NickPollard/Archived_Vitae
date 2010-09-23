@@ -11,17 +11,11 @@
 
 #include "common.fwd.h"
 #include "maths.h"
+#include "transform.h"
 
 #define MAX_TRANSFORMS 128
 #define MAX_MODELS 128
 #define MAX_LIGHTS 128
-
-// *** Transform ***
-struct transform_s {
-	matrix		local;
-	matrix		world;
-	transform*	parent;
-};
 
 // *** Scene ***
 typedef struct scene_s {
@@ -31,11 +25,5 @@ typedef struct scene_s {
 	light*		lights[MAX_LIGHTS];
 	transform	transforms[MAX_TRANSFORMS];
 } scene;
-
-// Create a new default transform
-transform* transform_createTransform();
-
-// Create a new default transform with the given parent
-transform* transform_createTransform_Parent(transform* parent);
 
 #endif // __SCENE_H__

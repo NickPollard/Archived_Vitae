@@ -1,16 +1,20 @@
 // engine.c
 #include "src/common.h"
 #include "src/engine.h"
+#include "src/model.h"
 #include "src/ticker.h"
 #include "src/window.h"
-#include <sys/time.h>
 
 #include <GL/glut.h>
+
+#include <sys/time.h>
 
 // Use GTK library
 #define __GTK__
 
 ticklist* test_tickers = NULL;
+
+model* testModel = NULL;
 
 // tick - process a frame of game update
 void engine_tick(int ei) {
@@ -150,9 +154,10 @@ void test_drawScene() {
 
 	glPushMatrix();
 	glTranslatef(1.f, -1.f, 0.f); // Move to the center of the pentagon
-	glBegin(GL_TRIANGLES); // Begin triangle coords
-	drawCube();
-	glEnd(); // End Triangles
+//	glBegin(GL_TRIANGLES); // Begin triangle coords
+//	drawCube();
+	model_draw(testModel);
+//	glEnd(); // End Triangles
 	glPopMatrix();
 
 	glPushMatrix();
@@ -195,6 +200,8 @@ void init(int argc, char** argv) {
 	engine* e = malloc(sizeof(engine));
 	e->timer = malloc(sizeof(frame_timer));
 	frame_timer_init(e->timer);
+
+	testModel = model_createTestCube();
 
 	init_OpenGL(e, argc, argv);
 
