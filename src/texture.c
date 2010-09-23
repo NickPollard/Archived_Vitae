@@ -15,7 +15,8 @@ TextureHandle texture_load_by_id(TextureLibrary* lib, TextureID id) {
 		printf("Texture -- Loading new pixbuf (\"%s\")\n", id);
 		// Load the pixbuf
 		GError* error = NULL;
-		t = gdk_pixbuf_new_from_file(id, &error);
+//		t = gdk_pixbuf_new_from_file(id, &error);
+		(void)error;
 		if (!t)
 			fprintf(stderr, "Texture -- Error trying to load pixbuf: %s\n", id);
 		texture_library_add_texture(lib, id, t);

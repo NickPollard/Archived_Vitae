@@ -12,6 +12,7 @@
 
 // types
 typedef unsigned int uint;
+typedef unsigned char uchar;
 
 inline unsigned long long rdtsc()
 {

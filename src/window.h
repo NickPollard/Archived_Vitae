@@ -8,7 +8,6 @@
 #include "spritebuffer.h"
 
 typedef struct {
-	GtkWindow* GTKwindow;
 	int width;
 	int height;
 	canvas* canv;

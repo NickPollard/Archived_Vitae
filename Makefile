@@ -1,6 +1,6 @@
 C = gcc
 CFLAGS = -Wall -Werror -m32 -std=c99 -I . `pkg-config --cflags gtk+-2.0`
-LFLAGS = -m32 `pkg-config --libs gtk+-2.0`
+LFLAGS = -m32 -lglut -lGLU
 EXECUTABLE = vitae
 include Makelist
 DEPS = $(SRCS:src/%.c=bin/%.d)

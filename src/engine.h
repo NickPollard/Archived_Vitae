@@ -16,6 +16,6 @@ int tick();
 void init(int argc, char** argv);
 
 // run - executes the main loop of the engine
-void run(window* rootWindow);
+void run();
 
 #endif // __ENGINE_H__

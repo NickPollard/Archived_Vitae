@@ -19,7 +19,7 @@ float frame_timer_delta(frame_timer* timer) {
 
 	float fps = 1.f/delta;
 	timer->fps = timer->fps * 0.9f + fps * 0.1f;
-	printf("fps: %.2f\n", timer->fps);
+//	printf("fps: %.2f\n", timer->fps);
 
 	return delta;
 }
