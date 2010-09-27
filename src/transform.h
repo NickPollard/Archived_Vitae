@@ -8,6 +8,7 @@ struct transform_s {
 	matrix		local;	// Local space matrix; 15th element is 1.f if clean and 2.f if dirty
 	matrix		world;
 	transform*	parent;
+	int			isDirty;
 };
 
 // Create a new default transform
@@ -17,7 +18,7 @@ transform* transform_createTransform(scene* s);
 transform* transform_createTransform_Parent(scene* s, transform* parent);
 
 // Concatenate the parent world space transforms to produce this world space transform from local
-void transform_concatenate(transform* t);
+int transform_concatenate(transform* t);
 
 // Mark the transform as dirty (needs concatenation)
 void transform_markDirty(transform* t);
