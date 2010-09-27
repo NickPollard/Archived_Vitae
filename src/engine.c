@@ -7,14 +7,17 @@
 #include "src/scene.h"
 #include "src/ticker.h"
 #include "src/transform.h"
-#include "src/window.h"
 
+// Lua Libraries
+#include <lua.h>
+#include <lauxlib.h>
+#include <lualib.h>
+
+// OpenGL Libraries
 #include <GL/glut.h>
 
+// System libraries
 #include <sys/time.h>
-
-// Use GTK library
-#define __GTK__
 
 model* testModelA = NULL;
 model* testModelB = NULL;
@@ -134,6 +137,15 @@ void init_OpenGL(engine* e, int argc, char** argv) {
 	glutTimerFunc(25, engine_tick, (int)e);
 }
 
+void init_Lua(engine* e, int argc, char** argv) {
+//	char buff[256];
+//	int error;
+	lua_State* l = lua_open();
+	(void)l;
+	luaL_openlibs(l);	// Load the Lua libs into our lua state
+	lua_close(l);
+}
+
 // init - initialises the engine
 void init(int argc, char** argv) {
 	engine* e = malloc(sizeof(engine));
@@ -151,7 +163,13 @@ void init(int argc, char** argv) {
 	t2 = transform_createTransform(theScene);
 	t->parent = t2;
 	
+	// *** Start up Core Systems
+
+	// *** Initialise OpenGL
 	init_OpenGL(e, argc, argv);
+
+	// *** Initialise Lua
+	init_Lua(e, argc, argv);
 }
 
 void run_OpenGL() {

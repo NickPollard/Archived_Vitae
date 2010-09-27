@@ -1,5 +1,4 @@
-SRCS = src/canvas.c \
-		src/engine.c \
+SRCS =	src/engine.c \
 		src/light.c \
 		src/main.c \
 		src/maths.c \

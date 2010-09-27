@@ -1,6 +1,7 @@
 C = gcc
-CFLAGS = -Wall -Werror -m32 -std=c99 -I . `pkg-config --cflags gtk+-2.0`
-LFLAGS = -m32 -lglut -lGLU
+CFLAGS = -Wall -Werror -m32 -std=c99 -I .
+LFLAGS = -m32 
+LIBS = -lglut -lGLU -llua
 EXECUTABLE = vitae
 include Makelist
 DEPS = $(SRCS:src/%.c=bin/%.d)
@@ -23,17 +24,21 @@ cleandebug :
 
 $(EXECUTABLE) : $(SRCS) $(OBJS) $(DEPS)
 	@echo "- Linking $@"
-	@$(C) $(LFLAGS) -O2 -o $(EXECUTABLE) $(OBJS)
+	@$(C) $(LFLAGS) -O2 -o $(EXECUTABLE) $(OBJS) $(LIBS)
 
 debug : $(EXECUTABLE)_debug
 
 $(EXECUTABLE)_debug : $(SRCS) $(OBJS_DBG)
 	@echo "- Linking $@"
-	@$(C) -g $(LFLAGS) -o $(EXECUTABLE)_debug $(OBJS_DBG)
+	@$(C) -g $(LFLAGS) -o $(EXECUTABLE)_debug $(OBJS_DBG) $(LIBS)
 
 bin/debug/%.o : src/%.c
 	@echo "- Compiling $@"
 	@$(C) -g $(CFLAGS) -c -o $@ $<
+
+bin/%.o : src/%.c
+	@echo "- Compiling $@"
+	@$(C) $(CFLAGS) -O2 -MD -c -o $@ $<
 
 bin/%.o : src/%.c
 	@echo "- Compiling $@"

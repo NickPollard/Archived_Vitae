@@ -2,7 +2,6 @@
 #ifndef __ENGINE_H__
 #define __ENGINE_H__
 
-#include "window.h"
 #include "time.h"
 
 extern scene* theScene;
