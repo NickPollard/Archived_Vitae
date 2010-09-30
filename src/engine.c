@@ -9,7 +9,6 @@
 #include "src/transform.h"
 
 // Lua Libraries
-#include <lua.h>
 #include <lauxlib.h>
 #include <lualib.h>
 
@@ -24,6 +23,8 @@ model* testModelB = NULL;
 
 scene* theScene = NULL;
 transform* t2 = NULL;
+
+engine* static_engine_hack;
 
 // tick - process a frame of game update
 void engine_tick(int ePtr) {
@@ -52,9 +53,19 @@ void engine_tick(int ePtr) {
 }
 
 void handleKeyPress(uchar key, int x, int y) {
+	// Lua Test
+	engine* e = static_engine_hack;
+	lua_getglobal(e->lua, "handleKeyPress");
+	lua_pushnumber(e->lua, (int)key);
+	lua_pcall(e->lua,	/* args */			1,
+						/* returns */		1,
+						/* error handler */ 0);
+	int ret = lua_tonumber(e->lua, -1);
+	printf("Lua says %d!\n", ret);
+
 	switch (key) {
 		case 27: // Escape key
-			exit(0); // Exit the program
+			deInit(e); // Exit the program
 	}
 }
 
@@ -140,10 +151,10 @@ void init_OpenGL(engine* e, int argc, char** argv) {
 void init_Lua(engine* e, int argc, char** argv) {
 //	char buff[256];
 //	int error;
-	lua_State* l = lua_open();
-	(void)l;
-	luaL_openlibs(l);	// Load the Lua libs into our lua state
-	lua_close(l);
+	e->lua = lua_open();
+	luaL_openlibs(e->lua);	// Load the Lua libs into our lua state
+	if (luaL_loadfile(e->lua, "src/lua/main.lua") || lua_pcall(e->lua, 0, 0, 0))
+		printf("Error loading lua!\n");
 }
 
 // init - initialises the engine
@@ -170,6 +181,20 @@ void init(int argc, char** argv) {
 
 	// *** Initialise Lua
 	init_Lua(e, argc, argv);
+
+	static_engine_hack = e;
+}
+
+// deInit_lua - deinitialises the Lua interpreter
+void deInit_Lua(engine* e) {
+	lua_close(e->lua);
+}
+
+// deInit - deInitialises the engine
+void deInit(engine* e) {
+	deInit_Lua(e);
+
+	exit(0);
 }
 
 void run_OpenGL() {
