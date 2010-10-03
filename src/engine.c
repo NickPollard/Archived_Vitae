@@ -26,12 +26,13 @@ transform* t2 = NULL;
 
 engine* static_engine_hack;
 
-// tick - process a frame of game update
-void engine_tick(int ePtr) {
-	engine* e = (engine*)ePtr;
-	float dt = timer_getDelta(e->timer);
-	(void)dt;
+/*
+ *
+ *  Test Functions
+ *
+ */
 
+void engine_tick_TEST(engine* e, float dt) {
 	static float time = 0.f;
 	time += dt;
 	float period = 2.f;
@@ -45,16 +46,58 @@ void engine_tick(int ePtr) {
 	
 	vector translateC = {{ 0.f, 0.f, animate,  1.f}};
 	transform_setLocalTranslation(t2, &translateC);
+}
+
+void init_TEST() {
+	theScene = scene_createScene();
+	testModelA = model_createTestCube();
+	testModelB = model_createTestCube();
+	transform* t = transform_createTransform(theScene);
+	testModelA->trans->parent = t;
+	testModelB->trans->parent = t;
+	vector translate = {{ -2.f, 0.f, 0.f, 1.f }};
+	transform_setLocalTranslation(t, &translate);
+	t2 = transform_createTransform(theScene);
+	t->parent = t2;
+}
+
+
+
+
+/*
+ *
+ *  Engine Methods
+ *
+ */
+
+
+void tick(int ePtr) {
+	engine_tick((engine*)ePtr);
+	glutTimerFunc(25, tick, ePtr);
+}
+
+
+// tick - process a frame of game update
+void engine_tick(engine* e) {
+	float dt = timer_getDelta(e->timer);
+
+	// TEST
+	engine_tick_TEST(e, dt);
+	// end TEST
 
 	scene_tick(theScene, dt);
 
 	glutPostRedisplay(); // Tell GLUT that the rendering has changed.
-	glutTimerFunc(25, engine_tick, (int)e);
 }
 
+// Static wrapper
 void handleKeyPress(uchar key, int x, int y) {
+	engine_handleKeyPress(static_engine_hack, key, x, y);
+}
+
+// Handle a key press from the user
+void engine_handleKeyPress(engine* e, uchar key, int x, int y) {
 	// Lua Test
-	engine* e = static_engine_hack;
 	lua_getglobal(e->lua, "handleKeyPress");
 	lua_pushnumber(e->lua, (int)key);
 	lua_pcall(e->lua,	/* args */			1,
@@ -65,7 +108,7 @@ void handleKeyPress(uchar key, int x, int y) {
 
 	switch (key) {
 		case 27: // Escape key
-			deInit(e); // Exit the program
+			engine_deInit(e); // Exit the program
 	}
 }
 
@@ -85,7 +128,7 @@ void handleResize(int w, int h) {
 	// Note to self - does glu normally use doubles rather than floats?
 }
 
-float angle =340.f;
+float angle = 340.f;
 
 void drawLighting() {
 	// Ambient Light
@@ -122,6 +165,7 @@ void test_drawScene() {
 
 	glutSwapBuffers(); // Send the 3d scene to the screen (flips display buffers)
 }
+
 // Initialise the 3D rendering
 void initRendering() {
 	// Enable default depth test
@@ -131,7 +175,8 @@ void initRendering() {
 	glEnable(GL_NORMALIZE);
 }
 
-void init_OpenGL(engine* e, int argc, char** argv) {
+// Initialise the OpenGL subsystem so it is ready for use
+void engine_initOpenGL(engine* e, int argc, char** argv) {
 	// Initialise GLUT
 	glutInit(&argc, argv);
 	glutInitDisplayMode(GLUT_DOUBLE | GLUT_RGB | GLUT_DEPTH);
@@ -145,10 +190,11 @@ void init_OpenGL(engine* e, int argc, char** argv) {
 	glutKeyboardFunc(handleKeyPress);
 	glutReshapeFunc(handleResize);
 	
-	glutTimerFunc(25, engine_tick, (int)e);
+	glutTimerFunc(25, tick, (int)e);
 }
 
-void init_Lua(engine* e, int argc, char** argv) {
+// Initialise the Lua subsystem so that it is ready for use
+void engine_initLua(engine* e, int argc, char** argv) {
 //	char buff[256];
 //	int error;
 	e->lua = lua_open();
@@ -157,42 +203,43 @@ void init_Lua(engine* e, int argc, char** argv) {
 		printf("Error loading lua!\n");
 }
 
-// init - initialises the engine
-void init(int argc, char** argv) {
+engine* engine_create() {
 	engine* e = malloc(sizeof(engine));
 	e->timer = malloc(sizeof(frame_timer));
-	timer_init(e->timer);
+	return e;
+}
 
-	theScene = scene_createScene();
-	testModelA = model_createTestCube();
-	testModelB = model_createTestCube();
-	transform* t = transform_createTransform(theScene);
-	testModelA->trans->parent = t;
-	testModelB->trans->parent = t;
-	vector translate = {{ -2.f, 0.f, 0.f, 1.f }};
-	transform_setLocalTranslation(t, &translate);
-	t2 = transform_createTransform(theScene);
-	t->parent = t2;
+// Initialise the engine
+void engine_init(engine* e, int argc, char** argv) {
+	timer_init(e->timer);
 	
 	// *** Start up Core Systems
 
 	// *** Initialise OpenGL
-	init_OpenGL(e, argc, argv);
+	engine_initOpenGL(e, argc, argv);
 
 	// *** Initialise Lua
-	init_Lua(e, argc, argv);
+	engine_initLua(e, argc, argv);
 
+	// TEST
+	init_TEST();
+}
+
+// Initialises the application
+void init(int argc, char** argv) {
+	engine* e = engine_create();
+	engine_init(e, argc, argv);
 	static_engine_hack = e;
 }
 
 // deInit_lua - deinitialises the Lua interpreter
-void deInit_Lua(engine* e) {
+void engine_deInitLua(engine* e) {
 	lua_close(e->lua);
 }
 
 // deInit - deInitialises the engine
-void deInit(engine* e) {
-	deInit_Lua(e);
+void engine_deInit(engine* e) {
+	engine_deInitLua(e);
 
 	exit(0);
 }
