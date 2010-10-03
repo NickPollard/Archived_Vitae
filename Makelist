@@ -1,5 +1,6 @@
 SRCS =	src/engine.c \
 		src/light.c \
+		src/lua.c \
 		src/main.c \
 		src/maths.c \
 		src/model.c \

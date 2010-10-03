@@ -87,6 +87,11 @@ void engine_tick(engine* e) {
 
 	scene_tick(theScene, dt);
 
+	if (e->onTick && luaCallback_enabled(e->onTick)) {
+//		printf("Calling engine::onTick handler: %s\n", e->onTick->func);
+		LUA_CALL(e->lua, e->onTick->func);
+	}
+
 	glutPostRedisplay(); // Tell GLUT that the rendering has changed.
 }
 
@@ -195,17 +200,20 @@ void engine_initOpenGL(engine* e, int argc, char** argv) {
 
 // Initialise the Lua subsystem so that it is ready for use
 void engine_initLua(engine* e, int argc, char** argv) {
-//	char buff[256];
-//	int error;
 	e->lua = lua_open();
 	luaL_openlibs(e->lua);	// Load the Lua libs into our lua state
 	if (luaL_loadfile(e->lua, "src/lua/main.lua") || lua_pcall(e->lua, 0, 0, 0))
 		printf("Error loading lua!\n");
+
+	LUA_CALL(e->lua, "init");
 }
 
+// Create a new engine
 engine* engine_create() {
 	engine* e = malloc(sizeof(engine));
 	e->timer = malloc(sizeof(frame_timer));
+	e->callbacks = luaInterface_create();
+	e->onTick = luaInterface_addCallback(e->callbacks, "onTick");
 	return e;
 }
 
@@ -220,6 +228,7 @@ void engine_init(engine* e, int argc, char** argv) {
 
 	// *** Initialise Lua
 	engine_initLua(e, argc, argv);
+	luaInterface_registerCallback(e->callbacks, "onTick", "tick");
 
 	// TEST
 	init_TEST();

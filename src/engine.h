@@ -2,6 +2,8 @@
 #ifndef __ENGINE_H__
 #define __ENGINE_H__
 
+#include "src/lua.h"
+
 #include "time.h"
 
 // Lua Libraries
@@ -12,6 +14,8 @@ extern scene* theScene;
 typedef struct {
 	frame_timer* timer;
 	lua_State* lua;
+	luaInterface* callbacks;
+	luaCallback* onTick;
 } engine;
 
 /*

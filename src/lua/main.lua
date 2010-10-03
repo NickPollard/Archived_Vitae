@@ -2,6 +2,12 @@
 
 counter = 0
 
+function init()
+	counter = 42
+
+	registerEventHandler(engine, onTick, "tick")
+end
+
 function handleKeyPress(keyCode)
 	if keyCode == 97 then
 		counter = counter - 1
@@ -9,4 +15,8 @@ function handleKeyPress(keyCode)
 		counter = counter + 1
 	end
 	return counter
+end
+
+function tick()
+	counter = counter + 1
 end
