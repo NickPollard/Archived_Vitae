@@ -1,6 +1,10 @@
 #ifndef __LUA_H__
 #define __LUA_H__
 
+// Lua Libraries
+#include <lauxlib.h>
+#include <lualib.h>
+
 #define LUA_CALL(lua, func)					\
 	lua_getglobal(lua, func);				\
 	lua_pcall(lua,	/* args */			0,	\
@@ -44,5 +48,9 @@ luaCallback* luaInterface_findCallback(luaInterface* interface, const char* name
 
 // Register a luaCallback
 void luaInterface_registerCallback(luaInterface* i, const char* name, const char* func);
+
+int LUA_registerCallback(lua_State* l);
+
+void lua_registerFunction(lua_State* l, lua_CFunction func, const char* name);
 
 #endif // __LUA_H__

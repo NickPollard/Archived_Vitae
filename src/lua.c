@@ -37,3 +37,13 @@ void luaInterface_registerCallback(luaInterface* i, const char* name, const char
 	callBack->func = func;
 	callBack->enabled = true;
 }
+
+int LUA_registerCallback(lua_State* l) {
+	printf("Register callback!\n");
+	return 0;
+}
+
+void lua_registerFunction(lua_State* l, lua_CFunction func, const char* name) {
+    lua_pushcfunction(l, func);
+    lua_setglobal(l, name);
+}

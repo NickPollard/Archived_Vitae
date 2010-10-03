@@ -5,7 +5,8 @@ counter = 0
 function init()
 	counter = 42
 
-	registerEventHandler(engine, onTick, "tick")
+--	registerEventHandler(engine, onTick, "tick")
+	registerEventHandler()
 end
 
 function handleKeyPress(keyCode)

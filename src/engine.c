@@ -205,6 +205,8 @@ void engine_initLua(engine* e, int argc, char** argv) {
 	if (luaL_loadfile(e->lua, "src/lua/main.lua") || lua_pcall(e->lua, 0, 0, 0))
 		printf("Error loading lua!\n");
 
+	lua_registerFunction(e->lua, LUA_registerCallback, "registerEventHandler");
+
 	LUA_CALL(e->lua, "init");
 }
 
