@@ -12,8 +12,10 @@
 #include <lauxlib.h>
 #include <lualib.h>
 
-// OpenGL Libraries
+// GLUT Libraries
 #include <GL/glut.h>
+// GLFW Libraries
+#include <GL/glfw.h>
 
 // System libraries
 #include <sys/time.h>
@@ -73,7 +75,7 @@ void init_TEST() {
 
 void tick(int ePtr) {
 	engine_tick((engine*)ePtr);
-	glutTimerFunc(25, tick, ePtr);
+//	glutTimerFunc(25, tick, ePtr);
 }
 
 
@@ -92,7 +94,7 @@ void engine_tick(engine* e) {
 		LUA_CALL(e->lua, e->onTick->func);
 	}
 
-	glutPostRedisplay(); // Tell GLUT that the rendering has changed.
+//	glutPostRedisplay(); // Tell GLUT that the rendering has changed.
 }
 
 // Static wrapper
@@ -139,7 +141,7 @@ void drawLighting() {
 	// Ambient Light
 	GLfloat ambientColour[] = { 0.2f, 0.2f, 0.2f, 1.f };
 	glLightModelfv(GL_LIGHT_MODEL_AMBIENT, ambientColour);
-
+	
 	// Add a positioned light
 	GLfloat lightColour0[] = {0.5f, 0.f, 0.f, 1.f};
 	GLfloat lightPos0[] = {-2.f, 0.f, 2.f, 1.f};
@@ -158,6 +160,12 @@ void test_drawScene() {
 	glLoadIdentity(); // Initialise to the identity matrix
 	glTranslatef(0.f, 0.f, -15.f); // Move forward 5 units
 
+	glBegin(GL_TRIANGLES);
+	glVertex3f(0.f, 0.f, 5.f);
+	glVertex3f(1.f, 0.f, 5.f);
+	glVertex3f(0.f, 1.f, 5.f);
+	glEnd();
+
 	glPushMatrix();
 	glTranslatef(1.f, -1.f, 0.f); // Move to the center of the pentagon
 	model_draw(testModelA);
@@ -168,7 +176,7 @@ void test_drawScene() {
 	model_draw(testModelB);
 	glPopMatrix();
 
-	glutSwapBuffers(); // Send the 3d scene to the screen (flips display buffers)
+	glfwSwapBuffers(); // Send the 3d scene to the screen (flips display buffers)
 }
 
 // Initialise the 3D rendering
@@ -183,19 +191,23 @@ void initRendering() {
 // Initialise the OpenGL subsystem so it is ready for use
 void engine_initOpenGL(engine* e, int argc, char** argv) {
 	// Initialise GLUT
-	glutInit(&argc, argv);
-	glutInitDisplayMode(GLUT_DOUBLE | GLUT_RGB | GLUT_DEPTH);
-	glutInitWindowSize(900, 600); //Set the window size
+//	glutInit(&argc, argv);
+//	glutInitDisplayMode(GLUT_DOUBLE | GLUT_RGB | GLUT_DEPTH);
+//	glutInitWindowSize(900, 600); //Set the window size
+	if (!glfwInit())
+		printf("ERROR - failed to init glfw.\n");
+
+	glfwOpenWindow(640, 480, 0, 0, 0, 0, 0, 0, GLFW_WINDOW);
 
 	// Create the window
-	glutCreateWindow("Vitae");
+//	glutCreateWindow("Vitae");
 	initRendering(); // initialise the rendering
 
-	glutDisplayFunc(test_drawScene);
-	glutKeyboardFunc(handleKeyPress);
-	glutReshapeFunc(handleResize);
+//	glutDisplayFunc(test_drawScene);
+//	glutKeyboardFunc(handleKeyPress);
+//	glutReshapeFunc(handleResize);
 	
-	glutTimerFunc(25, tick, (int)e);
+//	glutTimerFunc(25, tick, (int)e);
 }
 
 // Initialise the Lua subsystem so that it is ready for use
@@ -252,11 +264,18 @@ void engine_deInitLua(engine* e) {
 void engine_deInit(engine* e) {
 	engine_deInitLua(e);
 
+	glfwTerminate();
+
 	exit(0);
 }
 
 void run_OpenGL() {
-	glutMainLoop();
+	int running = true;
+	while (running) {
+		test_drawScene();
+
+		running = !glfwGetKey(GLFW_KEY_ESC) && glfwGetWindowParam(GLFW_OPENED);
+	}
 }
 
 // run - executes the main loop of the engine

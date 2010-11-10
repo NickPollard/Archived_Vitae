@@ -38,8 +38,10 @@ void glTranslate_vector(vector* v) {
 	glTranslatef(v->coord.x, v->coord.y, v->coord.z);
 }
 
+// Iterate through each model in the scene
+// Translate by their transform
+// Then draw all the submeshes
 void drawScene(scene* s) {
-	// for each model in the scene
 	for (int i = 0; i < s->modelCount; i++) {
 		glPushMatrix();
 		// TODO: Translate by the models transform

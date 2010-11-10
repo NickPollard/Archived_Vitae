@@ -13,9 +13,9 @@ extern scene* theScene;
 
 typedef struct {
 	frame_timer* timer;
-	lua_State* lua;
-	luaInterface* callbacks;
-	luaCallback* onTick;
+	lua_State* lua;					//!< Engine wide persistant lua state
+	luaInterface* callbacks;		//!< Lua Interface for callbacks from the engine
+	luaCallback* onTick;			//!< OnTick event handler
 } engine;
 
 /*
