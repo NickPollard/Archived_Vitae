@@ -7,6 +7,7 @@
 
 #include "common.h"
 #include "engine.h"
+#include "mem/allocator.h"
 
 // ###################################
 
@@ -14,6 +15,8 @@ int main(int argc, char** argv) {
 	printf("Loading Vitae.\n");
 
 	init(argc, argv);
+
+	test_allocator();
 
 	run();
 

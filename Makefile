@@ -13,6 +13,7 @@ all : $(EXECUTABLE)
 clean :
 	@echo "--- Removing Object Files ---"
 	@-rm -vf bin/*.o;
+	@-rm -vf bin/*/*.o;
 	@echo "--- Removing Executable ---"
 	@-rm -vf $(EXECUTABLE);
 

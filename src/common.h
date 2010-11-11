@@ -12,6 +12,10 @@
 #define true 1
 #define false 0
 
+#define TERM_RED "[1;31;40m"
+#define TERM_GREEN "[1;32;40m"
+#define TERM_WHITE "[0;37;40m"
+
 // types
 typedef unsigned int uint;
 typedef unsigned char uchar;
@@ -31,5 +35,12 @@ typedef struct vec2_t {
 	float x;
 	float y;
 } vec2;
+
+// Printing
+#define printError( format, args... ) 	{ \
+											printf( "%sError%s: ", TERM_RED, TERM_WHITE ); \
+											printf( format, args ); \
+											printf( " [File: %s, Line: %d]\n", __FILE__, __LINE__ ); \
+										}
 
 #endif // __COMMON_H__
