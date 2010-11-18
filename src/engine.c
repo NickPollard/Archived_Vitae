@@ -139,8 +139,8 @@ void drawLighting() {
 	GLfloat ambientColour[] = { 0.f, 0.f, 0.f, 1.f };
 	glLightModelfv(GL_LIGHT_MODEL_AMBIENT, ambientColour);
 	
-	// Add a positioned light
-	GLfloat lightColour0[] = {1.f, 0.0f, 0.0f, 1.f};
+	// Add a positioned light1
+	GLfloat lightColour0[] = {1.f, 1.0f, 1.0f, 1.f};
 	GLfloat lightPos0[] = {-2.f, 0.f, 2.f, 1.f};
 	glLightfv(GL_LIGHT0, GL_DIFFUSE, lightColour0);
 	glLightfv(GL_LIGHT0, GL_POSITION, lightPos0);
@@ -149,7 +149,7 @@ void drawLighting() {
 // Draws the 3D scene
 void test_drawScene() {
 	// Clear information from last draw
-	glClearColor(0.f, 0.f, 0.2f, 0.f);
+	glClearColor(0.f, 0.f, 0.0f, 0.f);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
 	drawLighting();
@@ -170,9 +170,9 @@ void test_drawScene() {
 
 	glColor4f(1.f, 1.f, 1.f, 1.f);
 	glVertex3f(1.f, 2.f, 5.f);
-	glColor4f(1.f, 0.f, 1.f, 1.f);
+	glColor4f(1.f, 1.f, 1.f, 1.f);
 	glVertex3f(1.f, 0.f, 5.f);
-	glColor4f(0.f, 1.f, 1.f, 1.f);
+	glColor4f(1.f, 1.f, 1.f, 1.f);
 	glVertex3f(0.f, 2.f, 5.f);
 	glEnd();
 	
