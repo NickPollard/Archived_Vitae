@@ -50,6 +50,7 @@ void engine_tick_TEST(engine* e, float dt) {
 }
 
 void init_TEST() {
+	printf("TEST: Initialise test models.\n");
 	theScene = scene_createScene();
 	testModelA = model_createTestCube();
 	testModelB = model_createTestCube();
@@ -135,11 +136,11 @@ float angle = 340.f;
 
 void drawLighting() {
 	// Ambient Light
-	GLfloat ambientColour[] = { 0.2f, 0.2f, 0.2f, 1.f };
+	GLfloat ambientColour[] = { 0.f, 0.f, 0.f, 1.f };
 	glLightModelfv(GL_LIGHT_MODEL_AMBIENT, ambientColour);
 	
 	// Add a positioned light
-	GLfloat lightColour0[] = {0.5f, 0.f, 0.f, 1.f};
+	GLfloat lightColour0[] = {1.f, 0.0f, 0.0f, 1.f};
 	GLfloat lightPos0[] = {-2.f, 0.f, 2.f, 1.f};
 	glLightfv(GL_LIGHT0, GL_DIFFUSE, lightColour0);
 	glLightfv(GL_LIGHT0, GL_POSITION, lightPos0);
@@ -148,7 +149,7 @@ void drawLighting() {
 // Draws the 3D scene
 void test_drawScene() {
 	// Clear information from last draw
-	glClearColor(0.f, 0.f, 0.f, 0.f);
+	glClearColor(0.f, 0.f, 0.2f, 0.f);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
 	drawLighting();
@@ -157,17 +158,21 @@ void test_drawScene() {
 	glLoadIdentity(); // Initialise to the identity matrix
 
 	glPushMatrix();
-	glTranslatef(0.f, 0.f, -15.f); // Move forward 5 units
+	glTranslatef(0.f, 0.f, -10.f); // Move forward 5 units
 	glBegin(GL_TRIANGLES);
+	glColor4f(1.f, 1.f, 1.f, 1.f);
+	glNormal3f(0.f, 0.f, -1.f);
 	glVertex3f(0.f, 0.f, 5.f);
+	glColor4f(1.f, 0.f, 1.f, 1.f);
 	glVertex3f(1.f, 0.f, 5.f);
+	glColor4f(0.f, 1.f, 1.f, 1.f);
 	glVertex3f(0.f, 1.f, 5.f);
 
-	glColor3f(1.f, 0.f, 0.f);
+	glColor4f(1.f, 1.f, 1.f, 1.f);
 	glVertex3f(1.f, 2.f, 5.f);
-	glColor3f(0.f, 2.f, 0.f);
+	glColor4f(1.f, 0.f, 1.f, 1.f);
 	glVertex3f(1.f, 0.f, 5.f);
-	glColor3f(0.f, 0.f, 1.f);
+	glColor4f(0.f, 1.f, 1.f, 1.f);
 	glVertex3f(0.f, 2.f, 5.f);
 	glEnd();
 	
@@ -198,10 +203,13 @@ void test_drawScene() {
 
 // Initialise the 3D rendering
 void initRendering() {
+	printf("RENDERING: Initialising OpenGL rendering settings.\n");
 	glEnable(GL_DEPTH_TEST);
 	glEnable(GL_LIGHTING);
 	glEnable(GL_LIGHT0);
 	glEnable(GL_NORMALIZE);
+	glShadeModel(GL_SMOOTH);
+	glEnable(GL_COLOR_MATERIAL);
 }
 
 // Initialise the OpenGL subsystem so it is ready for use
