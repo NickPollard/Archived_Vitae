@@ -7,7 +7,7 @@
 // TAKES width and height of the window, as ints
 window* window_create(int w, int h) {
 	// Allocate memory
-	window* win = malloc(sizeof(window));
+	window* win = mem_alloc(sizeof(window));
 
 	// Set params
 	win->width = w;
@@ -54,7 +54,7 @@ void area_on_draw(GtkWidget* w, GdkEventExpose* e, gpointer renderData) {
 	GdkGC* gc = gdk_gc_new(w->window);
 	
 	// Black
-	GdkColor* black = malloc(sizeof(GdkColor));
+	GdkColor* black = mem_alloc(sizeof(GdkColor));
 	gdk_color_black(gdk_colormap_get_system(), black);
 
 	render_data* r = (render_data*)renderData;
@@ -68,7 +68,7 @@ void area_on_draw(GtkWidget* w, GdkEventExpose* e, gpointer renderData) {
 };
 
 render_data* renderData_create(spritebuffer* s, canvas* c) {
-	render_data* r = malloc(sizeof(render_data));
+	render_data* r = mem_alloc(sizeof(render_data));
 	r->buffer = s;
 	r->canv = c;
 	return r;

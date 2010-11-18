@@ -38,7 +38,7 @@ int spritebuffer_add_sprite(spritebuffer* buffer, sprite* s) {
 // TAKES requested max size for the sprite array
 spritebuffer* spritebuffer_create(int request_size) {
 	// Allocate enough size for the spritebuffer struct plus the sprite array
-	void* p = malloc(sizeof(spritebuffer) + sizeof(sprite*) * request_size);
+	void* p = mem_alloc(sizeof(spritebuffer) + sizeof(sprite*) * request_size);
 	spritebuffer* s = (spritebuffer*)p;
 	s->count = 0;
 	s->max = request_size;

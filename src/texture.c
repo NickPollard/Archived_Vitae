@@ -38,7 +38,7 @@ TextureHandle texture_find_by_id(TextureLibrary* lib, TextureID id) {
 }
 
 TextureLibrary* texture_library_create() {
-	TextureLibrary* lib = malloc(sizeof(TextureLibrary));
+	TextureLibrary* lib = mem_alloc(sizeof(TextureLibrary));
 	memset(lib, 0, sizeof(TextureLibrary));
 	return lib;
 }

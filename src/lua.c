@@ -1,6 +1,9 @@
 // Lua.c
 #include "src/common.h"
 #include "src/lua.h"
+//---------------------
+#include "mem/allocator.h"
+
 
 // Is the luaCallback currently enabled?
 int luaCallback_enabled(luaCallback* l) {
@@ -16,7 +19,7 @@ luaCallback* luaInterface_addCallback(luaInterface* i, const char* name) {
 
 // Create a luaInterface
 luaInterface* luaInterface_create() {
-	luaInterface* i = malloc(sizeof(luaInterface));
+	luaInterface* i = mem_alloc(sizeof(luaInterface));
 	i->callbackCount = 0;
 	memset(&i->callbackArray[0], 0, sizeof(luaCallback) * MAX_CALLBACKS);
 	return i;

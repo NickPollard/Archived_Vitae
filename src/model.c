@@ -6,6 +6,7 @@
 #include "maths.h"
 #include "transform.h"
 #include "engine.h"
+#include "mem/allocator.h"
 
 #include <GL/glut.h>
 
@@ -72,7 +73,7 @@ mesh* mesh_createTestCube() {
 
 // Create an empty mesh with vertCount distinct vertices and indexCount vertex indices
 mesh* mesh_createMesh(int vertCount, int indexCount) {
-	void* data = malloc(sizeof(mesh) + 
+	void* data = mem_alloc(sizeof(mesh) + 
 						(sizeof(vector) * vertCount) + 
 						(sizeof(int) * indexCount));
 	mesh* m = data;
@@ -96,7 +97,7 @@ model* model_createTestCube() {
 
 // Create an empty model with meshCount submeshes
 model* model_createModel(int meshCount) {
-	model* m = malloc(sizeof(model) +
+	model* m = mem_alloc(sizeof(model) +
 						sizeof(mesh*) * meshCount);
 	m->meshCount = meshCount;
 	return m;

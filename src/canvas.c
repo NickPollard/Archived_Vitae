@@ -5,6 +5,6 @@
 
 // Creates a new blank Canvas
 canvas* canvas_create() {
-	return (canvas*)malloc(sizeof(canvas));
+	return (canvas*)mem_alloc(sizeof(canvas));
 }
 

@@ -5,6 +5,7 @@
 //-----------------------
 #include "light.h"
 #include "model.h"
+#include "mem/allocator.h"
 
 #include <GL/glut.h>
 
@@ -21,7 +22,7 @@ model* scene_getModel(scene* s, int i) {
 }	
 
 scene* scene_createTestScene() {
-	scene* s = malloc(sizeof(scene));
+	scene* s = mem_alloc(sizeof(scene));
 	s->modelCount = 0;
 	s->lightCount = 0;
 
@@ -52,7 +53,7 @@ void drawScene(scene* s) {
 
 // Make a scene
 scene* scene_createScene() {
-	scene* s = malloc(sizeof(scene));
+	scene* s = mem_alloc(sizeof(scene));
 	s->modelCount = s->lightCount = s->transformCount = 0;
 	return s;
 }

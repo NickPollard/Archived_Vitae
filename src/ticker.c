@@ -1,6 +1,8 @@
 // ticker.c
 #include "src/common.h"
 #include "src/ticker.h"
+//---------------------
+#include "mem/allocator.h"
 #include <assert.h>
 
 // Tick all tickers in the tick list!
@@ -13,10 +15,10 @@ void tick_all(ticklist* t, float dt) {
 }
 
 ticklist* ticklist_create(tickfunc tickHandler, int size) {
-	ticklist* t = (ticklist*)malloc(sizeof(ticklist));
+	ticklist* t = (ticklist*)mem_alloc(sizeof(ticklist));
 	t->tick = tickHandler;
 	t->count = 0;
-	t->data = malloc(size * sizeof(void*));
+	t->data = mem_alloc(size * sizeof(void*));
 	t->max = size;
 
 	return t;

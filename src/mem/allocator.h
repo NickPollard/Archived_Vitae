@@ -1,6 +1,9 @@
 #ifndef __ALLOCATOR_H__
 #define __ALLOCATOR_H__
 // Allocator.h
+#include <stddef.h>
+
+#define MEM_DEBUG_VERBOSE
 
 typedef struct block_s block;
 
@@ -28,6 +31,13 @@ struct block_s {
 };
 
 #endif // __ALLOCATOR_H__
+
+// Default allocate from the static heap
+// Passes straight through to heap_allocate()
+void* mem_alloc(size_t bytes);
+
+// Initialise the memory subsystem
+void mem_init(int argc, char** argv);
 
 // Allocates *size* bytes from the given heapAllocator *heap*
 // Will crash if out of memory

@@ -1,13 +1,30 @@
 // Allocator.c
 #include "allocator.h"
 #include "src/common.h"
-
+//---------------------
 #include <assert.h>
 #include <stdio.h>
+
+#define static_heap_size (64 << 20) // In MegaBytes
+heapAllocator* static_heap = NULL;
+
+// Default allocate from the static heap
+// Passes straight through to heap_allocate()
+void* mem_alloc(size_t bytes) {
+	return heap_allocate(static_heap, bytes);
+}
+
+// Initialise the memory subsystem
+void mem_init(int argc, char** argv) {
+	static_heap = heap_create(static_heap_size);
+}
 
 // Allocates *size* bytes from the given heapAllocator *heap*
 // Will crash if out of memory
 void* heap_allocate( heapAllocator* heap, int size ) {
+#ifdef MEM_DEBUG_VERBOSE
+	printf( "HeapAllocator request for %d bytes.\n", size );
+#endif
 	block* b = heap_findEmptyBlock( heap, size );
 	if ( !b )
 		printError( "HeapAllocator out of memory on request for %d bytes.\n", size );

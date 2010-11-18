@@ -17,7 +17,7 @@ void sprite_render_to_canvas(sprite* s, canvas* c) {
 }
 
 sprite* sprite_create_from_bitmap(TextureLibrary* lib, const char* bitmapName) {
-	sprite* s = malloc(sizeof(sprite));
+	sprite* s = mem_alloc(sizeof(sprite));
 	s->image = texture_load_by_id(lib, bitmapName);
 	s->width = gdk_pixbuf_get_height(s->image);
 	s->height = gdk_pixbuf_get_width(s->image);
@@ -34,7 +34,7 @@ void sprite_set_x_y(sprite* s, int x, int y) {
 //
 
 spritemover* spritemover_create(sprite* spr, float x, float y, float vx, float vy) {
-	spritemover* s = (spritemover*)malloc(sizeof(spritemover));
+	spritemover* s = (spritemover*)mem_alloc(sizeof(spritemover));
 	s->s = spr;
 	s->position.x = x;
 	s->position.y = y;

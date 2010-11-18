@@ -2,6 +2,7 @@
 #include "src/common.h"
 #include "src/engine.h"
 //---------------------
+#include "mem/allocator.h"
 #include "src/maths.h"
 #include "src/model.h"
 #include "src/scene.h"
@@ -224,8 +225,8 @@ void engine_initLua(engine* e, int argc, char** argv) {
 
 // Create a new engine
 engine* engine_create() {
-	engine* e = malloc(sizeof(engine));
-	e->timer = malloc(sizeof(frame_timer));
+	engine* e = mem_alloc(sizeof(engine));
+	e->timer = mem_alloc(sizeof(frame_timer));
 	e->callbacks = luaInterface_create();
 	e->onTick = luaInterface_addCallback(e->callbacks, "onTick");
 	return e;
@@ -250,6 +251,8 @@ void engine_init(engine* e, int argc, char** argv) {
 
 // Initialises the application
 void init(int argc, char** argv) {
+	mem_init(argc, argv);
+
 	engine* e = engine_create();
 	engine_init(e, argc, argv);
 	static_engine_hack = e;
