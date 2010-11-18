@@ -136,7 +136,7 @@ float angle = 340.f;
 
 void drawLighting() {
 	// Ambient Light
-	GLfloat ambientColour[] = { 0.f, 0.f, 0.f, 1.f };
+	GLfloat ambientColour[] = { 0.2f, 0.f, 0.2f, 1.f };
 	glLightModelfv(GL_LIGHT_MODEL_AMBIENT, ambientColour);
 	
 	// Add a positioned light1
@@ -145,6 +145,8 @@ void drawLighting() {
 	glLightfv(GL_LIGHT0, GL_DIFFUSE, lightColour0);
 	glLightfv(GL_LIGHT0, GL_POSITION, lightPos0);
 }
+
+	float depth = 8.f;
 
 // Draws the 3D scene
 void test_drawScene() {
@@ -157,33 +159,25 @@ void test_drawScene() {
 	glMatrixMode(GL_MODELVIEW); // Switch to the drawing perspective
 	glLoadIdentity(); // Initialise to the identity matrix
 
-	glPushMatrix();
 	glTranslatef(0.f, 0.f, -10.f); // Move forward 5 units
+
+
+	glPushMatrix();
 	glBegin(GL_TRIANGLES);
 	glColor4f(1.f, 1.f, 1.f, 1.f);
 	glNormal3f(0.f, 0.f, -1.f);
-	glVertex3f(0.f, 0.f, 5.f);
+	glVertex3f(0.f, 0.f, depth);
 	glColor4f(1.f, 0.f, 1.f, 1.f);
-	glVertex3f(1.f, 0.f, 5.f);
+	glVertex3f(1.f, 0.f, depth);
 	glColor4f(0.f, 1.f, 1.f, 1.f);
-	glVertex3f(0.f, 1.f, 5.f);
+	glVertex3f(0.f, 1.f, depth);
 
 	glColor4f(1.f, 1.f, 1.f, 1.f);
-	glVertex3f(1.f, 2.f, 5.f);
+	glVertex3f(1.f, 2.f, depth);
 	glColor4f(1.f, 1.f, 1.f, 1.f);
-	glVertex3f(1.f, 0.f, 5.f);
+	glVertex3f(1.f, 0.f, depth);
 	glColor4f(1.f, 1.f, 1.f, 1.f);
-	glVertex3f(0.f, 2.f, 5.f);
-	glEnd();
-	
-/*	
-	glPopMatrix();
-	glPushMatrix();
-	glTranslatef(0.f, 0.f, 5.f); // Move forward 5 units
-	glBegin(GL_TRIANGLES);
-	glVertex3f(0.f, 0.f, 5.f);
-	glVertex3f(1.f, 0.f, 5.f);
-	glVertex3f(0.f, 1.f, 5.f);
+	glVertex3f(0.f, 2.f, depth);
 	glEnd();
 	glPopMatrix();
 
@@ -196,7 +190,6 @@ void test_drawScene() {
 	glTranslatef(-1.f, 1.f, 0.f); // Move to the center of the pentagon
 	model_draw(testModelB);
 	glPopMatrix();
-	*/
 
 	glfwSwapBuffers(); // Send the 3d scene to the screen (flips display buffers)
 }
@@ -290,8 +283,14 @@ void openGL_run() {
 	handleResize(640, 480);	// Call once to init
 	while (running) {
 		test_drawScene();
+		engine_tick(static_engine_hack);
 
 		running = !glfwGetKey(GLFW_KEY_ESC) && glfwGetWindowParam(GLFW_OPENED);
+
+		if (glfwGetKey(GLFW_KEY_UP))
+			depth += 0.01f;
+		if (glfwGetKey(GLFW_KEY_DOWN))
+			depth -= 0.01f;
 	}
 }
 
