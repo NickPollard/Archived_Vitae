@@ -13,8 +13,6 @@
 #include <lauxlib.h>
 #include <lualib.h>
 
-// GLUT Libraries
-#include <GL/glut.h>
 // GLFW Libraries
 #include <GL/glfw.h>
 
@@ -76,7 +74,6 @@ void init_TEST() {
 
 void tick(int ePtr) {
 	engine_tick((engine*)ePtr);
-//	glutTimerFunc(25, tick, ePtr);
 }
 
 
@@ -95,7 +92,6 @@ void engine_tick(engine* e) {
 		LUA_CALL(e->lua, e->onTick->func);
 	}
 
-//	glutPostRedisplay(); // Tell GLUT that the rendering has changed.
 }
 
 // Static wrapper
@@ -120,19 +116,18 @@ void engine_handleKeyPress(engine* e, uchar key, int x, int y) {
 	}
 }
 
+// Handle a window resize
+// Set the camera perspective and tell OpenGL how to convert 
+// from coordinates to pixel values
 void handleResize(int w, int h) {
-	// Tell OpenGL how to convert from coordinates to pixel values
+	printf("Resize!\n");
 	glViewport(0, 0, w, h);
+	glMatrixMode(GL_PROJECTION);
+	glLoadIdentity();
+//	gluPerspective(45.0, (double)w / (double)h, 1.0, 200.0);
 
-	glMatrixMode(GL_PROJECTION); // Enter projection mode, so that we'll modify the projection matrix
-
-	// Set the camera perspective
-	glLoadIdentity(); // initialise to the identity matrix
-	gluPerspective(45.0,
-			(double)w / (double)h,
-			1.0,
-			200.0);
-
+	float aspect_ratio = ((float)w) / (float)h;
+	glFrustum(.5, -.5, -.5 * aspect_ratio, .5 * aspect_ratio, 1, 50);
 	// Note to self - does glu normally use doubles rather than floats?
 }
 
@@ -153,19 +148,39 @@ void drawLighting() {
 // Draws the 3D scene
 void test_drawScene() {
 	// Clear information from last draw
+	glClearColor(0.f, 0.f, 0.f, 0.f);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
 	drawLighting();
 
 	glMatrixMode(GL_MODELVIEW); // Switch to the drawing perspective
 	glLoadIdentity(); // Initialise to the identity matrix
-	glTranslatef(0.f, 0.f, -15.f); // Move forward 5 units
 
+	glPushMatrix();
+	glTranslatef(0.f, 0.f, -15.f); // Move forward 5 units
+	glBegin(GL_TRIANGLES);
+	glVertex3f(0.f, 0.f, 5.f);
+	glVertex3f(1.f, 0.f, 5.f);
+	glVertex3f(0.f, 1.f, 5.f);
+
+	glColor3f(1.f, 0.f, 0.f);
+	glVertex3f(1.f, 2.f, 5.f);
+	glColor3f(0.f, 2.f, 0.f);
+	glVertex3f(1.f, 0.f, 5.f);
+	glColor3f(0.f, 0.f, 1.f);
+	glVertex3f(0.f, 2.f, 5.f);
+	glEnd();
+	
+/*	
+	glPopMatrix();
+	glPushMatrix();
+	glTranslatef(0.f, 0.f, 5.f); // Move forward 5 units
 	glBegin(GL_TRIANGLES);
 	glVertex3f(0.f, 0.f, 5.f);
 	glVertex3f(1.f, 0.f, 5.f);
 	glVertex3f(0.f, 1.f, 5.f);
 	glEnd();
+	glPopMatrix();
 
 	glPushMatrix();
 	glTranslatef(1.f, -1.f, 0.f); // Move to the center of the pentagon
@@ -176,13 +191,13 @@ void test_drawScene() {
 	glTranslatef(-1.f, 1.f, 0.f); // Move to the center of the pentagon
 	model_draw(testModelB);
 	glPopMatrix();
+	*/
 
 	glfwSwapBuffers(); // Send the 3d scene to the screen (flips display buffers)
 }
 
 // Initialise the 3D rendering
 void initRendering() {
-	// Enable default depth test
 	glEnable(GL_DEPTH_TEST);
 	glEnable(GL_LIGHTING);
 	glEnable(GL_LIGHT0);
@@ -191,24 +206,14 @@ void initRendering() {
 
 // Initialise the OpenGL subsystem so it is ready for use
 void engine_initOpenGL(engine* e, int argc, char** argv) {
-	// Initialise GLUT
-//	glutInit(&argc, argv);
-//	glutInitDisplayMode(GLUT_DOUBLE | GLUT_RGB | GLUT_DEPTH);
-//	glutInitWindowSize(900, 600); //Set the window size
 	if (!glfwInit())
 		printf("ERROR - failed to init glfw.\n");
 
-	glfwOpenWindow(640, 480, 0, 0, 0, 0, 0, 0, GLFW_WINDOW);
+	glfwOpenWindow(640, 480, 5, 6, 5, 0, 0, 0, GLFW_WINDOW);
+	glfwSetWindowTitle("Vitae");
+	glfwSetWindowSizeCallback(handleResize);
 
-	// Create the window
-//	glutCreateWindow("Vitae");
 	initRendering(); // initialise the rendering
-
-//	glutDisplayFunc(test_drawScene);
-//	glutKeyboardFunc(handleKeyPress);
-//	glutReshapeFunc(handleResize);
-	
-//	glutTimerFunc(25, tick, (int)e);
 }
 
 // Initialise the Lua subsystem so that it is ready for use
@@ -272,8 +277,9 @@ void engine_deInit(engine* e) {
 	exit(0);
 }
 
-void run_OpenGL() {
+void openGL_run() {
 	int running = true;
+	handleResize(640, 480);	// Call once to init
 	while (running) {
 		test_drawScene();
 
@@ -285,6 +291,6 @@ void run_OpenGL() {
 void run() {
 //	TextureLibrary* textures = texture_library_create();
 
-	run_OpenGL();
+	openGL_run();
 }
 

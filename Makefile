@@ -1,7 +1,7 @@
 C = gcc
 CFLAGS = -Wall -Werror -m32 -std=c99 -I . `pkg-config --cflags libglfw`
 LFLAGS = -m32 
-LIBS = -lglut -lGLU -llua `pkg-config --libs libglfw`
+LIBS = -lGLU -llua `pkg-config --libs libglfw`
 EXECUTABLE = vitae
 include Makelist
 DEPS = $(SRCS:src/%.c=bin/%.d)
