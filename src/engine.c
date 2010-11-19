@@ -19,12 +19,7 @@
 // System libraries
 #include <sys/time.h>
 
-model* testModelA = NULL;
-model* testModelB = NULL;
-
 scene* theScene = NULL;
-transform* t2 = NULL;
-
 engine* static_engine_hack;
 
 /*
@@ -33,38 +28,14 @@ engine* static_engine_hack;
  *
  */
 
-void engine_tick_TEST(engine* e, float dt) {
-	static float time = 0.f;
-	time += dt;
-	float period = 2.f;
-	float animate = 2.f * sinf(time * 2 * PI / period);
-
-	// Animate cubes
-	vector translateA = {{ animate, 0.f, 0.f, 1.f}};
-	transform_setLocalTranslation(testModelA->trans, &translateA);
-	vector translateB = {{ 0.f, animate, 0.f, 1.f}};
-	transform_setLocalTranslation(testModelB->trans, &translateB);
-	
-	vector translateC = {{ 0.f, 0.f, animate,  1.f}};
-	transform_setLocalTranslation(t2, &translateC);
+void test_engine_tick(engine* e, float dt) {
+//	scene_tick(theScene, dt);
 }
 
-void init_TEST() {
-	printf("TEST: Initialise test models.\n");
+void test_engine_init() {
 	theScene = scene_createScene();
-	testModelA = model_createTestCube();
-	testModelB = model_createTestCube();
-	transform* t = transform_createTransform(theScene);
-	testModelA->trans->parent = t;
-	testModelB->trans->parent = t;
-	vector translate = {{ -2.f, 0.f, 0.f, 1.f }};
-	transform_setLocalTranslation(t, &translate);
-	t2 = transform_createTransform(theScene);
-	t->parent = t2;
+	test_scene_init(theScene);
 }
-
-
-
 
 /*
  *
@@ -72,18 +43,12 @@ void init_TEST() {
  *
  */
 
-
-void tick(int ePtr) {
-	engine_tick((engine*)ePtr);
-}
-
-
 // tick - process a frame of game update
 void engine_tick(engine* e) {
 	float dt = timer_getDelta(e->timer);
 
 	// TEST
-	engine_tick_TEST(e, dt);
+	test_engine_tick(e, dt);
 	// end TEST
 
 	scene_tick(theScene, dt);
@@ -121,46 +86,33 @@ void engine_handleKeyPress(engine* e, uchar key, int x, int y) {
 // Set the camera perspective and tell OpenGL how to convert 
 // from coordinates to pixel values
 void handleResize(int w, int h) {
-	printf("Resize!\n");
 	glViewport(0, 0, w, h);
 	glMatrixMode(GL_PROJECTION);
 	glLoadIdentity();
-//	gluPerspective(45.0, (double)w / (double)h, 1.0, 200.0);
+	gluPerspective(45.0, (double)w / (double)h, 1.0, 200.0);
 
-	float aspect_ratio = ((float)w) / (float)h;
-	glFrustum(.5, -.5, -.5 * aspect_ratio, .5 * aspect_ratio, 1, 50);
+//	float aspect_ratio = ((float)w) / (float)h;
+//	glFrustum(.5, -.5, -.5 * aspect_ratio, .5 * aspect_ratio, 1, 50);
 	// Note to self - does glu normally use doubles rather than floats?
 }
 
 float angle = 340.f;
 
-void drawLighting() {
-	// Ambient Light
-	GLfloat ambientColour[] = { 0.2f, 0.f, 0.2f, 1.f };
-	glLightModelfv(GL_LIGHT_MODEL_AMBIENT, ambientColour);
-	
-	// Add a positioned light1
-	GLfloat lightColour0[] = {1.f, 1.0f, 1.0f, 1.f};
-	GLfloat lightPos0[] = {-2.f, 0.f, 2.f, 1.f};
-	glLightfv(GL_LIGHT0, GL_DIFFUSE, lightColour0);
-	glLightfv(GL_LIGHT0, GL_POSITION, lightPos0);
-}
-
-	float depth = 8.f;
+float depth = 8.f;
 
 // Draws the 3D scene
-void test_drawScene() {
+void engine_render() {
 	// Clear information from last draw
 	glClearColor(0.f, 0.f, 0.0f, 0.f);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-	drawLighting();
+	// Switch to the drawing perspective and initialise to the identity matrix
+	glMatrixMode(GL_MODELVIEW); 
+	glLoadIdentity(); 
+	glTranslatef(0.f, 0.f, -10.f);
 
-	glMatrixMode(GL_MODELVIEW); // Switch to the drawing perspective
-	glLoadIdentity(); // Initialise to the identity matrix
-
-	glTranslatef(0.f, 0.f, -10.f); // Move forward 5 units
-
+	scene_drawLighting();
+	scene_render(theScene);
 
 	glPushMatrix();
 	glBegin(GL_TRIANGLES);
@@ -181,21 +133,11 @@ void test_drawScene() {
 	glEnd();
 	glPopMatrix();
 
-	glPushMatrix();
-	glTranslatef(1.f, -1.f, 0.f); // Move to the center of the pentagon
-	model_draw(testModelA);
-	glPopMatrix();
-
-	glPushMatrix();
-	glTranslatef(-1.f, 1.f, 0.f); // Move to the center of the pentagon
-	model_draw(testModelB);
-	glPopMatrix();
-
 	glfwSwapBuffers(); // Send the 3d scene to the screen (flips display buffers)
 }
 
 // Initialise the 3D rendering
-void initRendering() {
+void render_init() {
 	printf("RENDERING: Initialising OpenGL rendering settings.\n");
 	glEnable(GL_DEPTH_TEST);
 	glEnable(GL_LIGHTING);
@@ -214,7 +156,7 @@ void engine_initOpenGL(engine* e, int argc, char** argv) {
 	glfwSetWindowTitle("Vitae");
 	glfwSetWindowSizeCallback(handleResize);
 
-	initRendering(); // initialise the rendering
+	render_init(); // initialise the rendering
 }
 
 // Initialise the Lua subsystem so that it is ready for use
@@ -252,16 +194,20 @@ void engine_init(engine* e, int argc, char** argv) {
 	luaInterface_registerCallback(e->callbacks, "onTick", "tick");
 
 	// TEST
-	init_TEST();
+	test_engine_init();
 }
 
 // Initialises the application
 void init(int argc, char** argv) {
+
+	// *** Initialise Memory
 	mem_init(argc, argv);
 
+	// *** Initialise Engine
 	engine* e = engine_create();
 	engine_init(e, argc, argv);
 	static_engine_hack = e;
+
 }
 
 // deInit_lua - deinitialises the Lua interpreter
@@ -278,12 +224,14 @@ void engine_deInit(engine* e) {
 	exit(0);
 }
 
-void openGL_run() {
+// run - executes the main loop of the engine
+void run() {
+//	TextureLibrary* textures = texture_library_create();
 	int running = true;
 	handleResize(640, 480);	// Call once to init
 	while (running) {
-		test_drawScene();
 		engine_tick(static_engine_hack);
+		engine_render();
 
 		running = !glfwGetKey(GLFW_KEY_ESC) && glfwGetWindowParam(GLFW_OPENED);
 
@@ -292,12 +240,5 @@ void openGL_run() {
 		if (glfwGetKey(GLFW_KEY_DOWN))
 			depth -= 0.01f;
 	}
-}
-
-// run - executes the main loop of the engine
-void run() {
-//	TextureLibrary* textures = texture_library_create();
-
-	openGL_run();
 }
 

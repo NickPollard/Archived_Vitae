@@ -8,4 +8,5 @@ SRCS =	src/engine.c \
 		src/ticker.c \
 		src/time.c \
 		src/transform.c \
-		src/mem/allocator.c
+		src/mem/allocator.c \
+		src/render/debugdraw.c

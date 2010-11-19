@@ -36,4 +36,14 @@ void scene_concatenateTransforms(scene* s);
 // Update the scene
 void scene_tick(scene* s, float dt);
 
+void scene_drawLighting();
+
+void scene_render(scene* s);
+
+// Initialise a scene with some test data
+void test_scene_init(scene* s);
+
+void test_scene_tick(scene* s, float dt);
+
+
 #endif // __SCENE_H__
