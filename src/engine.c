@@ -22,6 +22,9 @@
 scene* theScene = NULL;
 engine* static_engine_hack;
 
+float camX = 0.f;
+float camY = 0.f;
+
 /*
  *
  *  Test Functions
@@ -108,10 +111,11 @@ void engine_render() {
 
 	// Switch to the drawing perspective and initialise to the identity matrix
 	glMatrixMode(GL_MODELVIEW); 
-	glLoadIdentity(); 
-	glTranslatef(0.f, 0.f, -10.f);
+//	glLoadIdentity(); 
+//	glTranslatef(0.f, 0.f, -10.f);
 
-	scene_drawLighting(theScene);
+	scene_applyCamera(theScene);
+	scene_renderLighting(theScene);
 	scene_render(theScene);
 
 	glPushMatrix();
@@ -235,10 +239,22 @@ void run() {
 
 		running = !glfwGetKey(GLFW_KEY_ESC) && glfwGetWindowParam(GLFW_OPENED);
 
-		if (glfwGetKey(GLFW_KEY_UP))
+		if (glfwGetKey(GLFW_KEY_UP)) {
 			depth += 0.01f;
-		if (glfwGetKey(GLFW_KEY_DOWN))
+			camY += 0.01f;
+		}
+		if (glfwGetKey(GLFW_KEY_DOWN)) {
 			depth -= 0.01f;
+			camY -= 0.01f;
+		}
+		if (glfwGetKey(GLFW_KEY_LEFT)) {
+			camX -= 0.01f;
+		}
+		if (glfwGetKey(GLFW_KEY_RIGHT)) {
+			camX += 0.01f;
+		}
+
+		scene_setCamera(theScene, camX, camY, 10.f, 1.f);
 	}
 }
 

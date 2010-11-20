@@ -28,6 +28,7 @@ struct scene_s {
 	transform	transforms[MAX_TRANSFORMS];
 	int			transformCount;
 	GLfloat		ambient[4];
+	vector		cameraPos;
 } ;
 
 // Make a Scene
@@ -39,11 +40,15 @@ void scene_concatenateTransforms(scene* s);
 // Update the scene
 void scene_tick(scene* s, float dt);
 
-void scene_drawLighting(scene* s);
+void scene_renderLighting(scene* s);
 
 void scene_render(scene* s);
 
 void scene_setAmbient(scene* s, float r, float g, float b, float a);
+
+void scene_applyCamera(scene* s);
+
+void scene_setCamera(scene* s, float x, float y, float z, float w);
 
 // Initialise a scene with some test data
 void test_scene_init(scene* s);

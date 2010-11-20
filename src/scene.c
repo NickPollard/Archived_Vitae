@@ -49,6 +49,8 @@ void test_scene_init(scene* s) {
 	light_setPosition(l, &lightPos);
 	light_setDiffuse(l, 1.f, 0.f, 0.f, 1.f);
 	scene_addLight(s, l);
+
+	scene_setCamera(s, 0.f, 0.f, 10.f, 1.f);
 }
 
 void glTranslate_vector(vector* v) {
@@ -60,28 +62,14 @@ void glTranslate_vector(vector* v) {
 // Then draw all the submeshes
 void scene_render(scene* s) {
 	for (int i = 0; i < s->modelCount; i++) {
-		glPushMatrix();
 		model_draw(scene_getModel(s, i));
-		glPopMatrix();
 	}
 }
 
-void scene_drawLighting(scene* s) {
+void scene_renderLighting(scene* s) {
 	// Ambient Light
 	glLightModelfv(GL_LIGHT_MODEL_AMBIENT, s->ambient);
 	
-	// Add a positioned light1
-//	GLfloat lightColour0[] = {1.f, 1.0f, 1.0f, 1.f};
-//	GLfloat lightPos0[] = {0.f, 0.f, 0.f, 3.f};
-//	GLfloat lightAttenuationConstant = 1.f;
-//	GLfloat lightAttenuationLinear = 1.f;
-//	GLfloat lightAttenuationQuadratic = 0.f;
-//	glLightfv(GL_LIGHT0, GL_DIFFUSE, lightColour0);
-//	glLightfv(GL_LIGHT0, GL_POSITION, lightPos0);
-//	glLightf(GL_LIGHT0, GL_LINEAR_ATTENUATION, lightAttenuationLinear);
-//	glLightf(GL_LIGHT0, GL_CONSTANT_ATTENUATION, lightAttenuationConstant);
-//	glLightf(GL_LIGHT0, GL_QUADRATIC_ATTENUATION, lightAttenuationQuadratic);
-
 	light_render(GL_LIGHT0, s->lights[0]);
 }
 
@@ -96,6 +84,7 @@ void scene_setAmbient(scene* s, float r, float g, float b, float a) {
 scene* scene_createScene() {
 	scene* s = mem_alloc(sizeof(scene));
 	s->modelCount = s->lightCount = s->transformCount = 0;
+	scene_setCamera(s, 0.f, 0.f, 0.f, 1.f);
 	scene_setAmbient(s, 0.2f, 0.2f, 0.2f, 1.f);
 	return s;
 }
@@ -112,6 +101,21 @@ void scene_tick(scene* s, float dt) {
 
 	// TEST
 	test_scene_tick(s, dt);
+}
+
+void scene_setCamera(scene* s, float x, float y, float z, float w) {
+	s->cameraPos.val[0] = x;
+	s->cameraPos.val[1] = y;
+	s->cameraPos.val[2] = z;
+	s->cameraPos.val[3] = w;
+}
+
+void scene_applyCamera(scene* s) {
+	glLoadIdentity();
+	// Negate as we're doing the inverse of CameraPos
+	glTranslatef(-s->cameraPos.coord.x,
+				-s->cameraPos.coord.y,
+				-s->cameraPos.coord.z);
 }
 
 void test_scene_tick(scene* s, float dt) {
