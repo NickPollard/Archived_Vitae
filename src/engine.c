@@ -83,7 +83,7 @@ void engine_handleKeyPress(engine* e, uchar key, int x, int y) {
 
 	switch (key) {
 		case 27: // Escape key
-			engine_deInit(e); // Exit the program
+			engine_terminate(e); // Exit the program
 	}
 }
 
@@ -156,16 +156,18 @@ void init(int argc, char** argv) {
 
 }
 
-// deInit_lua - deinitialises the Lua interpreter
-void engine_deInitLua(engine* e) {
+// terminateLua - terminates the Lua interpreter
+void engine_terminateLua(engine* e) {
 	lua_close(e->lua);
 }
 
-// deInit - deInitialises the engine
-void engine_deInit(engine* e) {
-	engine_deInitLua(e);
+// terminate - terminates (De-initialises) the engine
+void engine_terminate(engine* e) {
+	// *** clean up Lua
+	engine_terminateLua(e);
 
-	glfwTerminate();
+	// *** clean up Renderer
+	render_terminate();
 
 	exit(0);
 }
@@ -179,22 +181,35 @@ void run() {
 		engine_tick(static_engine_hack);
 		render(theScene);
 
-		running = !key_held(GLFW_KEY_ESC) && glfwGetWindowParam(GLFW_OPENED);
+		running = !key_held(KEY_ESC) && glfwGetWindowParam(GLFW_OPENED);
 
-		if (key_held(GLFW_KEY_UP)) {
+		if (key_held(KEY_UP)) {
 			depth += 0.01f;
 			camY += 0.01f;
 		}
-		if (key_held(GLFW_KEY_DOWN)) {
+		if (key_held(KEY_DOWN)) {
 			depth -= 0.01f;
 			camY -= 0.01f;
 		}
-		if (key_held(GLFW_KEY_LEFT)) {
+		if (key_held(KEY_LEFT)) {
 			camX -= 0.01f;
 		}
-		if (key_held(GLFW_KEY_RIGHT)) {
+		if (key_held(KEY_RIGHT)) {
 			camX += 0.01f;
 		}
+
+		static int mouseX = 0;
+		static int mouseY = 0;
+		int x, y;
+		float mouseScale = 0.01f;
+
+		glfwGetMousePos(&x, &y);
+		if ( glfwGetMouseButton(GLFW_MOUSE_BUTTON_LEFT) ) {
+			camX -= (float)(x - mouseX) * mouseScale;	
+			camY += (float)(y - mouseY) * mouseScale;	
+		}
+		mouseX = x;
+		mouseY = y;
 
 		scene_setCamera(theScene, camX, camY, 10.f, 1.f);
 	}

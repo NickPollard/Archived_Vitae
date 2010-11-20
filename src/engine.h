@@ -50,11 +50,11 @@ void engine_initOpenGL(engine* e, int argc, char** argv);
 // Initialise the Lua subsystem so that it is ready for use
 void engine_initLua(engine* e, int argc, char** argv);
 
-// deInit - deInitialises the engine
-void engine_deInit(engine* e);
+// terminate - de-initialises the engine
+void engine_terminate(engine* e);
 
-// deInit_lua - deinitialises the Lua interpreter
-void engine_deInitLua(engine* e);
+// terminateLua - de-initialises the Lua interpreter
+void engine_terminateLua(engine* e);
 
 // Tick the engine, processing a frame of game update
 void engine_tick(engine* e);

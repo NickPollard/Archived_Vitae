@@ -60,6 +60,11 @@ void render_init() {
 	glEnable(GL_COLOR_MATERIAL);
 }
 
+// Terminate the 3D rendering
+void render_terminate() {
+	glfwTerminate();
+}
+
 // Render the current scene
 // This is where the business happens
 void render(scene* s) {
