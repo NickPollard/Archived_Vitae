@@ -104,64 +104,6 @@ float angle = 340.f;
 
 float depth = 8.f;
 
-// Draws the 3D scene
-void engine_render() {
-	// Clear information from last draw
-	glClearColor(0.f, 0.f, 0.0f, 0.f);
-	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
-	// Switch to the drawing perspective and initialise to the identity matrix
-	glMatrixMode(GL_MODELVIEW); 
-
-	scene_applyCamera(theScene);
-	render_lighting(theScene);
-	render_scene(theScene);
-
-	glPushMatrix();
-	glBegin(GL_TRIANGLES);
-	glColor4f(1.f, 1.f, 1.f, 1.f);
-	glNormal3f(0.f, 0.f, 1.f);
-	glVertex3f(0.f, 0.f, depth);
-	glColor4f(1.f, 0.f, 1.f, 1.f);
-	glVertex3f(1.f, 0.f, depth);
-	glColor4f(0.f, 1.f, 1.f, 1.f);
-	glVertex3f(0.f, 1.f, depth);
-
-	glColor4f(1.f, 1.f, 1.f, 1.f);
-	glVertex3f(1.f, 2.f, depth);
-	glColor4f(1.f, 1.f, 1.f, 1.f);
-	glVertex3f(1.f, 0.f, depth);
-	glColor4f(1.f, 1.f, 1.f, 1.f);
-	glVertex3f(0.f, 2.f, depth);
-	glEnd();
-	glPopMatrix();
-
-	glfwSwapBuffers(); // Send the 3d scene to the screen (flips display buffers)
-}
-
-// Initialise the 3D rendering
-void render_init() {
-	printf("RENDERING: Initialising OpenGL rendering settings.\n");
-	glEnable(GL_DEPTH_TEST);
-	glEnable(GL_LIGHTING);
-	glEnable(GL_LIGHT0);
-	glEnable(GL_NORMALIZE);
-	glShadeModel(GL_SMOOTH);
-	glEnable(GL_COLOR_MATERIAL);
-}
-
-// Initialise the OpenGL subsystem so it is ready for use
-void engine_initOpenGL(engine* e, int argc, char** argv) {
-	if (!glfwInit())
-		printf("ERROR - failed to init glfw.\n");
-
-	glfwOpenWindow(640, 480, 5, 6, 5, 0, 0, 0, GLFW_WINDOW);
-	glfwSetWindowTitle("Vitae");
-	glfwSetWindowSizeCallback(handleResize);
-
-	render_init(); // initialise the rendering
-}
-
 // Initialise the Lua subsystem so that it is ready for use
 void engine_initLua(engine* e, int argc, char** argv) {
 	e->lua = lua_open();
@@ -190,7 +132,7 @@ void engine_init(engine* e, int argc, char** argv) {
 	// *** Start up Core Systems
 
 	// *** Initialise OpenGL
-	engine_initOpenGL(e, argc, argv);
+	render_init(e, argc, argv);
 
 	// *** Initialise Lua
 	engine_initLua(e, argc, argv);
@@ -234,7 +176,7 @@ void run() {
 	handleResize(640, 480);	// Call once to init
 	while (running) {
 		engine_tick(static_engine_hack);
-		engine_render();
+		render(theScene);
 
 		running = !glfwGetKey(GLFW_KEY_ESC) && glfwGetWindowParam(GLFW_OPENED);
 

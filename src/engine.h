@@ -11,6 +11,8 @@
 
 extern scene* theScene;
 
+extern float depth;
+
 typedef struct {
 	frame_timer* timer;
 	lua_State* lua;					//!< Engine wide persistant lua state
@@ -60,5 +62,6 @@ void engine_tick(engine* e);
 // Handle a key press from the user
 void engine_handleKeyPress(engine* e, uchar key, int x, int y);
 
+void handleResize(int w, int h);
 
 #endif // __ENGINE_H__

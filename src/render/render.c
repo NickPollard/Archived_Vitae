@@ -6,6 +6,11 @@
 #include "light.h"
 #include "model.h"
 #include "scene.h"
+// temp
+#include "engine.h"
+
+// GLFW Libraries
+#include <GL/glfw.h>
 
 // Iterate through each model in the scene
 // Translate by their transform
@@ -21,4 +26,70 @@ void render_lighting(scene* s) {
 	glLightModelfv(GL_LIGHT_MODEL_AMBIENT, s->ambient);
 	
 	light_render(GL_LIGHT0, s->lights[0]);
+}
+
+void render_applyCamera(vector* camera) {
+	glLoadIdentity();
+	// Negate as we're doing the inverse of camera
+	glTranslatef(-camera->coord.x,
+				-camera->coord.y,
+				-camera->coord.z);
+}
+
+// Clear information from last draw
+void render_clear() {
+	glClearColor(0.f, 0.f, 0.0f, 0.f);
+	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+}
+
+// Initialise the 3D rendering
+void render_init() {
+	if (!glfwInit())
+		printf("ERROR - failed to init glfw.\n");
+
+	glfwOpenWindow(640, 480, 5, 6, 5, 0, 0, 0, GLFW_WINDOW);
+	glfwSetWindowTitle("Vitae");
+	glfwSetWindowSizeCallback(handleResize);
+
+	printf("RENDERING: Initialising OpenGL rendering settings.\n");
+	glEnable(GL_DEPTH_TEST);
+	glEnable(GL_LIGHTING);
+	glEnable(GL_LIGHT0);
+	glEnable(GL_NORMALIZE);
+	glShadeModel(GL_SMOOTH);
+	glEnable(GL_COLOR_MATERIAL);
+}
+
+// Render the current scene
+// This is where the business happens
+void render(scene* s) {
+	render_clear();
+
+	// Switch to the drawing perspective and initialise to the identity matrix
+	glMatrixMode(GL_MODELVIEW); 
+
+	render_applyCamera(&s->cameraPos);
+	render_lighting(s);
+	render_scene(s);
+
+	glPushMatrix();
+	glBegin(GL_TRIANGLES);
+	glColor4f(1.f, 1.f, 1.f, 1.f);
+	glNormal3f(0.f, 0.f, 1.f);
+	glVertex3f(0.f, 0.f, depth);
+	glColor4f(1.f, 0.f, 1.f, 1.f);
+	glVertex3f(1.f, 0.f, depth);
+	glColor4f(0.f, 1.f, 1.f, 1.f);
+	glVertex3f(0.f, 1.f, depth);
+
+	glColor4f(1.f, 1.f, 1.f, 1.f);
+	glVertex3f(1.f, 2.f, depth);
+	glColor4f(1.f, 1.f, 1.f, 1.f);
+	glVertex3f(1.f, 0.f, depth);
+	glColor4f(1.f, 1.f, 1.f, 1.f);
+	glVertex3f(0.f, 2.f, depth);
+	glEnd();
+	glPopMatrix();
+
+	glfwSwapBuffers(); // Send the 3d scene to the screen (flips display buffers)
 }

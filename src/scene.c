@@ -94,14 +94,6 @@ void scene_setCamera(scene* s, float x, float y, float z, float w) {
 	s->cameraPos.val[3] = w;
 }
 
-void scene_applyCamera(scene* s) {
-	glLoadIdentity();
-	// Negate as we're doing the inverse of CameraPos
-	glTranslatef(-s->cameraPos.coord.x,
-				-s->cameraPos.coord.y,
-				-s->cameraPos.coord.z);
-}
-
 void test_scene_tick(scene* s, float dt) {
 	static float time = 0.f;
 	time += dt;
