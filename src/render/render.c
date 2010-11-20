@@ -3,6 +3,7 @@
 #include "common.h"
 #include "render.h"
 //-----------------------
+#include "camera.h"
 #include "light.h"
 #include "model.h"
 #include "scene.h"
@@ -28,12 +29,11 @@ void render_lighting(scene* s) {
 	light_render(GL_LIGHT0, s->lights[0]);
 }
 
-void render_applyCamera(vector* camera) {
+void render_applyCamera(camera* cam) {
 	glLoadIdentity();
 	// Negate as we're doing the inverse of camera
-	glTranslatef(-camera->coord.x,
-				-camera->coord.y,
-				-camera->coord.z);
+	vector* v = camera_getTranslation(cam);
+	glTranslatef( -(v->coord.x), -(v->coord.y), -(v->coord.z) );
 }
 
 // Clear information from last draw
@@ -68,7 +68,7 @@ void render(scene* s) {
 	// Switch to the drawing perspective and initialise to the identity matrix
 	glMatrixMode(GL_MODELVIEW); 
 
-	render_applyCamera(&s->cameraPos);
+	render_applyCamera(s->cam);
 	render_lighting(s);
 	render_scene(s);
 

@@ -90,7 +90,7 @@ mesh* mesh_createMesh(int vertCount, int indexCount) {
 model* model_createTestCube() {
 	model* m = model_createModel(/* meshCount */ 1);
 	mesh* me = mesh_createTestCube();
-	m->trans = transform_createTransform(theScene);
+	m->trans = transform_create(theScene);
 	m->meshes[0] = me;
 	return m;
 }

@@ -16,6 +16,8 @@ struct light_s {
 
 light* light_create();
 
+light* light_createWithTransform(scene* s);
+
 void light_setAttenuation(light* l, float constant, float linear, float quadratic);
 
 void light_setDiffuse(light* l, float r, float g, float b, float a);

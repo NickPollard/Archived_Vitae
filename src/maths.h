@@ -23,6 +23,8 @@ typedef union matrix_u {
 	float val[4][4];
 } matrix;
 
+vector Vector(float x, float y, float z, float w);
+
 // Vector Addition
 void Add(vector* dst, vector* srcA, vector* srcB);
 

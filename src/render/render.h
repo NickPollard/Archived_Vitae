@@ -9,7 +9,7 @@ void render_scene(scene* s);
 
 void render_lighting(scene* s);
 
-void render_applyCamera(vector* camera);
+void render_applyCamera(camera* cam);
 
 // Initialise the 3D rendering
 void render_init();

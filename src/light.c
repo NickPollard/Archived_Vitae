@@ -15,6 +15,13 @@ light* light_create() {
 	return l;
 }
 
+light* light_createWithTransform(scene* s) {
+	light* l = light_create();
+	transform* t = transform_create(s);
+	l->trans = t;
+	return l;
+}
+
 void light_setAttenuation(light* l, float constant, float linear, float quadratic) {
 	l->attenuationConstant = constant;
 	l->attenuationLinear = linear;

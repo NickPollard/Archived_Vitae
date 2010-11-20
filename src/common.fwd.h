@@ -1,6 +1,7 @@
 #ifndef __COMMON_FWD_H__
 #define __COMMON_FWD_H__
 
+struct camera_s;
 struct light_s;
 struct model_s;
 struct transform_s;
@@ -8,6 +9,7 @@ struct mesh_s;
 struct scene_s;
 union vector_u;
 
+typedef struct camera_s camera;
 typedef struct light_s light;
 typedef struct model_s model;
 typedef struct mesh_s mesh;

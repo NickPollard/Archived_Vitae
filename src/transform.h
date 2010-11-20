@@ -12,10 +12,10 @@ struct transform_s {
 };
 
 // Create a new default transform
-transform* transform_createTransform(scene* s);
+transform* transform_create(scene* s);
 
 // Create a new default transform with the given parent
-transform* transform_createTransform_Parent(scene* s, transform* parent);
+transform* transform_create_Parent(scene* s, transform* parent);
 
 // Concatenate the parent world space transforms to produce this world space transform from local
 int transform_concatenate(transform* t);

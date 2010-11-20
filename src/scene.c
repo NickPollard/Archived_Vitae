@@ -3,6 +3,7 @@
 #include "common.h"
 #include "scene.h"
 //-----------------------
+#include "camera.h"
 #include "light.h"
 #include "model.h"
 #include "mem/allocator.h"
@@ -29,12 +30,12 @@ model* scene_getModel(scene* s, int i) {
 void test_scene_init(scene* s) {
 	testModelA = model_createTestCube();
 	testModelB = model_createTestCube();
-	transform* t = transform_createTransform(s);
+	transform* t = transform_create(s);
 	testModelA->trans->parent = t;
 	testModelB->trans->parent = t;
-	vector translate = {{ -2.f, 0.f, 0.f, 1.f }};
+	vector translate = Vector( -2.f, 0.f, 0.f, 1.f );
 	transform_setLocalTranslation(t, &translate);
-	t2 = transform_createTransform(s);
+	t2 = transform_create(s);
 	t->parent = t2;
 
 	scene_addModel(s, testModelA);
@@ -42,9 +43,7 @@ void test_scene_init(scene* s) {
 
 	scene_setAmbient(s, 0.2f, 0.f, 0.2f, 1.f);
 
-	transform* lightT = transform_createTransform(s);
-	light* l = light_create();
-	l->trans = lightT;
+	light* l = light_createWithTransform(s);
 	vector lightPos = {{ 1.f, 1.f, 1.f, 1.f }};
 	light_setPosition(l, &lightPos);
 	light_setDiffuse(l, 1.f, 0.f, 0.f, 1.f);
@@ -68,6 +67,7 @@ void scene_setAmbient(scene* s, float r, float g, float b, float a) {
 scene* scene_createScene() {
 	scene* s = mem_alloc(sizeof(scene));
 	s->modelCount = s->lightCount = s->transformCount = 0;
+	s->cam = camera_createWithTransform(s);
 	scene_setCamera(s, 0.f, 0.f, 0.f, 1.f);
 	scene_setAmbient(s, 0.2f, 0.2f, 0.2f, 1.f);
 	return s;
@@ -88,10 +88,8 @@ void scene_tick(scene* s, float dt) {
 }
 
 void scene_setCamera(scene* s, float x, float y, float z, float w) {
-	s->cameraPos.val[0] = x;
-	s->cameraPos.val[1] = y;
-	s->cameraPos.val[2] = z;
-	s->cameraPos.val[3] = w;
+	vector v = Vector(x, y, z, w);
+	camera_setTranslation(s->cam, &v);
 }
 
 void test_scene_tick(scene* s, float dt) {
@@ -100,11 +98,11 @@ void test_scene_tick(scene* s, float dt) {
 	float period = 2.f;
 	float animate = 2.f * sinf(time * 2 * PI / period);
 	// Animate cubes
-	vector translateA = {{ animate, 0.f, 0.f, 1.f}};
+	vector translateA = Vector( animate, 0.f, 0.f, 1.f );
 	transform_setLocalTranslation(testModelA->trans, &translateA);
-	vector translateB = {{ 0.f, animate, 0.f, 1.f}};
+	vector translateB = Vector( 0.f, animate, 0.f, 1.f );
 	transform_setLocalTranslation(testModelB->trans, &translateB);
 	
-	vector translateC = {{ 0.f, 0.f, animate,  1.f}};
+	vector translateC = Vector( 0.f, 0.f, animate,  1.f );
 	transform_setLocalTranslation(t2, &translateC);
 }

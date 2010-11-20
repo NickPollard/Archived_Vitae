@@ -8,7 +8,7 @@ void transform_setWorldSpace();
 void transform_setLocalSpace();
 
 // Create a new default transform
-transform* transform_createTransform(scene* s) {
+transform* transform_create(scene* s) {
 	transform* t = &s->transforms[s->transformCount];
 	s->transformCount++;
 	matrix_setIdentity(&t->local);
@@ -19,8 +19,8 @@ transform* transform_createTransform(scene* s) {
 }
 
 // Create a new default transform with the given parent
-transform* transform_createTransform_Parent(scene* s, transform* parent) {
-	transform* t = transform_createTransform(s);
+transform* transform_create_Parent(scene* s, transform* parent) {
+	transform* t = transform_create(s);
 	t->parent = parent;
 	return t;
 }

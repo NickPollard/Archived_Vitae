@@ -4,6 +4,15 @@
 #include "maths.h"
 //----------------------
 
+vector Vector(float x, float y, float z, float w) {
+	vector v;
+	v.coord.x = x;
+	v.coord.y = y;
+	v.coord.z = z;
+	v.coord.w = w;
+	return v;
+}
+
 // Vector Addition
 void Add(vector* dst, vector* srcA, vector* srcB) {
 	for (int i = 0; i < 4; i++)
