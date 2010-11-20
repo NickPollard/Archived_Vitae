@@ -8,6 +8,7 @@
 #include "src/scene.h"
 #include "src/ticker.h"
 #include "src/transform.h"
+#include "src/render/render.h"
 
 // Lua Libraries
 #include <lauxlib.h>
@@ -111,12 +112,10 @@ void engine_render() {
 
 	// Switch to the drawing perspective and initialise to the identity matrix
 	glMatrixMode(GL_MODELVIEW); 
-//	glLoadIdentity(); 
-//	glTranslatef(0.f, 0.f, -10.f);
 
 	scene_applyCamera(theScene);
-	scene_renderLighting(theScene);
-	scene_render(theScene);
+	render_lighting(theScene);
+	render_scene(theScene);
 
 	glPushMatrix();
 	glBegin(GL_TRIANGLES);

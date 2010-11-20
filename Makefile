@@ -1,5 +1,5 @@
 C = gcc
-CFLAGS = -Wall -Werror -m32 -std=c99 -I . `pkg-config --cflags libglfw`
+CFLAGS = -Wall -Werror -m32 -std=c99 -I . `pkg-config --cflags libglfw` -Isrc
 LFLAGS = -m32 
 LIBS = -lGLU -llua `pkg-config --libs libglfw`
 EXECUTABLE = vitae

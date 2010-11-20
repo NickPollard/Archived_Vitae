@@ -1,0 +1,6 @@
+MODULES
+
+The Vitae engine is split up into Modules, each of which has one main area of concern.
+
+Scene - stores a static representation of the current world state's physical representation. The game logic should 'evaluate' to a scene each frame.
+Renderer - renders a given Scene into a 2d frame

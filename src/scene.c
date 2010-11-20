@@ -57,22 +57,6 @@ void glTranslate_vector(vector* v) {
 	glTranslatef(v->coord.x, v->coord.y, v->coord.z);
 }
 
-// Iterate through each model in the scene
-// Translate by their transform
-// Then draw all the submeshes
-void scene_render(scene* s) {
-	for (int i = 0; i < s->modelCount; i++) {
-		model_draw(scene_getModel(s, i));
-	}
-}
-
-void scene_renderLighting(scene* s) {
-	// Ambient Light
-	glLightModelfv(GL_LIGHT_MODEL_AMBIENT, s->ambient);
-	
-	light_render(GL_LIGHT0, s->lights[0]);
-}
-
 void scene_setAmbient(scene* s, float r, float g, float b, float a) {
 	s->ambient[0] = r;
 	s->ambient[1] = g;
