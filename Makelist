@@ -1,5 +1,6 @@
 SRCS =	src/camera.c \
 		src/engine.c \
+		src/input.c \
 		src/light.c \
 		src/lua.c \
 		src/main.c \

@@ -3,6 +3,7 @@
 #include "src/engine.h"
 //---------------------
 #include "mem/allocator.h"
+#include "src/input.h"
 #include "src/maths.h"
 #include "src/model.h"
 #include "src/scene.h"
@@ -178,20 +179,20 @@ void run() {
 		engine_tick(static_engine_hack);
 		render(theScene);
 
-		running = !glfwGetKey(GLFW_KEY_ESC) && glfwGetWindowParam(GLFW_OPENED);
+		running = !key_held(GLFW_KEY_ESC) && glfwGetWindowParam(GLFW_OPENED);
 
-		if (glfwGetKey(GLFW_KEY_UP)) {
+		if (key_held(GLFW_KEY_UP)) {
 			depth += 0.01f;
 			camY += 0.01f;
 		}
-		if (glfwGetKey(GLFW_KEY_DOWN)) {
+		if (key_held(GLFW_KEY_DOWN)) {
 			depth -= 0.01f;
 			camY -= 0.01f;
 		}
-		if (glfwGetKey(GLFW_KEY_LEFT)) {
+		if (key_held(GLFW_KEY_LEFT)) {
 			camX -= 0.01f;
 		}
-		if (glfwGetKey(GLFW_KEY_RIGHT)) {
+		if (key_held(GLFW_KEY_RIGHT)) {
 			camX += 0.01f;
 		}
 
