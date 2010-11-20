@@ -111,13 +111,13 @@ void engine_render() {
 	glLoadIdentity(); 
 	glTranslatef(0.f, 0.f, -10.f);
 
-	scene_drawLighting();
+	scene_drawLighting(theScene);
 	scene_render(theScene);
 
 	glPushMatrix();
 	glBegin(GL_TRIANGLES);
 	glColor4f(1.f, 1.f, 1.f, 1.f);
-	glNormal3f(0.f, 0.f, -1.f);
+	glNormal3f(0.f, 0.f, 1.f);
 	glVertex3f(0.f, 0.f, depth);
 	glColor4f(1.f, 0.f, 1.f, 1.f);
 	glVertex3f(1.f, 0.f, depth);

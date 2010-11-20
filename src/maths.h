@@ -2,7 +2,7 @@
 #ifndef __MATHS_H__
 #define __MATHS_H__
 
-#include <GL/glut.h>
+#include <GL/glfw.h>
 
 #include <math.h>
 
@@ -48,6 +48,9 @@ void matrix_setRow(matrix* m, int row, const vector* v);
 
 // Set the translation component of a 4x4 matrix
 void matrix_setTranslation(matrix* m, const vector* v);
+
+// Get the translation component of a 4x4 matrix
+vector* matrix_getTranslation(matrix* m);
 
 // Initialise a matrix to the identity
 void matrix_setIdentity(matrix* m);

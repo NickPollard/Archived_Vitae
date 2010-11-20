@@ -75,6 +75,11 @@ void matrix_setTranslation(matrix* m, const vector* v) {
 	matrix_setColumn(m, 3, v);
 }
 
+// Get the translation component of a 4x4 matrix
+vector* matrix_getTranslation(matrix* m) {
+	return &m->cols[3];
+}
+
 // Initialise a matrix to the identity
 void matrix_setIdentity(matrix* m) {
 	m->val[0][0] = 1.f;

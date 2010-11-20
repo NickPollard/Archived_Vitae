@@ -8,8 +8,20 @@
 // *** Light ***
 struct light_s {
 	transform*	trans;
-	color		col;
+	color		diffuseCol;
+	float		attenuationConstant;
+	float		attenuationLinear;
+	float		attenuationQuadratic;
 };
 
-light* light_createTestLight();
+light* light_create();
+
+void light_setAttenuation(light* l, float constant, float linear, float quadratic);
+
+void light_setDiffuse(light* l, float r, float g, float b, float a);
+
+void light_render(GLenum index, light* l);
+
+void light_setPosition(light* l, vector* pos);
+
 #endif // __LIGHT_H__
