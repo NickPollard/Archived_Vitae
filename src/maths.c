@@ -38,25 +38,23 @@ void Cross(vector* dst, vector* srcA, vector* srcB) {
 	dst->coord.w = 1.f;
 }
 
-vector Mul(matrix* m, vector* v) {
-	vector dst;
-	dst.coord.x = m->val[0][0] * v->coord.x + 
+void matrixVecMul(vector* out, matrix* m, vector* in) {
+	out->coord.x = m->val[0][0] * v->coord.x + 
 			m->val[0][1] * v->coord.y + 
 			m->val[0][2] * v->coord.z + 
 			m->val[0][3] * v->coord.w;
-	dst.coord.y = m->val[1][0] * v->coord.x + 
+	out->coord.y = m->val[1][0] * v->coord.x + 
 			m->val[1][1] * v->coord.y + 
 			m->val[1][2] * v->coord.z + 
 			m->val[1][3] * v->coord.w;
-	dst.coord.z = m->val[2][0] * v->coord.x + 
+	out->coord.z = m->val[2][0] * v->coord.x + 
 			m->val[2][1] * v->coord.y + 
 			m->val[2][2] * v->coord.z + 
 			m->val[2][3] * v->coord.w;
-	dst.coord.w = m->val[3][0] * v->coord.x + 
+	out->coord.w = m->val[3][0] * v->coord.x + 
 			m->val[3][1] * v->coord.y + 
 			m->val[3][2] * v->coord.z + 
 			m->val[3][3] * v->coord.w;
-	return dst;
 }
 
 void Set(vector* v, float x, float y, float z, float w) {

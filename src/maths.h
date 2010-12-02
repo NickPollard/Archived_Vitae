@@ -38,7 +38,7 @@ float Dot(vector* A, vector* B);
 void Cross(vector* dst, vector* srcA, vector* srcB);
 
 // Matrix Vector multiply
-vector Mul(matrix* m, vector* v);
+void matrixVecMul(vector* out, matrix* m, vector* in);
 
 void Set(vector* v, float x, float y, float z, float w);
 
