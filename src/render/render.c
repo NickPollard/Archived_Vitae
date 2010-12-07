@@ -13,6 +13,9 @@
 // GLFW Libraries
 #include <GL/glfw.h>
 
+// Private Function declarations
+void render_buildShaders();
+
 // Iterate through each model in the scene
 // Translate by their transform
 // Then draw all the submeshes
@@ -58,6 +61,8 @@ void render_init() {
 	glEnable(GL_NORMALIZE);
 	glShadeModel(GL_SMOOTH);
 	glEnable(GL_COLOR_MATERIAL);
+
+	render_buildShaders();
 }
 
 // Terminate the 3D rendering
@@ -97,4 +102,8 @@ void render(scene* s) {
 	glPopMatrix();
 
 	glfwSwapBuffers(); // Send the 3d scene to the screen (flips display buffers)
+}
+
+void render_buildShaders() {
+
 }
