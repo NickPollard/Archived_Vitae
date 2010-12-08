@@ -7,6 +7,7 @@
 #include "light.h"
 #include "model.h"
 #include "scene.h"
+#include "render/texture.h"
 // temp
 #include "engine.h"
 
@@ -59,8 +60,11 @@ void render_init() {
 	glEnable(GL_LIGHTING);
 	glEnable(GL_LIGHT0);
 	glEnable(GL_NORMALIZE);
+	glEnable(GL_TEXTURE_2D);
 	glShadeModel(GL_SMOOTH);
 	glEnable(GL_COLOR_MATERIAL);
+
+	texture_init();
 
 	render_buildShaders();
 }
@@ -85,17 +89,28 @@ void render(scene* s) {
 	glPushMatrix();
 	glBegin(GL_TRIANGLES);
 	glColor4f(1.f, 1.f, 1.f, 1.f);
+
+	glTexCoord2f(0.f, 0.f);
 	glNormal3f(0.f, 0.f, 1.f);
 	glVertex3f(0.f, 0.f, depth);
+
+	glTexCoord2f(1.f, 0.f);
 	glColor4f(1.f, 0.f, 1.f, 1.f);
 	glVertex3f(1.f, 0.f, depth);
+
+	glTexCoord2f(0.f, 1.f);
 	glColor4f(0.f, 1.f, 1.f, 1.f);
 	glVertex3f(0.f, 1.f, depth);
 
+	glTexCoord2f(1.f, 1.f);
 	glColor4f(1.f, 1.f, 1.f, 1.f);
 	glVertex3f(1.f, 2.f, depth);
+
+	glTexCoord2f(1.f, 0.f);
 	glColor4f(1.f, 1.f, 1.f, 1.f);
 	glVertex3f(1.f, 0.f, depth);
+
+	glTexCoord2f(0.f, 1.f);
 	glColor4f(1.f, 1.f, 1.f, 1.f);
 	glVertex3f(0.f, 2.f, depth);
 	glEnd();
