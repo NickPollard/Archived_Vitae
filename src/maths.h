@@ -61,5 +61,9 @@ void matrix_setIdentity(matrix* m);
 const GLfloat* matrix_getGlMatrix(const matrix* m);
 
 // Multiply two matrices together
-matrix matrix_mul(matrix* m1, matrix* m2);
+void matrix_mul(matrix* dst, matrix* m1, matrix* m2);
+
+// Copy one matrix to another
+void matrix_cpy(matrix* dst, matrix* src);
+
 #endif // __MATHS_H__

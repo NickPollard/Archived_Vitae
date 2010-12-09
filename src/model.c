@@ -8,7 +8,6 @@
 #include "engine.h"
 #include "mem/allocator.h"
 
-#include <GL/glut.h>
 
 void vgl_vertexDraw(vector* v) {
 	glVertex3fv((GLfloat*)v);

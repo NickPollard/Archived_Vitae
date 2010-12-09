@@ -1,7 +1,7 @@
 C = gcc
-CFLAGS = -Wall -Werror -m32 -std=c99 -I . `pkg-config --cflags libglfw` -Isrc
-LFLAGS = -m32 
-LIBS = -lGLU -llua `pkg-config --libs libglfw`
+CFLAGS = -Wall -Werror -m64 -std=c99 -I . `pkg-config --cflags libglfw` -I/usr/include/lua5.1  -Isrc
+LFLAGS = -m64 
+LIBS = -lGLU -l/usr/lib -lliblua5.1.a `pkg-config --libs libglfw`
 EXECUTABLE = vitae
 include Makelist
 DEPS = $(SRCS:src/%.c=bin/%.d)
@@ -34,14 +34,21 @@ $(EXECUTABLE)_debug : $(SRCS) $(OBJS_DBG)
 	@$(C) -g $(LFLAGS) -o $(EXECUTABLE)_debug $(OBJS_DBG) $(LIBS)
 
 bin/debug/%.o : src/%.c
+	mkdir -p bin/debug
 	@echo "- Compiling $@"
 	@$(C) -g $(CFLAGS) -c -o $@ $<
 
 bin/%.o : src/%.c
+	mkdir -p bin
+	mkdir -p bin/mem
+	mkdir -p bin/render
 	@echo "- Compiling $@"
 	@$(C) $(CFLAGS) -O2 -MD -c -o $@ $<
 
 bin/%.o : src/%.c
+	mkdir -p bin
+	mkdir -p bin/mem
+	mkdir -p bin/render
 	@echo "- Compiling $@"
 	@$(C) $(CFLAGS) -O2 -MD -c -o $@ $<
 

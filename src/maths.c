@@ -71,59 +71,50 @@ void matrix_setRow(matrix* m, int row, const vector* v) {
 	m->val[0][row] = v->val[0];
 	m->val[1][row] = v->val[1];
 	m->val[2][row] = v->val[2];
-	m->val[3][row] = v->val[3];
-}
+	m->val[3][row] = v->val[3]; }
 
 // Set a column in a matrix to a given vector
 void matrix_setColumn(matrix* m, int col, const vector* v) {
-	m->cols[col] = *v;
-}
+	m->cols[col] = *v; }
 
 // Set the translation component of a 4x4 matrix
 void matrix_setTranslation(matrix* m, const vector* v) {
-	matrix_setColumn(m, 3, v);
-}
+	matrix_setColumn(m, 3, v); }
 
 // Get the translation component of a 4x4 matrix
 vector* matrix_getTranslation(matrix* m) {
-	return &m->cols[3];
-}
+	return &m->cols[3]; }
 
 // Initialise a matrix to the identity
 void matrix_setIdentity(matrix* m) {
+	memset(m, 0, sizeof(matrix));
 	m->val[0][0] = 1.f;
-	m->val[0][1] = 0.f;
-	m->val[0][2] = 0.f;
-	m->val[0][3] = 0.f;
-	m->val[1][0] = 0.f;
 	m->val[1][1] = 1.f;
-	m->val[1][2] = 0.f;
-	m->val[1][3] = 0.f;
-	m->val[2][0] = 0.f;
-	m->val[2][1] = 0.f;
 	m->val[2][2] = 1.f;
-	m->val[2][3] = 0.f;
-	m->val[3][0] = 0.f;
-	m->val[3][1] = 0.f;
-	m->val[3][2] = 0.f;
-	m->val[3][3] = 1.f;
-}
+	m->val[3][3] = 1.f; }
 
 // Convert a V matrix to an OGL matrix
-const GLfloat* matrix_getGlMatrix(const matrix* m) {
-	return (const GLfloat*)m;
-}
+const GLfloat* matrix_getGlMatrix( const matrix* m ) {
+	return (const GLfloat*)m; }
 
 // Multiply two matrices together
-matrix matrix_mul(matrix* m1, matrix* m2) {
-	matrix dst;
-	for (int i = 0; i < 4; i++) {
-		for (int j = 0; j < 4; j++) {
-			dst.val[i][j] = m1->val[0][j] * m2->val[i][0]
+void matrix_mul( matrix* dst, matrix* m1, matrix* m2 ) {
+	for ( int i = 0; i < 4; i++ ) {
+		for ( int j = 0; j < 4; j++ ) {
+			dst->val[i][j] = m1->val[0][j] * m2->val[i][0]
 						+ m1->val[1][j] * m2->val[i][1]
 						+ m1->val[2][j] * m2->val[i][2]
-						+ m1->val[3][j] * m2->val[i][3];
-		}
-	}
-	return dst;
+						+ m1->val[3][j] * m2->val[i][3]; }}}
+
+// Copy one matrix to another
+void matrix_cpy( restrict matrix* dst, matrix* src ) { 
+	restrict float* a = (float*)dst;
+	restrict float* b = (float*)src;
+	for (int i = 0; i < 16; i++) {
+		a++ = b++; } }
+
+// Calculate the inverse of a matrix
+// dst cannot alias src
+void matrix_inverse( restrict matrix* dst, matrix* src ) {
+	assert(dst != src);
 }
