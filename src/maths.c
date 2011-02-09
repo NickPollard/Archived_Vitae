@@ -3,6 +3,7 @@
 #include "common.h"
 #include "maths.h"
 //----------------------
+#include <assert.h>
 
 vector Vector(float x, float y, float z, float w) {
 	vector v;
@@ -38,7 +39,7 @@ void Cross(vector* dst, vector* srcA, vector* srcB) {
 	dst->coord.w = 1.f;
 }
 
-void matrixVecMul(vector* out, matrix* m, vector* in) {
+void matrixVecMul(vector* out, matrix* m, vector* v) {
 	out->coord.x = m->val[0][0] * v->coord.x + 
 			m->val[0][1] * v->coord.y + 
 			m->val[0][2] * v->coord.z + 
@@ -105,14 +106,14 @@ void matrix_mul( matrix* dst, matrix* m1, matrix* m2 ) {
 						+ m1->val[3][j] * m2->val[i][3]; }}}
 
 // Copy one matrix to another
-void matrix_cpy( restrict matrix* dst, matrix* src ) { 
-	restrict float* a = (float*)dst;
-	restrict float* b = (float*)src;
+void matrix_cpy( matrix* restrict dst, matrix* src ) { 
+	float* restrict a = (float*)dst;
+	float* restrict b = (float*)src;
 	for (int i = 0; i < 16; i++) {
-		a++ = b++; } }
+		*a++ = *b++; } }
 
 // Calculate the inverse of a matrix
 // dst cannot alias src
-void matrix_inverse( restrict matrix* dst, matrix* src ) {
+void matrix_inverse( matrix* restrict dst, matrix* src ) {
 	assert(dst != src);
 }
