@@ -1,0 +1,20 @@
+(Scene (name "Template_Scene"
+		light (brightness 1.0
+				diffuse (1.0 1.0 1.0 1.0)
+				specular (1.0 1.0 1.0 1.0))
+		light (brightness 1.0
+				diffuse (1.0 1.0 1.0 1.0)
+				specular (1.0 1.0 1.0 1.0))
+		light (brightness 1.0
+				diffuse (1.0 1.0 1.0 1.0)
+				specular (1.0 1.0 1.0 1.0))
+		model (file "template.mdl"
+				transform (translation (0.0 0.0 0.0 1.0)))
+		model (file "template.mdl"
+				transform (translation (0.0 0.0 0.0 1.0))))
+ Scene (name "Other_Scene"
+		light (brightness 1.0
+				diffuse (1.0 1.0 1.0 1.0)
+				specular (1.0 1.0 1.0 1.0))
+		model (file "template.mdl"
+				transform (translation (0.0 0.0 0.0 1.0)))))
