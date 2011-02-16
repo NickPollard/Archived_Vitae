@@ -103,12 +103,15 @@ model* model_createModel(int meshCount) {
 }
 
 // Draw the verts of a mesh to the openGL buffer
-void mesh_drawVerts(mesh* m) {
-	glBegin(GL_TRIANGLES);
-	for (int i = 0; i < m->indexCount; i += 3) {
-		vgl_vertexDraw(&m->verts[m->indices[i]]);
-		vgl_vertexDraw(&m->verts[m->indices[i + 1]]);
-		vgl_vertexDraw(&m->verts[m->indices[i + 2]]);
+void mesh_drawVerts( mesh* m ) {
+	glBegin( GL_TRIANGLES );
+	for ( int i = 0; i < m->indexCount; i += 3 ) {
+		glTexCoord2f( 0.f, 0.f );
+		vgl_vertexDraw( &m->verts[m->indices[i]] );
+		glTexCoord2f( 1.f, 0.f );
+		vgl_vertexDraw( &m->verts[m->indices[i + 1]] );
+		glTexCoord2f( 0.f, 1.f );
+		vgl_vertexDraw( &m->verts[m->indices[i + 2]] );
 	}
 	glEnd();
 }

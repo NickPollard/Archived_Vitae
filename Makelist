@@ -12,4 +12,6 @@ SRCS =	src/camera.c \
 		src/transform.c \
 		src/mem/allocator.c \
 		src/render/debugdraw.c \
-		src/render/render.c
+		src/render/render.c \
+		src/render/texture.c \
+		src/external/util.c
