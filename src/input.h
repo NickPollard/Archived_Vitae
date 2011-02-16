@@ -17,6 +17,17 @@
 
 #endif
 
+#define KEY_MAX 256
+
+typedef struct input_data_s {
+	int keys[KEY_MAX];
+} input_data;
+
+typedef struct input_s {
+	input_data currentData;
+	input_data lastData;
+} input;
+
 // return whether the given key is held down or not
 // does not discriminate between whether the key was pressed this frame
 int key_held(int key);

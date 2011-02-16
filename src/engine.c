@@ -95,10 +95,6 @@ void handleResize(int w, int h) {
 	glMatrixMode(GL_PROJECTION);
 	glLoadIdentity();
 	gluPerspective(45.0, (double)w / (double)h, 1.0, 200.0);
-
-//	float aspect_ratio = ((float)w) / (float)h;
-//	glFrustum(.5, -.5, -.5 * aspect_ratio, .5 * aspect_ratio, 1, 50);
-	// Note to self - does glu normally use doubles rather than floats?
 }
 
 float angle = 340.f;
