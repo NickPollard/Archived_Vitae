@@ -3,12 +3,14 @@
 #include "src/engine.h"
 //---------------------
 #include "mem/allocator.h"
+#include "src/font.h"
 #include "src/input.h"
 #include "src/maths.h"
 #include "src/model.h"
 #include "src/scene.h"
 #include "src/ticker.h"
 #include "src/transform.h"
+#include "src/render/debugdraw.h"
 #include "src/render/render.h"
 
 // Lua Libraries
@@ -21,8 +23,10 @@
 // System libraries
 #include <sys/time.h>
 
+// *** Static Hacks
 scene* theScene = NULL;
 engine* static_engine_hack;
+int w = 640, h = 480;
 
 float camX = 0.f;
 float camY = 0.f;
@@ -92,10 +96,13 @@ void engine_handleKeyPress(engine* e, uchar key, int x, int y) {
 // Set the camera perspective and tell OpenGL how to convert 
 // from coordinates to pixel values
 void handleResize(int w, int h) {
+	/*
 	glViewport(0, 0, w, h);
 	glMatrixMode(GL_PROJECTION);
 	glLoadIdentity();
 	gluPerspective(45.0, (double)w / (double)h, 1.0, 200.0);
+	*/
+	render_set3D( w, h );
 }
 
 float angle = 340.f;
@@ -126,9 +133,11 @@ engine* engine_create() {
 
 // Initialise the engine
 void engine_init(engine* e, int argc, char** argv) {
+
 	timer_init(e->timer);
 	
 	// *** Start up Core Systems
+	font_init();
 
 	// *** Initialise OpenGL
 	render_init(e, argc, argv);
@@ -182,7 +191,8 @@ void engine_run(engine* e) {
 	handleResize(640, 480);	// Call once to init
 	while (running) {
 		engine_tick(e);
-		render(theScene);
+		render_set3D( w, h );
+		render( theScene );
 
 		running = !input_keyPressed(e->input, KEY_ESC) && glfwGetWindowParam(GLFW_OPENED);
 

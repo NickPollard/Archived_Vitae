@@ -7,6 +7,7 @@
 #include "light.h"
 #include "model.h"
 #include "scene.h"
+#include "render/debugdraw.h"
 #include "render/texture.h"
 // temp
 #include "engine.h"
@@ -16,6 +17,31 @@
 
 // Private Function declarations
 void render_buildShaders();
+
+void render_set3D( int w, int h ) {
+	glViewport(0, 0, w, h);
+	glMatrixMode(GL_PROJECTION);
+	glLoadIdentity();
+	gluPerspective(45.0, (double)w / (double)h, 1.0, 200.0);
+
+	// *** Enable the depth test
+	glEnable( GL_DEPTH_TEST );
+}
+
+void render_set2D() {
+	// *** Set an orthographic projection
+	glMatrixMode( GL_PROJECTION );
+	glLoadIdentity();
+	glOrtho( 0,		// left
+			640.0,	// right
+		   	480.0,	// bottom
+		   	0,		// top
+		   	0,		// near
+		   	1 );	// far
+
+	// *** Disable the depth test
+	glDisable( GL_DEPTH_TEST );
+}
 
 // Iterate through each model in the scene
 // Translate by their transform
@@ -42,7 +68,7 @@ void render_applyCamera(camera* cam) {
 
 // Clear information from last draw
 void render_clear() {
-	glClearColor(0.f, 0.f, 0.0f, 0.f);
+	glClearColor(0.f, 0.f, 0.0, 0.f);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 }
 
@@ -76,15 +102,16 @@ void render_terminate() {
 
 // Render the current scene
 // This is where the business happens
-void render(scene* s) {
+void render( scene* s ) {
 	render_clear();
 
 	// Switch to the drawing perspective and initialise to the identity matrix
 	glMatrixMode(GL_MODELVIEW); 
+	glColor4f(1.f, 1.f, 1.f, 1.f);
 
-	render_applyCamera(s->cam);
-	render_lighting(s);
-	render_scene(s);
+	render_applyCamera( s->cam );
+	render_lighting( s );
+	render_scene( s );
 
 	glPushMatrix();
 	glBegin(GL_TRIANGLES);
@@ -115,6 +142,10 @@ void render(scene* s) {
 	glVertex3f(0.f, 2.f, depth);
 	glEnd();
 	glPopMatrix();
+
+	vector from = Vector( 200.f, 200.f, 0.f, 0.f );
+	vector to = Vector( 440.f, 280.f, 0.f, 0.f );
+	debugdraw_drawRect2D( &from, &to );
 
 	glfwSwapBuffers(); // Send the 3d scene to the screen (flips display buffers)
 }

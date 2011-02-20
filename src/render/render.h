@@ -8,6 +8,10 @@
  *
  */
 
+void render_set2D();
+
+void render_set3D( int w, int h );
+
 // Iterate through each model in the scene
 // Translate by their transform
 // Then draw all the submeshes

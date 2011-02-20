@@ -7,4 +7,6 @@
 // Draw a debug cross at the point *center*
 void debugdraw_cross(vector* center, float radius);
 
+void debugdraw_drawRect2D( vector* from, vector* to );
+
 #endif // __DEBUGDRAW__

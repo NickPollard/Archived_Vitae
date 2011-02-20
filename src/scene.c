@@ -41,7 +41,7 @@ void test_scene_init(scene* s) {
 	scene_addModel(s, testModelA);
 	scene_addModel(s, testModelB);
 
-	scene_setAmbient(s, 0.2f, 0.f, 0.2f, 1.f);
+	scene_setAmbient(s, 0.2f, 0.2f, 0.2f, 1.f);
 
 	light* l = light_createWithTransform(s);
 	vector lightPos = {{ 1.f, 1.f, 1.f, 1.f }};

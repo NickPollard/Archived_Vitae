@@ -36,10 +36,6 @@ input* input_create();
 // tick the input, recording this frames input data from devices
 void input_tick( input* in, float dt );
 
-// return whether the given key is held down or not
-// does not discriminate between whether the key was pressed this frame
-int key_held(int key);
-
 // Is the key held down this frame? Regardless of previous state
 int input_keyHeld( input* i, int key );
 
