@@ -18,6 +18,7 @@ typedef struct {
 	lua_State* lua;					//!< Engine wide persistant lua state
 	luaInterface* callbacks;		//!< Lua Interface for callbacks from the engine
 	luaCallback* onTick;			//!< OnTick event handler
+	input* input;
 } engine;
 
 /*
@@ -55,6 +56,9 @@ void engine_terminate(engine* e);
 
 // terminateLua - de-initialises the Lua interpreter
 void engine_terminateLua(engine* e);
+
+// run - executes the main loop of the application
+void engine_run(engine* e);
 
 // Tick the engine, processing a frame of game update
 void engine_tick(engine* e);

@@ -49,18 +49,19 @@ void test_engine_init() {
  */
 
 // tick - process a frame of game update
-void engine_tick(engine* e) {
-	float dt = timer_getDelta(e->timer);
+void engine_tick( engine* e ) {
+	float dt = timer_getDelta( e->timer );
 
 	// TEST
-	test_engine_tick(e, dt);
+	test_engine_tick( e, dt );
 	// end TEST
 
-	scene_tick(theScene, dt);
+	input_tick( e->input, dt );
+	scene_tick( theScene, dt );
 
-	if (e->onTick && luaCallback_enabled(e->onTick)) {
+	if ( e->onTick && luaCallback_enabled( e->onTick ) ) {
 //		printf("Calling engine::onTick handler: %s\n", e->onTick->func);
-		LUA_CALL(e->lua, e->onTick->func);
+		LUA_CALL( e->lua, e->onTick->func );
 	}
 
 }
@@ -119,6 +120,7 @@ engine* engine_create() {
 	e->timer = mem_alloc(sizeof(frame_timer));
 	e->callbacks = luaInterface_create();
 	e->onTick = luaInterface_addCallback(e->callbacks, "onTick");
+	e->input = input_create();
 	return e;
 }
 
@@ -168,29 +170,34 @@ void engine_terminate(engine* e) {
 	exit(0);
 }
 
-// run - executes the main loop of the engine
+// static_run
 void run() {
+	engine_run( static_engine_hack );
+}
+
+// run - executes the main loop of the engine
+void engine_run(engine* e) {
 //	TextureLibrary* textures = texture_library_create();
 	int running = true;
 	handleResize(640, 480);	// Call once to init
 	while (running) {
-		engine_tick(static_engine_hack);
+		engine_tick(e);
 		render(theScene);
 
-		running = !key_held(KEY_ESC) && glfwGetWindowParam(GLFW_OPENED);
+		running = !input_keyPressed(e->input, KEY_ESC) && glfwGetWindowParam(GLFW_OPENED);
 
-		if (key_held(KEY_UP)) {
+		if (input_keyHeld( e->input, KEY_UP)) {
 			depth += 0.01f;
 			camY += 0.01f;
 		}
-		if (key_held(KEY_DOWN)) {
+		if (input_keyHeld( e->input, KEY_DOWN)) {
 			depth -= 0.01f;
 			camY -= 0.01f;
 		}
-		if (key_held(KEY_LEFT)) {
+		if (input_keyHeld( e->input, KEY_LEFT)) {
 			camX -= 0.01f;
 		}
-		if (key_held(KEY_RIGHT)) {
+		if (input_keyHeld( e->input, KEY_RIGHT)) {
 			camX += 0.01f;
 		}
 
