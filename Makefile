@@ -1,7 +1,7 @@
 C = gcc
-CFLAGS = -Wall -Werror -m64 -std=c99 -I . `pkg-config --cflags libglfw` -I/usr/include/lua5.1  -Isrc
-LFLAGS = -m64 
-LIBS = -lGLU -l/usr/lib -lliblua5.1.a `pkg-config --libs libglfw`
+CFLAGS = -Wall -Werror -m32 -std=c99 -I . `pkg-config --cflags libglfw` -I/usr/include/lua5.1  -Isrc
+LFLAGS = -m32
+LIBS = -lGLU -L/usr/lib -L/usr/local/lib -llua `pkg-config --libs libglfw`
 EXECUTABLE = vitae
 include Makelist
 DEPS = $(SRCS:src/%.c=bin/%.d)
@@ -25,7 +25,7 @@ cleandebug :
 
 $(EXECUTABLE) : $(SRCS) $(OBJS) $(DEPS)
 	@echo "- Linking $@"
-	@$(C) $(LFLAGS) -O2 -o $(EXECUTABLE) $(OBJS) $(LIBS)
+	$(C) $(LFLAGS) -O2 -o $(EXECUTABLE) $(OBJS) $(LIBS)
 
 debug : $(EXECUTABLE)_debug
 
@@ -39,16 +39,16 @@ bin/debug/%.o : src/%.c
 	@$(C) -g $(CFLAGS) -c -o $@ $<
 
 bin/%.o : src/%.c
-	mkdir -p bin
-	mkdir -p bin/mem
-	mkdir -p bin/render
+	@mkdir -p bin
+	@mkdir -p bin/mem
+	@mkdir -p bin/render
 	@echo "- Compiling $@"
 	@$(C) $(CFLAGS) -O2 -MD -c -o $@ $<
 
 bin/%.o : src/%.c
-	mkdir -p bin
-	mkdir -p bin/mem
-	mkdir -p bin/render
+	@mkdir -p bin
+	@mkdir -p bin/mem
+	@mkdir -p bin/render
 	@echo "- Compiling $@"
 	@$(C) $(CFLAGS) -O2 -MD -c -o $@ $<
 

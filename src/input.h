@@ -17,15 +17,15 @@
 
 #endif
 
-#define KEY_MAX 256
+#define KEY_MAX 256 / sizeof ( char )
 
 typedef struct input_data_s {
-	int keys[KEY_MAX];
+	char keys[KEY_MAX];
 } input_data;
 
 typedef struct input_s {
-	input_data currentData;
-	input_data lastData;
+	int active;
+	input_data data[2]; // This frame, last frame - switch on every frame
 } input;
 
 // return whether the given key is held down or not
