@@ -9,6 +9,9 @@
 #ifndef __UTIL_H__
 #define __UTIL_H__
 
+// GLFW Libraries
+#include <GL/glfw.h>
+
 void *file_contents(const char *filename, GLint *length);
 void *read_tga(const char *filename, int *width, int *height);
 

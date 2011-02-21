@@ -4,6 +4,7 @@
 #include "render.h"
 //-----------------------
 #include "camera.h"
+#include "font.h"
 #include "light.h"
 #include "model.h"
 #include "scene.h"
@@ -142,10 +143,15 @@ void render( scene* s ) {
 	glVertex3f(0.f, 2.f, depth);
 	glEnd();
 	glPopMatrix();
-
-	vector from = Vector( 200.f, 200.f, 0.f, 0.f );
-	vector to = Vector( 440.f, 280.f, 0.f, 0.f );
+/*
+	vector from = Vector( 280.f, 200.f, 0.f, 0.f );
+	vector to = Vector( 360.f, 280.f, 0.f, 0.f );
+	font_bindGlyph( 'A' );
 	debugdraw_drawRect2D( &from, &to );
+	*/
+	font_renderString( 10.f, 10.f, "abcdefghijklmnopqrstuvwxyz" );
+	font_renderString( 10.f, 30.f, "ABCDEFGHIJKLMNOPQRSTUVWXYZ" );
+	font_renderString( 10.f, 50.f, "This is a test!" );
 
 	glfwSwapBuffers(); // Send the 3d scene to the screen (flips display buffers)
 }

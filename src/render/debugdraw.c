@@ -38,16 +38,16 @@ void debugdraw_drawRect2D( vector* tl, vector* br ) {
 	glTexCoord2f( 0.f, 0.f );
 	glVertex3f( tl->coord.x, tl->coord.y, -0.5f );	
 
-	glTexCoord2f( 1.f, 0.f );
+	glTexCoord2f( 0.f, 1.f );
 	glVertex3f( tl->coord.x, br->coord.y, -0.5f );	
 
-	glTexCoord2f( 0.f, 1.f );
-	glVertex3f( br->coord.x, tl->coord.y, -0.5f );	
-
-	glTexCoord2f( 0.f, 1.f );
+	glTexCoord2f( 1.f, 0.f );
 	glVertex3f( br->coord.x, tl->coord.y, -0.5f );	
 
 	glTexCoord2f( 1.f, 0.f );
+	glVertex3f( br->coord.x, tl->coord.y, -0.5f );	
+
+	glTexCoord2f( 0.f, 1.f );
 	glVertex3f( tl->coord.x, br->coord.y, -0.5f );	
 
 	glTexCoord2f( 1.f, 1.f );

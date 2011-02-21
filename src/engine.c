@@ -136,11 +136,12 @@ void engine_init(engine* e, int argc, char** argv) {
 
 	timer_init(e->timer);
 	
-	// *** Start up Core Systems
-	font_init();
 
 	// *** Initialise OpenGL
 	render_init(e, argc, argv);
+
+	// *** Start up Core Systems
+	font_init();
 
 	// *** Initialise Lua
 	engine_initLua(e, argc, argv);

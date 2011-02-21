@@ -5,6 +5,9 @@
 //---------------------
 #include "external/util.h"
 
+// GLFW Libraries
+#include <GL/glfw.h>
+
 // Globals
 GLuint g_texture_default;
 

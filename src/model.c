@@ -7,6 +7,7 @@
 #include "transform.h"
 #include "engine.h"
 #include "mem/allocator.h"
+#include "render/texture.h"
 
 
 void vgl_vertexDraw(vector* v) {
@@ -106,7 +107,7 @@ model* model_createModel(int meshCount) {
 void mesh_drawVerts( mesh* m ) {
 	glBegin( GL_TRIANGLES );
 	for ( int i = 0; i < m->indexCount; i += 3 ) {
-		glTexCoord2f( 0.f, 0.f );
+		glTexCoord2f( 0.f, 0.f ); // TODO - UVs in model format
 		vgl_vertexDraw( &m->verts[m->indices[i]] );
 		glTexCoord2f( 1.f, 0.f );
 		vgl_vertexDraw( &m->verts[m->indices[i + 1]] );
@@ -123,6 +124,7 @@ mesh* model_getMesh(model* m, int i) {
 
 // Draw each submesh of a model
 void model_draw(model* m) {
+	glBindTexture( GL_TEXTURE_2D, g_texture_default );
 	glPushMatrix();
 	glMultMatrixf(matrix_getGlMatrix(&m->trans->world));
 	for (int i = 0; i < m->meshCount; i++) {
