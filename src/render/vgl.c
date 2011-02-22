@@ -8,6 +8,8 @@
 // GLFW Libraries
 #include <GL/glfw.h>
 
+// Build a new texture from the given bitmap buffer
+// Plus properties
 vglTexture vgl_buildTexture( const ubyte* img, int w, int h, int type, int format ) {
 	vglTexture tex = 0;
    	glGenTextures( 1, &tex );
@@ -30,4 +32,9 @@ vglTexture vgl_buildTexture( const ubyte* img, int w, int h, int type, int forma
 			GL_UNSIGNED_BYTE,	// 8-bits per channel
 			img );
 	return tex;
+}
+
+// Bind a texture, activating it for use
+void vglBindTexture( vglTexture tex ) {
+	glBindTexture( GL_TEXTURE_2D, tex );
 }

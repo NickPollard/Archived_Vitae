@@ -16,12 +16,16 @@
 #define TERM_GREEN "[1;32;40m"
 #define TERM_WHITE "[0;37;40m"
 
+#define then ?
+#define otherwise :
+
 // types
 typedef unsigned int uint;
 typedef unsigned int u32;
 typedef unsigned char uchar;
 typedef unsigned char ubyte;
 typedef unsigned char u8;
+typedef const char* String;
 
 inline unsigned long long rdtsc()
 {
