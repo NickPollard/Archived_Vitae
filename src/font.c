@@ -18,9 +18,10 @@ unsigned char ttf_buffer[1<<25];
 
 vglTexture g_glyph[CHAR_COUNT];
 vglTexture g_atlas;
-vector g_glyphData[CHAR_COUNT];
+vector g_glyphUV[CHAR_COUNT];
+vector g_glyphSize[CHAR_COUNT];
 
-#define FONT_PATH "assets/font/DroidSansMono.ttf"
+#define FONT_PATH "assets/font/DroidSans.ttf"
 
 // Test init function, based on the main func in the complete program implementation of stb TrueType ((C) Sean Barrett 2009)
 void font_init() {
@@ -98,8 +99,9 @@ void vfont_loadTTF( String path ) {
 		for ( int y = 0; y < h; y++ ) {
 			memcpy( &font_atlas[ row_start[best] + y ][ row_width[best] ], (bitmap + y * w), w );
 		}
-		g_glyphData[ch] = Vector( (float)row_width[best]/256.f, (float)row_start[best]/256.f, (float)(row_width[best] + w)/256.f, (float)(row_start[best] + h)/256.f );
-		printf( "Glyph: %c : %.2f, %.2f, %.2f, %.2f\n", ch, g_glyphData[ch].coord.x, g_glyphData[ch].coord.y, g_glyphData[ch].coord.z, g_glyphData[ch].coord.w);
+		g_glyphUV[ch] = Vector( (float)row_width[best]/256.f, (float)row_start[best]/256.f, (float)(row_width[best] + w)/256.f, (float)(row_start[best] + h)/256.f );
+		g_glyphSize[ch] = Vector( (float)w, (float)h, 0.f, 0.f );
+		printf( "Glyph: %c : %.2f, %.2f, %.2f, %.2f\n", ch, g_glyphUV[ch].coord.x, g_glyphUV[ch].coord.y, g_glyphUV[ch].coord.z, g_glyphUV[ch].coord.w);
 		row_width[best] += w;
 
 
@@ -133,9 +135,16 @@ void vfont_bindGlyph( const char c ) {
 
 static const float stride = 16.f;
 
+float glyph_width( const char c ) {
+	return g_glyphSize[(uchar)c].coord.x;
+}
+
+float glyph_height( const char c ) {
+	return g_glyphSize[(uchar)c].coord.y;
+}
 void font_renderGlyph( float x, float y, const char c ) {
-	vector from = Vector( x, y, g_glyphData[(uchar)c].coord.x, g_glyphData[(uchar)c].coord.y );
-	vector to = Vector( x + stride, y + stride, g_glyphData[(uchar)c].coord.z, g_glyphData[(uchar)c].coord.w );
+	vector from = Vector( x, y, g_glyphUV[(uchar)c].coord.x, g_glyphUV[(uchar)c].coord.y );
+	vector to = Vector( x + glyph_width(c), y + stride, g_glyphUV[(uchar)c].coord.z, g_glyphUV[(uchar)c].coord.w );
 	vfont_bindGlyph( c );
 	debugdraw_drawRect2D( &from, &to );
 }
@@ -145,6 +154,6 @@ void font_renderString( float x, float y, String string ) {
 	assert( l > 0 );
 	for ( int i = 0; i < l; i++ ) {
 		font_renderGlyph( x, y, string[i] );
-		x += stride;
+		x += glyph_width( string[i] );
 	}
 }
