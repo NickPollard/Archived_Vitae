@@ -21,7 +21,8 @@ void test_font_renderChar( char* c ) {
 	
 }
 
-#define FONT_PATH "/usr/share/fonts/truetype/ttf-droid/DroidSans.ttf"
+//#define FONT_PATH "/usr/share/fonts/truetype/ttf-droid/DroidSans.ttf"
+#define FONT_PATH "assets/font/DejaVuSans.ttf"
 
 // Test init function, based on the main func in the complete program implementation of stb TrueType ((C) Sean Barrett 2009)
 void font_init() {
@@ -33,7 +34,12 @@ void font_init() {
    s = 20;
 
    // *** load the ttf file
-   int ret = fread(ttf_buffer, 1, 1<<25, fopen(FONT_PATH, "rb"));
+   FILE* fontfile = fopen(FONT_PATH, "rb");
+   if (!fontfile) {
+	   printf( "Error loading font file: \"%s\"\n", FONT_PATH );
+	   exit( -1 );
+   }
+   int ret = fread(ttf_buffer, 1, 1<<25, fontfile);
    (void)ret;
 
    // *** init the tt system and extract font data

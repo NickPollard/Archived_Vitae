@@ -3,3 +3,4 @@ vitae
 vitae_debug
 assets
 bin
+*.o

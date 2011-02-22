@@ -40,13 +40,7 @@ bin/debug/%.o : src/%.c
 
 bin/%.o : src/%.c
 	@mkdir -p bin
-	@mkdir -p bin/mem
-	@mkdir -p bin/render
-	@echo "- Compiling $@"
-	@$(C) $(CFLAGS) -O2 -MD -c -o $@ $<
-
-bin/%.o : src/%.c
-	@mkdir -p bin
+	@mkdir -p bin/external
 	@mkdir -p bin/mem
 	@mkdir -p bin/render
 	@echo "- Compiling $@"
