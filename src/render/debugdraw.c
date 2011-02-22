@@ -35,22 +35,22 @@ void debugdraw_drawRect2D( vector* tl, vector* br ) {
 	glColor4f( 1.f, 1.f, 1.f, 1.f );
 	glNormal3f( 0.f, 0.f, 1.f );
 
-	glTexCoord2f( 0.f, 0.f );
+	glTexCoord2f( tl->coord.z, tl->coord.w );
 	glVertex3f( tl->coord.x, tl->coord.y, -0.5f );	
 
-	glTexCoord2f( 0.f, 1.f );
+	glTexCoord2f( tl->coord.z, br->coord.w );
 	glVertex3f( tl->coord.x, br->coord.y, -0.5f );	
 
-	glTexCoord2f( 1.f, 0.f );
+	glTexCoord2f( br->coord.z, tl->coord.w );
 	glVertex3f( br->coord.x, tl->coord.y, -0.5f );	
 
-	glTexCoord2f( 1.f, 0.f );
+	glTexCoord2f( br->coord.z, tl->coord.w );
 	glVertex3f( br->coord.x, tl->coord.y, -0.5f );	
 
-	glTexCoord2f( 0.f, 1.f );
+	glTexCoord2f( tl->coord.z, br->coord.w );
 	glVertex3f( tl->coord.x, br->coord.y, -0.5f );	
 
-	glTexCoord2f( 1.f, 1.f );
+	glTexCoord2f( br->coord.z, br->coord.w );
 	glVertex3f( br->coord.x, br->coord.y, -0.5f );	
 
 	glEnd();

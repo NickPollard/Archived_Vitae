@@ -2,6 +2,10 @@
 
 #pragma once
 
+#include "render/vgl.h"
+
+extern vglTexture g_atlas;
+
 // Test init function, based on the main func in the complete program implementation of stb TrueType ((C) Sean Barrett 2009)
 void font_init();
 

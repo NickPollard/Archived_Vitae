@@ -8,6 +8,7 @@
 #include "engine.h"
 #include "mem/allocator.h"
 #include "render/texture.h"
+#include "render/vgl.h"
 
 
 void vgl_vertexDraw(vector* v) {
@@ -124,7 +125,7 @@ mesh* model_getMesh(model* m, int i) {
 
 // Draw each submesh of a model
 void model_draw(model* m) {
-	glBindTexture( GL_TEXTURE_2D, g_texture_default );
+	vglBindTexture( g_texture_default );
 	glPushMatrix();
 	glMultMatrixf(matrix_getGlMatrix(&m->trans->world));
 	for (int i = 0; i < m->meshCount; i++) {
