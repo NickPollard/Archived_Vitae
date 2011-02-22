@@ -1,6 +1,13 @@
+# vim
 *.swp
+
+# Compiled
 vitae
 vitae_debug
-assets
 bin
 *.o
+
+assets
+
+
+
