@@ -18,7 +18,10 @@
 
 // types
 typedef unsigned int uint;
+typedef unsigned int u32;
 typedef unsigned char uchar;
+typedef unsigned char ubyte;
+typedef unsigned char u8;
 
 inline unsigned long long rdtsc()
 {

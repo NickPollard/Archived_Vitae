@@ -20,6 +20,7 @@ clean :
 cleandebug : 
 	@echo "--- Removing Object Files ---"
 	@-rm -vf bin/debug/*.o;
+	@-rm -vf bin/debug/*/*.o;
 	@echo "--- Removing Debug Executable ---"
 	@-rm -vf $(EXECUTABLE)_debug;
 
@@ -35,6 +36,10 @@ $(EXECUTABLE)_debug : $(SRCS) $(OBJS_DBG)
 
 bin/debug/%.o : src/%.c
 	@mkdir -p bin/debug
+	@mkdir -p bin/debug/external
+	@mkdir -p bin/debug/mem
+	@mkdir -p bin/debug/render
+	@mkdir -p bin/debug/system
 	@echo "- Compiling $@"
 	@$(C) -g $(CFLAGS) -c -o $@ $<
 
@@ -43,6 +48,7 @@ bin/%.o : src/%.c
 	@mkdir -p bin/external
 	@mkdir -p bin/mem
 	@mkdir -p bin/render
+	@mkdir -p bin/system
 	@echo "- Compiling $@"
 	@$(C) $(CFLAGS) -O2 -MD -c -o $@ $<
 

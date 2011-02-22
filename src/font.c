@@ -6,8 +6,8 @@
 #include "maths.h"
 #include "external/util.h"
 #include "render/debugdraw.h"
-// GLFW Libraries
-#include <GL/glfw.h>
+#include "render/vgl.h"
+#include "system/file.h"
 
 // *** The stb TrueType library
 #define STB_TRUETYPE_IMPLEMENTATION
@@ -22,7 +22,7 @@ void test_font_renderChar( char* c ) {
 }
 
 //#define FONT_PATH "/usr/share/fonts/truetype/ttf-droid/DroidSans.ttf"
-#define FONT_PATH "assets/font/DejaVuSans.ttf"
+#define FONT_PATH "assets/font/DroidSansMono.ttf"
 
 // Test init function, based on the main func in the complete program implementation of stb TrueType ((C) Sean Barrett 2009)
 void font_init() {
@@ -34,18 +34,12 @@ void font_init() {
    s = 20;
 
    // *** load the ttf file
-   FILE* fontfile = fopen(FONT_PATH, "rb");
-   if (!fontfile) {
-	   printf( "Error loading font file: \"%s\"\n", FONT_PATH );
-	   exit( -1 );
-   }
+   FILE* fontfile = vfile_open( FONT_PATH, "rb" );
    int ret = fread(ttf_buffer, 1, 1<<25, fontfile);
    (void)ret;
 
    // *** init the tt system and extract font data
    stbtt_InitFont(&font, ttf_buffer, stbtt_GetFontOffsetForIndex(ttf_buffer,0));
-
-   glGenTextures( 256, g_glyph );
 
    for (unsigned char ch = 0; ch < 255; ch++) {
 	   // *** extract a bitmap
@@ -55,24 +49,8 @@ void font_init() {
 	   for ( int i = 0 ; (i < h) && (i < 16); i++ ) {
 		   memcpy( img[i], bitmap + (w * i), w );
 	   }
-	   printf( "Glyph: '%c': w %d h %d.\n", ch, w, h );
-	   glBindTexture( GL_TEXTURE_2D, g_glyph[ch] );
 
-	   // Set up sampling parameters, use defaults for now
-	   // Bilinear interpolation, clamped
-	   glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR );
-	   glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR );
-	   glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_WRAP_S,     GL_CLAMP_TO_EDGE );
-	   glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_WRAP_T,     GL_CLAMP_TO_EDGE );
-
-	   glTexImage2D( GL_TEXTURE_2D,
-			   0,			// No Mipmaps for now
-			   GL_LUMINANCE,	// 1-channel, 8-bits per channel (8-bit stride)
-			   (GLsizei)16, (GLsizei)16,
-			   0,			// Border, unused
-			   GL_LUMINANCE,		// TGA uses BGR order internally
-			   GL_UNSIGNED_BYTE,	// 8-bits per channel
-			   img );
+	   g_glyph[ch] = vgl_buildTexture( (ubyte*)img, 16, 16, VGL_LUMINANCE, VGL_LUMINANCE );
 
 	   // *** display the bitmap
 	   /*
