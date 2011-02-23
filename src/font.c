@@ -15,11 +15,15 @@
 unsigned char ttf_buffer[1<<25];
   
 #define CHAR_COUNT 256
+#define CHAR_SPACE 32
+#define SPACE_WIDTH 10
 
 vglTexture g_glyph[CHAR_COUNT];
 vglTexture g_atlas;
 vector g_glyphUV[CHAR_COUNT];
 vector g_glyphSize[CHAR_COUNT];
+
+stbtt_fontinfo font;
 
 #define FONT_PATH "assets/font/DroidSans.ttf"
 
@@ -38,7 +42,6 @@ void vfont_loadTTF( String path ) {
 	(void)ret;
 
 	// *** init the tt system and extract font data
-	stbtt_fontinfo font;
 	stbtt_InitFont(&font, ttf_buffer, stbtt_GetFontOffsetForIndex(ttf_buffer,0));
 
 #define ATLAS_W 256
@@ -143,8 +146,8 @@ float glyph_height( const char c ) {
 	return g_glyphSize[(uchar)c].coord.y;
 }
 void font_renderGlyph( float x, float y, const char c ) {
-	vector from = Vector( x, y, g_glyphUV[(uchar)c].coord.x, g_glyphUV[(uchar)c].coord.y );
-	vector to = Vector( x + glyph_width(c), y + stride, g_glyphUV[(uchar)c].coord.z, g_glyphUV[(uchar)c].coord.w );
+	vector from = Vector( x, y - glyph_height(c), g_glyphUV[(uchar)c].coord.x, g_glyphUV[(uchar)c].coord.y );
+	vector to = Vector( x + glyph_width(c), y, g_glyphUV[(uchar)c].coord.z, g_glyphUV[(uchar)c].coord.w );
 	vfont_bindGlyph( c );
 	debugdraw_drawRect2D( &from, &to );
 }
@@ -153,7 +156,16 @@ void font_renderString( float x, float y, String string ) {
 	int l = strlen( string );
 	assert( l > 0 );
 	for ( int i = 0; i < l; i++ ) {
-		font_renderGlyph( x, y, string[i] );
-		x += glyph_width( string[i] );
+		int advanceWidth;
+		int leftSideBearing;
+		stbtt_GetCodepointHMetrics(&font, (int)string[i], &advanceWidth, &leftSideBearing);
+		printf( "advance: %d.\n", advanceWidth);
+		if ( string[i] != CHAR_SPACE ) {
+			font_renderGlyph( x, y, string[i] );
+			x += glyph_width( string[i] );
+//			x += advanceWidth;
+		}
+		else
+			x += SPACE_WIDTH;
 	}
 }

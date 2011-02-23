@@ -149,9 +149,9 @@ void render( scene* s ) {
 	font_bindGlyph( 'A' );
 	debugdraw_drawRect2D( &from, &to );
 	*/
-	font_renderString( 10.f, 10.f, "a" );
+	font_renderString( 10.f, 10.f, "abcdefghijklmnopqrstuvwxyz" );
 	font_renderString( 10.f, 30.f, "ABCDEFGHIJKLMNOPQRSTUVWXYZ" );
-	font_renderString( 10.f, 50.f, "This is a test!" );
+	font_renderString( 10.f, 50.f, "This is a test of things!" );
 
 	glfwSwapBuffers(); // Send the 3d scene to the screen (flips display buffers)
 }
