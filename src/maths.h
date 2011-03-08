@@ -18,6 +18,13 @@ union vector_u {
 	float	val[4];
 };
 
+typedef struct quat_s {
+	float x;
+	float y;
+	float z;
+	float s;
+} quat;
+
 typedef union matrix_u {
 	vector cols[4];
 	float val[4][4];
