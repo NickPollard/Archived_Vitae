@@ -348,7 +348,7 @@ typedef struct
 
    int numGlyphs;                // number of glyphs, needed for range checking
 
-   int loca,head,glyf,hhea,hmtx; // table locations as offset from start of .ttf
+   int loca,head,glyf,hhea,hmtx,vhea,vmtx; // table locations as offset from start of .ttf
    int index_map;                // a cmap mapping for our chosen character encoding
    int indexToLocFormat;         // format needed to map from glyph index to glyph
 } stbtt_fontinfo;
@@ -405,6 +405,7 @@ extern int stbtt_GetCodepointBox(const stbtt_fontinfo *info, int codepoint, int 
 // Gets the bounding box of the visible part of the glyph, in unscaled coordinates
 
 extern void stbtt_GetGlyphHMetrics(const stbtt_fontinfo *info, int glyph_index, int *advanceWidth, int *leftSideBearing);
+extern void stbtt_GetGlyphVMetrics(const stbtt_fontinfo *info, int glyph_index, int *advanceHeight, int *topSideBearing);
 extern int  stbtt_GetGlyphKernAdvance(const stbtt_fontinfo *info, int glyph1, int glyph2);
 extern int  stbtt_GetGlyphBox(const stbtt_fontinfo *info, int glyph_index, int *x0, int *y0, int *x1, int *y1);
 // as above, but takes one or more glyph indices for greater efficiency
@@ -685,7 +686,10 @@ int stbtt_InitFont(stbtt_fontinfo *info, const unsigned char *data2, int fontsta
    info->glyf = stbtt__find_table(data, fontstart, "glyf");
    info->hhea = stbtt__find_table(data, fontstart, "hhea");
    info->hmtx = stbtt__find_table(data, fontstart, "hmtx");
-   if (!cmap || !info->loca || !info->head || !info->glyf || !info->hhea || !info->hmtx)
+   // [NP] - Find vertical metrics too
+   info->vhea = stbtt__find_table(data, fontstart, "vhea");
+   info->vmtx = stbtt__find_table(data, fontstart, "vmtx");
+   if (!cmap || !info->loca || !info->head || !info->glyf || !info->hhea || !info->hmtx || !info->vhea || !info->vmtx)
       return 0;
 
    t = stbtt__find_table(data, fontstart, "maxp");
@@ -1089,6 +1093,18 @@ void stbtt_GetGlyphHMetrics(const stbtt_fontinfo *info, int glyph_index, int *ad
    } else {
       if (advanceWidth)     *advanceWidth    = ttSHORT(info->data + info->hmtx + 4*(numOfLongHorMetrics-1));
       if (leftSideBearing)  *leftSideBearing = ttSHORT(info->data + info->hmtx + 4*numOfLongHorMetrics + 2*(glyph_index - numOfLongHorMetrics));
+   }
+}
+
+void stbtt_GetGlyphVMetrics(const stbtt_fontinfo *info, int glyph_index, int *advanceHeight, int *topSideBearing)
+{
+   stbtt_uint16 numOfLongVerMetrics = ttUSHORT(info->data+info->vhea + 34);
+   if (glyph_index < numOfLongVerMetrics) {
+      if (advanceHeight)     *advanceHeight    = ttSHORT(info->data + info->vmtx + 4*glyph_index);
+      if (topSideBearing)  *topSideBearing = ttSHORT(info->data + info->vmtx + 4*glyph_index + 2);
+   } else {
+      if (advanceHeight)     *advanceHeight    = ttSHORT(info->data + info->vmtx + 4*(numOfLongVerMetrics-1));
+      if (topSideBearing)  *topSideBearing = ttSHORT(info->data + info->vmtx + 4*numOfLongVerMetrics + 2*(glyph_index - numOfLongVerMetrics));
    }
 }
 
