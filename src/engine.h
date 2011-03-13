@@ -74,6 +74,10 @@ void engine_tick(engine* e);
 // Handle a key press from the user
 void engine_handleKeyPress(engine* e, uchar key, int x, int y);
 
+// Look for a ticklist of the right type to add this entity too
+// If one is not found, create one
+void engine_addTicker( engine* e, void* entity, tickfunc tick );
+
 void handleResize(int w, int h);
 
 #endif // __ENGINE_H__

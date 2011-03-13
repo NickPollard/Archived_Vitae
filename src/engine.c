@@ -11,6 +11,7 @@
 #include "transform.h"
 #include "render/debugdraw.h"
 #include "render/render.h"
+#include "debug/debugtext.h"
 
 // Lua Libraries
 #include <lauxlib.h>
@@ -29,15 +30,21 @@ int w = 640, h = 480;
 float camX = 0.f;
 float camY = 0.f;
 
+// Function Declarations
+void engine_tickTickers( engine* e, float dt );
+
 /*
  *
  *  Test Functions
  *
  */
 
-void test_engine_init() {
+void test_engine_init( engine* e ) {
 	theScene = scene_createScene();
 	test_scene_init(theScene);
+
+	debugtextframe* f = debugtextframe_create( 10.f, 10.f, 20.f );
+	engine_addTicker( e, (void*)f, debugtextframe_tick );
 }
 
 /*
@@ -52,6 +59,8 @@ void engine_tick( engine* e ) {
 
 	input_tick( e->input, dt );
 	scene_tick( theScene, dt );
+
+	engine_tickTickers( e, dt );
 
 	if ( e->onTick && luaCallback_enabled( e->onTick ) ) {
 //		printf("Calling engine::onTick handler: %s\n", e->onTick->func);
@@ -118,6 +127,7 @@ engine* engine_create() {
 	e->callbacks = luaInterface_create();
 	e->onTick = luaInterface_addCallback(e->callbacks, "onTick");
 	e->input = input_create();
+	e->tickers = NULL;
 	return e;
 }
 
@@ -138,7 +148,7 @@ void engine_init(engine* e, int argc, char** argv) {
 	luaInterface_registerCallback(e->callbacks, "onTick", "tick");
 
 	// TEST
-	test_engine_init();
+	test_engine_init( e );
 }
 
 // Initialises the application
@@ -218,26 +228,16 @@ void engine_run(engine* e) {
 		scene_setCamera(theScene, camX, camY, 10.f, 1.f);
 	}
 }
-/*
-engine_addTicker( engine* e, void* entity, tickfunc* tick ) {
+
+// Run through all the ticklists, ticking each of them
+void engine_tickTickers( engine* e, float dt ) {
 	ticklistlist* t = e->tickers;
-	while ( t->tail != NULL ) {
-		if ( t->head->tick == tick ) {
-			if ( ticklist_add( t, entity ) )
-				return;
-		}
+	while (t != NULL) {
+		assert( t->head );	// Should never be NULL heads
+		tick_all( t->head, dt ); // tick the whole of this ticklist
 		t = t->tail;
 	}
-	// Check the final ticker
-	if ( t->head->tick == tick ) {
-		if ( ticklist_add( t, entity ) )
-			return;
-	}
-	t->tail = malloc( sizeof( ticklistlist ));
-	t->tail->tail = NULL;
-	t->tail->head = ticklist_create( tick, kDefaultTickListSize );
 }
-*/
 
 // Search the list of ticklists for one with the matching tick func
 // and space to add a new entry
@@ -257,12 +257,19 @@ ticklist* engine_findTickList( engine* e, tickfunc tick ) {
 // (the ticklistlist contains all the ticklists, ie. for each different tick function)
 ticklist* engine_addTickList( engine* e, tickfunc tick ) {
 	ticklistlist* tll = e->tickers;
-	while ( tll->tail != NULL)
+	if ( !tll ) {
+		e->tickers = malloc( sizeof( ticklistlist ));
+		tll = e->tickers;
+	}
+	else {
+		while ( tll->tail != NULL)
+			tll = tll->tail;
+		tll->tail = malloc( sizeof( ticklistlist ));
 		tll = tll->tail;
-	tll->tail = malloc( sizeof( ticklistlist ));
-	tll->tail->tail = NULL;
-	tll->tail->head = ticklist_create( tick, kDefaultTickListSize );
-	return tll->tail->head;
+	}
+	tll->tail = NULL;
+	tll->head = ticklist_create( tick, kDefaultTickListSize );
+	return tll->head;
 }
 
 // Look for a ticklist of the right type to add this entity too

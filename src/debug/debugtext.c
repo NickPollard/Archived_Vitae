@@ -21,7 +21,8 @@ debugtextframe* debugtextframe_create( float x, float y, float lineHeight) {
 	return f;
 }
 
-void debugtextframe_tick( debugtextframe* f, float dt ) {
+void debugtextframe_tick( void* entity, float dt ) {
+	debugtextframe* f = (debugtextframe*)entity;
 	f->lineCount = 0;
 }
 
