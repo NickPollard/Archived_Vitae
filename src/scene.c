@@ -86,6 +86,9 @@ void scene_concatenateTransforms(scene* s) {
 void scene_tick(scene* s, float dt) {
 	scene_concatenateTransforms(s);
 
+	char string[128];
+	sprintf( string, "TransformCount: %d", s->transformCount );
+	PrintDebugText( s->debugtext, string );
 	for (int i = 0; i < s->transformCount; i++) {
 		PrintDebugText( s->debugtext, "Transform" );
 	}

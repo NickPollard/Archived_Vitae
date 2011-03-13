@@ -32,6 +32,6 @@ void debugtextframe_render( void* entity ) {
 //		printf( "debugtext rendering: %d \"%s\"\n", i, f->lines[i] );
 		font_renderString( x, y, f->lines[i] );
 		y += f->lineHeight;
-	f->lineCount = 0;
 	}
+	f->lineCount = 0;
 }
