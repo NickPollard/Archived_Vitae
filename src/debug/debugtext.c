@@ -22,16 +22,16 @@ debugtextframe* debugtextframe_create( float x, float y, float lineHeight) {
 }
 
 void debugtextframe_tick( void* entity, float dt ) {
-	debugtextframe* f = (debugtextframe*)entity;
-	f->lineCount = 0;
 }
 
-void debugtextframe_render( debugtextframe* f ) {
-	printf( "debugtext frame render!\n" );
+void debugtextframe_render( void* entity ) {
+	debugtextframe* f = (debugtextframe*)entity;
 	float x = f->x;
 	float y = f->y;
 	for ( int i = 0; i < f->lineCount; i++) {
+//		printf( "debugtext rendering: %d \"%s\"\n", i, f->lines[i] );
 		font_renderString( x, y, f->lines[i] );
 		y += f->lineHeight;
+	f->lineCount = 0;
 	}
 }

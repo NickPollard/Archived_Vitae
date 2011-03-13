@@ -29,6 +29,7 @@ struct scene_s {
 	int			transformCount;
 	GLfloat		ambient[4];
 	camera*		cam;
+	debugtextframe* debugtext;
 } ;
 
 // Make a Scene

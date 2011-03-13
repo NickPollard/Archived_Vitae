@@ -32,6 +32,7 @@ float camY = 0.f;
 
 // Function Declarations
 void engine_tickTickers( engine* e, float dt );
+void engine_renderRenders( engine* e );
 
 /*
  *
@@ -40,11 +41,15 @@ void engine_tickTickers( engine* e, float dt );
  */
 
 void test_engine_init( engine* e ) {
-	theScene = scene_createScene();
-	test_scene_init(theScene);
-
 	debugtextframe* f = debugtextframe_create( 10.f, 10.f, 20.f );
 	engine_addTicker( e, (void*)f, debugtextframe_tick );
+	engine_addRender( e, (void*)f, debugtextframe_render );
+	e->debugtext = f;
+
+	theScene = scene_createScene();
+	theScene->debugtext = e->debugtext;
+	
+	test_scene_init(theScene);
 }
 
 /*
@@ -123,11 +128,13 @@ void engine_initLua(engine* e, int argc, char** argv) {
 // Create a new engine
 engine* engine_create() {
 	engine* e = mem_alloc(sizeof(engine));
+	memset( e, 0, sizeof( engine ));
 	e->timer = mem_alloc(sizeof(frame_timer));
 	e->callbacks = luaInterface_create();
 	e->onTick = luaInterface_addCallback(e->callbacks, "onTick");
 	e->input = input_create();
 	e->tickers = NULL;
+	e->renders = NULL;
 	return e;
 }
 
@@ -185,6 +192,13 @@ void run() {
 	engine_run( static_engine_hack );
 }
 
+void engine_render( engine* e ) {
+	render_clear();
+	render( theScene );
+	engine_renderRenders( e );
+	glfwSwapBuffers(); // Send the 3d scene to the screen (flips display buffers)
+}
+
 // run - executes the main loop of the engine
 void engine_run(engine* e) {
 //	TextureLibrary* textures = texture_library_create();
@@ -193,7 +207,8 @@ void engine_run(engine* e) {
 	while (running) {
 		engine_tick(e);
 		render_set3D( w, h );
-		render( theScene );
+
+		engine_render( e );
 
 		running = !input_keyPressed(e->input, KEY_ESC) && glfwGetWindowParam(GLFW_OPENED);
 
@@ -231,11 +246,20 @@ void engine_run(engine* e) {
 
 // Run through all the delegates, ticking each of them
 void engine_tickTickers( engine* e, float dt ) {
-	delegatelist* t = e->tickers;
-	while (t != NULL) {
-		assert( t->head );	// Should never be NULL heads
-		delegate_tick( t->head, dt ); // tick the whole of this delegate
-		t = t->tail;
+	delegatelist* d = e->tickers;
+	while (d != NULL) {
+		assert( d->head );	// Should never be NULL heads
+		delegate_tick( d->head, dt ); // tick the whole of this delegate
+		d = d->tail;
+	}
+}
+
+void engine_renderRenders( engine* e ) {
+	delegatelist* d = e->renders;
+	while (d != NULL) {
+		assert( d->head );	// Should never be NULL heads
+		delegate_render( d->head ); // render the whole of this delegate
+		d = d->tail;
 	}
 }
 

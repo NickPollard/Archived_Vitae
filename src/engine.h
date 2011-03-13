@@ -30,6 +30,7 @@ typedef struct {
 	delegatelist* tickers;	
 	delegatelist* renders;
 
+	debugtextframe* debugtext;
 } engine;
 
 /*
@@ -77,6 +78,7 @@ void engine_handleKeyPress(engine* e, uchar key, int x, int y);
 // Look for a delegate of the right type to add this entity too
 // If one is not found, create one
 void engine_addTicker( engine* e, void* entity, tickfunc tick );
+void engine_addRender( engine* e, void* entity, renderfunc render );
 
 void handleResize(int w, int h);
 

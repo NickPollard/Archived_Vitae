@@ -103,7 +103,6 @@ void render_terminate() {
 // Render the current scene
 // This is where the business happens
 void render( scene* s ) {
-	render_clear();
 
 	// Switch to the drawing perspective and initialise to the identity matrix
 	glMatrixMode(GL_MODELVIEW); 
@@ -147,7 +146,6 @@ void render( scene* s ) {
 	font_renderString( 10.f, 30.f, "ABCDEFGHIJKLMNOPQRSTUVWXYZ.,/?|'@#!$%^&" );
 	font_renderString( 10.f, 50.f, "This is a test!" );
 */
-	glfwSwapBuffers(); // Send the 3d scene to the screen (flips display buffers)
 }
 
 void render_buildShaders() {

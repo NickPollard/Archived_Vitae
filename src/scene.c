@@ -7,8 +7,9 @@
 #include "light.h"
 #include "model.h"
 #include "mem/allocator.h"
-#include "src/render/debugdraw.h"
-#include "src/font.h"
+#include "render/debugdraw.h"
+#include "font.h"
+#include "debug/debugtext.h"
 
 
 model* testModelA = NULL;
@@ -66,7 +67,8 @@ void scene_setAmbient(scene* s, float r, float g, float b, float a) {
 
 // Make a scene
 scene* scene_createScene() {
-	scene* s = mem_alloc(sizeof(scene));
+	scene* s = mem_alloc( sizeof( scene ));
+	memset( s, 0, sizeof( scene ));
 	s->modelCount = s->lightCount = s->transformCount = 0;
 	s->cam = camera_createWithTransform(s);
 	scene_setCamera(s, 0.f, 0.f, 0.f, 1.f);
@@ -84,10 +86,8 @@ void scene_concatenateTransforms(scene* s) {
 void scene_tick(scene* s, float dt) {
 	scene_concatenateTransforms(s);
 
-	float y = 80.f, ymargin = 20.f;
 	for (int i = 0; i < s->transformCount; i++) {
-		font_renderString( 10.f, y, "Transform");
-		y += ymargin;
+		PrintDebugText( s->debugtext, "Transform" );
 	}
 
 	// TEST
