@@ -34,7 +34,9 @@ void tick_all(ticklist* t, float dt);
 ticklist* ticklist_create(tickfunc tickHandler, int size);
 
 // add an entry to a ticklist
-void ticklist_add(ticklist* t, void* entry);
+int ticklist_add(ticklist* t, void* entry);
+
+int ticklist_isFull( ticklist* t );
 
 //////////////
 //

@@ -8,6 +8,7 @@
 #include "model.h"
 #include "mem/allocator.h"
 #include "src/render/debugdraw.h"
+#include "src/font.h"
 
 
 model* testModelA = NULL;
@@ -82,6 +83,12 @@ void scene_concatenateTransforms(scene* s) {
 // Update the scene
 void scene_tick(scene* s, float dt) {
 	scene_concatenateTransforms(s);
+
+	float y = 80.f, ymargin = 20.f;
+	for (int i = 0; i < s->transformCount; i++) {
+		font_renderString( 10.f, y, "Transform");
+		y += ymargin;
+	}
 
 	// TEST
 	test_scene_tick(s, dt);

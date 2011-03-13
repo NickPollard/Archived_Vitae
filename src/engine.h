@@ -2,8 +2,9 @@
 #ifndef __ENGINE_H__
 #define __ENGINE_H__
 
-#include "src/lua.h"
-
+#include "base/list.h"
+#include "lua.h"
+#include "ticker.h"
 #include "time.h"
 
 // Lua Libraries
@@ -13,12 +14,22 @@ extern scene* theScene;
 
 extern float depth;
 
+DEF_LIST(ticklist)
+#define kDefaultTickListSize 16
+
 typedef struct {
+	// *** General
 	frame_timer* timer;
+	input* input;
+
+	// *** Lua
 	lua_State* lua;					//!< Engine wide persistant lua state
 	luaInterface* callbacks;		//!< Lua Interface for callbacks from the engine
 	luaCallback* onTick;			//!< OnTick event handler
-	input* input;
+
+	// *** Tickers
+	ticklistlist* tickers;	
+
 } engine;
 
 /*
@@ -26,9 +37,6 @@ typedef struct {
  *  Static Functions
  *
  */
-
-// tick - process a frame of game update
-void tick(int ePtr);
 
 // init - initialises the application
 void init(int argc, char** argv);

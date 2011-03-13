@@ -24,9 +24,16 @@ ticklist* ticklist_create(tickfunc tickHandler, int size) {
 	return t;
 }
 
-void ticklist_add(ticklist* t, void* entry) {
-	assert(t->count < t->max);
-	t->data[t->count++] = entry;
+int ticklist_add(ticklist* t, void* entry) {
+	if (t->count < t->max) {
+		t->data[t->count++] = entry;
+		return true;
+	}
+	return false;
+}
+
+int ticklist_isFull( ticklist* t ) {
+	return t->count == t->max;
 }
 
 //////////////

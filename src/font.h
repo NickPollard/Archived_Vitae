@@ -16,6 +16,8 @@ void vfont_loadTTF( String path );
 
 void vfont_bindGlyph( const char c );
 
+float glyph_height( const char c );
+
 void font_renderGlyph( float x, float y, const char c );
 
 void font_renderString( float x, float y, String string );
