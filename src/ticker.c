@@ -8,32 +8,38 @@
 // Tick all tickers in the tick list!
 // All tickers in a list share the same tick function
 // This is to (hopefully) improve cache usage and debugging
-void tick_all(ticklist* t, float dt) {
-	for (int i = 0; i < t->count; i++) {
-		t->tick(t->data[i], dt);
+void delegate_tick(delegate* d, float dt) {
+	for ( int i = 0; i < d->count; i++ ) {
+		((tickfunc)d->tick)( d->data[i], dt );
 	}
 }
 
-ticklist* ticklist_create(tickfunc tickHandler, int size) {
-	ticklist* t = (ticklist*)mem_alloc(sizeof(ticklist));
-	t->tick = tickHandler;
-	t->count = 0;
-	t->data = mem_alloc(size * sizeof(void*));
-	t->max = size;
-
-	return t;
+void delegate_render( delegate* d ) {
+	for ( int i = 0; i < d->count; i++ ) {
+		((renderfunc)d->tick)( d->data[i] );
+	}
 }
 
-int ticklist_add(ticklist* t, void* entry) {
-	if (t->count < t->max) {
-		t->data[t->count++] = entry;
+delegate* delegate_create(void* func, int size) {
+	delegate* d = (delegate*)mem_alloc(sizeof(delegate));
+	d->tick = func;
+	d->count = 0;
+	d->data = mem_alloc(size * sizeof(void*));
+	d->max = size;
+
+	return d;
+}
+
+int delegate_add(delegate* d, void* entry) {
+	if (d->count < d->max) {
+		d->data[d->count++] = entry;
 		return true;
 	}
 	return false;
 }
 
-int ticklist_isFull( ticklist* t ) {
-	return t->count == t->max;
+int delegate_isFull( delegate* d ) {
+	return d->count == d->max;
 }
 
 //////////////

@@ -14,8 +14,8 @@ extern scene* theScene;
 
 extern float depth;
 
-DEF_LIST(ticklist)
-#define kDefaultTickListSize 16
+DEF_LIST(delegate)
+#define kDefaultdelegateSize 16
 
 typedef struct {
 	// *** General
@@ -27,8 +27,8 @@ typedef struct {
 	luaInterface* callbacks;		//!< Lua Interface for callbacks from the engine
 	luaCallback* onTick;			//!< OnTick event handler
 
-	// *** Tickers
-	ticklistlist* tickers;	
+	delegatelist* tickers;	
+	delegatelist* renders;
 
 } engine;
 
@@ -74,7 +74,7 @@ void engine_tick(engine* e);
 // Handle a key press from the user
 void engine_handleKeyPress(engine* e, uchar key, int x, int y);
 
-// Look for a ticklist of the right type to add this entity too
+// Look for a delegate of the right type to add this entity too
 // If one is not found, create one
 void engine_addTicker( engine* e, void* entity, tickfunc tick );
 

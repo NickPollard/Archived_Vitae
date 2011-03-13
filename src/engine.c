@@ -229,54 +229,77 @@ void engine_run(engine* e) {
 	}
 }
 
-// Run through all the ticklists, ticking each of them
+// Run through all the delegates, ticking each of them
 void engine_tickTickers( engine* e, float dt ) {
-	ticklistlist* t = e->tickers;
+	delegatelist* t = e->tickers;
 	while (t != NULL) {
 		assert( t->head );	// Should never be NULL heads
-		tick_all( t->head, dt ); // tick the whole of this ticklist
+		delegate_tick( t->head, dt ); // tick the whole of this delegate
 		t = t->tail;
 	}
 }
 
-// Search the list of ticklists for one with the matching tick func
+// Search the list of delegates for one with the matching tick func
 // and space to add a new entry
-ticklist* engine_findTickList( engine* e, tickfunc tick ) {
-	ticklistlist* t = e->tickers;
-	while ( t != NULL ) {
-		if ( t->head->tick == tick && !ticklist_isFull(t->head) ) {
-			return t->head;
+delegate* engine_findDelegate( delegatelist* d, void* func ) {
+	while ( d != NULL ) {
+		if ( d->head->tick == func && !delegate_isFull(d->head) ) {
+			return d->head;
 		}
-		t = t->tail;
+		d = d->tail;
 	}
 	return NULL;
 }
 
-// Add a new ticklist to the ticklistlist
-// (a ticklist is a list of entities to all receive the same tick function)
-// (the ticklistlist contains all the ticklists, ie. for each different tick function)
-ticklist* engine_addTickList( engine* e, tickfunc tick ) {
-	ticklistlist* tll = e->tickers;
-	if ( !tll ) {
-		e->tickers = malloc( sizeof( ticklistlist ));
-		tll = e->tickers;
-	}
-	else {
-		while ( tll->tail != NULL)
-			tll = tll->tail;
-		tll->tail = malloc( sizeof( ticklistlist ));
-		tll = tll->tail;
-	}
-	tll->tail = NULL;
-	tll->head = ticklist_create( tick, kDefaultTickListSize );
-	return tll->head;
+delegate* engine_findTickDelegate( engine* e, tickfunc tick ) {
+	return engine_findDelegate( e->tickers, tick );
 }
 
-// Look for a ticklist of the right type to add this entity too
+delegate* engine_findRenderDelegate( engine* e, renderfunc render ) {
+	return engine_findDelegate( e->renders, render );
+}
+// Add a new delegate to the delegatelist
+// (a delegate is a list of entities to all receive the same tick function)
+// (the delegatelist contains all the delegates, ie. for each different tick function)
+
+
+delegate* engine_addDelegate( delegatelist** d, void* func ) {
+	delegatelist* dl = *d;
+	if ( !dl ) {
+		*d = malloc( sizeof( delegatelist ));
+		dl = *d;
+	}
+	else {
+		while ( dl->tail != NULL)
+			dl = dl->tail;
+		dl->tail = malloc( sizeof( delegatelist ));
+		dl = dl->tail;
+	}
+	dl->tail = NULL;
+	dl->head = delegate_create( func, kDefaultdelegateSize );
+	return dl->head;
+}
+
+delegate* engine_addTickDelegate( engine* e, tickfunc tick ) {
+	return engine_addDelegate( &e->tickers, tick );
+}
+
+delegate* engine_addRenderDelegate( engine* e, renderfunc render ) {
+	return engine_addDelegate( &e->renders, render );
+}
+
+// Look for a delegate of the right type to add this entity too
 // If one is not found, create one
 void engine_addTicker( engine* e, void* entity, tickfunc tick ) {
-	ticklist* tl = engine_findTickList( e, tick );
-	if (!tl)
-		tl = engine_addTickList( e, tick );
-	ticklist_add( tl, entity);
+	delegate* d = engine_findTickDelegate( e, tick );
+	if ( !d )
+		d = engine_addTickDelegate( e, tick );
+	delegate_add( d, entity);
+}
+
+void engine_addRender( engine* e, void* entity, renderfunc render ) {
+	delegate* d = engine_findRenderDelegate( e, render );
+	if ( !d )
+		d = engine_addRenderDelegate( e, render );
+	delegate_add( d, entity );
 }

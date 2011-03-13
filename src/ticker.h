@@ -3,40 +3,45 @@
 #define __TICKER_H__
 
 // Tick function signature
-typedef void (*tickfunc)(void*, float);
+typedef void (*tickfunc)( void*, float );
+// Render function signature
+typedef void (*renderfunc)( void*);
 
-// ticklist
+// delegate
 // A struct holding a list of objects to be ticked (updated)
 // All objects have the same tick handler, ie. they are of the same time
-// You should create a separate ticklist for each type of object you want to tick
+// You should create a separate delegate for each type of object you want to tick
 // and then tick them each explicitly
 //
 // eg. 
-//  ticklist animations;
-//  ticklist models;
-//  ticklist physics;
+//  delegate animations;
+//  delegate models;
+//  delegate physics;
 //
-//	tick_all(animations, dt);
-//  tick_all(models, dt);
-//  tick_all(physics, dt);
+//	delegate_tick(animations, dt);
+//  delegate_tick(models, dt);
+//  delegate_tick(physics, dt);
 //
-typedef struct ticklist_t {
-	tickfunc	tick;
+typedef struct {
+	void*		tick;
 	void**		data;
 	int			count;
 	int			max;
-} ticklist;
+} delegate;
 
-// tick all objects in a ticklist
-void tick_all(ticklist* t, float dt);
+// tick all objects in a delegate
+void delegate_tick(delegate* t, float dt);
 
-// create a new ticklist
-ticklist* ticklist_create(tickfunc tickHandler, int size);
+// render all objects in a delegate
+void delegate_render( delegate* d );
 
-// add an entry to a ticklist
-int ticklist_add(ticklist* t, void* entry);
+// create a new delegate
+delegate* delegate_create(void* func, int size);
 
-int ticklist_isFull( ticklist* t );
+// add an entry to a delegate
+int delegate_add(delegate* t, void* entry);
+
+int delegate_isFull( delegate* t );
 
 //////////////
 //
