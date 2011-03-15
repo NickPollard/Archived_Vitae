@@ -15,7 +15,7 @@ extern scene* theScene;
 extern float depth;
 
 DEF_LIST(delegate)
-#define kDefaultdelegateSize 16
+#define kDefaultDelegateSize 16
 
 typedef struct {
 	// *** General

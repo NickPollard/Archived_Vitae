@@ -4,6 +4,7 @@
 #include "scene.h"
 //-----------------------
 #include "camera.h"
+#include "input.h"
 #include "light.h"
 #include "model.h"
 #include "mem/allocator.h"
@@ -11,10 +12,18 @@
 #include "font.h"
 #include "debug/debugtext.h"
 
+// *** static data
 
 model* testModelA = NULL;
 model* testModelB = NULL;
 transform* t2 = NULL;
+
+keybind scene_debug_transforms_toggle;
+
+void scene_static_init( ) {
+	scene_debug_transforms_toggle = input_registerKeybind( );
+	input_setDefaultKeyBind( scene_debug_transforms_toggle, KEY_T );
+}
 
 void scene_addModel(scene* s, model* m) {
 	s->models[s->modelCount++] = m;
@@ -66,7 +75,7 @@ void scene_setAmbient(scene* s, float r, float g, float b, float a) {
 }
 
 // Make a scene
-scene* scene_createScene() {
+scene* scene_create() {
 	scene* s = mem_alloc( sizeof( scene ));
 	memset( s, 0, sizeof( scene ));
 	s->modelCount = s->lightCount = s->transformCount = 0;
@@ -82,17 +91,27 @@ void scene_concatenateTransforms(scene* s) {
 		transform_concatenate(&s->transforms[i]);
 }
 
-// Update the scene
-void scene_tick(scene* s, float dt) {
-	scene_concatenateTransforms(s);
-
+void scene_debugTransforms( scene* s ) {
 	char string[128];
 	sprintf( string, "TransformCount: %d", s->transformCount );
 	PrintDebugText( s->debugtext, string );
 	for (int i = 0; i < s->transformCount; i++) {
-//		PrintDebugText( s->debugtext, "Transform" );
 		transform_printDebug( &s->transforms[i], s->debugtext );
 	}
+}
+
+// Process input for the scene
+void scene_input( scene* s, input* in ) {
+	if ( input_keybindPressed( in, scene_debug_transforms_toggle ) )
+		s->debug_flags ^= kSceneDebugTransforms;
+}
+
+// Update the scene
+void scene_tick(scene* s, float dt) {
+	scene_concatenateTransforms(s);
+
+	if ( s->debug_flags & kSceneDebugTransforms )
+		scene_debugTransforms( s );
 
 	// TEST
 	test_scene_tick(s, dt);

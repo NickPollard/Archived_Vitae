@@ -46,7 +46,7 @@ void test_engine_init( engine* e ) {
 	engine_addRender( e, (void*)f, debugtextframe_render );
 	e->debugtext = f;
 
-	theScene = scene_createScene();
+	theScene = scene_create();
 	theScene->debugtext = e->debugtext;
 	
 	test_scene_init(theScene);
@@ -166,6 +166,9 @@ void init(int argc, char** argv) {
 	// *** Initialise Memory
 	mem_init(argc, argv);
 
+	// *** Static Module initialization
+	scene_static_init();
+
 	// *** Initialise Engine
 	engine* e = engine_create();
 	engine_init(e, argc, argv);
@@ -207,6 +210,9 @@ void engine_run(engine* e) {
 	int running = true;
 	handleResize(640, 480);	// Call once to init
 	while (running) {
+
+		scene_input( theScene, e->input );
+
 		engine_tick(e);
 		render_set3D( w, h );
 
@@ -302,7 +308,7 @@ delegate* engine_addDelegate( delegatelist** d, void* func ) {
 		dl = dl->tail;
 	}
 	dl->tail = NULL;
-	dl->head = delegate_create( func, kDefaultdelegateSize );
+	dl->head = delegate_create( func, kDefaultDelegateSize );
 	return dl->head;
 }
 

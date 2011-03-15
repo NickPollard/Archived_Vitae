@@ -15,11 +15,18 @@
 // Other
 #define KEY_ESC		GLFW_KEY_ESC
 
-#endif
+#define KEY_T		'T'
 
+#endif // GLFW
+
+// *** General input defines
+typedef int keybind;
 #define KEY_COUNT 512
 #define INPUT_DATA_FRAMES 2
 #define INPUT_KEYDATA_SIZE KEY_COUNT / sizeof ( char )
+
+// *** keybind defines
+#define INPUT_MAX_KEYBINDS 128
 
 typedef struct input_data_s {
 	char keys[INPUT_KEYDATA_SIZE];
@@ -28,6 +35,7 @@ typedef struct input_data_s {
 struct input_s {
 	int active;	// Index into the data array, alternates between 0 and 1
 	input_data data[INPUT_DATA_FRAMES]; // This frame, last frame - switch on every frame
+	int keybinds[INPUT_MAX_KEYBINDS];
 };
 
 // constructor
@@ -47,5 +55,19 @@ int input_keyPressed( input* i, int key );
 
 // Was the key first released this frame? ie. It is not depressed now, but was last frame
 int input_keyReleased( input* i, int key );
+
+int input_registerKeybind( );
+
+// Set a keybind for the given input setup only, overwriting the default
+void input_setKeyBind( input* in, keybind bind, int key );
+
+// Set a default keybind. This will be copied into any input that is created after
+void input_setDefaultKeyBind( keybind bind, int key );
+
+// Keybind varients of the key functions
+int input_keybindPressed( input* in, int keybind );
+int input_keybindHeld( input* in, int keybind );
+int input_keybindReleased( input* in, int keybind );
+int input_keybindWasHeld( input* in, int keybind );
 
 #endif // __INPUT_H__
