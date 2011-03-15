@@ -99,13 +99,15 @@ void engine_handleKeyPress(engine* e, uchar key, int x, int y) {
 // Handle a window resize
 // Set the camera perspective and tell OpenGL how to convert 
 // from coordinates to pixel values
-void handleResize(int w, int h) {
+void handleResize(int w_, int h_) {
 	/*
 	glViewport(0, 0, w, h);
 	glMatrixMode(GL_PROJECTION);
 	glLoadIdentity();
 	gluPerspective(45.0, (double)w / (double)h, 1.0, 200.0);
 	*/
+	w = w_;
+	h = h_;
 	render_set3D( w, h );
 }
 
