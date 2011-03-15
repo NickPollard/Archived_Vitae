@@ -32,4 +32,6 @@ int transform_isDirty(transform* t);
 // Set the translation of the localspace transformation matrix
 void transform_setLocalTranslation(transform* t, vector* v);
 
+void transform_printDebug( transform* t, debugtextframe* f );
+
 #endif // __TRANSFORM_H__

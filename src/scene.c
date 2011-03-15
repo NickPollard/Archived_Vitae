@@ -90,7 +90,8 @@ void scene_tick(scene* s, float dt) {
 	sprintf( string, "TransformCount: %d", s->transformCount );
 	PrintDebugText( s->debugtext, string );
 	for (int i = 0; i < s->transformCount; i++) {
-		PrintDebugText( s->debugtext, "Transform" );
+//		PrintDebugText( s->debugtext, "Transform" );
+		transform_printDebug( &s->transforms[i], s->debugtext );
 	}
 
 	// TEST
