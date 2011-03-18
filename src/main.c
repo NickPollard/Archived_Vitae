@@ -8,6 +8,7 @@
 #include "common.h"
 #include "engine.h"
 #include "mem/allocator.h"
+#include "system/file.h"
 
 // ###################################
 
@@ -17,6 +18,7 @@ int main(int argc, char** argv) {
 	init(argc, argv);
 
 	test_allocator();
+	test_sfile();
 
 	run();
 
