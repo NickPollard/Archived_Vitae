@@ -197,7 +197,7 @@ void font_renderString( float x, float y, String string ) {
 		int leftSideBearing;
 		stbtt_GetCodepointHMetrics(&font, (int)string[i], &advanceWidth, &leftSideBearing);
 		printf( "advance: %d.\n", advanceWidth);
-		if ( string[i] != CHAR_SPACE ) {
+		if ( string[i] != ASCII_SPACE ) {
 			font_renderGlyph( x, y, string[i] );
 			x += glyph_width( string[i] );
 //			x += advanceWidth;

@@ -117,7 +117,7 @@ void matrix_cpy( matrix* restrict dst, matrix* src ) {
 void matrix_inverse( matrix* restrict dst, matrix* src ) {
 	assert(dst != src);
 }
-
+/*
 matrix matrix_fromQuat( quat q ) {
 	matrix m;
 	return m;
@@ -132,3 +132,4 @@ matrix matrix_build( quat rot, vec trans ) {
 	matrix m;
 	return m;
 }
+*/
