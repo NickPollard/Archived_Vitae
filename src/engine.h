@@ -2,8 +2,9 @@
 #ifndef __ENGINE_H__
 #define __ENGINE_H__
 
-#include "src/lua.h"
-
+#include "base/list.h"
+#include "lua.h"
+#include "ticker.h"
 #include "time.h"
 
 // Lua Libraries
@@ -13,12 +14,23 @@ extern scene* theScene;
 
 extern float depth;
 
+DEF_LIST(delegate)
+#define kDefaultDelegateSize 16
+
 typedef struct {
+	// *** General
 	frame_timer* timer;
+	input* input;
+
+	// *** Lua
 	lua_State* lua;					//!< Engine wide persistant lua state
 	luaInterface* callbacks;		//!< Lua Interface for callbacks from the engine
 	luaCallback* onTick;			//!< OnTick event handler
-	input* input;
+
+	delegatelist* tickers;	
+	delegatelist* renders;
+
+	debugtextframe* debugtext;
 } engine;
 
 /*
@@ -26,9 +38,6 @@ typedef struct {
  *  Static Functions
  *
  */
-
-// tick - process a frame of game update
-void tick(int ePtr);
 
 // init - initialises the application
 void init(int argc, char** argv);
@@ -65,6 +74,11 @@ void engine_tick(engine* e);
 
 // Handle a key press from the user
 void engine_handleKeyPress(engine* e, uchar key, int x, int y);
+
+// Look for a delegate of the right type to add this entity too
+// If one is not found, create one
+void engine_addTicker( engine* e, void* entity, tickfunc tick );
+void engine_addRender( engine* e, void* entity, renderfunc render );
 
 void handleResize(int w, int h);
 

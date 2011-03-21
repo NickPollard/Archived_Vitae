@@ -19,6 +19,8 @@
 #define MAX_MODELS 128
 #define MAX_LIGHTS 128
 
+#define kSceneDebugTransforms 0x00000001
+
 // *** Scene ***
 struct scene_s {
 	int			modelCount;
@@ -29,13 +31,26 @@ struct scene_s {
 	int			transformCount;
 	GLfloat		ambient[4];
 	camera*		cam;
+
+	// Debug
+	debugtextframe* debugtext;
+	int			debug_flags;
 } ;
 
+// *** Static functions
+
+void scene_static_init( );
+
+// *** Scene functions
+
 // Make a Scene
-scene* scene_createScene();
+scene* scene_create();
 
 // Traverse the transform graph, updating worldspace transforms
 void scene_concatenateTransforms(scene* s);
+
+// Process input for the scene
+void scene_input( scene* s, input* in );
 
 // Update the scene
 void scene_tick(scene* s, float dt);

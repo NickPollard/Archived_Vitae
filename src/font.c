@@ -15,17 +15,19 @@
 unsigned char ttf_buffer[1<<25];
   
 #define CHAR_COUNT 256
-#define CHAR_SPACE 32
-#define SPACE_WIDTH 10
+#define ASCII_SPACE 0x20
+#define SPACE_WIDTH 8
 
 vglTexture g_glyph[CHAR_COUNT];
 vglTexture g_atlas;
 vector g_glyphUV[CHAR_COUNT];
 vector g_glyphSize[CHAR_COUNT];
+float xmargin;
 
 stbtt_fontinfo font;
 
 #define FONT_PATH "assets/font/DroidSans.ttf"
+//#define FONT_PATH "assets/font/arial.ttf"
 
 // Test init function, based on the main func in the complete program implementation of stb TrueType ((C) Sean Barrett 2009)
 void font_init() {
@@ -103,6 +105,8 @@ void vfont_loadTTF( String path ) {
 			memcpy( &font_atlas[ row_start[best] + y ][ row_width[best] ], (bitmap + y * w), w );
 		}
 		g_glyphUV[ch] = Vector( (float)row_width[best]/256.f, (float)row_start[best]/256.f, (float)(row_width[best] + w)/256.f, (float)(row_start[best] + h)/256.f );
+		if (ch == ASCII_SPACE)
+			w = SPACE_WIDTH;
 		g_glyphSize[ch] = Vector( (float)w, (float)h, 0.f, 0.f );
 		printf( "Glyph: %c : %.2f, %.2f, %.2f, %.2f\n", ch, g_glyphUV[ch].coord.x, g_glyphUV[ch].coord.y, g_glyphUV[ch].coord.z, g_glyphUV[ch].coord.w);
 		row_width[best] += w;
@@ -123,6 +127,8 @@ void vfont_loadTTF( String path ) {
 
 		free( bitmap );
 	}
+
+	xmargin = glyph_height('X') - glyph_height('x');
 
 	// Validate row heights + starts
 	for (int r = 1; r < ATLAS_ROWS; r ++) {
@@ -145,9 +151,40 @@ float glyph_width( const char c ) {
 float glyph_height( const char c ) {
 	return g_glyphSize[(uchar)c].coord.y;
 }
+
+int has_ascender( const char c ) {
+	switch (c) {
+		case 'a':
+		case 'c':
+		case 'e':
+		case 'g':
+		case 'i':
+		case 'm':
+		case 'n':
+		case 'o':
+		case 'p':
+		case 'q':
+		case 'r':
+		case 's':
+		case 'u':
+		case 'v':
+		case 'w':
+		case 'x':
+		case 'y':
+		case 'z':
+			return false;
+		default:
+			return true;
+	}
+}
+
+float glyph_topmargin( const char c ) {
+	return has_ascender( c ) ? 0.f : xmargin;
+}
+
 void font_renderGlyph( float x, float y, const char c ) {
-	vector from = Vector( x, y - glyph_height(c), g_glyphUV[(uchar)c].coord.x, g_glyphUV[(uchar)c].coord.y );
-	vector to = Vector( x + glyph_width(c), y, g_glyphUV[(uchar)c].coord.z, g_glyphUV[(uchar)c].coord.w );
+	vector from = Vector( x, y + glyph_topmargin(c), g_glyphUV[(uchar)c].coord.x, g_glyphUV[(uchar)c].coord.y );
+	vector to = Vector( x + glyph_width(c), y + glyph_height(c) + glyph_topmargin(c), g_glyphUV[(uchar)c].coord.z, g_glyphUV[(uchar)c].coord.w );
 	vfont_bindGlyph( c );
 	debugdraw_drawRect2D( &from, &to );
 }

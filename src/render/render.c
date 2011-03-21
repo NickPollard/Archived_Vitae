@@ -25,7 +25,6 @@ void render_set3D( int w, int h ) {
 	glLoadIdentity();
 	gluPerspective(45.0, (double)w / (double)h, 1.0, 200.0);
 
-	// *** Enable the depth test
 	glEnable( GL_DEPTH_TEST );
 }
 
@@ -40,7 +39,6 @@ void render_set2D() {
 		   	0,		// near
 		   	1 );	// far
 
-	// *** Disable the depth test
 	glDisable( GL_DEPTH_TEST );
 }
 
@@ -56,7 +54,8 @@ void render_scene(scene* s) {
 void render_lighting(scene* s) {
 	// Ambient Light
 	glLightModelfv(GL_LIGHT_MODEL_AMBIENT, s->ambient);
-	
+
+	// Point Lights	
 	light_render(GL_LIGHT0, s->lights[0]);
 }
 
@@ -104,7 +103,6 @@ void render_terminate() {
 // Render the current scene
 // This is where the business happens
 void render( scene* s ) {
-	render_clear();
 
 	// Switch to the drawing perspective and initialise to the identity matrix
 	glMatrixMode(GL_MODELVIEW); 
@@ -144,16 +142,10 @@ void render( scene* s ) {
 	glEnd();
 	glPopMatrix();
 /*
-	vector from = Vector( 280.f, 200.f, 0.f, 0.f );
-	vector to = Vector( 360.f, 280.f, 0.f, 0.f );
-	font_bindGlyph( 'A' );
-	debugdraw_drawRect2D( &from, &to );
-	*/
-	font_renderString( 10.f, 10.f, "abcdefghijklmnopqrstuvwxyz" );
-	font_renderString( 10.f, 30.f, "ABCDEFGHIJKLMNOPQRSTUVWXYZ" );
-	font_renderString( 10.f, 50.f, "This is a test of things!" );
-
-	glfwSwapBuffers(); // Send the 3d scene to the screen (flips display buffers)
+	font_renderString( 10.f, 10.f, "a" );
+	font_renderString( 10.f, 30.f, "ABCDEFGHIJKLMNOPQRSTUVWXYZ.,/?|'@#!$%^&" );
+	font_renderString( 10.f, 50.f, "This is a test!" );
+*/
 }
 
 void render_buildShaders() {

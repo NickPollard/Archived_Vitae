@@ -2,6 +2,7 @@
 #include "transform.h"
 //-------------------------
 #include "scene.h"
+#include "debug/debugtext.h"
 
 void transform_setWorldSpace();
 
@@ -79,4 +80,13 @@ int transform_isDirty(transform* t) {
 void transform_setLocalTranslation(transform* t, vector* v) {
 	matrix_setTranslation(&t->local, v);
 	transform_markDirty(t);
+}
+
+void transform_printDebug( transform* t, debugtextframe* f ) {
+	char string[128];
+	sprintf( string, "Transform: Translation %.2f, %.2f, %.2f", 
+			t->world.val[3][0], 
+			t->world.val[3][1], 
+			t->world.val[3][2] );
+	PrintDebugText( f, string );
 }
