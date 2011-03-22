@@ -63,16 +63,22 @@ const char* stream_nextToken( inputStream* stream ) {
 	// Consume leading whitespace
 	while ( isWhiteSpace( *stream->stream ) )
 			stream->stream++;
-	// measure the length of the token
+	// measure the length of the token - ptr should become one-past-the-end
 	const char* ptr = stream->stream;
-	while ( !isWhiteSpace( *ptr ) && !isTerminator( *ptr ))
+	while ( !isWhiteSpace( *ptr ) && !isTerminator( *ptr )) {
+		if ( isListStart( *ptr ) || isListEnd( *ptr ) ) {
+			if ( ( ptr - stream->stream ) == 0 ) // if parenthesis is first char, push pas it
+				ptr++;	
+			break;
+		}
 		ptr++;
+	}
 	// make a copy of it
 	int length = ptr - stream->stream;
 	char* token = malloc( sizeof( char ) * (length + 1) );
 	strncpy( token, stream->stream, length );
 	token[length] = '\0';
-	stream->stream++; // Advance past the end of the token
+	stream->stream = ptr; // Advance past the end of the token
 	return token;
 }
 

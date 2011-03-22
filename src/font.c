@@ -108,7 +108,7 @@ void vfont_loadTTF( String path ) {
 		if (ch == ASCII_SPACE)
 			w = SPACE_WIDTH;
 		g_glyphSize[ch] = Vector( (float)w, (float)h, 0.f, 0.f );
-		printf( "Glyph: %c : %.2f, %.2f, %.2f, %.2f\n", ch, g_glyphUV[ch].coord.x, g_glyphUV[ch].coord.y, g_glyphUV[ch].coord.z, g_glyphUV[ch].coord.w);
+		//printf( "Glyph: %c : %.2f, %.2f, %.2f, %.2f\n", ch, g_glyphUV[ch].coord.x, g_glyphUV[ch].coord.y, g_glyphUV[ch].coord.z, g_glyphUV[ch].coord.w);
 		row_width[best] += w;
 
 
@@ -133,7 +133,7 @@ void vfont_loadTTF( String path ) {
 	// Validate row heights + starts
 	for (int r = 1; r < ATLAS_ROWS; r ++) {
 		assert( (row_start[r] == row_start[r - 1] + row_height[r - 1]) || ( row_start[r] == 0 && row_width[r] == 0 ) );
-		printf("Row: %d - Start: %d.\n", r, row_start[r] );
+		//printf("Row: %d - Start: %d.\n", r, row_start[r] );
 	}
 }
 
@@ -196,7 +196,7 @@ void font_renderString( float x, float y, String string ) {
 		int advanceWidth;
 		int leftSideBearing;
 		stbtt_GetCodepointHMetrics(&font, (int)string[i], &advanceWidth, &leftSideBearing);
-		printf( "advance: %d.\n", advanceWidth);
+//		printf( "advance: %d.\n", advanceWidth);
 		if ( string[i] != ASCII_SPACE ) {
 			font_renderGlyph( x, y, string[i] );
 			x += glyph_width( string[i] );
