@@ -26,6 +26,8 @@ void render_set3D( int w, int h ) {
 	gluPerspective(45.0, (double)w / (double)h, 1.0, 200.0);
 
 	glEnable( GL_DEPTH_TEST );
+	glDepthFunc( GL_LEQUAL );
+	glDepthMask( GL_TRUE );
 }
 
 void render_set2D() {
@@ -77,7 +79,7 @@ void render_init() {
 	if (!glfwInit())
 		printf("ERROR - failed to init glfw.\n");
 
-	glfwOpenWindow(640, 480, 5, 6, 5, 0, 0, 0, GLFW_WINDOW);
+	glfwOpenWindow(640, 480, 8, 8, 8, 8, 8, 0, GLFW_WINDOW);
 	glfwSetWindowTitle("Vitae");
 	glfwSetWindowSizeCallback(handleResize);
 

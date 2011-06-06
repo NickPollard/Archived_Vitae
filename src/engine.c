@@ -108,7 +108,7 @@ void handleResize(int w_, int h_) {
 	*/
 	w = w_;
 	h = h_;
-	render_set3D( w, h );
+	//render_set3D( w, h );
 }
 
 float angle = 340.f;
@@ -198,6 +198,7 @@ void run() {
 }
 
 void engine_render( engine* e ) {
+	render_set3D( w, h );
 	render_clear();
 	render( theScene );
 	engine_renderRenders( e );
@@ -214,8 +215,7 @@ void engine_run(engine* e) {
 		scene_input( theScene, e->input );
 
 		engine_tick(e);
-		render_set3D( w, h );
-
+		
 		engine_render( e );
 
 		running = !input_keyPressed(e->input, KEY_ESC) && glfwGetWindowParam(GLFW_OPENED);
