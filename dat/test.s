@@ -1,1 +1,2 @@
-((1 test 23)(4 5)(6 (7 8)))
+( scene ( object ( model "cube.obj" )
+				 ( position ( vector 0.0 0.0 0.0 ))))

@@ -4,6 +4,11 @@
 //-----------------------
 #include <assert.h>
 
+//
+// *** File
+//
+
+// file open wrapper that asserts on failure
 FILE* vfile_open( const char* path, const char* mode ) {
    // *** load the ttf file
    FILE* file = fopen( path, mode );
@@ -14,7 +19,9 @@ FILE* vfile_open( const char* path, const char* mode ) {
    return file;
 }
 
-
+// Load the entire contents of a file into a heap-allocated buffer of the same length
+// returns a pointer to that buffer
+// It its the caller's responsibility to free the buffer
 void* vfile_contents(const char *path, int *length)
 {
     FILE *f = fopen(path, "r");
@@ -37,16 +44,20 @@ void* vfile_contents(const char *path, int *length)
     return buffer;
 }
 
+//
+// *** Parsing
+//
+
 // Is the character a whitespace character?
 // eg. space, tab
 int isWhiteSpace( char c ) {
-	return ( c == ' ' );
+	return ( c == ' ' || c == '\n' );
 }
 
 // Is the character a terminator character
 // Eg. NULL-terminator or end of line
 int isTerminator( char c ) {
-	return ( c == '\0' || c == '\n' ); // Or EoF
+	return ( c == '\0' /*|| c == '\n'*/ ); // Or EoF
 }
 
 int isListStart( char c ) {
@@ -57,9 +68,24 @@ int isListEnd( char c ) {
 	return c == ')';
 }
 
+//
+// *** Stream Reading
+//
+
+void inputStream_reset( inputStream* in ) {
+	in->stream = in->source;
+}
+
+inputStream* inputStream_create( const char* source ) {
+	inputStream* in = malloc( sizeof( inputStream ));
+	memset( in, 0, sizeof( inputStream ));
+	in->source = source;
+	in->stream = in->source;
+	return in;
+}
 
 // Returns the next token as a c string, advances the inputstream to the token's end
-const char* stream_nextToken( inputStream* stream ) {
+const char* inputStream_nextToken( inputStream* stream ) {
 	// Consume leading whitespace
 	while ( isWhiteSpace( *stream->stream ) )
 			stream->stream++;
@@ -82,28 +108,47 @@ const char* stream_nextToken( inputStream* stream ) {
 	return token;
 }
 
+//
+// *** S-Expressions
+//
+
 slist* slist_create() {
 	slist* s = malloc( sizeof( slist ));
 	memset( s, 0, sizeof( slist ));
 	return s;
 }
 
+bool isAtom( sterm* s ) {
+	return ( s->type_tag == typeAtom );
+}
+
+bool isList( sterm* s ) {
+	return ( s->type_tag == typeList );
+}
+
+sterm sterm_create( int tag, void* ptr ) {
+	sterm term = { tag, ptr };
+	return term;
+}
+
 // Read a token at a time from the inputstream, advancing the read head,
 // and build it into an slist of atoms
-void sexpr_consume( slist* s, inputStream* in ) {
+void sexpr_consume( slist* s, inputStream* stream ) {
 	while ( true ) {
-		const char* token = stream_nextToken( in );
+		const char* token = inputStream_nextToken( stream );
 		// Step down a level
 		if ( isListStart( *token ) ) {
-			printf( "Found (\n" );
-			s->head = slist_create();
-			sexpr_consume( (slist*)s->head, in );
+//			printf( "Found (\n" );
+			s->head = sterm_create( typeList, slist_create() );
+			s->head.type_tag = typeList;
+			s->head.ptr = slist_create();
+			sexpr_consume( (slist*)s->head.ptr, stream );
 			free( (void*)token ); // discard non-atom tokens
 			continue;
 		}
 		// Step up a level
 		if ( isListEnd( *token ) ) {
-			printf( "Found )\n" );
+//			printf( "Found )\n" );
 			free( (void*)token ); // discard non-atom tokens
 			return;
 		}
@@ -112,33 +157,23 @@ void sexpr_consume( slist* s, inputStream* in ) {
 		}
 		// Add an atom
 		if ( 1 /*isAtom( *token )*/ ) {
-			printf( "Found atom: %s\n", token );
-			if ( s->head ) {
+//			printf( "Found atom: %s\n", token );
+			if ( s->head.ptr ) {
 				s->tail = slist_create();
 				s = s->tail;	
 			}
-			s->head = (void*)token;
+			s->head.type_tag = typeAtom;
+			s->head.ptr = (void*)token;
 		}
 	}
 }
 
-slist* vfile_sread( inputStream* in ) {
+// Build an S-expression from an inputstream of characters
+slist* sepxr_readFile( inputStream* in ) {
 	slist* s = slist_create();
 	s->tail = NULL; // This is the parent list of the file, so has no tail
 	sexpr_consume( s, in );
 	return s;
-}
-
-void inputStream_reset( inputStream* in ) {
-	in->stream = in->source;
-}
-
-inputStream* inputStream_create( const char* source ) {
-	inputStream* in = malloc( sizeof( inputStream ));
-	memset( in, 0, sizeof( inputStream ));
-	in->source = source;
-	in->stream = in->source;
-	return in;
 }
 
 void test_sfile( ) {
@@ -147,7 +182,7 @@ void test_sfile( ) {
 
 	// TODO can this be stack allocated? Look at more stack allocation rather than heap
 	inputStream* in = inputStream_create( contents );
-	slist* s = vfile_sread( in );
+	slist* s = sepxr_readFile( in );
 	(void)s;
 }
 
