@@ -211,18 +211,6 @@ sterm* consume( inputStream* stream ) {
 	return sterm_create( typeAtom, (void*)token );
 }
 
-void test_sfile( ) {
-	int length = 0;
-	char* contents = vfile_contents( "dat/test2.s", &length );
-
-	// TODO can this be stack allocated? Look at more stack allocation rather than heap
-	inputStream* in = inputStream_create( contents );
-	sterm* s = consume( in );
-	(void)s;
-
-	free( contents );
-}
-
 /*
 sexpr_read( sexpr s, inputStream* in) {
 	if ( is_atom( s ))
@@ -240,9 +228,27 @@ scene* scene_load( slist* data ) {
 }
 */
 
+void* s_print( sterm* s );
+void* s_concat( sterm* s );
+
+bool strEq( const char* a, const char* b ) {
+	return ( strcmp( a, b ) == 0 );
+}
+
 // TODO PLACEHOLDER
-void* lookup( void* data ) {
-	return data;
+void* lookup( const char* data ) {
+	if ( strEq( data, "print" ) ) {
+		sterm* print = sterm_create( typeFunc, s_print );
+		return print;
+	}
+	if ( strEq( data, "concat" ) ) {
+		sterm* concat = sterm_create( typeFunc, s_concat );
+		return concat;
+	}
+	return (void*)data;
+//	printf( "Lookup invalid.\n" );
+//	assert( 0 );
+//	return NULL;
 }
 
 bool isFunction( sterm* s ) {
@@ -260,10 +266,10 @@ void* eval( sterm* data ) {
 		return lookup( (void*)getAtom( data ) );
 	}
 	else if ( isList( data ) ) {
-		// If evaluating a list, the head must be eval to an atom
+		// If evaluating a list, the head must eval to an atom
 		// That atom must be a function?
 		sterm* func = eval( data->head );
-		assert( isFunction( func ));
+		assert( isFunction( func ) );
 		return ((sfunc)func->head)( data->tail );
 	}
 	else {
@@ -273,6 +279,48 @@ void* eval( sterm* data ) {
 	return NULL;
 }
 
+void* s_concat( sterm* s ) {
+	int size = 0;
+	char* string = NULL;
+	while( s ) {
+		const char* text = (const char*)((sterm*)s->head)->head;
+		int extra = strlen( text );
+		char* tmp = malloc( sizeof( char ) * ( size + extra + 1 ) );
+		strncpy( tmp, string, size );
+		strncpy( tmp + size, text, extra );
+		free( string );
+		string = tmp;
+		size += extra;
+		string[size] = '\0';
+		s = s->tail;
+	}
+	return string;
+}
+
+void* s_print( sterm* s ) {
+	printf( "> s_print(): " );
+	while( s ) {
+		const char* string = eval( s->head );
+		printf( "%s", string );
+		s = s->tail;
+	}
+	printf( "\n" );
+	return NULL;
+}
+
+void test_sfile( ) {
+	int length = 0;
+	char* contents = vfile_contents( "dat/test2.s", &length );
+
+	// TODO can this be stack allocated? Look at more stack allocation rather than heap
+	inputStream* in = inputStream_create( contents );
+	sterm* s = consume( in );
+	(void)s;
+
+	eval( s );
+
+	free( contents );
+}
 /*
 // Process a vector
 // Expects a list of floats
