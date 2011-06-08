@@ -51,7 +51,7 @@ void* vfile_contents(const char *path, int *length)
 // Is the character a whitespace character?
 // eg. space, tab
 int isWhiteSpace( char c ) {
-	return ( c == ' ' || c == '\n' );
+	return ( c == ' ' || c == '\n' || c == '\t' );
 }
 
 // Is the character a terminator character
@@ -78,14 +78,14 @@ void inputStream_reset( inputStream* in ) {
 
 inputStream* inputStream_create( const char* source ) {
 	inputStream* in = malloc( sizeof( inputStream ));
-	memset( in, 0, sizeof( inputStream ));
+	assert( in );
 	in->source = source;
 	in->stream = in->source;
 	return in;
 }
 
 // Returns the next token as a c string, advances the inputstream to the token's end
-const char* inputStream_nextToken( inputStream* stream ) {
+char* inputStream_nextToken( inputStream* stream ) {
 	// Consume leading whitespace
 	while ( isWhiteSpace( *stream->stream ) )
 			stream->stream++;
@@ -112,37 +112,42 @@ const char* inputStream_nextToken( inputStream* stream ) {
 // *** S-Expressions
 //
 
+/*
 slist* slist_create() {
 	slist* s = malloc( sizeof( slist ));
 	memset( s, 0, sizeof( slist ));
 	return s;
 }
+*/
 
 bool isAtom( sterm* s ) {
-	return ( s->type_tag == typeAtom );
+	return ( s->type == typeAtom );
 }
 
 bool isList( sterm* s ) {
-	return ( s->type_tag == typeList );
+	return ( s->type == typeList );
 }
 
-sterm sterm_create( int tag, void* ptr ) {
-	sterm term = { tag, ptr };
+sterm* sterm_create( int tag, void* ptr ) {
+	sterm* term = malloc( sizeof( term ) );
+	term->type = tag;
+	term->head = ptr;
+	term->tail = NULL;
 	return term;
 }
 
+/*
 // Read a token at a time from the inputstream, advancing the read head,
 // and build it into an slist of atoms
-void sexpr_consume( slist* s, inputStream* stream ) {
+void sexpr_consume( sterm* s, inputStream* stream ) {
 	while ( true ) {
 		const char* token = inputStream_nextToken( stream );
 		// Step down a level
 		if ( isListStart( *token ) ) {
 //			printf( "Found (\n" );
-			s->head = sterm_create( typeList, slist_create() );
-			s->head.type_tag = typeList;
-			s->head.ptr = slist_create();
-			sexpr_consume( (slist*)s->head.ptr, stream );
+			s->type = typeList;
+			s->head = sterm_create( typeNull, NULL );
+			sexpr_consume( s->head, stream );
 			free( (void*)token ); // discard non-atom tokens
 			continue;
 		}
@@ -156,34 +161,66 @@ void sexpr_consume( slist* s, inputStream* stream ) {
 			return; // End of stream
 		}
 		// Add an atom
-		if ( 1 /*isAtom( *token )*/ ) {
+		if ( 1  ) {
 //			printf( "Found atom: %s\n", token );
-			if ( s->head.ptr ) {
-				s->tail = slist_create();
+			if ( s->head ) {
+				s->tail = sterm_create( typeList, NULL );
 				s = s->tail;	
 			}
-			s->head.type_tag = typeAtom;
-			s->head.ptr = (void*)token;
+			s->head = sterm_create( typeAtom, (void*)token );
+			return;
 		}
 	}
 }
+*/
 
-// Build an S-expression from an inputstream of characters
-slist* sepxr_readFile( inputStream* in ) {
-	slist* s = slist_create();
-	s->tail = NULL; // This is the parent list of the file, so has no tail
-	sexpr_consume( s, in );
-	return s;
+// Read a token at a time from the inputstream, advancing the read head,
+// and build it into an slist of atoms
+sterm* consume( inputStream* stream ) {
+	char* token = inputStream_nextToken( stream );
+	if ( isListEnd( *token ) ) {
+		free( token ); // It's a bracket, discard it
+		return NULL;
+	}
+	if ( isListStart( *token ) ) {
+		free( token ); // It's a bracket, discard it
+		printf( "List: (\n" );
+		sterm* list = sterm_create( typeList, NULL );
+		sterm* s = list;
+
+		s->head = consume( stream );
+		if ( !s->head ) { // The Empty list () 
+			printf( "List: )\n" );
+			return list;
+		}
+
+		while ( true ) {
+			sterm* sub_expr = consume( stream );					// Consume a subexpr
+			if ( sub_expr ) {									// If a valid return
+				s->tail = sterm_create( typeList, NULL );	// Add it to the tail
+				s = s->tail;
+				s->head = sub_expr;
+			} else {
+				printf( "List: )\n" );
+				return list;
+			}
+		}
+	}
+	printf( "Atom: %s\n", token );
+	// When it's an atom, we keep the token, don't free it
+	return sterm_create( typeAtom, (void*)token );
 }
 
 void test_sfile( ) {
 	int length = 0;
-	const char* contents = vfile_contents( "dat/test.s", &length );
+	char* contents = vfile_contents( "dat/test2.s", &length );
 
 	// TODO can this be stack allocated? Look at more stack allocation rather than heap
 	inputStream* in = inputStream_create( contents );
-	slist* s = sepxr_readFile( in );
+	sterm* s = consume( in );
 	(void)s;
+
+	free( contents );
 }
 
 /*
@@ -193,4 +230,117 @@ sexpr_read( sexpr s, inputStream* in) {
 	for each sexpr su: sexpr_read (su)
 }
 */
+#if 1
 
+// Load a scene from a .sc file (s-expression based)
+/*
+scene* scene_load( slist* data ) {
+	scene* s = scene_create();
+	process( data );
+}
+*/
+
+// TODO PLACEHOLDER
+void* lookup( void* data ) {
+	return data;
+}
+
+bool isFunction( sterm* s ) {
+	return s->type == typeFunc;
+}
+
+const char* getAtom( sterm* term ) {
+	assert( term->type = typeAtom );
+	return (const char*)term->head;
+}
+
+void* eval( sterm* data ) {
+	if ( isAtom( data ) ) {
+		// It's either a function, a string, or a number
+		return lookup( (void*)getAtom( data ) );
+	}
+	else if ( isList( data ) ) {
+		// If evaluating a list, the head must be eval to an atom
+		// That atom must be a function?
+		sterm* func = eval( data->head );
+		assert( isFunction( func ));
+		return ((sfunc)func->head)( data->tail );
+	}
+	else {
+		printf( "Unrecognised Sterm type: %d.\n", data->type );
+		assert( 0 );
+	}
+	return NULL;
+}
+
+/*
+// Process a vector
+// Expects a list of floats
+void* vector_process( sterm* s ) {
+	vector v = vector_create();
+	v[3] = 0.f;
+	int i = 0;
+	while( s && i < 4 ) {
+		sterm result = eval( s->head );
+		assert( asFloat( result ) );
+		v[i] = asFloat( result );
+		i++;
+		s = s->tail;
+	}
+	assert( i > 2 );
+	return v;
+}
+*/
+
+/*
+// Evaluate a list of sterms
+void* eval( slist* data ) {
+	if ( isAtom( data->head ) ) {
+//		return lookup( data->head.ptr );
+	}
+	else if ( isList( data->head )) {
+		return eval( data->head->head )( data->head->tail );
+	}
+}
+// Create the objects indicated by a data file
+// The file should have only one root
+void load( slist* data ) {
+	// find the function defined by the head
+	// Call it with the data defined by the tail
+	eval( data );
+}
+
+void file_load( const char* filename ) {
+	int length = 0;
+	const char* contents = vfile_contents( filename, &length );
+	inputStream* in = inputStream_create( contents );
+	slist* s = sexpr_readFile( in );
+	load( s );
+}
+
+
+void scene_parse( scene* s, slist* data ) {
+	
+
+
+	if slist->head isToken
+	{
+		token = slist->head
+		if ( token == 'object' ) {
+			object obj = object_create();
+			object_parse( obj, slist->tail );
+		}
+	}	
+}
+
+// called once for each argument to scene
+void scene_process( void* context, slist* data ) {
+	
+//( scene ( object ( model "cube.obj" )
+//				 ( position ( vector 0.0 0.0 0.0 ))))
+
+//		create a scene, scene->parse( subtree)
+//		create an object, object->parase(subtree);
+}
+*/
+#endif
