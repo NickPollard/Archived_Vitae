@@ -7,19 +7,9 @@ enum tag_type {
 	typeNull,
 	typeList,
 	typeAtom,
-	typeFunc
+	typeFunc,
+	typeModel
 };
-/*
-typedef struct sterm_s {
-	int		type;
-	void*	ptr;
-} sterm;
-
-typedef struct slist_s {
-	struct slist_s* tail;
-	sterm*	head;
-} slist;
-*/
 
 typedef struct sterm_s {	int		type;
 							void*	head;

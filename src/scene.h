@@ -63,6 +63,8 @@ void scene_setAmbient(scene* s, float r, float g, float b, float a);
 
 void scene_setCamera(scene* s, float x, float y, float z, float w);
 
+void scene_addModel(scene* s, model* m);
+
 model* scene_getModel(scene* s, int i);
 
 // Initialise a scene with some test data

@@ -1,6 +1,9 @@
 // file.c
 #include "common.h"
 #include "file.h"
+// TEMP
+#include "model.h"
+#include "scene.h"
 //-----------------------
 #include <assert.h>
 
@@ -86,7 +89,7 @@ inputStream* inputStream_create( const char* source ) {
 
 // Returns the next token as a c string, advances the inputstream to the token's end
 char* inputStream_nextToken( inputStream* stream ) {
-	// Consume leading whitespace
+	// parse leading whitespace
 	while ( isWhiteSpace( *stream->stream ) )
 			stream->stream++;
 	// measure the length of the token - ptr should become one-past-the-end
@@ -128,6 +131,10 @@ bool isList( sterm* s ) {
 	return ( s->type == typeList );
 }
 
+bool isModel( sterm* s ) {
+	return ( s->type == typeModel );
+}
+
 sterm* sterm_create( int tag, void* ptr ) {
 	sterm* term = malloc( sizeof( term ) );
 	term->type = tag;
@@ -136,47 +143,9 @@ sterm* sterm_create( int tag, void* ptr ) {
 	return term;
 }
 
-/*
 // Read a token at a time from the inputstream, advancing the read head,
 // and build it into an slist of atoms
-void sexpr_consume( sterm* s, inputStream* stream ) {
-	while ( true ) {
-		const char* token = inputStream_nextToken( stream );
-		// Step down a level
-		if ( isListStart( *token ) ) {
-//			printf( "Found (\n" );
-			s->type = typeList;
-			s->head = sterm_create( typeNull, NULL );
-			sexpr_consume( s->head, stream );
-			free( (void*)token ); // discard non-atom tokens
-			continue;
-		}
-		// Step up a level
-		if ( isListEnd( *token ) ) {
-//			printf( "Found )\n" );
-			free( (void*)token ); // discard non-atom tokens
-			return;
-		}
-		if ( isTerminator( *token )) {
-			return; // End of stream
-		}
-		// Add an atom
-		if ( 1  ) {
-//			printf( "Found atom: %s\n", token );
-			if ( s->head ) {
-				s->tail = sterm_create( typeList, NULL );
-				s = s->tail;	
-			}
-			s->head = sterm_create( typeAtom, (void*)token );
-			return;
-		}
-	}
-}
-*/
-
-// Read a token at a time from the inputstream, advancing the read head,
-// and build it into an slist of atoms
-sterm* consume( inputStream* stream ) {
+sterm* parse( inputStream* stream ) {
 	char* token = inputStream_nextToken( stream );
 	if ( isListEnd( *token ) ) {
 		free( token ); // It's a bracket, discard it
@@ -184,40 +153,46 @@ sterm* consume( inputStream* stream ) {
 	}
 	if ( isListStart( *token ) ) {
 		free( token ); // It's a bracket, discard it
-		printf( "List: (\n" );
 		sterm* list = sterm_create( typeList, NULL );
 		sterm* s = list;
 
-		s->head = consume( stream );
+		s->head = parse( stream );
 		if ( !s->head ) { // The Empty list () 
-			printf( "List: )\n" );
 			return list;
 		}
 
 		while ( true ) {
-			sterm* sub_expr = consume( stream );					// Consume a subexpr
+			sterm* sub_expr = parse( stream );					// parse a subexpr
 			if ( sub_expr ) {									// If a valid return
 				s->tail = sterm_create( typeList, NULL );	// Add it to the tail
 				s = s->tail;
 				s->head = sub_expr;
 			} else {
-				printf( "List: )\n" );
 				return list;
 			}
 		}
 	}
-	printf( "Atom: %s\n", token );
 	// When it's an atom, we keep the token, don't free it
 	return sterm_create( typeAtom, (void*)token );
 }
 
-/*
-sexpr_read( sexpr s, inputStream* in) {
-	if ( is_atom( s ))
-		return atom_read( s );
-	for each sexpr su: sexpr_read (su)
+sterm* parse_string( const char* string ) {
+	inputStream* stream = inputStream_create( string );
+	sterm* s = parse( stream );
+	free( stream );
+	return s;
 }
-*/
+
+sterm* parse_file( const char* filename ) {
+	int length = 0;
+	char* contents = vfile_contents( filename, &length );
+	assert( contents );
+	assert( length != 0 );
+	sterm* s = parse_string( contents );
+	free( contents );
+	return s;
+}
+
 #if 1
 
 // Load a scene from a .sc file (s-expression based)
@@ -230,25 +205,25 @@ scene* scene_load( slist* data ) {
 
 void* s_print( sterm* s );
 void* s_concat( sterm* s );
+void* s_model( sterm* s );
+void* s_scene( sterm* s );
 
 bool strEq( const char* a, const char* b ) {
 	return ( strcmp( a, b ) == 0 );
 }
 
+#define S_FUNC( atom, func )	if ( strEq( data, atom ) ) { \
+									sterm* s = sterm_create( typeFunc, func ); \
+									return s; \
+								}
+
 // TODO PLACEHOLDER
 void* lookup( const char* data ) {
-	if ( strEq( data, "print" ) ) {
-		sterm* print = sterm_create( typeFunc, s_print );
-		return print;
-	}
-	if ( strEq( data, "concat" ) ) {
-		sterm* concat = sterm_create( typeFunc, s_concat );
-		return concat;
-	}
+	S_FUNC( "print", s_print )
+	S_FUNC( "concat", s_concat )
+	S_FUNC( "model", s_model )
+	S_FUNC( "scene", s_scene )
 	return (void*)data;
-//	printf( "Lookup invalid.\n" );
-//	assert( 0 );
-//	return NULL;
 }
 
 bool isFunction( sterm* s ) {
@@ -279,11 +254,26 @@ void* eval( sterm* data ) {
 	return NULL;
 }
 
+void sterm_free( sterm* s ) {
+	if ( isAtom( s ) ) {
+		free( s->head );
+		free( s );
+	}
+	if ( isList( s ) ) {
+		if ( s->tail )
+			sterm_free( s->tail );
+		if ( s->head )
+			sterm_free( s->head );
+		free( s );
+	}
+}
+
 void* s_concat( sterm* s ) {
 	int size = 0;
 	char* string = NULL;
 	while( s ) {
-		const char* text = (const char*)((sterm*)s->head)->head;
+		const char* text = eval( s->head );
+		//const char* text = (const char*)((sterm*)s->head)->head;
 		int extra = strlen( text );
 		char* tmp = malloc( sizeof( char ) * ( size + extra + 1 ) );
 		strncpy( tmp, string, size );
@@ -308,18 +298,63 @@ void* s_print( sterm* s ) {
 	return NULL;
 }
 
+// S is a list of model attributes
+void* s_model( sterm* s ) {
+	printf( "Model\n" );
+	while( s ) {
+//		attribute a = eval( s->head );
+		s = s->tail;
+	}
+	model* m = model_createTestCube();
+	sterm* model_term = sterm_create( typeModel, m );
+	return model_term;
+}
+
+void* s_scene( sterm* s ) {
+	printf( "Scene\n" );
+	scene* _scene = scene_create();
+	while( s ) {
+		sterm* e = eval( s->head );
+		if ( isModel( e ) ) {
+			model* _model = (model*)e->head;
+			scene_addModel( _scene, _model );
+		}
+		s = s->tail;
+	}
+	return _scene;
+}
+
+// *** Testing
+
+// Tests s_concat, eval, parse, inputStream
+void test_s_concat() {
+	sterm* s = parse_string( "(concat Hello World)" );
+	char* result = eval( s );
+
+	assert( strcmp( result, "HelloWorld" ) == 0 );
+	assert( strcmp( result, "HellooWorld" ) != 0 );
+
+	sterm_free( s );
+	return;
+}
+
+// Tests s_scene, s_model, eval, parse, inputStream
+void test_s_scene() {
+	sterm* s = parse_string( "(scene (model))" );
+	scene* _scene = eval( s );
+	(void)_scene;
+
+	sterm_free( s );
+	return;
+}
+
 void test_sfile( ) {
-	int length = 0;
-	char* contents = vfile_contents( "dat/test2.s", &length );
-
-	// TODO can this be stack allocated? Look at more stack allocation rather than heap
-	inputStream* in = inputStream_create( contents );
-	sterm* s = consume( in );
-	(void)s;
-
+	sterm* s = parse_file( "dat/test2.s" );
 	eval( s );
+	sterm_free( s );
 
-	free( contents );
+	test_s_concat();
+	test_s_scene();
 }
 /*
 // Process a vector
