@@ -24,7 +24,7 @@
 // *** Scene ***
 struct scene_s {
 	int			modelCount;
-	model*		models[MAX_MODELS];
+	modelInstance*	models[MAX_MODELS];
 	int			lightCount;
 	light*		lights[MAX_LIGHTS];
 	transform	transforms[MAX_TRANSFORMS];
@@ -63,9 +63,11 @@ void scene_setAmbient(scene* s, float r, float g, float b, float a);
 
 void scene_setCamera(scene* s, float x, float y, float z, float w);
 
-void scene_addModel(scene* s, model* m);
+void scene_addModel(scene* s, modelInstance* m);
 
-model* scene_getModel(scene* s, int i);
+void scene_addTransform( scene* s, transform* t );
+
+modelInstance* scene_getModel(scene* s, int i);
 
 // Initialise a scene with some test data
 void test_scene_init(scene* s);

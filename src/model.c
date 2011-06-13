@@ -4,7 +4,6 @@
 #include "model.h"
 //-----------------------
 #include "maths.h"
-#include "transform.h"
 #include "engine.h"
 #include "mem/allocator.h"
 #include "render/texture.h"
@@ -88,10 +87,9 @@ mesh* mesh_createMesh(int vertCount, int indexCount) {
 }
 
 // Create a test model of a cube
-model* model_createTestCube() {
+model* model_createTestCube( ) {
 	model* m = model_createModel(/* meshCount */ 1);
 	mesh* me = mesh_createTestCube();
-	m->trans = transform_create(theScene);
 	m->meshes[0] = me;
 	return m;
 }
@@ -124,12 +122,9 @@ mesh* model_getMesh(model* m, int i) {
 }
 
 // Draw each submesh of a model
-void model_draw(model* m) {
+void model_draw( model* m ) {
 	vglBindTexture( g_texture_default );
-	glPushMatrix();
-	glMultMatrixf(matrix_getGlMatrix(&m->trans->world));
 	for (int i = 0; i < m->meshCount; i++) {
-		mesh_drawVerts(model_getMesh(m, i));
+		mesh_drawVerts( model_getMesh( m, i ));
 	}
-	glPopMatrix();
 }

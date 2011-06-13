@@ -12,6 +12,7 @@
 #include "render/debugdraw.h"
 #include "render/render.h"
 #include "debug/debugtext.h"
+#include "system/file.h"
 
 // Lua Libraries
 #include <lauxlib.h>
@@ -47,7 +48,12 @@ void test_engine_init( engine* e ) {
 	e->debugtext = f;
 
 	theScene = scene_create();
+	/*
+	sterm* data = parse_string( "(scene (model))" );
+	theScene = eval( data );
+	sterm_free( data );
 	theScene->debugtext = e->debugtext;
+	*/
 	
 	test_scene_init(theScene);
 }

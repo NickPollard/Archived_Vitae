@@ -2,6 +2,7 @@
 #include "transform.h"
 //-------------------------
 #include "scene.h"
+#include "mem/allocator.h"
 #include "debug/debugtext.h"
 
 void transform_setWorldSpace();
@@ -10,14 +11,25 @@ void transform_setLocalSpace();
 
 // Create a new default transform
 transform* transform_create(scene* s) {
-	transform* t = &s->transforms[s->transformCount];
-	s->transformCount++;
+	assert( s->transformCount < MAX_TRANSFORMS );
+	transform* t = &s->transforms[s->transformCount++];
 	matrix_setIdentity(&t->local);
 	matrix_setIdentity(&t->world);
 	t->parent = NULL;
 	t->isDirty = 0;
 	return t;
 }
+
+// Create a new default transform
+transform* transform_createEmpty() {
+	transform* t = mem_alloc( sizeof( transform ));
+	matrix_setIdentity(&t->local);
+	matrix_setIdentity(&t->world);
+	t->parent = NULL;
+	t->isDirty = 0;
+	return t;
+}
+
 
 // Create a new default transform with the given parent
 transform* transform_create_Parent(scene* s, transform* parent) {

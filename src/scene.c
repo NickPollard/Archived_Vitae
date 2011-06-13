@@ -9,13 +9,14 @@
 #include "model.h"
 #include "mem/allocator.h"
 #include "render/debugdraw.h"
+#include "render/modelinstance.h"
 #include "font.h"
 #include "debug/debugtext.h"
 
 // *** static data
 
-model* testModelA = NULL;
-model* testModelB = NULL;
+modelInstance* testModelA = NULL;
+modelInstance* testModelB = NULL;
 transform* t2 = NULL;
 
 keybind scene_debug_transforms_toggle;
@@ -25,23 +26,36 @@ void scene_static_init( ) {
 	input_setDefaultKeyBind( scene_debug_transforms_toggle, KEY_T );
 }
 
-void scene_addModel(scene* s, model* m) {
+//void scene_addModel( scene* s, model* m ) {
+//	s->models[s->modelCount++] = m;
+//}
+
+void scene_addModel( scene* s, modelInstance* m ) {
 	s->models[s->modelCount++] = m;
 }
 
-void scene_addLight(scene* s, light* l) {
+void scene_addLight( scene* s, light* l ) {
 	s->lights[s->lightCount++] = l;
 }
 
-model* scene_getModel(scene* s, int i) {
+void scene_addTransform( scene* s, transform* t ) {
+	memcpy(	&s->transforms[s->transformCount++], t, sizeof( transform ));
+}
+
+modelInstance* scene_getModel(scene* s, int i) {
 	return s->models[i];
 }	
 
 // Initialise a scene with some test data
-void test_scene_init(scene* s) {
-	testModelA = model_createTestCube();
-	testModelB = model_createTestCube();
-	transform* t = transform_create(s);
+void test_scene_init( scene* s ) {
+	model* testCube = model_createTestCube();
+	testModelA = modelInstance_create( testCube );
+	testModelB = modelInstance_create( testCube );
+	testModelA->trans = transform_create( s );
+	testModelB->trans = transform_create( s );
+//	testModelA = model_createTestCube( s );
+//	testModelB = model_createTestCube( s );
+	transform* t = transform_create( s );
 	testModelA->trans->parent = t;
 	testModelB->trans->parent = t;
 	vector translate = Vector( -2.f, 0.f, 0.f, 1.f );
@@ -129,11 +143,24 @@ void test_scene_tick(scene* s, float dt) {
 	float animate = 2.f * sinf(time * 2 * PI / period);
 	// Animate cubes
 	vector translateA = Vector( animate, 0.f, 0.f, 1.f );
-	transform_setLocalTranslation(testModelA->trans, &translateA);
+	transform_setLocalTranslation( testModelA->trans, &translateA );
 	vector translateB = Vector( 0.f, animate, 0.f, 1.f );
-	transform_setLocalTranslation(testModelB->trans, &translateB);
+	transform_setLocalTranslation( testModelB->trans, &translateB );
 	
 	vector translateC = Vector( 0.f, 0.f, animate,  1.f );
 	transform_setLocalTranslation(t2, &translateC);
+}
+
+//
+// Load a pre-computed scene
+//
+
+void scene_load( ) {
+	// The scene can just be copied
+	// The scene contains the transforms, so they come with it
+	// Pointers will need fixing up
+	// Need to copy models somewhere - where should they be stored?
+	//	- Should probably be some centralised model storage, might need to be defragged
+	//	- Wait - we only have modelinstances, not models.
 }
 

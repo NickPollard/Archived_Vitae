@@ -23,7 +23,6 @@ struct mesh_s {
    A Model contains many meshes, each of which use a given shader
    */
 struct model_s {
-	transform*	trans;
 	int			meshCount;
 	mesh*		meshes[MAX_SUBMESHES];
 };
@@ -35,7 +34,7 @@ mesh* mesh_createTestCube();
 mesh* mesh_createMesh(int vertCount, int indexCount);
 
 // Create a test model of a cube
-model* model_createTestCube();
+model* model_createTestCube( );
 
 // Create an empty model with meshCount submeshes
 model* model_createModel(int meshCount);

@@ -135,6 +135,10 @@ bool isModel( sterm* s ) {
 	return ( s->type == typeModel );
 }
 
+bool isTransform( sterm* s ) {
+	return ( s->type == typeTransform );
+}
+
 sterm* sterm_create( int tag, void* ptr ) {
 	sterm* term = malloc( sizeof( term ) );
 	term->type = tag;
@@ -206,7 +210,7 @@ scene* scene_load( slist* data ) {
 void* s_print( sterm* s );
 void* s_concat( sterm* s );
 void* s_model( sterm* s );
-void* s_scene( sterm* s );
+//void* s_scene( sterm* s );
 
 bool strEq( const char* a, const char* b ) {
 	return ( strcmp( a, b ) == 0 );
@@ -218,11 +222,12 @@ bool strEq( const char* a, const char* b ) {
 								}
 
 // TODO PLACEHOLDER
+// ( should be a hash lookup or similar )
 void* lookup( const char* data ) {
 	S_FUNC( "print", s_print )
 	S_FUNC( "concat", s_concat )
 	S_FUNC( "model", s_model )
-	S_FUNC( "scene", s_scene )
+//	S_FUNC( "scene", s_scene )
 	return (void*)data;
 }
 
@@ -309,20 +314,55 @@ void* s_model( sterm* s ) {
 	sterm* model_term = sterm_create( typeModel, m );
 	return model_term;
 }
+/*
+// Adds all the children of a node to the scene
+void scene_addChildren( scene* s, sterm* parent ) {
+	sterm* child = parent->children;
+	while ( child ) {
+		scene_add( s, child->head );
+		child = child->tail;
+	}
+}
 
-void* s_scene( sterm* s ) {
+// Adds a node to a scene
+void scene_add( scene* s, sterm* object ) {
+	if ( isModel( object ) ) {
+		model* _model = (model*)object->head;
+		scene_addModel( _scene, _model );
+	}
+	else
+		if ( isTransform( object ) ) {
+			transform_data* data = (transform*)object->head;
+			scene_addTransform( _scene, data->_transform );
+			scene_addChildren( _scene, data );
+		}
+}
+*/
+/*
+	s_scene
+	Argument list contains scene object trees
+	ie. transforms, models, or transforms containing sub-items
+	s_scene needs to recursively load these trees, setting up correct
+	transform trees and parents
+   */
+/*
+void* s_scene( sterm* args ) {
 	printf( "Scene\n" );
 	scene* _scene = scene_create();
-	while( s ) {
-		sterm* e = eval( s->head );
-		if ( isModel( e ) ) {
-			model* _model = (model*)e->head;
-			scene_addModel( _scene, _model );
+	while( args ) {
+		sterm* object = eval( args->head );
+		if ( isModel( object ) ) {
+			scene_addModel( _scene, (model*)object->head );
 		}
-		s = s->tail;
+	   	else
+		if ( isTransform( object ) ) {
+			scene_addTransform( _scene, (transform*)object->head );
+		}
+		args = args->tail;
 	}
 	return _scene;
 }
+*/
 
 // *** Testing
 
@@ -354,7 +394,7 @@ void test_sfile( ) {
 	sterm_free( s );
 
 	test_s_concat();
-	test_s_scene();
+//	test_s_scene();
 }
 /*
 // Process a vector

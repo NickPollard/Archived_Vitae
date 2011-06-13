@@ -9,6 +9,7 @@
 #include "model.h"
 #include "scene.h"
 #include "render/debugdraw.h"
+#include "render/modelinstance.h"
 #include "render/texture.h"
 // temp
 #include "engine.h"
@@ -49,7 +50,7 @@ void render_set2D() {
 // Then draw all the submeshes
 void render_scene(scene* s) {
 	for (int i = 0; i < s->modelCount; i++) {
-		model_draw(scene_getModel(s, i));
+		modelInstance_draw( scene_getModel( s, i ));
 	}
 }
 
