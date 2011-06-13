@@ -73,7 +73,7 @@ void scene_addTransform( scene* s, transform* t );
 modelInstance* scene_getModel(scene* s, int i);
 
 // Initialise a scene with some test data
-void test_scene_init(scene* s);
+scene* test_scene_init();
 
 void test_scene_tick(scene* s, float dt);
 

@@ -18,6 +18,7 @@
 modelInstance* testModelA = NULL;
 modelInstance* testModelB = NULL;
 transform* t2 = NULL;
+scene* scene_load( int n_bytes, void* src );
 
 keybind scene_debug_transforms_toggle;
 
@@ -47,14 +48,14 @@ modelInstance* scene_getModel(scene* s, int i) {
 }	
 
 // Initialise a scene with some test data
-void test_scene_init( scene* s ) {
+scene* test_scene_init( ) {
+	scene* s = scene_create();
+
 	modelHandle testCube = model_getHandleFromFilename( "invalid.obj" );
 	testModelA = modelInstance_create( testCube );
 	testModelB = modelInstance_create( testCube );
 	testModelA->trans = transform_create( s );
 	testModelB->trans = transform_create( s );
-//	testModelA = model_createTestCube( s );
-//	testModelB = model_createTestCube( s );
 	transform* t = transform_create( s );
 	testModelA->trans->parent = t;
 	testModelB->trans->parent = t;
@@ -69,12 +70,89 @@ void test_scene_init( scene* s ) {
 	scene_setAmbient(s, 0.2f, 0.2f, 0.2f, 1.f);
 
 	light* l = light_createWithTransform(s);
+	
 	vector lightPos = {{ 1.f, 1.f, 1.f, 1.f }};
 	light_setPosition(l, &lightPos);
 	light_setDiffuse(l, 1.f, 0.f, 0.f, 1.f);
+
 	scene_addLight(s, l);
 
 	scene_setCamera(s, 0.f, 0.f, 10.f, 1.f);
+
+	int size = ( sizeof( scene ) +
+				 sizeof( modelInstance* ) * MAX_MODELS + 
+				 sizeof( light* ) * MAX_LIGHTS + 
+				 sizeof( transform ) * 6 +
+				 sizeof( modelInstance ) * 2 +
+				 sizeof( light ));
+	void* buffer = malloc( size );
+
+	void* data = buffer;
+	// Pack data
+	scene* _scene = data;
+	memcpy( data, s, sizeof( scene ));
+	data += sizeof( scene );
+
+	modelInstance** models = data;
+	data += sizeof( modelInstance* ) * MAX_MODELS;
+
+	light** lights = data;
+	data += sizeof( light* ) * MAX_LIGHTS;
+
+	modelInstance* a = data;
+	memcpy( data, testModelA, sizeof( modelInstance ));
+	data += sizeof( modelInstance );
+
+	modelInstance* b = data;
+	memcpy( data, testModelB, sizeof( modelInstance ));
+	data += sizeof( modelInstance );
+
+	transform* ta = data;
+	memcpy( data, testModelA->trans, sizeof( transform ));
+	data += sizeof( transform );
+
+	transform* tb = data;
+	memcpy( data, testModelB->trans, sizeof( transform ));
+	data += sizeof( transform );
+
+	transform* _t = data;
+	memcpy( data, t, sizeof( transform ));
+	data += sizeof( transform );
+
+	transform* _t2 = data;
+	memcpy( data, t2, sizeof( transform ));
+	data += sizeof( transform );
+
+	transform* _tl = data;
+	memcpy( data, l->trans, sizeof( transform ));
+	data += sizeof( transform );
+	
+	transform* _tc = data;
+	memcpy( data, s->cam->trans, sizeof( transform ));
+	data += sizeof( transform );
+
+	light* _l = data;
+	memcpy( data, l, sizeof( light ));
+
+	_scene->models = models;
+	_scene->models[0] = a;
+	_scene->models[1] = b;
+	_scene->lights = lights;
+	_scene->lights[0] = _l;
+	_scene->transforms = ta;
+	_scene->cam->trans = _tc;
+	l->trans = _tl;
+	a->trans = ta;
+	b->trans = tb;
+	ta->parent = _t;
+	tb->parent = _t;
+	_t->parent = _t2;
+
+
+	// Fix-up pointers
+
+	scene* s2 = scene_load( size, buffer );
+	return s2;
 }
 
 void glTranslate_vector(vector* v) {
@@ -158,7 +236,7 @@ void test_scene_tick(scene* s, float dt) {
 // Load a pre-computed scene
 //
 
-void scene_load( int n_bytes, void* src ) {
+scene* scene_load( int n_bytes, void* src ) {
 	void* dst = mem_alloc( n_bytes );
 	int offset = dst - src;
 	memcpy( dst, src, n_bytes );
@@ -170,6 +248,7 @@ void scene_load( int n_bytes, void* src ) {
 	s->lights		+= offset;
 	// Transforms
 	for ( int i = 0; i < s->transform_count; i++ ) {
+		printf(" transform %d.\n", i );
 		transform* t = &s->transforms[i];
 		if ( t->parent )	// Don't need to update NULL parents
 			t->parent += offset;
@@ -192,5 +271,6 @@ void scene_load( int n_bytes, void* src ) {
 		if ( l->trans )	// Don't need to update NULL transforms
 			l->trans += offset;
 	}
+	return dst;
 }
 

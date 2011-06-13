@@ -47,7 +47,6 @@ void test_engine_init( engine* e ) {
 	engine_addRender( e, (void*)f, debugtextframe_render );
 	e->debugtext = f;
 
-	theScene = scene_create();
 	/*
 	sterm* data = parse_string( "(scene (model))" );
 	theScene = eval( data );
@@ -55,7 +54,7 @@ void test_engine_init( engine* e ) {
 	theScene->debugtext = e->debugtext;
 	*/
 	
-	test_scene_init(theScene);
+	theScene = test_scene_init();
 }
 
 /*
