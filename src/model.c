@@ -8,7 +8,13 @@
 #include "mem/allocator.h"
 #include "render/texture.h"
 #include "render/vgl.h"
+#include "system/string.h"
 
+#define maxModels 256
+
+int model_count;
+model* models[maxModels];
+const char* modelFiles[maxModels];
 
 void vgl_vertexDraw(vector* v) {
 	glVertex3fv((GLfloat*)v);
@@ -127,4 +133,37 @@ void model_draw( model* m ) {
 	for (int i = 0; i < m->meshCount; i++) {
 		mesh_drawVerts( model_getMesh( m, i ));
 	}
+}
+
+void model_initModelStorage() {
+	memset( models, 0, sizeof( model* ) * maxModels );
+	memset( modelFiles, 0, sizeof( const char* ) * maxModels );
+	model_count = 0;
+}
+
+model* model_getByHandle( modelHandle h ) {
+	return models[h];
+}
+
+// Synchronously load a model from a given file
+model* model_loadFromFileSync( const char* filename ) {
+	// TODO: Implement
+	return model_createTestCube();
+}
+
+// TODO - debug; should be replaced with hashed ID
+modelHandle model_getHandleFromFilename( const char* filename ) {
+	// If the model is already in the array, return it
+	for ( int i = 0; i < model_count; i++ ) {
+		if ( string_equal( filename, modelFiles[i] )) {
+			return (modelHandle)i;
+		}
+	}
+	// Otherwise add it and return
+	assert( model_count < maxModels );
+	modelHandle handle = (modelHandle)model_count;
+	modelFiles[handle] = string_createCopy( filename );
+	models[handle] = model_loadFromFileSync( filename );
+	model_count++;
+	return handle;
 }

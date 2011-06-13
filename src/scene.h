@@ -23,12 +23,15 @@
 
 // *** Scene ***
 struct scene_s {
-	int			modelCount;
-	modelInstance*	models[MAX_MODELS];
-	int			lightCount;
-	light*		lights[MAX_LIGHTS];
-	transform	transforms[MAX_TRANSFORMS];
-	int			transformCount;
+	int			model_count;
+	modelInstance**	models;
+	//
+	int			light_count;
+	light**		lights;
+	//
+	int			transform_count;
+	transform*	transforms;
+	//
 	GLfloat		ambient[4];
 	camera*		cam;
 

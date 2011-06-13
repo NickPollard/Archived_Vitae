@@ -18,5 +18,6 @@ SRCS =	src/camera.c \
 		src/render/texture.c \
 		src/render/vgl.c \
 		src/system/file.c \
+		src/system/string.c \
 		src/external/util.c \
 		src/debug/debugtext.c

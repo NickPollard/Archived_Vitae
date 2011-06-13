@@ -11,10 +11,10 @@ void transform_setLocalSpace();
 
 // Create a new default transform
 transform* transform_create(scene* s) {
-	assert( s->transformCount < MAX_TRANSFORMS );
-	transform* t = &s->transforms[s->transformCount++];
-	matrix_setIdentity(&t->local);
-	matrix_setIdentity(&t->world);
+	assert( s->transform_count < MAX_TRANSFORMS );
+	transform* t = &s->transforms[s->transform_count++];
+	matrix_setIdentity( &t->local );
+	matrix_setIdentity( &t->world );
 	t->parent = NULL;
 	t->isDirty = 0;
 	return t;

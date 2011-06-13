@@ -27,6 +27,9 @@ struct model_s {
 	mesh*		meshes[MAX_SUBMESHES];
 };
 
+typedef int modelHandle; // A Handle into the model array
+
+
 // Create a test mesh of a cube
 mesh* mesh_createTestCube();
 

@@ -49,7 +49,7 @@ void render_set2D() {
 // Translate by their transform
 // Then draw all the submeshes
 void render_scene(scene* s) {
-	for (int i = 0; i < s->modelCount; i++) {
+	for (int i = 0; i < s->model_count; i++) {
 		modelInstance_draw( scene_getModel( s, i ));
 	}
 }

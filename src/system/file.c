@@ -5,6 +5,7 @@
 #include "model.h"
 #include "scene.h"
 //-----------------------
+#include "system/string.h"
 #include <assert.h>
 
 //
@@ -212,11 +213,7 @@ void* s_concat( sterm* s );
 void* s_model( sterm* s );
 //void* s_scene( sterm* s );
 
-bool strEq( const char* a, const char* b ) {
-	return ( strcmp( a, b ) == 0 );
-}
-
-#define S_FUNC( atom, func )	if ( strEq( data, atom ) ) { \
+#define S_FUNC( atom, func )	if ( string_equal( data, atom ) ) { \
 									sterm* s = sterm_create( typeFunc, func ); \
 									return s; \
 								}

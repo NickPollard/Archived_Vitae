@@ -27,19 +27,19 @@ void scene_static_init( ) {
 }
 
 //void scene_addModel( scene* s, model* m ) {
-//	s->models[s->modelCount++] = m;
+//	s->models[s->model_count++] = m;
 //}
 
 void scene_addModel( scene* s, modelInstance* m ) {
-	s->models[s->modelCount++] = m;
+	s->models[s->model_count++] = m;
 }
 
 void scene_addLight( scene* s, light* l ) {
-	s->lights[s->lightCount++] = l;
+	s->lights[s->light_count++] = l;
 }
 
 void scene_addTransform( scene* s, transform* t ) {
-	memcpy(	&s->transforms[s->transformCount++], t, sizeof( transform ));
+	memcpy(	&s->transforms[s->transform_count++], t, sizeof( transform ));
 }
 
 modelInstance* scene_getModel(scene* s, int i) {
@@ -92,7 +92,10 @@ void scene_setAmbient(scene* s, float r, float g, float b, float a) {
 scene* scene_create() {
 	scene* s = mem_alloc( sizeof( scene ));
 	memset( s, 0, sizeof( scene ));
-	s->modelCount = s->lightCount = s->transformCount = 0;
+	s->model_count = s->light_count = s->transform_count = 0;
+	s->models = mem_alloc( sizeof( modelInstance* ) * MAX_MODELS );
+	s->lights = mem_alloc( sizeof( light* ) * MAX_LIGHTS );
+	s->transforms = mem_alloc( sizeof( transform ) * MAX_TRANSFORMS );
 	s->cam = camera_createWithTransform(s);
 	scene_setCamera(s, 0.f, 0.f, 0.f, 1.f);
 	scene_setAmbient(s, 0.2f, 0.2f, 0.2f, 1.f);
@@ -101,15 +104,15 @@ scene* scene_create() {
 
 // Traverse the transform graph, updating worldspace transforms
 void scene_concatenateTransforms(scene* s) {
-	for (int i = 0; i < s->transformCount; i++)
+	for (int i = 0; i < s->transform_count; i++)
 		transform_concatenate(&s->transforms[i]);
 }
 
 void scene_debugTransforms( scene* s ) {
 	char string[128];
-	sprintf( string, "TransformCount: %d", s->transformCount );
+	sprintf( string, "transform_count: %d", s->transform_count );
 	PrintDebugText( s->debugtext, string );
-	for (int i = 0; i < s->transformCount; i++) {
+	for (int i = 0; i < s->transform_count; i++) {
 		transform_printDebug( &s->transforms[i], s->debugtext );
 	}
 }
@@ -155,12 +158,33 @@ void test_scene_tick(scene* s, float dt) {
 // Load a pre-computed scene
 //
 
-void scene_load( ) {
+void scene_load( int n_bytes, void* src ) {
+	void* dst = mem_alloc( n_bytes );
+	int offset = dst - src;
+	memcpy( dst, src, n_bytes );
 	// The scene can just be copied
-	// The scene contains the transforms, so they come with it
+	scene* s = dst;
 	// Pointers will need fixing up
-	// Need to copy models somewhere - where should they be stored?
-	//	- Should probably be some centralised model storage, might need to be defragged
-	//	- Wait - we only have modelinstances, not models.
+	s->models		+= offset;
+	s->transforms	+= offset;
+	s->lights		+= offset;
+	// Transforms
+	for ( int i = 0; i < s->transform_count; i++ ) {
+		transform* t = &s->transforms[i];
+		if ( t->parent )	// Don't need to update NULL parents
+			t->parent += offset;
+	}
+	// ModelInstances
+	for ( int i = 0; i < s->model_count; i++ ) {
+		modelInstance* m = s->models[i];
+		if ( m->trans )	// Don't need to update NULL parents
+			m->trans += offset;
+	}
+	// Lights
+	for ( int i = 0; i < s->light_count; i++ ) {
+		light* l = s->lights[i];
+		if ( l->trans )	// Don't need to update NULL transforms
+			l->trans += offset;
+	}
 }
 
