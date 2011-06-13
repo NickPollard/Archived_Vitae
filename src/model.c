@@ -6,6 +6,7 @@
 #include "maths.h"
 #include "engine.h"
 #include "mem/allocator.h"
+#include "render/modelinstance.h"
 #include "render/texture.h"
 #include "render/vgl.h"
 #include "system/string.h"
@@ -15,6 +16,7 @@
 int model_count;
 model* models[maxModels];
 const char* modelFiles[maxModels];
+int modelIDs[maxModels];
 
 void vgl_vertexDraw(vector* v) {
 	glVertex3fv((GLfloat*)v);
@@ -151,6 +153,27 @@ model* model_loadFromFileSync( const char* filename ) {
 	return model_createTestCube();
 }
 
+const char* model_getFileNameFromID( int id ) {
+	// TODO: Implement
+	return NULL;
+}
+
+modelHandle model_getHandleFromID( int id ) {
+	// If the model is already in the array, return it
+	for ( int i = 0; i < model_count; i++ ) {
+		if ( modelIDs[i] == id ) {
+			return (modelHandle)i;
+		}
+	}
+	// Otherwise add it and return
+	assert( model_count < maxModels );
+	modelHandle handle = (modelHandle)model_count;
+	modelIDs[handle] = id;
+	models[handle] = model_loadFromFileSync( model_getFileNameFromID( id ) );
+	model_count++;
+	return handle;
+}
+
 // TODO - debug; should be replaced with hashed ID
 modelHandle model_getHandleFromFilename( const char* filename ) {
 	// If the model is already in the array, return it
@@ -166,4 +189,8 @@ modelHandle model_getHandleFromFilename( const char* filename ) {
 	models[handle] = model_loadFromFileSync( filename );
 	model_count++;
 	return handle;
+}
+
+model* model_fromInstance( modelInstance* instance ) {
+	return model_getByHandle( instance->model );
 }

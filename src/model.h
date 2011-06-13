@@ -1,6 +1,5 @@
 // model.h
-#ifndef __MODEL_H__
-#define __MODEL_H__
+#pragma once
 
 #include "common.fwd.h"
 
@@ -27,9 +26,6 @@ struct model_s {
 	mesh*		meshes[MAX_SUBMESHES];
 };
 
-typedef int modelHandle; // A Handle into the model array
-
-
 // Create a test mesh of a cube
 mesh* mesh_createTestCube();
 
@@ -48,4 +44,8 @@ void mesh_drawVerts(mesh* m);
 // Draw each submesh of a model
 void model_draw(model* m);
 
-#endif // __MODEL_H__
+modelHandle model_getHandleFromID( int id );
+
+model* model_fromInstance( modelInstance* instance );
+
+modelHandle model_getHandleFromFilename( const char* filename );

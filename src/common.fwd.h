@@ -24,4 +24,7 @@ typedef union vector_u vector;
 typedef union vector_u color;
 typedef struct scene_s scene;
 
+typedef int modelHandle; // A Handle into the model array
+
+
 #endif // __COMMON_FWD_H__

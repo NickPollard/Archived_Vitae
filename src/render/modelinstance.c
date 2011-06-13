@@ -6,7 +6,7 @@
 #include "model.h"
 #include "transform.h"
 
-modelInstance* modelInstance_create( model* m ) {
+modelInstance* modelInstance_create( modelHandle m ) {
 	modelInstance* i = malloc( sizeof( modelInstance ));
 	i->model = m;
 	return i;
@@ -15,6 +15,6 @@ modelInstance* modelInstance_create( model* m ) {
 void modelInstance_draw( modelInstance* instance ) {
 	glPushMatrix(); {
 		glMultMatrixf( matrix_getGlMatrix( &instance->trans->world ));
-		model_draw( instance->model );
+		model_draw( model_fromInstance( instance ) );
 	} glPopMatrix();
 }

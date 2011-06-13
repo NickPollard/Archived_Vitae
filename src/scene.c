@@ -48,7 +48,7 @@ modelInstance* scene_getModel(scene* s, int i) {
 
 // Initialise a scene with some test data
 void test_scene_init( scene* s ) {
-	model* testCube = model_createTestCube();
+	modelHandle testCube = model_getHandleFromFilename( "invalid.obj" );
 	testModelA = modelInstance_create( testCube );
 	testModelB = modelInstance_create( testCube );
 	testModelA->trans = transform_create( s );
@@ -179,6 +179,12 @@ void scene_load( int n_bytes, void* src ) {
 		modelInstance* m = s->models[i];
 		if ( m->trans )	// Don't need to update NULL parents
 			m->trans += offset;
+		// Hookup Model Handle
+		// The model parameter should contain an ID derived from the filename
+		// (eg. via a hash)
+		// We then hookup to the model of that filename, loading it if required
+		int id = (int)m->model;
+		m->model = model_getHandleFromID( id );
 	}
 	// Lights
 	for ( int i = 0; i < s->light_count; i++ ) {

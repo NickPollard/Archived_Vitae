@@ -11,10 +11,10 @@
    */
 
 struct modelInstance_s {
-	model*	model;
+	modelHandle	model;
 	transform* trans;
 };
 
-modelInstance* modelInstance_create( model* m );
+modelInstance* modelInstance_create( modelHandle m );
 
 void modelInstance_draw( modelInstance* instance );
