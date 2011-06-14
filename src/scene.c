@@ -15,9 +15,6 @@
 
 // *** static data
 
-modelInstance* testModelA = NULL;
-modelInstance* testModelB = NULL;
-transform* t2 = NULL;
 scene* scene_load( int n_bytes, void* src );
 
 keybind scene_debug_transforms_toggle;
@@ -52,8 +49,8 @@ scene* test_scene_init( ) {
 	scene* s = scene_create();
 
 	modelHandle testCube = model_getHandleFromFilename( "invalid.obj" );
-	testModelA = modelInstance_create( testCube );
-	testModelB = modelInstance_create( testCube );
+	modelInstance* testModelA = modelInstance_create( testCube );
+	modelInstance* testModelB = modelInstance_create( testCube );
 	testModelA->trans = transform_create( s );
 	testModelB->trans = transform_create( s );
 	transform* t = transform_create( s );
@@ -61,7 +58,7 @@ scene* test_scene_init( ) {
 	testModelB->trans->parent = t;
 	vector translate = Vector( -2.f, 0.f, 0.f, 1.f );
 	transform_setLocalTranslation(t, &translate);
-	t2 = transform_create(s);
+	transform* t2 = transform_create(s);
 	t->parent = t2;
 
 	scene_addModel(s, testModelA);
@@ -220,16 +217,18 @@ void scene_setCamera(scene* s, float x, float y, float z, float w) {
 void test_scene_tick(scene* s, float dt) {
 	static float time = 0.f;
 	time += dt;
-	float period = 2.f;
+
+	static const float period = 2.f;
 	float animate = 2.f * sinf(time * 2 * PI / period);
+
 	// Animate cubes
 	vector translateA = Vector( animate, 0.f, 0.f, 1.f );
-	transform_setLocalTranslation( testModelA->trans, &translateA );
+	transform_setLocalTranslation( s->models[0]->trans, &translateA );
 	vector translateB = Vector( 0.f, animate, 0.f, 1.f );
-	transform_setLocalTranslation( testModelB->trans, &translateB );
+	transform_setLocalTranslation( s->models[1]->trans, &translateB );
 	
 	vector translateC = Vector( 0.f, 0.f, animate,  1.f );
-	transform_setLocalTranslation(t2, &translateC);
+	transform_setLocalTranslation( &s->transforms[3], &translateC);
 }
 
 //
