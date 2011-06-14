@@ -141,7 +141,7 @@ scene* test_scene_init( ) {
 	_scene->lights[0] = _l;
 	_scene->transforms = ta;
 	_scene->cam->trans = _tc;
-	l->trans = _tl;
+	_l->trans = _tl;
 	a->trans = ta;
 	b->trans = tb;
 	ta->parent = _t;
@@ -243,21 +243,21 @@ scene* scene_load( int n_bytes, void* src ) {
 	// The scene can just be copied
 	scene* s = dst;
 	// Pointers will need fixing up
-	s->models		+= offset;
-	s->transforms	+= offset;
-	s->lights		+= offset;
+	s->models		= (void*)s->models + offset;
+	s->transforms	= (void*)s->transforms + offset;
+	s->lights		= (void*)s->lights + offset;
 	// Transforms
 	for ( int i = 0; i < s->transform_count; i++ ) {
 		printf(" transform %d.\n", i );
 		transform* t = &s->transforms[i];
 		if ( t->parent )	// Don't need to update NULL parents
-			t->parent += offset;
+			t->parent = (void*)t->parent + offset;
 	}
 	// ModelInstances
 	for ( int i = 0; i < s->model_count; i++ ) {
 		modelInstance* m = s->models[i];
 		if ( m->trans )	// Don't need to update NULL parents
-			m->trans += offset;
+			m->trans = (void*)m->trans + offset;
 		// Hookup Model Handle
 		// The model parameter should contain an ID derived from the filename
 		// (eg. via a hash)
@@ -269,7 +269,7 @@ scene* scene_load( int n_bytes, void* src ) {
 	for ( int i = 0; i < s->light_count; i++ ) {
 		light* l = s->lights[i];
 		if ( l->trans )	// Don't need to update NULL transforms
-			l->trans += offset;
+			l->trans = (void*)l->trans + offset;
 	}
 	return dst;
 }
