@@ -36,6 +36,10 @@ struct block_s {
 // Passes straight through to heap_allocate()
 void* mem_alloc(size_t bytes);
 
+// Default deallocate from the static heap
+// Passes straight through to heap_deallocate()
+void mem_free( void* ptr );
+
 // Initialise the memory subsystem
 void mem_init(int argc, char** argv);
 

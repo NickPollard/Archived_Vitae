@@ -10,8 +10,14 @@ heapAllocator* static_heap = NULL;
 
 // Default allocate from the static heap
 // Passes straight through to heap_allocate()
-void* mem_alloc(size_t bytes) {
-	return heap_allocate(static_heap, bytes);
+void* mem_alloc( size_t bytes ) {
+	return heap_allocate( static_heap, bytes );
+}
+
+// Default deallocate from the static heap
+// Passes straight through to heap_deallocate()
+void mem_free( void* ptr ) {
+	heap_deallocate( static_heap, ptr );
 }
 
 // Initialise the memory subsystem

@@ -12,6 +12,7 @@ SRCS =	src/camera.c \
 		src/time.c \
 		src/transform.c \
 		src/mem/allocator.c \
+		src/mem/pool.c \
 		src/render/debugdraw.c \
 		src/render/modelinstance.c \
 		src/render/render.c \

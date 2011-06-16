@@ -13,9 +13,12 @@
 #include "font.h"
 #include "debug/debugtext.h"
 
+static const size_t modelArraySize = sizeof( modelInstance* ) * MAX_MODELS;
+static const size_t lightArraySize = sizeof( light* ) * MAX_LIGHTS;
+
 // *** static data
 
-scene* scene_load( int n_bytes, void* src );
+scene* scene_load( size_t n_bytes, void* src );
 
 keybind scene_debug_transforms_toggle;
 
@@ -149,6 +152,7 @@ scene* test_scene_init( ) {
 	// Fix-up pointers
 
 	scene* s2 = scene_load( size, buffer );
+
 	return s2;
 }
 
@@ -230,12 +234,42 @@ void test_scene_tick(scene* s, float dt) {
 	vector translateC = Vector( 0.f, 0.f, animate,  1.f );
 	transform_setLocalTranslation( &s->transforms[3], &translateC);
 }
+//	Save a Scene to a binary blob
+//	Takes a pointer to a scene, and copies all elements of that scene into a compacted
+//  Binary blob
+void* scene_save( scene* s ) {
+	// Calculate size and allocate buffer
+	size_t size = ( sizeof( scene ) +							// space for scene struct
+				 modelArraySize + 								// Space for models array
+				 lightArraySize + 								// Space for light array
+				 sizeof( transform ) * s->transform_count +		// space for transform array
+				 sizeof( modelInstance ) * s->model_count +		// space for actual models
+				 sizeof( light ) * s->light_count );			// space for actual lights
+	void* buffer = mem_alloc( size );
+
+	void* data = buffer;
+
+	// Copy the data
+	// The Scene
+	memcpy( data, s, sizeof( scene ));
+	scene* s_out = (scene*) data;
+	data += sizeof( scene );
+	// Setup model array
+	s_out->models = data;
+	memset( s_out->models, 0, modelArraySize );
+	data += modelArraySize;
+	// Setup light array
+	s_out->lights = data;
+	memset( s_out->lights, 0, lightArraySize );
+	data += lightArraySize;
+
+	return buffer;
+}
 
 //
-// Load a pre-computed scene
+//	Load a Scene from a binary blob, as created by scene_save
 //
-
-scene* scene_load( int n_bytes, void* src ) {
+scene* scene_load( size_t n_bytes, void* src ) {
 	void* dst = mem_alloc( n_bytes );
 	int offset = dst - src;
 	memcpy( dst, src, n_bytes );
