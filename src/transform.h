@@ -2,6 +2,7 @@
 #define __TRANSFORM_H__
 
 #include "maths.h"
+#include "mem/pool.h"
 
 // *** Transform ***
 struct transform_s {
@@ -10,6 +11,8 @@ struct transform_s {
 	transform*	parent;
 	int			isDirty;
 };
+
+DECLARE_POOL( transform )
 
 // Create a new default transform
 transform* transform_create(scene* s);

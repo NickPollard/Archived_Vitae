@@ -5,6 +5,8 @@
 #include "mem/allocator.h"
 #include "debug/debugtext.h"
 
+IMPLEMENT_POOL( transform )
+
 void transform_setWorldSpace();
 
 void transform_setLocalSpace();
