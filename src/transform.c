@@ -7,6 +7,12 @@
 
 IMPLEMENT_POOL( transform )
 
+pool_transform* static_transform_pool = NULL;
+
+void transform_initPool() {
+	static_transform_pool = pool_transform_create( 256 );
+}
+
 void transform_setWorldSpace();
 
 void transform_setLocalSpace();
@@ -14,7 +20,9 @@ void transform_setLocalSpace();
 // Create a new default transform
 transform* transform_create(scene* s) {
 	assert( s->transform_count < MAX_TRANSFORMS );
-	transform* t = &s->transforms[s->transform_count++];
+//	transform* t = &s->transforms[s->transform_count++];
+	transform* t = pool_transform_allocate( static_transform_pool );
+	scene_addTransform( s, t );
 	matrix_setIdentity( &t->local );
 	matrix_setIdentity( &t->world );
 	t->parent = NULL;

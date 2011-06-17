@@ -1,6 +1,7 @@
 // modelinstance.h
 
 #pragma once
+#include "mem/pool.h"
 
 /*
 	ModelInstance
@@ -14,6 +15,10 @@ struct modelInstance_s {
 	modelHandle	model;
 	transform* trans;
 };
+
+DECLARE_POOL( modelInstance )
+
+void modelInstance_initPool();
 
 modelInstance* modelInstance_create( modelHandle m );
 

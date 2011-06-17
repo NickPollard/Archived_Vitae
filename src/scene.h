@@ -24,13 +24,13 @@
 // *** Scene ***
 struct scene_s {
 	int			model_count;
-	modelInstance**	models;
+	modelInstance**	modelInstances;
 	//
 	int			light_count;
 	light**		lights;
 	//
 	int			transform_count;
-	transform*	transforms;
+	transform**	transforms;
 	//
 	GLfloat		ambient[4];
 	camera*		cam;
@@ -69,6 +69,7 @@ void scene_setCamera(scene* s, float x, float y, float z, float w);
 void scene_addModel(scene* s, modelInstance* m);
 
 void scene_addTransform( scene* s, transform* t );
+transform* scene_transform( scene* s, int i );
 
 modelInstance* scene_getModel(scene* s, int i);
 

@@ -14,11 +14,16 @@ struct transform_s {
 
 DECLARE_POOL( transform )
 
+// *** Static
+void transform_initPool();
+
 // Create a new default transform
 transform* transform_create(scene* s);
 
 // Create a new default transform with the given parent
 transform* transform_create_Parent(scene* s, transform* parent);
+
+// *** Members
 
 // Concatenate the parent world space transforms to produce this world space transform from local
 int transform_concatenate(transform* t);

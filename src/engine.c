@@ -10,6 +10,7 @@
 #include "scene.h"
 #include "transform.h"
 #include "render/debugdraw.h"
+#include "render/modelinstance.h"
 #include "render/render.h"
 #include "debug/debugtext.h"
 #include "system/file.h"
@@ -160,6 +161,9 @@ void engine_init(engine* e, int argc, char** argv) {
 	// *** Initialise Lua
 	engine_initLua(e, argc, argv);
 	luaInterface_registerCallback(e->callbacks, "onTick", "tick");
+
+	transform_initPool();
+	modelInstance_initPool();
 
 	// TEST
 	test_engine_init( e );

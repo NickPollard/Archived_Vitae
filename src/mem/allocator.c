@@ -32,8 +32,10 @@ void* heap_allocate( heapAllocator* heap, int size ) {
 	printf( "HeapAllocator request for %d bytes.\n", size );
 #endif
 	block* b = heap_findEmptyBlock( heap, size );
-	if ( !b )
+	if ( !b ) {
 		printError( "HeapAllocator out of memory on request for %d bytes.\n", size );
+		assert( 0 );
+	}
 	if ( b->size > ( size + sizeof( block ) ) ) {
 		block* remaining = block_create( b->data + size, b->size - size );
 		block_insertAfter( b, remaining );

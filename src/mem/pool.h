@@ -53,10 +53,3 @@ void pool_##type##_free( pool_##type* pool, type* m ) {					\
 	assert( index < pool->size );										\
 	pool->free[index] = true;											\
 }
-
-DECLARE_POOL( modelInstance )
-
-// *** Test
-
-// TEST
-void test_pool();
