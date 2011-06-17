@@ -17,7 +17,7 @@ light* light_create() {
 
 light* light_createWithTransform(scene* s) {
 	light* l = light_create();
-	transform* t = transform_create(s);
+	transform* t = transform_createAndAdd( s );
 	l->trans = t;
 	return l;
 }

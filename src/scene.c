@@ -18,8 +18,6 @@ static const size_t lightArraySize = sizeof( light* ) * MAX_LIGHTS;
 
 // *** static data
 
-scene* scene_load( size_t n_bytes, void* src );
-
 keybind scene_debug_transforms_toggle;
 
 void scene_static_init( ) {
@@ -46,25 +44,41 @@ void scene_addTransform( scene* s, transform* t ) {
 	s->transforms[s->transform_count++] = t;
 }
 
-modelInstance* scene_getModel(scene* s, int i) {
+int scene_transformIndex( scene* s, transform* t ) {
+	for ( int i = 0; i < s->transform_count; i++ ) {
+		if ( scene_transform( s, i ) == t )
+			return i;
+	}
+	return -1;
+}
+
+modelInstance* scene_model(scene* s, int i) {
 	return s->modelInstances[i];
 }	
+
+light* scene_light( scene* s, int i ) {
+	return s->lights[i];
+}
 
 // Initialise a scene with some test data
 scene* test_scene_init( ) {
 	scene* s = scene_create();
+	s->cam = camera_create( s );
+	s->cam->trans = transform_createAndAdd( s );
+	scene_setCamera( s, 0.f, 0.f, 0.f, 1.f );
+	scene_setAmbient( s, 0.2f, 0.2f, 0.2f, 1.f );
 
 	modelHandle testCube = model_getHandleFromFilename( "invalid.obj" );
 	modelInstance* testModelA = modelInstance_create( testCube );
 	modelInstance* testModelB = modelInstance_create( testCube );
-	testModelA->trans = transform_create( s );
-	testModelB->trans = transform_create( s );
-	transform* t = transform_create( s );
+	testModelA->trans = transform_createAndAdd( s );
+	testModelB->trans = transform_createAndAdd( s );
+	transform* t = transform_createAndAdd( s );
 	testModelA->trans->parent = t;
 	testModelB->trans->parent = t;
 	vector translate = Vector( -2.f, 0.f, 0.f, 1.f );
 	transform_setLocalTranslation(t, &translate);
-	transform* t2 = transform_create(s);
+	transform* t2 = transform_createAndAdd( s );
 	t->parent = t2;
 
 	scene_addModel(s, testModelA);
@@ -72,68 +86,20 @@ scene* test_scene_init( ) {
 
 	scene_setAmbient(s, 0.2f, 0.2f, 0.2f, 1.f);
 
-	light* l = light_createWithTransform(s);
-	
+	light* l = light_createWithTransform( s );
 	vector lightPos = {{ 1.f, 1.f, 1.f, 1.f }};
 	light_setPosition(l, &lightPos);
 	light_setDiffuse(l, 1.f, 0.f, 0.f, 1.f);
-
 	scene_addLight(s, l);
 
 	scene_setCamera(s, 0.f, 0.f, 10.f, 1.f);
 
-	int size = ( sizeof( scene ) +
-				 sizeof( modelInstance* ) * MAX_MODELS + 
-				 sizeof( light* ) * MAX_LIGHTS + 
-				 sizeof( transform* ) * 6 +
-				 sizeof( modelInstance ) * 2 +
-				 sizeof( light ));
-	void* buffer = malloc( size );
+	sceneData* data = scene_save( s );
+	scene* s2 = scene_load( data );
+	sceneData_free( data );
+	return s2;
 
-	void* data = buffer;
-	// Pack data
-	scene* _scene = data;
-	memcpy( data, s, sizeof( scene ));
-	data += sizeof( scene );
-
-	modelInstance** modelInstances = data;
-	data += sizeof( modelInstance* ) * MAX_MODELS;
-
-	light** lights = data;
-	data += sizeof( light* ) * MAX_LIGHTS;
-
-	modelInstance* a = data;
-	memcpy( data, testModelA, sizeof( modelInstance ));
-	data += sizeof( modelInstance );
-
-	modelInstance* b = data;
-	memcpy( data, testModelB, sizeof( modelInstance ));
-	data += sizeof( modelInstance );
-
-//
-
-	transform** trans = data;
-	memcpy( data, s->transforms, sizeof( transform* ) * 6 );
-	data += sizeof( transform* ) * 6;
-
-//
-
-	light* _l = data;
-	memcpy( data, l, sizeof( light ));
-
-	_scene->modelInstances = modelInstances;
-	_scene->modelInstances[0] = a;
-	_scene->modelInstances[1] = b;
-	_scene->lights = lights;
-	_scene->lights[0] = _l;
-	_scene->transforms = trans;
-
-	// Fix-up pointers
-
-//	scene* s2 = scene_load( size, buffer );
-
-//	return s2;
-	return s;
+//	return s;
 }
 
 void glTranslate_vector(vector* v) {
@@ -155,9 +121,7 @@ scene* scene_create() {
 	s->modelInstances = mem_alloc( sizeof( modelInstance* ) * MAX_MODELS );
 	s->lights = mem_alloc( sizeof( light* ) * MAX_LIGHTS );
 	s->transforms = mem_alloc( sizeof( transform* ) * MAX_TRANSFORMS );
-	s->cam = camera_createWithTransform(s);
-	scene_setCamera(s, 0.f, 0.f, 0.f, 1.f);
-	scene_setAmbient(s, 0.2f, 0.2f, 0.2f, 1.f);
+	memset( s->transforms, 0, sizeof( transform* ) * MAX_TRANSFORMS );
 	return s;
 }
 
@@ -218,76 +182,100 @@ void test_scene_tick(scene* s, float dt) {
 	vector translateC = Vector( 0.f, 0.f, animate,  1.f );
 	transform_setLocalTranslation( scene_transform( s, 3 ), &translateC);
 }
-//	Save a Scene to a binary blob
-//	Takes a pointer to a scene, and copies all elements of that scene into a compacted
-//  Binary blob
-void* scene_save( scene* s ) {
-	// Calculate size and allocate buffer
-	size_t size = ( sizeof( scene ) +							// space for scene struct
-				 modelArraySize + 								// Space for modelInstances array
-				 lightArraySize + 								// Space for light array
-				 sizeof( transform ) * s->transform_count +		// space for transform array
-				 sizeof( modelInstance ) * s->model_count +		// space for actual modelInstances
-				 sizeof( light ) * s->light_count );			// space for actual lights
-	void* buffer = mem_alloc( size );
 
-	void* data = buffer;
+// All sceneData data is owned by the sceneData
+// So free ALL of it
+void sceneData_free( sceneData* data ) {
+	mem_free( data->transforms );
+	mem_free( data->lights );
+	mem_free( data->modelInstances );
+	mem_free( data->cam );
 
-	// Copy the data
-	// The Scene
-	memcpy( data, s, sizeof( scene ));
-	scene* s_out = (scene*) data;
-	data += sizeof( scene );
-	// Setup model array
-	s_out->modelInstances = data;
-	memset( s_out->modelInstances, 0, modelArraySize );
-	data += modelArraySize;
-	// Setup light array
-	s_out->lights = data;
-	memset( s_out->lights, 0, lightArraySize );
-	data += lightArraySize;
-
-	return buffer;
+	// Finally free our data
+	mem_free( data );
 }
 
 //
 //	Load a Scene from a binary blob, as created by scene_save
 //
-scene* scene_load( size_t n_bytes, void* src ) {
-	void* dst = mem_alloc( n_bytes );
-	int offset = dst - src;
-	memcpy( dst, src, n_bytes );
-	// The scene can just be copied
-	scene* s = dst;
-	// Pointers will need fixing up
-	s->modelInstances		= (void*)s->modelInstances + offset;
-	s->transforms	= (void*)s->transforms + offset;
-	s->lights		= (void*)s->lights + offset;
-	// Transforms
+
+sceneData* scene_save( scene* s ) {
+	sceneData* data = mem_alloc( sizeof( sceneData ));
+
+	data->cam = mem_alloc( sizeof( camera ));
+	memcpy( data->cam, s->cam, sizeof( camera ));
+	data->cam->trans = (transform*)scene_transformIndex( s, data->cam->trans );
+
+	// transforms or parent transforms are stored as indices rather than pointers
+	// so that they can be restored correctly when moved and loaded
+
+	// transforms
+	data->transform_count = s->transform_count;
+	data->transforms = mem_alloc( sizeof( transform ) * data->transform_count );
 	for ( int i = 0; i < s->transform_count; i++ ) {
-		printf(" transform %d.\n", i );
-		transform* t = scene_transform( s, i );
-		if ( t->parent )	// Don't need to update NULL parents
-			t->parent = (void*)t->parent + offset;
+		data->transforms[i] = *scene_transform( s, i );
+		assert( data->transforms[i].parent != scene_transform( s, i ));
+		data->transforms[i].parent = (void*)scene_transformIndex( s, data->transforms[i].parent );
 	}
-	// ModelInstances
+	
+	// modelInstances
+	data->model_count = s->model_count;
+	data->modelInstances = mem_alloc( sizeof( modelInstance ) * data->model_count );
 	for ( int i = 0; i < s->model_count; i++ ) {
-		modelInstance* m = s->modelInstances[i];
-		if ( m->trans )	// Don't need to update NULL parents
-			m->trans = (void*)m->trans + offset;
-		// Hookup Model Handle
-		// The model parameter should contain an ID derived from the filename
-		// (eg. via a hash)
-		// We then hookup to the model of that filename, loading it if required
-		int id = (int)m->model;
-		m->model = model_getHandleFromID( id );
+		data->modelInstances[i] = *scene_model( s, i );
+		data->modelInstances[i].trans = (void*)scene_transformIndex( s, data->modelInstances[i].trans );
 	}
-	// Lights
+
+	// lights
+	data->light_count = s->light_count;
+	data->lights = mem_alloc( sizeof( light ) * data->light_count );
 	for ( int i = 0; i < s->light_count; i++ ) {
-		light* l = s->lights[i];
-		if ( l->trans )	// Don't need to update NULL transforms
-			l->trans = (void*)l->trans + offset;
+		data->lights[i] = *scene_light( s, i );
+		data->lights[i].trans = (void*)scene_transformIndex( s, data->lights[i].trans );
 	}
-	return dst;
+
+	return data;
 }
 
+transform* scene_resolveTransform( scene* s, int i ) {
+	if ( i == -1 )
+		return NULL;
+	else
+		return scene_transform( s, i );
+}
+
+scene* scene_load( sceneData* data ) {
+	// create scene
+	scene* s = scene_create();
+	scene_setAmbient( s, 0.2f, 0.2f, 0.2f, 1.f );
+
+	// create transforms
+	for ( int i = 0; i < data->transform_count; i++ ) {
+		transform* t = transform_create( s );
+		memcpy( t, &data->transforms[i], sizeof( transform ));
+		scene_addTransform( s, t );
+		t->parent = scene_resolveTransform( s, (int)t->parent );
+	}
+
+	s->cam = camera_create( s );
+	memcpy( s->cam, data->cam, sizeof( camera ));
+	s->cam->trans = scene_resolveTransform( s, (int)s->cam->trans );
+
+	// create modelInstances
+	for ( int i = 0; i < data->model_count; i++ ) {
+		modelInstance* m = modelInstance_createEmpty( );
+		memcpy( m, &data->modelInstances[i], sizeof( modelInstance ));
+		scene_addModel( s, m );
+		m->trans = scene_resolveTransform( s, (int)m->trans );
+	}
+
+	// create lights
+	for ( int i = 0; i < data->light_count; i++ ) {
+		light* l = light_create( );
+		memcpy( l, &data->lights[i], sizeof( light ));
+		scene_addLight( s, l );
+		l->trans = scene_resolveTransform( s, (int)l->trans );
+	}
+
+	return s;
+}

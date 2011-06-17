@@ -14,9 +14,13 @@ void modelInstance_initPool() {
 	static_modelInstance_pool = pool_modelInstance_create( 256 );
 }
 
-modelInstance* modelInstance_create( modelHandle m ) {
-//	modelInstance* i = malloc( sizeof( modelInstance ));
+modelInstance* modelInstance_createEmpty( ) {
 	modelInstance* i = pool_modelInstance_allocate( static_modelInstance_pool );
+	return i;
+}
+
+modelInstance* modelInstance_create( modelHandle m ) {
+	modelInstance* i = modelInstance_createEmpty();
 	i->model = m;
 	return i;
 }

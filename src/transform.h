@@ -18,7 +18,8 @@ DECLARE_POOL( transform )
 void transform_initPool();
 
 // Create a new default transform
-transform* transform_create(scene* s);
+transform* transform_create();
+transform* transform_createAndAdd( scene* s );
 
 // Create a new default transform with the given parent
 transform* transform_create_Parent(scene* s, transform* parent);

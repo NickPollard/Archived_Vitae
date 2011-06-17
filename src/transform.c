@@ -18,15 +18,19 @@ void transform_setWorldSpace();
 void transform_setLocalSpace();
 
 // Create a new default transform
-transform* transform_create(scene* s) {
-	assert( s->transform_count < MAX_TRANSFORMS );
-//	transform* t = &s->transforms[s->transform_count++];
+transform* transform_create() {
 	transform* t = pool_transform_allocate( static_transform_pool );
-	scene_addTransform( s, t );
 	matrix_setIdentity( &t->local );
 	matrix_setIdentity( &t->world );
 	t->parent = NULL;
 	t->isDirty = 0;
+	return t;
+}
+
+transform* transform_createAndAdd( scene* s ) {
+	assert( s->transform_count < MAX_TRANSFORMS );
+	transform* t = transform_create();
+	scene_addTransform( s, t );
 	return t;
 }
 

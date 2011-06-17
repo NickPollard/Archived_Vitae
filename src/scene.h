@@ -40,6 +40,19 @@ struct scene_s {
 	int			debug_flags;
 } ;
 
+typedef struct sceneData_s {
+	int			model_count;
+	modelInstance*	modelInstances;
+	//
+	int			light_count;
+	light*		lights;
+	//
+	int			transform_count;
+	transform*	transforms;
+
+	camera*		cam;
+} sceneData;
+
 // *** Static functions
 
 void scene_static_init( );
@@ -66,12 +79,18 @@ void scene_setAmbient(scene* s, float r, float g, float b, float a);
 
 void scene_setCamera(scene* s, float x, float y, float z, float w);
 
+// Transform Access
+transform* scene_transform( scene* s, int i );
+void scene_addTransform( scene* s, transform* t );
+int scene_transformIndex( scene* s, transform* t );
+
+// ModelInstance Access
+modelInstance* scene_model( scene* s, int i );
 void scene_addModel(scene* s, modelInstance* m);
 
-void scene_addTransform( scene* s, transform* t );
-transform* scene_transform( scene* s, int i );
-
-modelInstance* scene_getModel(scene* s, int i);
+// Light Access
+light* scene_light( scene* s, int i );
+void scene_addLight( scene* s, light* l );
 
 // Initialise a scene with some test data
 scene* test_scene_init();
@@ -79,4 +98,7 @@ scene* test_scene_init();
 void test_scene_tick(scene* s, float dt);
 
 
+sceneData* scene_save( scene* s );
+scene* scene_load( sceneData* data );
+void sceneData_free( sceneData* data );
 #endif // __SCENE_H__

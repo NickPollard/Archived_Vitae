@@ -15,7 +15,7 @@ camera* camera_create() {
 
 camera* camera_createWithTransform( scene* s ) {
 	camera* c = camera_create();
-	c->trans = transform_create( s );
+	c->trans = transform_createAndAdd( s );
 	return c;
 }
 
