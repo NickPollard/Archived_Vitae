@@ -19,7 +19,8 @@
 #define MAX_MODELS 128
 #define MAX_LIGHTS 128
 
-#define kSceneDebugTransforms 0x00000001
+#define kSceneDebugTransforms	0x00000001
+#define kSceneLightsTransforms	0x00000002
 
 // *** Scene ***
 struct scene_s {

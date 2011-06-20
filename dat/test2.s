@@ -1,1 +1,1 @@
-( print (concat Hello World) )
+( transform ( model ))

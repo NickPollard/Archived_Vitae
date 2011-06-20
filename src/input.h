@@ -16,6 +16,7 @@
 #define KEY_ESC		GLFW_KEY_ESC
 
 #define KEY_T		'T'
+#define KEY_L		'L'
 
 #endif // GLFW
 

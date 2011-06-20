@@ -52,10 +52,10 @@ void test_engine_init( engine* e ) {
 	sterm* data = parse_string( "(scene (model))" );
 	theScene = eval( data );
 	sterm_free( data );
-	theScene->debugtext = e->debugtext;
 	*/
 	
 	theScene = test_scene_init();
+	theScene->debugtext = e->debugtext;
 }
 
 /*

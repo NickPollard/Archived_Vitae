@@ -19,10 +19,14 @@ static const size_t lightArraySize = sizeof( light* ) * MAX_LIGHTS;
 // *** static data
 
 keybind scene_debug_transforms_toggle;
+keybind scene_debug_lights_toggle;
 
 void scene_static_init( ) {
 	scene_debug_transforms_toggle = input_registerKeybind( );
 	input_setDefaultKeyBind( scene_debug_transforms_toggle, KEY_T );
+
+	scene_debug_lights_toggle = input_registerKeybind( );
+	input_setDefaultKeyBind( scene_debug_lights_toggle, KEY_L );
 }
 
 // Add an existing modelInstance to the scene
@@ -60,6 +64,24 @@ light* scene_light( scene* s, int i ) {
 	return s->lights[i];
 }
 
+void scene_free( scene* s ) {
+	// All these pointers should be valid at this point
+	// They should not be cleared prior to calling scene_free
+	// This is part of our RAII-based memory strategy
+	assert( s->transforms );
+	assert( s->lights );
+	assert( s->modelInstances );
+	assert( s->cam );
+
+	mem_free( s->transforms );
+	mem_free( s->lights );
+	mem_free( s->modelInstances );
+	mem_free( s->cam );
+
+	// Finally free our scene
+	mem_free( s );
+}
+
 // Initialise a scene with some test data
 scene* test_scene_init( ) {
 	scene* s = scene_create();
@@ -71,15 +93,15 @@ scene* test_scene_init( ) {
 	modelHandle testCube = model_getHandleFromFilename( "invalid.obj" );
 	modelInstance* testModelA = modelInstance_create( testCube );
 	modelInstance* testModelB = modelInstance_create( testCube );
+	transform* t2 = transform_createAndAdd( s );
+	transform* t = transform_createAndAdd( s );
+	t->parent = t2;
 	testModelA->trans = transform_createAndAdd( s );
 	testModelB->trans = transform_createAndAdd( s );
-	transform* t = transform_createAndAdd( s );
 	testModelA->trans->parent = t;
 	testModelB->trans->parent = t;
 	vector translate = Vector( -2.f, 0.f, 0.f, 1.f );
 	transform_setLocalTranslation(t, &translate);
-	transform* t2 = transform_createAndAdd( s );
-	t->parent = t2;
 
 	scene_addModel(s, testModelA);
 	scene_addModel(s, testModelB);
@@ -97,6 +119,7 @@ scene* test_scene_init( ) {
 	sceneData* data = scene_save( s );
 	scene* s2 = scene_load( data );
 	sceneData_free( data );
+	scene_free( s );
 	return s2;
 
 //	return s;
@@ -126,6 +149,8 @@ scene* scene_create() {
 }
 
 transform* scene_transform( scene* s, int i ) {
+	assert( i >= 0 );
+	assert( i < s->transform_count );
 	return s->transforms[i];
 }
 
@@ -144,10 +169,17 @@ void scene_debugTransforms( scene* s ) {
 	}
 }
 
+void scene_debugLights( scene* s ) {
+	char string[128];
+	sprintf( string, "light_count: %d", s->light_count );
+	PrintDebugText( s->debugtext, string );
+}
 // Process input for the scene
 void scene_input( scene* s, input* in ) {
 	if ( input_keybindPressed( in, scene_debug_transforms_toggle ) )
 		s->debug_flags ^= kSceneDebugTransforms;
+	if ( input_keybindPressed( in, scene_debug_lights_toggle ) )
+		s->debug_flags ^= kSceneLightsTransforms;
 }
 
 // Update the scene
@@ -156,6 +188,8 @@ void scene_tick(scene* s, float dt) {
 
 	if ( s->debug_flags & kSceneDebugTransforms )
 		scene_debugTransforms( s );
+	if ( s->debug_flags & kSceneLightsTransforms )
+		scene_debugLights( s );
 
 	// TEST
 	test_scene_tick(s, dt);
@@ -180,7 +214,7 @@ void test_scene_tick(scene* s, float dt) {
 	transform_setLocalTranslation( s->modelInstances[1]->trans, &translateB );
 	
 	vector translateC = Vector( 0.f, 0.f, animate,  1.f );
-	transform_setLocalTranslation( scene_transform( s, 3 ), &translateC);
+	transform_setLocalTranslation( s->modelInstances[0]->trans->parent, &translateC);
 }
 
 // All sceneData data is owned by the sceneData
