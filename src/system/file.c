@@ -505,7 +505,7 @@ void scene_processTransform( scene* s, transform* parent, transformData* tData )
 	scene_addTransform( s, t );
 
 	// If it has children, process those
-	scene_processObjects( s, parent, tData->elements );
+	scene_processObjects( s, t, tData->elements );
 	
 }
 

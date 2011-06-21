@@ -10,6 +10,7 @@
 #include "mem/allocator.h"
 #include "render/debugdraw.h"
 #include "render/modelinstance.h"
+#include "system/file.h"
 #include "font.h"
 #include "debug/debugtext.h"
 
@@ -32,6 +33,7 @@ void scene_static_init( ) {
 // Add an existing modelInstance to the scene
 void scene_addModel( scene* s, modelInstance* m ) {
 	assert( s->model_count < MAX_MODELS );
+	assert( m->trans ); // Disallow adding a model without a transform already set
 	s->modelInstances[s->model_count++] = m;
 }
 
@@ -83,7 +85,8 @@ void scene_free( scene* s ) {
 }
 
 // Initialise a scene with some test data
-scene* test_scene_init( ) {
+scene* test_scene_init( ) { 
+	/*
 	scene* s = scene_create();
 	s->cam = camera_create( s );
 	s->cam->trans = transform_createAndAdd( s );
@@ -123,6 +126,19 @@ scene* test_scene_init( ) {
 	return s2;
 
 //	return s;
+*/
+	
+	sterm* st = parse_file( "dat/test2.s" );
+	scene* s = eval( st );
+	sterm_free( st );
+
+	// Test Misc scene setup
+	s->cam = camera_create( s );
+	s->cam->trans = transform_createAndAdd( s );
+	scene_setCamera(s, 0.f, 0.f, 10.f, 1.f);
+	scene_setAmbient( s, 0.2f, 0.2f, 0.2f, 1.f );
+
+	return s;
 }
 
 void glTranslate_vector(vector* v) {
@@ -192,7 +208,7 @@ void scene_tick(scene* s, float dt) {
 		scene_debugLights( s );
 
 	// TEST
-	test_scene_tick(s, dt);
+	//test_scene_tick(s, dt);
 }
 
 void scene_setCamera(scene* s, float x, float y, float z, float w) {

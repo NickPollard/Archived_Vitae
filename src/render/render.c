@@ -54,12 +54,14 @@ void render_scene(scene* s) {
 	}
 }
 
-void render_lighting(scene* s) {
+void render_lighting( scene* s ) {
 	// Ambient Light
 	glLightModelfv(GL_LIGHT_MODEL_AMBIENT, s->ambient);
 
 	// Point Lights	
-	light_render(GL_LIGHT0, s->lights[0]);
+	// according to www.opengl.org/sdk/dorcs/man/xhtml/glLight.xml this should work
+	for ( int i = 0; i < s->light_count; i++)
+		light_render( GL_LIGHT0 + i /* according to the oGL spec, this should work */, s->lights[i] );
 }
 
 void render_applyCamera(camera* cam) {
