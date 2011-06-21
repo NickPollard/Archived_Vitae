@@ -213,7 +213,7 @@ void* s_print( sterm* s );
 void* s_concat( sterm* s );
 void* s_model( sterm* s );
 void* s_transform( sterm* s );
-//void* s_scene( sterm* s );
+void* s_scene( sterm* s );
 
 #define S_FUNC( atom, func )	if ( string_equal( data, atom ) ) { \
 									sterm* s = sterm_create( typeFunc, func ); \
@@ -227,7 +227,7 @@ void* lookup( const char* data ) {
 	S_FUNC( "concat", s_concat )
 	S_FUNC( "model", s_model )
 	S_FUNC( "transform", s_transform )
-//	S_FUNC( "scene", s_scene )
+	S_FUNC( "scene", s_scene )
 	return (void*)data;
 }
 
@@ -238,6 +238,40 @@ bool isFunction( sterm* s ) {
 const char* getAtom( sterm* term ) {
 	assert( term->type = typeAtom );
 	return (const char*)term->head;
+}
+
+void debug_sterm_print( sterm* term ) {
+	if ( isList( term ) )
+	{
+		if ( isList( term->head )) {
+			printf( "(" );
+		}
+		debug_sterm_print( term->head );
+		if ( isList( term->head )) {
+			printf( ")" );
+		}
+	}
+	if ( isAtom( term ) )
+		printf( "%s ", (const char*)term->head );
+
+	if ( isModel( term ))
+		printf( "typeModel " );
+
+	if ( isTransform( term ))
+		printf( "typeTransform " );
+
+	if ( term->tail )
+		debug_sterm_print( term->tail );
+}
+
+void debug_sterm_printList( sterm* term ) {
+	printf( "List: " );
+	if ( isList( term ))
+		printf( "(" );
+	debug_sterm_print( term );
+	if ( isList( term ))
+		printf( ")" );
+	printf( "\n" );
 }
 
 void* eval( sterm* data ) {
@@ -302,83 +336,6 @@ void* s_print( sterm* s ) {
 	return NULL;
 }
 
-/*
-// S is a list of model attributes
-void* s_model( sterm* s ) {
-	printf( "Model\n" );
-	while( s ) {
-//		attribute a = eval( s->head );
-		s = s->tail;
-	}
-	modelInstance* m = modelInstance_createEmpty( );
-	sterm* model_term = sterm_create( typeModel, m );
-	return model_term;
-}
-void* s_transform( sterm* s ) {
-	printf( "Transform\n" );
-	transform* t = transform_create();
-	while( s ) {
-		sterm* e = eval( s );
-		if ( isTransform( e ) )
-			((transform*)e->head)->parent = t;
-		if ( isModel( e ) )
-			((modelInstance*)e->head)->trans = t;
-		s = s->tail;
-	}
-	sterm* transform_term = sterm_create( typeTransform, t );
-	return transform_term;
-}
-*/
-
-/*
-// Adds all the children of a node to the scene
-void scene_addChildren( scene* s, sterm* parent ) {
-	sterm* child = parent->children;
-	while ( child ) {
-		scene_add( s, child->head );
-		child = child->tail;
-	}
-}
-
-// Adds a node to a scene
-void scene_add( scene* s, sterm* object ) {
-	if ( isModel( object ) ) {
-		modelInstance* _model = (model*)object->head;
-		scene_addModel( _scene, _model );
-	}
-	else
-		if ( isTransform( object ) ) {
-			transform_data* data = (transform*)object->head;
-			scene_addTransform( _scene, data->_transform );
-			scene_addChildren( _scene, data );
-		}
-}
-*/
-/*
-	s_scene
-	Argument list contains scene object trees
-	ie. transforms, models, or transforms containing sub-items
-	s_scene needs to recursively load these trees, setting up correct
-	transform trees and parents
-   */
-/*
-void* s_scene( sterm* args ) {
-	printf( "Scene\n" );
-	scene* _scene = scene_create();
-	while( args ) {
-		sterm* object = eval( args->head );
-		if ( isModel( object ) ) {
-			scene_addModel( _scene, (modelInstance*)object->head );
-		}
-	   	else
-		if ( isTransform( object ) ) {
-			scene_addTransform( _scene, (transform*)object->head );
-		}
-		args = args->tail;
-	}
-	return _scene;
-}
-*/
 // *** Testing
 
 // Tests s_concat, eval, parse, inputStream
@@ -395,6 +352,7 @@ void test_s_concat() {
 
 // Tests s_scene, s_model, eval, parse, inputStream
 void test_s_scene() {
+	printf( "Beginning test: test_s_scene()\n" );
 	sterm* s = parse_string( "(scene (model))" );
 	scene* _scene = eval( s );
 	(void)_scene;
@@ -404,6 +362,10 @@ void test_s_scene() {
 }
 
 void test_sfile( ) {
+	sterm* p = parse_string( "(a (b c) (d))" );
+	debug_sterm_printList( p );
+
+	printf( "Beginning test: test dat/test2.s\n" );
 	sterm* s = parse_file( "dat/test2.s" );
 	eval( s );
 	sterm_free( s );
@@ -431,46 +393,6 @@ void* vector_process( sterm* s ) {
 */
 
 /*
-// Evaluate a list of sterms
-void* eval( slist* data ) {
-	if ( isAtom( data->head ) ) {
-//		return lookup( data->head.ptr );
-	}
-	else if ( isList( data->head )) {
-		return eval( data->head->head )( data->head->tail );
-	}
-}
-// Create the objects indicated by a data file
-// The file should have only one root
-void load( slist* data ) {
-	// find the function defined by the head
-	// Call it with the data defined by the tail
-	eval( data );
-}
-
-void file_load( const char* filename ) {
-	int length = 0;
-	const char* contents = vfile_contents( filename, &length );
-	inputStream* in = inputStream_create( contents );
-	slist* s = sexpr_readFile( in );
-	load( s );
-}
-
-
-void scene_parse( scene* s, slist* data ) {
-	
-
-
-	if slist->head isToken
-	{
-		token = slist->head
-		if ( token == 'object' ) {
-			object obj = object_create();
-			object_parse( obj, slist->tail );
-		}
-	}	
-}
-
 // called once for each argument to scene
 void scene_process( void* context, slist* data ) {
 	
@@ -482,6 +404,15 @@ void scene_process( void* context, slist* data ) {
 }
 */
 
+/*
+	call s_scene, with a list of sterms
+	creates a scene, then evals the list and calls s_process with that list
+
+	evalling the list causes s_transform to be called, with a list of sterms
+	that creates the transformData
+
+   */
+
 sterm* cons( void* head, sterm* tail ) {
 	sterm* term = mem_alloc( sizeof( sterm ));
 	term->type = typeList;
@@ -491,7 +422,9 @@ sterm* cons( void* head, sterm* tail ) {
 }
 
 sterm* eval_list( sterm* s ) {
-	sterm* result = cons( eval( s->head ), s->tail );
+	sterm* result = NULL;
+	if ( s )
+		result = cons( eval( s->head ), eval_list( s->tail ) );
 	return result;
 }
 
@@ -504,8 +437,10 @@ transformData* transformData_create() {
 }
 
 void transformData_processElement( transformData* t, sterm* element ) {
-	if ( isModel( element ) || isTransform( element ))
+	if ( isModel( element ) || isTransform( element )) {
+		printf( "Adding child to Transform.\n" );
 		t->elements = cons( element, t->elements );
+	}
 }
 
 // Receives a heterogenous list of elements, some might be transform properties
@@ -524,11 +459,14 @@ void transformData_processElements( transformData* t, sterm* elements ) {
 void* s_transform( sterm* raw_elements ) {
 	printf( "s_transform\n" );
 	transformData* tData = transformData_create();
+	debug_sterm_printList( raw_elements );
 	if ( raw_elements ) {
 		sterm* elements = eval_list( raw_elements );
+		debug_sterm_printList( elements );
 		transformData_processElements( tData, elements );
 	}
-	return tData;
+	sterm* t = sterm_create( typeTransform, tData );
+	return t;
 }
 
 typedef struct modelData_s {
@@ -558,7 +496,8 @@ void* s_model( sterm* raw_properties ) {
 		sterm* properties = eval_list( raw_properties );
 		modelData_processProperties( mData, properties );
 	}
-	return mData;
+	sterm* m = sterm_create( typeModel, mData );
+	return m;
 }
 
 void scene_processObject( scene* s, sterm* object ) {
@@ -572,8 +511,10 @@ void scene_processObjects( scene* s, sterm* objects ) {
 }
 
 void* s_scene( sterm* raw_scene_objects ) {
+	printf( "s_scene\n" );
 	scene* s = scene_create();
 	sterm* scene_objects = eval_list( raw_scene_objects ); // TODO: Could eval_list be part of just eval?
+	debug_sterm_printList( scene_objects );
 	scene_processObjects( s, scene_objects );
 	return s;
 }

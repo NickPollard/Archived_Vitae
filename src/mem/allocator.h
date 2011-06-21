@@ -3,7 +3,7 @@
 // Allocator.h
 #include <stddef.h>
 
-#define MEM_DEBUG_VERBOSE
+//#define MEM_DEBUG_VERBOSE
 
 typedef struct block_s block;
 
