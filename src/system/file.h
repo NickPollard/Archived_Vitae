@@ -21,14 +21,6 @@ typedef void* (*sfunc)( sterm* s );
 void sterm_free( sterm* s );
 
 
-/*
-// *** Load data
-typedef struct transform_data_s {
-	transform	_transform;
-	sterm*		children;	// All children as an s-list	
-} transform_data;
-*/
-
 
 // *** Stream Reading
 

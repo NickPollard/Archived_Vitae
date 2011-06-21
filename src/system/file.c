@@ -1,13 +1,14 @@
 // file.c
 #include "common.h"
 #include "file.h"
-// TEMP
-#include "model.h"
-#include "scene.h"
 //-----------------------
 #include "system/string.h"
 #include "render/modelinstance.h"
 #include <assert.h>
+// TEMP
+#include "model.h"
+#include "render/modelinstance.h"
+#include "scene.h"
 
 //
 // *** File
@@ -404,14 +405,6 @@ void scene_process( void* context, slist* data ) {
 }
 */
 
-/*
-	call s_scene, with a list of sterms
-	creates a scene, then evals the list and calls s_process with that list
-
-	evalling the list causes s_transform to be called, with a list of sterms
-	that creates the transformData
-
-   */
 
 sterm* cons( void* head, sterm* tail ) {
 	sterm* term = mem_alloc( sizeof( sterm ));
@@ -428,6 +421,7 @@ sterm* eval_list( sterm* s ) {
 	return result;
 }
 
+// TODO - could this be removed, just an slist but with the term above having the typeTransform?
 typedef struct transformData_s {
 	sterm* elements;
 } transformData;
@@ -438,7 +432,7 @@ transformData* transformData_create() {
 
 void transformData_processElement( transformData* t, sterm* element ) {
 	if ( isModel( element ) || isTransform( element )) {
-		printf( "Adding child to Transform.\n" );
+//		printf( "Adding child to Transform.\n" );
 		t->elements = cons( element, t->elements );
 	}
 }
@@ -457,12 +451,12 @@ void transformData_processElements( transformData* t, sterm* elements ) {
 // and all other sub transforms
 // So returns the whole sub tree from this point
 void* s_transform( sterm* raw_elements ) {
-	printf( "s_transform\n" );
+//	printf( "s_transform\n" );
 	transformData* tData = transformData_create();
-	debug_sterm_printList( raw_elements );
+//	debug_sterm_printList( raw_elements );
 	if ( raw_elements ) {
 		sterm* elements = eval_list( raw_elements );
-		debug_sterm_printList( elements );
+//		debug_sterm_printList( elements );
 		transformData_processElements( tData, elements );
 	}
 	sterm* t = sterm_create( typeTransform, tData );
@@ -490,7 +484,7 @@ void modelData_processProperties( modelData* m, sterm* properties ) {
 // Creates a model instance
 // Returns that model instance
 void* s_model( sterm* raw_properties ) {
-	printf( "s_model\n" );
+//	printf( "s_model\n" );
 	modelData* mData = modelData_create();
 	if ( raw_properties ) {
 		sterm* properties = eval_list( raw_properties );
@@ -500,22 +494,57 @@ void* s_model( sterm* raw_properties ) {
 	return m;
 }
 
-void scene_processObject( scene* s, sterm* object ) {
+void scene_processObject( scene* s, transform* parent, sterm* object );
+void scene_processObjects( scene* s, transform* parent, sterm* objects );
+void scene_processTransform( scene* s, transform* parent, transformData* tData );
+
+void scene_processTransform( scene* s, transform* parent, transformData* tData ) {
+	printf( "Transform!\n" );
+	transform* t = transform_create();
+	t->parent = parent;
+	scene_addTransform( s, t );
+
+	// If it has children, process those
+	scene_processObjects( s, parent, tData->elements );
+	
+}
+
+void scene_processModel( scene* s, transform* parent, modelData* mData ) {
+	printf( "Model!\n" );
+	modelHandle testCube = model_getHandleFromFilename( "invalid.obj" );
+	modelInstance* m = modelInstance_create( testCube );
+	m->trans = parent;
+	scene_addModel( s, m );
+}
+
+void scene_processObject( scene* s, transform* parent, sterm* object ) {
 	// TODO: implement	
+	if ( isTransform( object ))
+		scene_processTransform( s, parent, object->head );
+	if ( isModel( object ))
+		scene_processModel( s, parent, object->head );
 }
 
-void scene_processObjects( scene* s, sterm* objects ) {
-	scene_processObject( s, objects->head );
+void scene_processObjects( scene* s, transform* parent, sterm* objects ) {
+	scene_processObject( s, parent, objects->head );
 	if ( objects->tail )
-		scene_processObjects( s, objects->tail );
+		scene_processObjects( s, parent, objects->tail );
 }
 
+/*
+	call s_scene, with a list of sterms
+	creates a scene, then evals the list and calls s_process with that list
+
+	evalling the list causes s_transform to be called, with a list of sterms
+	that creates the transformData
+
+   */
 void* s_scene( sterm* raw_scene_objects ) {
-	printf( "s_scene\n" );
+//	printf( "s_scene\n" );
 	scene* s = scene_create();
 	sterm* scene_objects = eval_list( raw_scene_objects ); // TODO: Could eval_list be part of just eval?
-	debug_sterm_printList( scene_objects );
-	scene_processObjects( s, scene_objects );
+//	debug_sterm_printList( scene_objects );
+	scene_processObjects( s, NULL /*root has no parent*/, scene_objects );
 	return s;
 }
 
