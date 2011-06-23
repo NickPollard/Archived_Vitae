@@ -14,6 +14,13 @@
 #include "font.h"
 #include "debug/debugtext.h"
 
+// *** Private Declarations
+
+void scene_saveFile( scene* s, const char* filename );
+scene* scene_loadFile( const char* filename );
+
+// *** Constants
+
 static const size_t modelArraySize = sizeof( modelInstance* ) * MAX_MODELS;
 static const size_t lightArraySize = sizeof( light* ) * MAX_LIGHTS;
 
@@ -133,14 +140,15 @@ scene* test_scene_init( ) {
 	scene_setCamera(s, 0.f, 0.f, 10.f, 1.f);
 	scene_setAmbient( s, 0.2f, 0.2f, 0.2f, 1.f );
 
-	sceneData* data = scene_save( s );
-	scene* s2 = scene_load( data );
-	sceneData_free( data );
-	scene_free( s );
+//	scene_saveFile( s, "dat/test_scene.s" );
+	scene* s2 = scene_loadFile( "dat/test_scene.s" );
+
+//	sceneData* data = scene_save( s );
+//	scene* s2 = scene_load( data );
+//	sceneData_free( data );
+
+//	scene_free( s );
 	return s2;
-
-
-	return s;
 }
 
 void glTranslate_vector(vector* v) {
@@ -202,8 +210,10 @@ void scene_input( scene* s, input* in ) {
 
 // Update the scene
 void scene_tick(scene* s, float dt) {
-	scene_concatenateTransforms(s);
+	printf( "Concat.\n" );
+	scene_concatenateTransforms( s );
 
+	printf( "Debug.\n" );
 	if ( s->debug_flags & kSceneDebugTransforms )
 		scene_debugTransforms( s );
 	if ( s->debug_flags & kSceneLightsTransforms )
@@ -236,16 +246,9 @@ void test_scene_tick(scene* s, float dt) {
 }
 
 // All sceneData data is owned by the sceneData
-// So free ALL of it
 // EXCEPT now it will all be one big blob
 // so just free the data
 void sceneData_free( sceneData* data ) {
-//	mem_free( data->transforms );
-//	mem_free( data->lights );
-//	mem_free( data->modelInstances );
-//	mem_free( data->cam );
-
-	// Finally free our data
 	mem_free( data );
 }
 
@@ -275,13 +278,13 @@ sceneData* scene_save( scene* s ) {
 	void* blob_end = blob + blob_size;	// Used for debug check to ensure we don't write over the end
 	
 	sceneData* data = (sceneData*)blob;
+	data->size = blob_size;
 
 	// transforms or parent transforms are stored as indices rather than pointers
 	// so that they can be restored correctly when moved and loaded
 
 	// transforms
 	data->transform_count = s->transform_count;
-//	data->transforms = mem_alloc( sizeof( transform ) * data->transform_count );
 	data->transforms = blob + sizeof( sceneData );
 	assert( (void*)data->transforms < blob_end );
 
@@ -293,8 +296,7 @@ sceneData* scene_save( scene* s ) {
 	
 	// modelInstances
 	data->model_count = s->model_count;
-//	data->modelInstances = mem_alloc( sizeof( modelInstance ) * data->model_count );
-	data->modelInstances = ((void*)data->transforms) + transforms_size;
+	data->modelInstances = (void*)data->transforms + transforms_size;
 	assert( (void*)data->modelInstances < blob_end );
 
 	for ( int i = 0; i < s->model_count; i++ ) {
@@ -304,8 +306,7 @@ sceneData* scene_save( scene* s ) {
 
 	// lights
 	data->light_count = s->light_count;
-	//data->lights = mem_alloc( sizeof( light ) * data->light_count );
-	data->lights =( (void*)data->modelInstances) + models_size;
+	data->lights = (void*)data->modelInstances + models_size;
 	assert( (void*)data->lights < blob_end );
 
 	for ( int i = 0; i < s->light_count; i++ ) {
@@ -313,14 +314,11 @@ sceneData* scene_save( scene* s ) {
 		data->lights[i].trans = (void*)scene_transformIndex( s, data->lights[i].trans );
 	}
 
-//	data->cam = mem_alloc( sizeof( camera ));
-	data->cam = ((void*)data->lights) + lights_size;
+	data->cam = (void*)data->lights + lights_size;
 	assert( (void*)data->cam < blob_end );
 
 	memcpy( data->cam, s->cam, sizeof( camera ));
 	data->cam->trans = (transform*)scene_transformIndex( s, data->cam->trans );
-
-
 
 	return data;
 }
@@ -334,15 +332,18 @@ transform* scene_resolveTransform( scene* s, int i ) {
 
 // TODO
 void scene_saveFile( scene* s, const char* filename ) {
-	int buffer_length = 0;
-	void* buffer = NULL;
-	vfile_writeContents( filename, buffer, buffer_length );
+	sceneData* data = scene_save( s );
+	vfile_writeContents( filename, data, data->size );
+	sceneData_free( data );
 }
 
 // TODO
 scene* scene_loadFile( const char* filename ) {
 	int buffer_length;
 	void* buffer = vfile_contents( filename, &buffer_length );
+	sceneData* data = (sceneData*)buffer;
+	printf( "Loading scene from file %s. File Size: %d, Data size: %d.\n", filename, buffer_length, data->size );
+	assert( data->size == buffer_length );
 	return scene_load( buffer );
 }
 
@@ -351,12 +352,25 @@ scene* scene_load( sceneData* data ) {
 	scene* s = scene_create();
 	scene_setAmbient( s, 0.2f, 0.2f, 0.2f, 1.f );
 
+	printf( "Loading %d transforms.\n", data->transform_count );
+
+	size_t models_size =		sizeof( modelInstance ) *	data->model_count;
+//	size_t lights_size =		sizeof( light ) *			data->light_count;
+	size_t transforms_size =	sizeof( transform ) *		data->transform_count;
+
+	// Need to fix up array pointers
+	data->transforms = (void*)data + sizeof( sceneData );
+	data->modelInstances = (void*)data->transforms + transforms_size;
+	data->lights = (void*)data->modelInstances + models_size;
+
 	// create transforms
 	for ( int i = 0; i < data->transform_count; i++ ) {
 		transform* t = transform_create( s );
 		memcpy( t, &data->transforms[i], sizeof( transform ));
 		scene_addTransform( s, t );
+		printf(" Loading transform %d. Parent index = %d.\n", i, (int)t->parent );
 		t->parent = scene_resolveTransform( s, (int)t->parent );
+		assert( t != t->parent );
 	}
 
 	s->cam = camera_create( s );

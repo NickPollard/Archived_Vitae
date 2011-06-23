@@ -42,14 +42,16 @@ struct scene_s {
 } ;
 
 typedef struct sceneData_s {
+	size_t		size;
+	//
+	int			transform_count;
+	transform*	transforms;
+	//
 	int			model_count;
 	modelInstance*	modelInstances;
 	//
 	int			light_count;
 	light*		lights;
-	//
-	int			transform_count;
-	transform*	transforms;
 
 	camera*		cam;
 } sceneData;
