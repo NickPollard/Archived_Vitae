@@ -237,33 +237,54 @@ void test_scene_tick(scene* s, float dt) {
 
 // All sceneData data is owned by the sceneData
 // So free ALL of it
+// EXCEPT now it will all be one big blob
+// so just free the data
 void sceneData_free( sceneData* data ) {
-	mem_free( data->transforms );
-	mem_free( data->lights );
-	mem_free( data->modelInstances );
-	mem_free( data->cam );
+//	mem_free( data->transforms );
+//	mem_free( data->lights );
+//	mem_free( data->modelInstances );
+//	mem_free( data->cam );
 
 	// Finally free our data
 	mem_free( data );
 }
 
+// save a scene as a binary blob
+// the data should be packed in the following format:
 //
-//	Load a Scene from a binary blob, as created by scene_save
+// SceneData header
+// Transform Array (transform_count items)
+// Model Array (model_count items)
+// Light Array (light_count items)
 //
-
 sceneData* scene_save( scene* s ) {
-	sceneData* data = mem_alloc( sizeof( sceneData ));
+	// Calculate total size of binary blob needed
+	// Total size is header + size of all arrays
 
-	data->cam = mem_alloc( sizeof( camera ));
-	memcpy( data->cam, s->cam, sizeof( camera ));
-	data->cam->trans = (transform*)scene_transformIndex( s, data->cam->trans );
+	size_t models_size =		sizeof( modelInstance ) *	s->model_count;
+	size_t lights_size =		sizeof( light ) *			s->light_count;
+	size_t transforms_size =	sizeof( transform ) *		s->transform_count;
+
+	size_t blob_size = sizeof( sceneData ) +
+						transforms_size +
+						models_size +
+						lights_size +
+						sizeof( camera );
+
+	void* blob = mem_alloc( blob_size );
+	void* blob_end = blob + blob_size;	// Used for debug check to ensure we don't write over the end
+	
+	sceneData* data = (sceneData*)blob;
 
 	// transforms or parent transforms are stored as indices rather than pointers
 	// so that they can be restored correctly when moved and loaded
 
 	// transforms
 	data->transform_count = s->transform_count;
-	data->transforms = mem_alloc( sizeof( transform ) * data->transform_count );
+//	data->transforms = mem_alloc( sizeof( transform ) * data->transform_count );
+	data->transforms = blob + sizeof( sceneData );
+	assert( (void*)data->transforms < blob_end );
+
 	for ( int i = 0; i < s->transform_count; i++ ) {
 		data->transforms[i] = *scene_transform( s, i );
 		assert( data->transforms[i].parent != scene_transform( s, i ));
@@ -272,7 +293,10 @@ sceneData* scene_save( scene* s ) {
 	
 	// modelInstances
 	data->model_count = s->model_count;
-	data->modelInstances = mem_alloc( sizeof( modelInstance ) * data->model_count );
+//	data->modelInstances = mem_alloc( sizeof( modelInstance ) * data->model_count );
+	data->modelInstances = ((void*)data->transforms) + transforms_size;
+	assert( (void*)data->modelInstances < blob_end );
+
 	for ( int i = 0; i < s->model_count; i++ ) {
 		data->modelInstances[i] = *scene_model( s, i );
 		data->modelInstances[i].trans = (void*)scene_transformIndex( s, data->modelInstances[i].trans );
@@ -280,11 +304,23 @@ sceneData* scene_save( scene* s ) {
 
 	// lights
 	data->light_count = s->light_count;
-	data->lights = mem_alloc( sizeof( light ) * data->light_count );
+	//data->lights = mem_alloc( sizeof( light ) * data->light_count );
+	data->lights =( (void*)data->modelInstances) + models_size;
+	assert( (void*)data->lights < blob_end );
+
 	for ( int i = 0; i < s->light_count; i++ ) {
 		data->lights[i] = *scene_light( s, i );
 		data->lights[i].trans = (void*)scene_transformIndex( s, data->lights[i].trans );
 	}
+
+//	data->cam = mem_alloc( sizeof( camera ));
+	data->cam = ((void*)data->lights) + lights_size;
+	assert( (void*)data->cam < blob_end );
+
+	memcpy( data->cam, s->cam, sizeof( camera ));
+	data->cam->trans = (transform*)scene_transformIndex( s, data->cam->trans );
+
+
 
 	return data;
 }
