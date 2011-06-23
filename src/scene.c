@@ -119,11 +119,6 @@ scene* test_scene_init( ) {
 
 	scene_setCamera(s, 0.f, 0.f, 10.f, 1.f);
 
-	sceneData* data = scene_save( s );
-	scene* s2 = scene_load( data );
-	sceneData_free( data );
-	scene_free( s );
-	return s2;
 
 //	return s;
 */
@@ -137,6 +132,13 @@ scene* test_scene_init( ) {
 	s->cam->trans = transform_createAndAdd( s );
 	scene_setCamera(s, 0.f, 0.f, 10.f, 1.f);
 	scene_setAmbient( s, 0.2f, 0.2f, 0.2f, 1.f );
+
+	sceneData* data = scene_save( s );
+	scene* s2 = scene_load( data );
+	sceneData_free( data );
+	scene_free( s );
+	return s2;
+
 
 	return s;
 }
@@ -294,6 +296,20 @@ transform* scene_resolveTransform( scene* s, int i ) {
 		return scene_transform( s, i );
 }
 
+// TODO
+void scene_saveFile( scene* s, const char* filename ) {
+	int buffer_length = 0;
+	void* buffer = NULL;
+	vfile_writeContents( filename, buffer, buffer_length );
+}
+
+// TODO
+scene* scene_loadFile( const char* filename ) {
+	int buffer_length;
+	void* buffer = vfile_contents( filename, &buffer_length );
+	return scene_load( buffer );
+}
+
 scene* scene_load( sceneData* data ) {
 	// create scene
 	scene* s = scene_create();
@@ -315,8 +331,8 @@ scene* scene_load( sceneData* data ) {
 	for ( int i = 0; i < data->model_count; i++ ) {
 		modelInstance* m = modelInstance_createEmpty( );
 		memcpy( m, &data->modelInstances[i], sizeof( modelInstance ));
-		scene_addModel( s, m );
 		m->trans = scene_resolveTransform( s, (int)m->trans );
+		scene_addModel( s, m );
 	}
 
 	// create lights

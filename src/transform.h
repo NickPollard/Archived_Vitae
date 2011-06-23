@@ -10,6 +10,9 @@ struct transform_s {
 	matrix		world;
 	transform*	parent;
 	int			isDirty;
+#if DEBUG_STRINGS
+	const char* debug_name;
+#endif
 };
 
 DECLARE_POOL( transform )

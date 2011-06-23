@@ -41,7 +41,7 @@ bin/debug/%.o : src/%.c
 	@mkdir -p bin/debug/render
 	@mkdir -p bin/debug/system
 	@echo "- Compiling $@"
-	@$(C) -g $(CFLAGS) -c -o $@ $<
+	@$(C) -g $(CFLAGS) -D DEBUG -c -o $@ $<
 
 bin/%.o : src/%.c
 	@mkdir -p bin

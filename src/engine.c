@@ -12,6 +12,7 @@
 #include "render/debugdraw.h"
 #include "render/modelinstance.h"
 #include "render/render.h"
+#include "debug/debug.h"
 #include "debug/debugtext.h"
 #include "system/file.h"
 
@@ -21,6 +22,8 @@
 
 // GLFW Libraries
 #include <GL/glfw.h>
+
+IMPLEMENT_LIST(delegate)
 
 // System libraries
 
@@ -173,7 +176,8 @@ void engine_init(engine* e, int argc, char** argv) {
 void init(int argc, char** argv) {
 
 	// *** Initialise Memory
-	mem_init(argc, argv);
+	mem_init( argc, argv );
+	debug_init( );
 
 	// *** Static Module initialization
 	scene_static_init();
@@ -306,14 +310,15 @@ delegate* engine_findRenderDelegate( engine* e, renderfunc render ) {
 
 delegate* engine_addDelegate( delegatelist** d, void* func ) {
 	delegatelist* dl = *d;
-	if ( !dl ) {
-		*d = malloc( sizeof( delegatelist ));
+	if ( !*d ) {
+//		*d = mem_alloc( sizeof( delegatelist ));
+		*d = delegatelist_create();
 		dl = *d;
 	}
 	else {
 		while ( dl->tail != NULL)
 			dl = dl->tail;
-		dl->tail = malloc( sizeof( delegatelist ));
+		dl->tail = delegatelist_create();
 		dl = dl->tail;
 	}
 	dl->tail = NULL;

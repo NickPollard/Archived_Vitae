@@ -24,6 +24,9 @@ transform* transform_create() {
 	matrix_setIdentity( &t->world );
 	t->parent = NULL;
 	t->isDirty = 0;
+#if DEBUG_STRINGS
+	t->debug_name = debug_string( "Transform" );
+#endif
 	return t;
 }
 
@@ -110,9 +113,17 @@ void transform_setLocalTranslation(transform* t, vector* v) {
 
 void transform_printDebug( transform* t, debugtextframe* f ) {
 	char string[128];
+#if DEBUG_STRINGS
+	sprintf( string, "Transform: Name: %s, Translation %.2f, %.2f, %.2f", 
+			t->debug_name,
+			t->world.val[3][0], 
+			t->world.val[3][1], 
+			t->world.val[3][2] );
+#else
 	sprintf( string, "Transform: Translation %.2f, %.2f, %.2f", 
 			t->world.val[3][0], 
 			t->world.val[3][1], 
 			t->world.val[3][2] );
+#endif
 	PrintDebugText( f, string );
 }

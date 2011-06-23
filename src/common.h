@@ -10,6 +10,8 @@
 
 #include "common.fwd.h"
 
+#include "debug/debug.h"
+
 // Boolean defines
 #define true 1
 #define false 0

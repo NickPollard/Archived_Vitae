@@ -28,13 +28,12 @@ FILE* vfile_open( const char* path, const char* mode ) {
 // Load the entire contents of a file into a heap-allocated buffer of the same length
 // returns a pointer to that buffer
 // It its the caller's responsibility to free the buffer
-void* vfile_contents(const char *path, int *length)
-{
-    FILE *f = fopen(path, "r");
+void* vfile_contents( const char* path, int* length ) {
+    FILE *f = fopen( path, "r" );
     void *buffer;
 
     if (!f) {
-        fprintf(stderr, "Unable to open %s for reading\n", path);
+        fprintf(stderr, "vfile: Unable to open %s for reading\n", path);
         return NULL;
     }
 
@@ -42,12 +41,23 @@ void* vfile_contents(const char *path, int *length)
     *length = ftell(f);
     fseek(f, 0, SEEK_SET);
 
-    buffer = malloc(*length+1);
+    buffer = mem_alloc(*length+1);
     *length = fread(buffer, 1, *length, f);
     fclose(f);
-    ((char*)buffer)[*length] = '\0';
+    ((char*)buffer)[*length] = '\0'; // TODO should I be doing this? Distinction between binary and ASCII?
 
     return buffer;
+}
+
+void vfile_writeContents( const char* path, void* buffer, int length ) {
+	FILE *f = fopen( path, "w" );
+
+    if (!f) {
+        fprintf(stderr, "vfile: Unable to open %s for writing\n", path);
+        return;
+    }
+
+	fwrite( buffer, 1, length, f );
 }
 
 //
@@ -196,7 +206,7 @@ sterm* parse_file( const char* filename ) {
 	assert( contents );
 	assert( length != 0 );
 	sterm* s = parse_string( contents );
-	free( contents );
+	mem_free( contents );
 	return s;
 }
 
@@ -427,7 +437,9 @@ typedef struct transformData_s {
 } transformData;
 
 transformData* transformData_create() {
-	return (transformData*)mem_alloc( sizeof( transformData ));
+	transformData* t =  (transformData*)mem_alloc( sizeof( transformData ));
+	t->elements = NULL;
+	return t;
 }
 
 void transformData_processElement( transformData* t, sterm* element ) {

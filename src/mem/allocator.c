@@ -1,6 +1,6 @@
 // Allocator.c
+#include "common.h"
 #include "allocator.h"
-#include "src/common.h"
 //---------------------
 #include <assert.h>
 #include <stdio.h>
@@ -33,18 +33,26 @@ void* heap_allocate( heapAllocator* heap, int size ) {
 #endif
 	block* b = heap_findEmptyBlock( heap, size );
 	if ( !b ) {
-		printError( "HeapAllocator out of memory on request for %d bytes.\n", size );
+		printError( "HeapAllocator out of memory on request for %d bytes. Total size: %d bytes, Used size: %d bytes\n", size, heap->total_size, heap->total_allocated );
 		assert( 0 );
 	}
 	if ( b->size > ( size + sizeof( block ) ) ) {
+//		printf( "Allocator: Splitting Block of size %d into sizes %d ad %d\n", b->size, size, b->size-size );
 		block* remaining = block_create( b->data + size, b->size - size );
 		block_insertAfter( b, remaining );
 		b->size = size;
+		heap->total_allocated += sizeof( block );
+		heap->total_free -= sizeof( block );
 		// Try to merge blocks
 		if ( remaining->next && remaining->next->free )
-			block_merge( remaining, remaining->next );
+			block_merge( heap, remaining, remaining->next );
 	}
 	b->free = false;
+
+	heap->total_allocated += size;
+	heap->total_free -= size;
+
+	printf("Allocator returned address: %x.\n", (unsigned int)b->data );
 	return b->data;
 }
 
@@ -73,35 +81,50 @@ block* heap_findBlock( heapAllocator* heap, void* mem_addr ) {
 void heap_deallocate( heapAllocator* heap, void* data ) {
 	block* b = heap_findBlock( heap, data );
 	assert( b );
+	printf("Allocator freed address: %x.\n", (unsigned int)b->data );
 	b->free = true;
+
+	heap->total_free += b->size;
+	heap->total_allocated -= b->size;
+
 	// Try to merge blocks
-	if ( b->next->free )
-		block_merge( b, b->next );
-	if ( b->prev )
-		block_merge( b->prev, b );
+	if ( b->next && b->next->free )
+		block_merge( heap, b, b->next );
+	if ( b->prev && b->prev->free )
+		block_merge( heap, b->prev, b );
 }
 
 // Merge two continous blocks, *first* and *second*
 // Both *first* and *second* must be valid
 // Afterwards, only *first* will remain valid
 // but will have size equal to both plus sizeof( block )
-void block_merge( block* first, block* second ) {
+void block_merge( heapAllocator* heap, block* first, block* second ) {
+//	printf( "Allocator: Merging Blocks\n" );
 	assert( first );
 	assert( second );
 	assert( second->free );								// Second must be empty (not necessarily first!)
 	assert( second == (first->data + first->size) );	// Contiguous
 
+	heap->total_free += sizeof( block );
+	heap->total_allocated -= sizeof( block );
+
 	first->size += second->size + sizeof( block );
 	first->next = second->next;
+	first->free = true;
 }
 
 // Create a heapAllocator of *size* bytes
 // Initialised with one block pointing to the whole memory
 heapAllocator* heap_create( int heap_size ) {
-	void* data = malloc( sizeof( heapAllocator ) + heap_size );
+	// We add space for the first block header, so we do get the correct total size
+	// ie. this means that heap_create (size), followed by heap_Allocate( size ) should work
+	void* data = malloc( sizeof( heapAllocator ) + sizeof( block ) + heap_size );
 
 	heapAllocator* allocator = (heapAllocator*)data;
 	data += sizeof( heapAllocator );
+	allocator->total_size = heap_size;
+	allocator->total_free = heap_size;
+	allocator->total_allocated = 0;
 	
 	// Should not be possible to fail creating the first block header
 	block* first = block_create( data, heap_size );

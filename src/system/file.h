@@ -34,6 +34,8 @@ typedef struct inputStream_s {
 // *** File Operations
 
 FILE* vfile_open( const char* path, const char* mode );
+void* vfile_contents(const char *path, int *length);
+void vfile_writeContents( const char* path, void* buffer, int length );
 
 // *** Parsing
 

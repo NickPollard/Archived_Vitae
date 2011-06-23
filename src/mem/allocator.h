@@ -12,16 +12,17 @@ typedef struct block_s block;
 // Uses a doubly-linked list of block headers to keep track of used space
 // Insertion time is O(n)
 // Deallocation is O(n)
-typedef struct heapAllocator_s {
+struct heapAllocator_s {
 	unsigned int total_size;		// in bytes, size of the heap
 	unsigned int total_allocated;	// in bytes, currently allocated
 	unsigned int total_free;		// in bytes, currently free
 	block* first;					// doubly-linked list of blocks
-} heapAllocator;
+};
 
 // A memory block header for the heapAllocator
 // Each heapAllocator has a doubly-linked list of these
 // Each heap_allocate call will return one of these
+// TODO - can optimise the space here?
 struct block_s {
 	void*	data;			// the memory location of the actual block
 	unsigned int	size;	// in bytes, the block size
@@ -61,7 +62,7 @@ void heap_deallocate( heapAllocator* heap, void* data );
 // Merge two continous blocks, *first* and *second*
 // Afterwards, only *first* will remain valid
 // but will have size equal to both plus sizeof( block )
-void block_merge( block* first, block* second );
+void block_merge( heapAllocator* heap, block* first, block* second );
 
 // Create a heapAllocator of *size* bytes
 // Initialised with one block pointing to the whole memory
