@@ -97,7 +97,11 @@ void matrix_setColumn(matrix* m, int col, const vector* v) {
 
 // Set the translation component of a 4x4 matrix
 void matrix_setTranslation(matrix* m, const vector* v) {
-	matrix_setColumn(m, 3, v); }
+//	matrix_setColumn(m, 3, v);
+	m->val[3][0] = v->val[0];
+	m->val[3][1] = v->val[1];
+	m->val[3][2] = v->val[2];
+}
 
 // Get the translation component of a 4x4 matrix
 const vector* matrix_getTranslation(matrix* m) {
@@ -221,7 +225,7 @@ void matrix_fromEuler( matrix* dst, vector* euler_angles ) {
 	matrix_mul( dst, &y, &x );
 	matrix_mul( dst, dst, &z );
 
-	matrix_print( dst );
+//	matrix_print( dst );
 }
 
 // Build a rotation quaternion from Euler Angle values

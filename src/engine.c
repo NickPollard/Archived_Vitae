@@ -72,9 +72,17 @@ void test_engine_init( engine* e ) {
  *
  */
 
+void engine_input( engine* e ) {
+	flycam_input( fcam, e->input );
+
+	scene_input( theScene, e->input );
+}
+
 // tick - process a frame of game update
 void engine_tick( engine* e ) {
 	float dt = timer_getDelta( e->timer );
+
+	engine_input( e );
 
 	input_tick( e->input, dt );
 	scene_tick( theScene, dt );
@@ -231,8 +239,6 @@ void engine_run(engine* e) {
 	int running = true;
 	handleResize(640, 480);	// Call once to init
 	while (running) {
-
-		scene_input( theScene, e->input );
 
 		engine_tick(e);
 		

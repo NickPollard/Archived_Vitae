@@ -29,3 +29,5 @@ void flycam_setTarget( flycam* f, camera* c );
 
 // Update the flycam, setting the target data to latest
 void flycam_tick( flycam* f, float dt );
+
+void flycam_input( flycam* cam, input* in  );

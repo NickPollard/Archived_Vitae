@@ -93,4 +93,6 @@ quaternion quaternion_fromEuler( vector* euler_angles );
 
 // *** Test
 void test_matrix();
+
+void matrix_print( matrix* src );
 #endif // __MATHS_H__

@@ -21,9 +21,9 @@ camera* camera_createWithTransform( scene* s ) {
 }
 
 const vector* camera_getTranslation(camera* c) {
-	return matrix_getTranslation(&c->trans->local);
+	return matrix_getTranslation( &c->trans->local );
 }
 
 void camera_setTranslation(camera* c, const vector* v) {
-	matrix_setTranslation(&c->trans->local, v);
+	matrix_setTranslation( &c->trans->local, v );
 }
