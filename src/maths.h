@@ -23,8 +23,11 @@ typedef struct quat_s {
 	float y;
 	float z;
 	float s;
-} quat;
+} quaternion;
 
+// Matrix is COLUMN Major
+// ie val[0][x] = a point in the first column
+// Translation values are in the 12th, 13th, 14th, 15th addresses of the buffer
 typedef union matrix_u {
 	vector cols[4];
 	float val[4][4];
@@ -45,7 +48,13 @@ float Dot(vector* A, vector* B);
 void Cross(vector* dst, vector* srcA, vector* srcB);
 
 // Matrix Vector multiply
-void matrixVecMul(vector* out, matrix* m, vector* in);
+vector matrixVecMul(const matrix* m, const vector* v);
+
+// Matrix multiply
+//matrix matrixMul( const matrix* a, const matrix* b );
+
+// Matrix inverse
+matrix matrix_inverse( matrix* src );
 
 void Set(vector* v, float x, float y, float z, float w);
 
@@ -59,7 +68,7 @@ void matrix_setRow(matrix* m, int row, const vector* v);
 void matrix_setTranslation(matrix* m, const vector* v);
 
 // Get the translation component of a 4x4 matrix
-vector* matrix_getTranslation(matrix* m);
+const vector* matrix_getTranslation(matrix* m);
 
 // Initialise a matrix to the identity
 void matrix_setIdentity(matrix* m);
@@ -70,7 +79,18 @@ const GLfloat* matrix_getGlMatrix(const matrix* m);
 // Multiply two matrices together
 void matrix_mul(matrix* dst, matrix* m1, matrix* m2);
 
+// Build a matrix from a rotation and translation
+void matrix_fromRotTrans( matrix* dst, quaternion* rotation, vector* translation );
+
 // Copy one matrix to another
 void matrix_cpy(matrix* dst, matrix* src);
 
+// Build a rotation matrix from given Euler Angles
+void matrix_fromEuler( matrix* dst, vector* euler_angles );
+
+// Build a rotation quaternion from Euler Angle values
+quaternion quaternion_fromEuler( vector* euler_angles );
+
+// *** Test
+void test_matrix();
 #endif // __MATHS_H__

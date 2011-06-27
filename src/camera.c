@@ -20,10 +20,10 @@ camera* camera_createWithTransform( scene* s ) {
 	return c;
 }
 
-vector* camera_getTranslation(camera* c) {
+const vector* camera_getTranslation(camera* c) {
 	return matrix_getTranslation(&c->trans->local);
 }
 
-void camera_setTranslation(camera* c, vector* v) {
+void camera_setTranslation(camera* c, const vector* v) {
 	matrix_setTranslation(&c->trans->local, v);
 }

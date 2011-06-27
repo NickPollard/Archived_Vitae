@@ -7,6 +7,7 @@
 
 #include "common.h"
 #include "engine.h"
+#include "maths.h"
 #include "mem/allocator.h"
 #include "system/file.h"
 
@@ -22,6 +23,8 @@ int main(int argc, char** argv) {
 
 	// System Tests
 	test_sfile();
+
+	test_matrix();
 
 	run();
 

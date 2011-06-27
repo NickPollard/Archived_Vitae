@@ -13,7 +13,11 @@ void transform_initPool() {
 	static_transform_pool = pool_transform_create( 256 );
 }
 
-void transform_setWorldSpace();
+void transform_setWorldSpace( transform* t, matrix* world ) {
+	t->world = *world;
+	// TODO
+//	t->local = t->world * inverse( t->parent->world );
+}
 
 void transform_setLocalSpace();
 
@@ -72,7 +76,7 @@ void transform_concatenate(transform* t) {
 
 // Concatenate the parent world space transforms to produce this world space transform from local
 int transform_concatenate(transform* t) {
-	printf( "concatenate transform. This = %x, Parent = %x\n", (unsigned int)t, (unsigned int)t->parent );
+//	printf( "concatenate transform. This = %x, Parent = %x\n", (unsigned int)t, (unsigned int)t->parent );
 	if (t->parent)	{
 		if (transform_concatenate(t->parent) || transform_isDirty(t)) {
 			transform_markDirty(t);

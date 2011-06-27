@@ -12,8 +12,8 @@ camera* camera_create();
 
 camera* camera_createWithTransform(scene* s);
 
-vector* camera_getTranslation(camera* c);
+const vector* camera_getTranslation(camera* c);
 
-void camera_setTranslation(camera* c, vector* v);
+void camera_setTranslation(camera* c, const vector* v);
 
 #endif // __CAMERA_H__

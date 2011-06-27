@@ -210,10 +210,8 @@ void scene_input( scene* s, input* in ) {
 
 // Update the scene
 void scene_tick(scene* s, float dt) {
-	printf( "Concat.\n" );
 	scene_concatenateTransforms( s );
 
-	printf( "Debug.\n" );
 	if ( s->debug_flags & kSceneDebugTransforms )
 		scene_debugTransforms( s );
 	if ( s->debug_flags & kSceneLightsTransforms )

@@ -52,7 +52,9 @@ void* heap_allocate( heapAllocator* heap, int size ) {
 	heap->total_allocated += size;
 	heap->total_free -= size;
 
+#ifdef MEM_DEBUG_VERBOSE
 	printf("Allocator returned address: %x.\n", (unsigned int)b->data );
+#endif
 	return b->data;
 }
 

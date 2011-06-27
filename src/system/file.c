@@ -514,7 +514,7 @@ void scene_processObjects( scene* s, transform* parent, sterm* objects );
 void scene_processTransform( scene* s, transform* parent, transformData* tData );
 
 void scene_processTransform( scene* s, transform* parent, transformData* tData ) {
-	printf( "Transform!\n" );
+//	printf( "Transform!\n" );
 	transform* t = transform_create();
 	t->parent = parent;
 	scene_addTransform( s, t );
@@ -525,7 +525,7 @@ void scene_processTransform( scene* s, transform* parent, transformData* tData )
 }
 
 void scene_processModel( scene* s, transform* parent, modelData* mData ) {
-	printf( "Model!\n" );
+//	printf( "Model!\n" );
 	modelHandle testCube = model_getHandleFromFilename( "invalid.obj" );
 	modelInstance* m = modelInstance_create( testCube );
 	m->trans = parent;
