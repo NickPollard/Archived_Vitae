@@ -23,15 +23,19 @@ void flycam_input( flycam* cam, input* in  ) {
 	flycamInput fly_in;
 	fly_in.pan = Vector( 0.f, 0.f, 0.f, 0.f );
 	fly_in.track = Vector( 0.f, 0.f, 0.f, 0.f );
-	if ( input_keyHeld( in, KEY_UP ))
-		fly_in.track.coord.y = 0.01f;
-	if ( input_keyHeld( in, KEY_DOWN ))
-		fly_in.track.coord.y = -0.01f;
-	if ( input_keyHeld( in, KEY_LEFT ))
+	if ( input_keyHeld( in, KEY_W ))
+		fly_in.track.coord.z = 0.01f;
+	if ( input_keyHeld( in, KEY_S ))
+		fly_in.track.coord.z = -0.01f;
+	if ( input_keyHeld( in, KEY_UP ) || input_keyHeld( in, KEY_Q ))
+		fly_in.pan.coord.y = 0.01f;
+	if ( input_keyHeld( in, KEY_DOWN ) || input_keyHeld( in, KEY_E ))
+		fly_in.pan.coord.y = -0.01f;
+	if ( input_keyHeld( in, KEY_LEFT ) || input_keyHeld( in, KEY_A ))
 		fly_in.track.coord.x = -0.01f;
-	if ( input_keyHeld( in, KEY_RIGHT ))
+	if ( input_keyHeld( in, KEY_RIGHT ) || input_keyHeld( in, KEY_D ))
 		fly_in.track.coord.x = 0.01f;
-/*	printf( "Flycam input: pan: %.2f, %.2f, %.2f, %.2f\n", fly_in.track.coord.x, 
+/*	printf( "Flycam input: track: %.2f, %.2f, %.2f, %.2f\n", fly_in.track.coord.x, 
 															fly_in.track.coord.y,
 															fly_in.track.coord.z,
 															fly_in.track.coord.w );*/

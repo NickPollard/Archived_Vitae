@@ -17,6 +17,13 @@
 
 #define KEY_T		'T'
 #define KEY_L		'L'
+#define KEY_W		'W'
+#define KEY_A		'A'
+#define KEY_S		'S'
+#define KEY_D		'D'
+#define KEY_Q		'Q'
+#define KEY_E		'E'
+
 
 #endif // GLFW
 
