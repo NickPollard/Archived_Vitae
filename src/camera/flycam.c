@@ -44,7 +44,7 @@ void flycam_input( flycam* cam, input* in  ) {
 
 // Read in an input structure
 void flycam_process( flycam* cam, flycamInput* in ) {
-	matrix_print( &cam->transform );
+//	matrix_print( &cam->transform );
 	vector translation = matrixVecMul( &cam->transform, &in->track );
 	printf( "cam translation: %.2f, %.2f\n", translation.coord.x, translation.coord.y );
 //	quaternion rotation = quaternion_fromEuler( &in->pan );
@@ -67,6 +67,5 @@ void flycam_setTarget( flycam* f, camera* c ) {
 
 // Update the flycam, setting the target data to latest
 void flycam_tick( flycam* f, float dt ) {
-	camera_setTranslation( f->camera_target, matrix_getTranslation( &f->transform ));
-//	transform_setWorldSpace( f->camera_target->trans, &f->transform );
+	transform_setWorldSpace( f->camera_target->trans, &f->transform );
 }

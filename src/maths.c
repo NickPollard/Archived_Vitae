@@ -122,13 +122,37 @@ bool matrix_equal( matrix* a, matrix* b ) {
 	return true;
 }
 
+// Find the determinant of a 4x4 matrix using Laplace Expansion
+float matrix_determinant( matrix* src ) {
+	// first calculate and cache the determinants of the base 2x2 matrices
+	float** m = (float**)src;
+	float a = (m[0][2] * m[1][3]) - (m[1][2] * m[0][3]);
+	float b = (m[1][2] * m[2][3]) - (m[2][2] * m[1][3]);
+	float c = (m[2][2] * m[3][3]) - (m[3][2] * m[2][3]);
+	float d = (m[0][2] * m[2][3]) - (m[2][2] * m[0][3]);
+	float e = (m[1][2] * m[3][3]) - (m[3][2] * m[1][3]);
+	float f = (m[0][2] * m[3][3]) - (m[3][2] * m[0][3]);
+
+	// calculate the determinants of the 4 3x3 sub matrices
+	// Each is made from the det of 3 2x2 matrices
+	float det00 = ( 				  (m[1][1] * c) - (m[2][1] * e) + (m[3][1] * b) );
+	float det01 = ( (m[0][1] * c) - 				  (m[2][1] * f) + (m[3][1] * d) );
+	float det02 = ( (m[0][1] * e) - (m[1][1] * f) + 				  (m[3][1] * a) );
+	float det03 = ( (m[0][1] * b) - (m[1][1] * d) + (m[2][1] * a)					);
+
+	float det =   ( m[0][0] * det00 )
+				- ( m[1][0] * det01 )
+				+ ( m[2][0] * det02 )
+				- ( m[3][0] * det03 );
+
+	return det;
+}
+
 // Matrix inverse
-matrix matrix_inverse( matrix* src ) {
-	matrix dst;
+void matrix_inverse( matrix* restrict dst, matrix* src ) {
 	// TODO: implement
 	printf( "Not Yet Implemented: matrix_inverse \n");
 	assert( 0 );
-	return dst;
 }
 
 // Convert a V matrix to an OGL matrix

@@ -66,9 +66,12 @@ void render_lighting( scene* s ) {
 
 void render_applyCamera(camera* cam) {
 	glLoadIdentity();
+
 	// Negate as we're doing the inverse of camera
-	vector* v = camera_getTranslation(cam);
-	glTranslatef( -(v->coord.x), -(v->coord.y), -(v->coord.z) );
+	matrix cam_inverse;
+	matrix_inverse( &cam_inverse, &cam->trans->world );
+//	matrix_print( &cam_inverse );
+	glMultMatrixf( (float*)&cam_inverse );
 }
 
 // Clear information from last draw

@@ -14,8 +14,7 @@ void transform_initPool() {
 }
 
 void transform_setWorldSpace( transform* t, matrix* world ) {
-	t->world = *world;
-	// TODO
+	matrix_cpy( &t->world, world );
 //	t->local = t->world * inverse( t->parent->world );
 }
 

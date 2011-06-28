@@ -26,6 +26,7 @@ typedef struct quat_s {
 } quaternion;
 
 // Matrix is COLUMN Major
+// columns are laid out contiguously in memory
 // ie val[0][x] = a point in the first column
 // Translation values are in the 12th, 13th, 14th, 15th addresses of the buffer
 typedef union matrix_u {
@@ -54,7 +55,7 @@ vector matrixVecMul(const matrix* m, const vector* v);
 //matrix matrixMul( const matrix* a, const matrix* b );
 
 // Matrix inverse
-matrix matrix_inverse( matrix* src );
+void matrix_inverse( matrix* restrict dst, matrix* src );
 
 void Set(vector* v, float x, float y, float z, float w);
 
