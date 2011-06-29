@@ -27,7 +27,7 @@ modelInstance* modelInstance_create( modelHandle m ) {
 
 void modelInstance_draw( modelInstance* instance ) {
 	glPushMatrix(); {
-		glMultMatrixf( matrix_getGlMatrix( &instance->trans->world ));
+		glMultMatrixf( matrix_getGlMatrix( instance->trans->world ));
 		model_draw( model_fromInstance( instance ) );
 	} glPopMatrix();
 }

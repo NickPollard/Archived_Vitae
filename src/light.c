@@ -37,17 +37,17 @@ void light_setDiffuse(light* l, float r, float g, float b, float a) {
 
 void light_setPosition(light* l, vector* pos) {
 	assert(l->trans != NULL);
-	matrix_setTranslation(&l->trans->local, pos);
+	matrix_setTranslation(l->trans->local, pos);
 }
 
 void light_render(GLenum index, light* l) {
 	glLightfv(index, GL_DIFFUSE, (GLfloat*)(&l->diffuseCol));
-	glLightfv(index, GL_POSITION, (GLfloat*)matrix_getTranslation(&l->trans->world));
+	glLightfv(index, GL_POSITION, (GLfloat*)matrix_getTranslation(l->trans->world));
 
 	// Attenuation
 	glLightf(index, GL_CONSTANT_ATTENUATION, (GLfloat)l->attenuationConstant);
 	glLightf(index, GL_LINEAR_ATTENUATION, (GLfloat)l->attenuationLinear);
 	glLightf(index, GL_QUADRATIC_ATTENUATION, (GLfloat)l->attenuationQuadratic);
 	
-	debugdraw_cross(matrix_getTranslation(&l->trans->world), 1.f);
+	debugdraw_cross( matrix_getTranslation( l->trans->world ), 1.f);
 }

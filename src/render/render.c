@@ -68,10 +68,10 @@ void render_applyCamera(camera* cam) {
 	glLoadIdentity();
 
 	// Negate as we're doing the inverse of camera
-	matrix cam_inverse;
-	matrix_inverse( &cam_inverse, &cam->trans->world );
+//	matrix cam_inverse;
+//	matrix_inverse( cam_inverse, cam->trans->world );
 //	matrix_print( &cam_inverse );
-	glMultMatrixf( (float*)&cam_inverse );
+	glMultMatrixf( (float*)&cam->trans->world );
 }
 
 // Clear information from last draw

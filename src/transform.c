@@ -13,8 +13,8 @@ void transform_initPool() {
 	static_transform_pool = pool_transform_create( 256 );
 }
 
-void transform_setWorldSpace( transform* t, matrix* world ) {
-	matrix_cpy( &t->world, world );
+void transform_setWorldSpace( transform* t, matrix world ) {
+	matrix_cpy( t->world, world );
 //	t->local = t->world * inverse( t->parent->world );
 }
 
@@ -23,8 +23,8 @@ void transform_setLocalSpace();
 // Create a new default transform
 transform* transform_create() {
 	transform* t = pool_transform_allocate( static_transform_pool );
-	matrix_setIdentity( &t->local );
-	matrix_setIdentity( &t->world );
+	matrix_setIdentity( t->local );
+	matrix_setIdentity( t->world );
 	t->parent = NULL;
 	t->isDirty = 0;
 #if DEBUG_STRINGS
@@ -43,8 +43,8 @@ transform* transform_createAndAdd( scene* s ) {
 // Create a new default transform
 transform* transform_createEmpty() {
 	transform* t = mem_alloc( sizeof( transform ));
-	matrix_setIdentity(&t->local);
-	matrix_setIdentity(&t->world);
+	matrix_setIdentity(t->local);
+	matrix_setIdentity(t->world);
 	t->parent = NULL;
 	t->isDirty = 0;
 	return t;
@@ -65,7 +65,7 @@ void transform_concatenate(transform* t) {
 		transform_markClean(t);
 		if (t->parent) {
 			transform_concatenate(t->parent);
-			t->world = matrix_mul(&t->local, &t->parent->world);
+			t->world = matrix_mul(t->local, t->parent->world);
 		}
 		else
 			t->world = t->local;
@@ -79,12 +79,12 @@ int transform_concatenate(transform* t) {
 	if (t->parent)	{
 		if (transform_concatenate(t->parent) || transform_isDirty(t)) {
 			transform_markDirty(t);
-			matrix_mul(&t->world, &t->local, &t->parent->world);
+			matrix_mul(t->world, t->local, t->parent->world);
 			return true;
 		}
 	}
 	else if (transform_isDirty(t)) {
-		t->world = t->local;
+		matrix_cpy( t->world, t->local );
 		return true;
 	}
 	return false;
@@ -94,24 +94,24 @@ int transform_concatenate(transform* t) {
 // Mark the transform as dirty (needs concatenation)
 void transform_markDirty(transform* t) {
 	t->isDirty = 1;
-//	t->local.val[3][3] = 2.f;
+//	t->local[3][3] = 2.f;
 }
 
 // Mark the transform as clean (doesn't need concatenation)
 void transform_markClean(transform* t) {
 	t->isDirty = 0;
-//	t->local.val[3][3] = 1.f;
+//	t->local[3][3] = 1.f;
 }
 
 // Is the transform dirty? (does it need concatenating?)
 int transform_isDirty(transform* t) {
 	return t->isDirty;
-//	return (t->local.val[3][3] > 1.f);
+//	return (t->local[3][3] > 1.f);
 }
 
 // Set the translation of the localspace transformation matrix
 void transform_setLocalTranslation(transform* t, vector* v) {
-	matrix_setTranslation(&t->local, v);
+	matrix_setTranslation(t->local, v);
 	transform_markDirty(t);
 }
 
@@ -120,14 +120,14 @@ void transform_printDebug( transform* t, debugtextframe* f ) {
 #if DEBUG_STRINGS
 	sprintf( string, "Transform: Name: %s, Translation %.2f, %.2f, %.2f", 
 			t->debug_name,
-			t->world.val[3][0], 
-			t->world.val[3][1], 
-			t->world.val[3][2] );
+			t->world[3][0], 
+			t->world[3][1], 
+			t->world[3][2] );
 #else
 	sprintf( string, "Transform: Translation %.2f, %.2f, %.2f", 
-			t->world.val[3][0], 
-			t->world.val[3][1], 
-			t->world.val[3][2] );
+			t->world[3][0], 
+			t->world[3][1], 
+			t->world[3][2] );
 #endif
 	PrintDebugText( f, string );
 }
