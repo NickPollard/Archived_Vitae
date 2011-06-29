@@ -223,7 +223,11 @@ void scene_tick(scene* s, float dt) {
 
 void scene_setCamera(scene* s, float x, float y, float z, float w) {
 	vector v = Vector(x, y, z, w);
-	camera_setTranslation(s->cam, &v);
+//	camera_setTranslation(s->cam, &v);
+	matrix trans;
+	matrix_cpy( trans, s->cam->trans->world );
+	matrix_setTranslation( trans, &v );
+	transform_setWorldSpace( s->cam->trans, trans );
 }
 
 void test_scene_tick(scene* s, float dt) {

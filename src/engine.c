@@ -274,7 +274,7 @@ void engine_run(engine* e) {
 		mouseX = x;
 		mouseY = y;
 
-		scene_setCamera(theScene, camX, camY, 10.f, 1.f);
+//		scene_setCamera(theScene, camX, camY, 10.f, 1.f);
 	}
 }
 

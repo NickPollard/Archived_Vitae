@@ -68,10 +68,25 @@ void render_applyCamera(camera* cam) {
 	glLoadIdentity();
 
 	// Negate as we're doing the inverse of camera
-//	matrix cam_inverse;
-//	matrix_inverse( cam_inverse, cam->trans->world );
-//	matrix_print( &cam_inverse );
-	glMultMatrixf( (float*)&cam->trans->world );
+	matrix cam_inverse;
+	matrix_inverse( cam_inverse, cam->trans->world );
+	matrix_print( cam->trans->world );
+	matrix_print( cam->trans->local );
+	matrix_print( cam_inverse );
+
+/*
+	vector v = Vector( 0.4f, 0.2f, -3.f, 1.f );
+	vector v2 = matrixVecMul( cam->trans->world, &v );
+	v2 = matrixVecMul( cam_inverse, &v2 );
+	assert( vector_equal( &v, &v2 ));
+	*/
+
+	glMultMatrixf( (float*)cam_inverse );
+//	const vector* translation = matrix_getTranslation( cam_inverse );
+//	glTranslatef( translation->coord.x, translation->coord.y, translation->coord.z );
+//	glMultMatrixf( (float*)cam->trans->local );
+//	const vector* v = camera_getTranslation( cam );
+//	glTranslatef( -(v->coord.x), -(v->coord.y), -(v->coord.z) );
 }
 
 // Clear information from last draw
@@ -119,7 +134,7 @@ void render( scene* s ) {
 	render_applyCamera( s->cam );
 	render_lighting( s );
 	render_scene( s );
-
+/*
 	glPushMatrix();
 	glBegin(GL_TRIANGLES);
 	glColor4f(1.f, 1.f, 1.f, 1.f);
@@ -149,6 +164,8 @@ void render( scene* s ) {
 	glVertex3f(0.f, 2.f, depth);
 	glEnd();
 	glPopMatrix();
+	*/
+
 /*
 	font_renderString( 10.f, 10.f, "a" );
 	font_renderString( 10.f, 30.f, "ABCDEFGHIJKLMNOPQRSTUVWXYZ.,/?|'@#!$%^&" );

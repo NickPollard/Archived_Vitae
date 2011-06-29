@@ -41,7 +41,7 @@ typedef float matrix[4][4];
 vector Vector(float x, float y, float z, float w);
 
 // Vector Addition
-void Add(vector* dst, vector* srcA, vector* srcB);
+void Add(vector* dst, const vector* srcA, const vector* srcB);
 
 // Vector subtraction
 void Sub(vector *dst, vector* srcA, vector* srcB);
@@ -100,4 +100,7 @@ quaternion quaternion_fromEuler( vector* euler_angles );
 void test_matrix();
 
 void matrix_print( matrix src );
+
+bool vector_equal( const vector* a, const vector* b );
+
 #endif // __MATHS_H__

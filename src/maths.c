@@ -5,7 +5,7 @@
 //----------------------
 #include <assert.h>
 
-static const float epsilon = 0.00000001f;
+static const float epsilon = 0.00001f;
 
 bool f_eq( float a, float b ) {
 	return fabsf( a - b ) < epsilon;
@@ -21,7 +21,7 @@ vector Vector(float x, float y, float z, float w) {
 }
 
 // Vector Addition
-void Add(vector* dst, vector* srcA, vector* srcB) {
+void Add(vector* dst, const vector* srcA, const vector* srcB) {
 	for (int i = 0; i < 4; i++)
 		dst->val[i] = srcA->val[i] + srcB->val[i];
 }
@@ -125,10 +125,18 @@ void matrix_setIdentity(matrix m) {
 	m[2][2] = 1.f;
 	m[3][3] = 1.f; }
 
+void vector_print( const vector* v ) {
+	printf( "Vector: %.4f, %.4f, %.4f, %.4f.\n", v->val[0], v->val[1], v->val[2], v->val[3] );
+}
+
 bool vector_equal( const vector* a, const vector* b ) {
 	for (int i = 0; i < 4; i++)
-		if ( !f_eq( ((float*)a)[i], ((float*)b)[i] ) )
+		if ( !f_eq( ((float*)a)[i], ((float*)b)[i] ) ) {
+			printf( "vector_equal: vectors not equal.\n" );
+			vector_print( a );
+			vector_print( b );
 			return false;
+		}
 	return true;
 }
 
@@ -180,7 +188,6 @@ float matrix_determinantFromCofactors( matrix m, matrix cofactors ) {
 void matrix_transpose( matrix dst, matrix src ) {
 	for ( int i = 0; i < 4; i++ ) {
 		for ( int j = i; j < 4; j++ ) {
-			printf( "i: %d j: %d.\n", i, j );
 			dst[i][j] = src[j][i];
 			dst[j][i] = src[i][j];
 		}
@@ -388,8 +395,6 @@ void test_matrix() {
 	v = Vector( 0.4f, 0.2f, -3.f, 1.f );
 	vector v2 = matrixVecMul( a, &v );
 	v2 = matrixVecMul( c, &v2 );
-
 	assert( vector_equal( &v, &v2 ));
 
-	assert( 0 );
 }

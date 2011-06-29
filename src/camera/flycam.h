@@ -11,6 +11,8 @@
 
 typedef struct flycam_s {
 	matrix	transform;
+	vector	euler;
+	vector	translation;
 	camera*	camera_target;
 	vector	pan_sensitivity;
 	vector	track_sensitivity;
