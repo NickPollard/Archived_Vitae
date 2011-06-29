@@ -5,6 +5,12 @@
 //----------------------
 #include <assert.h>
 
+static const float epsilon = 0.00000001f;
+
+bool f_eq( float a, float b ) {
+	return abs( a - b ) < epsilon;
+}
+
 vector Vector(float x, float y, float z, float w) {
 	vector v;
 	v.coord.x = x;
@@ -117,15 +123,16 @@ void matrix_setIdentity(matrix* m) {
 
 bool matrix_equal( matrix* a, matrix* b ) {
 	for (int i = 0; i < 16; i++)
-		if ( ((float*)a)[i] != ((float*)b)[i] )
+		if ( !f_eq( ((float*)a)[i], ((float*)b)[i] ) )
 			return false;
 	return true;
 }
 
 // Find the determinant of a 4x4 matrix using Laplace Expansion
+// This can probably be simplified further if I multiply out the 2x2 and 3x3 factors
 float matrix_determinant( matrix* src ) {
 	// first calculate and cache the determinants of the base 2x2 matrices
-	float** m = (float**)src;
+	float (*m)[4] = (float(*)[4])src;
 	float a = (m[0][2] * m[1][3]) - (m[1][2] * m[0][3]);
 	float b = (m[1][2] * m[2][3]) - (m[2][2] * m[1][3]);
 	float c = (m[2][2] * m[3][3]) - (m[3][2] * m[2][3]);
@@ -148,8 +155,33 @@ float matrix_determinant( matrix* src ) {
 	return det;
 }
 
+void matrix_transpose( matrix* restrict dst, matrix* src ) {
+	for ( int i = 0; i < 4; i++ )
+		for ( int j = i; j < 4; i++ ) {
+			dst->val[i][j] = src->val[j][i];
+			dst->val[j][i] = src->val[i][j];
+		}
+}
+
+void matrix_scalarMul( matrix* restrict dst, matrix* src, float scalar ) {
+	float* srcf = (float*)src;
+	float* dstf = (float*)dst;
+	for ( int i = 0; i < 16; i++ )
+		dstf[i] = srcf[i] * scalar;
+}
+
 // Matrix inverse
 void matrix_inverse( matrix* restrict dst, matrix* src ) {
+	// calulate the matrix of cofactors
+	matrix cofactors;
+	for ( int i = 0; i < 16; i++ )
+		cofactors[i] = cofactor( src, i );
+	matrix adjugate;
+	matrix_transpose( &adjugate, &cofactors );
+	matrix inverse;
+	float invDet = 1.f / matrix_determinant( src );
+	matrix_scalarMul( &inverse, &adjugate, invDet );
+
 	// TODO: implement
 	printf( "Not Yet Implemented: matrix_inverse \n");
 	assert( 0 );
@@ -268,4 +300,12 @@ void test_matrix() {
 	matrix_mul( &c, &a, &b );
 	assert( matrix_equal( &c, &a ));
 	assert( !matrix_equal( &c, &b ));
+
+	matrix_setIdentity( &a );
+	float det = matrix_determinant( &a );
+	printf(" identity det = %.2f\n", det );
+	assert( f_eq( det, 1.f ));
+	det = matrix_determinant( &c );
+	printf(" det = %.2f\n", det );
+	assert( f_eq( det, 1.f ));
 }
