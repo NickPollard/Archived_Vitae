@@ -8,7 +8,7 @@
 static const float epsilon = 0.00000001f;
 
 bool f_eq( float a, float b ) {
-	return abs( a - b ) < epsilon;
+	return fabsf( a - b ) < epsilon;
 }
 
 vector Vector(float x, float y, float z, float w) {
@@ -125,6 +125,13 @@ void matrix_setIdentity(matrix m) {
 	m[2][2] = 1.f;
 	m[3][3] = 1.f; }
 
+bool vector_equal( const vector* a, const vector* b ) {
+	for (int i = 0; i < 4; i++)
+		if ( !f_eq( ((float*)a)[i], ((float*)b)[i] ) )
+			return false;
+	return true;
+}
+
 bool matrix_equal( matrix a, matrix b ) {
 	for (int i = 0; i < 16; i++)
 		if ( !f_eq( ((float*)a)[i], ((float*)b)[i] ) )
@@ -159,12 +166,25 @@ float matrix_determinant( matrix src ) {
 	return det;
 }
 
+float matrix_determinantFromCofactors( matrix m, matrix cofactors ) {
+
+	float det = ( m[0][0] * cofactors[0][0] ) +
+				( m[1][0] * cofactors[1][0] ) +
+				( m[2][0] * cofactors[2][0] ) +
+				( m[3][0] * cofactors[3][0] );
+
+	return det;
+}
+
+
 void matrix_transpose( matrix dst, matrix src ) {
-	for ( int i = 0; i < 4; i++ )
-		for ( int j = i; j < 4; i++ ) {
+	for ( int i = 0; i < 4; i++ ) {
+		for ( int j = i; j < 4; j++ ) {
+			printf( "i: %d j: %d.\n", i, j );
 			dst[i][j] = src[j][i];
 			dst[j][i] = src[i][j];
 		}
+	}
 }
 
 void matrix_scalarMul( matrix dst, matrix src, float scalar ) {
@@ -175,23 +195,55 @@ void matrix_scalarMul( matrix dst, matrix src, float scalar ) {
 }
 
 // Matrix inverse
-void matrix_inverse( matrix dst, matrix src ) {
-	/*
+// Calculate the matrix of cofactors
+// Take the tranpose of this, which is the adjugate
+// Calculate the determinant using Laplacian expansion from the cofactors
+// the inverse is 1/det * adjugate
+void matrix_inverse( matrix inverse, matrix src ) {
 	// calulate the matrix of cofactors
 	matrix cofactors;
 
-//	float bA = src
+	float bA = src[0][2]*src[1][3] - src[0][3]*src[1][2];
+	float bB = src[1][2]*src[2][3] - src[1][3]*src[2][2];
+	float bC = src[2][2]*src[3][3] - src[2][3]*src[3][2];
+	float bD = src[0][2]*src[2][3] - src[0][3]*src[2][2];
+	float bE = src[1][2]*src[3][3] - src[1][3]*src[3][2];
+	float bF = src[0][2]*src[3][3] - src[0][3]*src[3][2];
 
+	float tA = src[0][0]*src[1][1] - src[0][1]*src[1][0];
+	float tB = src[1][0]*src[2][1] - src[1][1]*src[2][0];
+	float tC = src[2][0]*src[3][1] - src[2][1]*src[3][0];
+	float tD = src[0][0]*src[2][1] - src[0][1]*src[2][0];
+	float tE = src[1][0]*src[3][1] - src[1][1]*src[3][0];
+	float tF = src[0][0]*src[3][1] - src[0][1]*src[3][0];
+
+	// Top Row
+	cofactors[0][0] = src[1][1]*bC - src[2][1]*bE + src[3][1]*bB;
+	cofactors[1][0] = -(src[0][1]*bC - src[2][1]*bF + src[3][1]*bD);
+	cofactors[2][0] = src[0][1]*bE - src[1][1]*bF + src[3][1]*bA;
+	cofactors[3][0] = -(src[0][1]*bB - src[2][1]*bD + src[2][1]*bA);
+	// Second row
+	cofactors[0][1] = -(src[1][0]*bC - src[2][0]*bE + src[3][0]*bB);
+	cofactors[1][1] = src[0][0]*bC - src[2][0]*bF + src[3][0]*bD;
+	cofactors[2][1] = -(src[0][0]*bE - src[1][0]*bF + src[3][0]*bA);
+	cofactors[3][1] = src[0][0]*bB - src[2][0]*bD + src[2][0]*bA;
+
+	// Third Row
+	cofactors[0][2] = src[1][3]*tC - src[2][3]*tE + src[3][3]*tB;
+	cofactors[1][2] = -(src[0][3]*tC - src[2][3]*tF + src[3][3]*tD);
+	cofactors[2][2] = src[0][3]*tE - src[1][3]*tF + src[3][3]*tA;
+	cofactors[3][2] = -(src[0][3]*tB - src[2][3]*tD + src[2][3]*tA);
+	// Fourth row
+	cofactors[0][3] = -(src[1][2]*tC - src[2][2]*tE + src[3][2]*tB);
+	cofactors[1][3] = src[0][2]*tC - src[2][2]*tF + src[3][2]*tD;
+	cofactors[2][3] = -(src[0][2]*tE - src[1][2]*tF + src[3][2]*tA);
+	cofactors[3][3] = src[0][2]*tB - src[2][2]*tD + src[2][2]*tA;
+
+	float invDet = 1.f / matrix_determinantFromCofactors( src, cofactors );
 
 	matrix adjugate;
 	matrix_transpose( adjugate, cofactors );
-	matrix inverse;
-	float invDet = 1.f / matrix_determinant( src );
 	matrix_scalarMul( inverse, adjugate, invDet );
-*/
-	// TODO: implement
-	printf( "Not Yet Implemented: matrix_inverse \n");
-	assert( 0 );
 }
 
 // Convert a V matrix to an OGL matrix
@@ -315,4 +367,29 @@ void test_matrix() {
 	det = matrix_determinant( c );
 	printf(" det = %.2f\n", det );
 	assert( f_eq( det, 1.f ));
+
+	// Test Inverse
+	// Inverse of Identity should be identity 
+	matrix_setIdentity( a );
+	matrix_setIdentity( b );
+	matrix_inverse( c, b );
+	assert( matrix_equal( c, a ) );
+
+	a[0][0] = 0.f;
+	a[1][0] = 0.5f;
+	a[0][1] = -2.f;
+	a[1][1] = 0.f;
+	matrix_inverse( c, a );
+	matrix_print( a );
+	matrix_print( c );
+	printf( "%.2f\n", c[0][0] );
+	assert( f_eq( c[1][0], -0.5f ) );
+
+	v = Vector( 0.4f, 0.2f, -3.f, 1.f );
+	vector v2 = matrixVecMul( a, &v );
+	v2 = matrixVecMul( c, &v2 );
+
+	assert( vector_equal( &v, &v2 ));
+
+	assert( 0 );
 }
