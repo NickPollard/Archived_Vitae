@@ -34,9 +34,9 @@ void flycam_input( flycam* cam, input* in  ) {
 		fly_in.track.coord.z = -delta;
 	if ( input_keyHeld( in, KEY_S ))
 		fly_in.track.coord.z = delta;
-	if ( input_keyHeld( in, KEY_UP ) || input_keyHeld( in, KEY_Q ))
+	if ( input_mouseHeld( in, BUTTON_LEFT ) || input_keyHeld( in, KEY_Q ))
 		fly_in.pan.coord.y = -0.01f;
-	if ( input_keyHeld( in, KEY_DOWN ) || input_keyHeld( in, KEY_E ))
+	if ( input_mouseHeld( in, BUTTON_RIGHT ) || input_keyHeld( in, KEY_E ))
 		fly_in.pan.coord.y = 0.01f;
 	if ( input_keyHeld( in, KEY_LEFT ) || input_keyHeld( in, KEY_A ))
 		fly_in.track.coord.x = -delta;

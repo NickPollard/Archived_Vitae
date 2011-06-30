@@ -57,6 +57,15 @@ void input_tick( input* in, float dt ) {
 			in->data[in->active].keys[i] |= ( 0x1 & glfwGetKey( i * 8 + j ) ) << j;
 		}
 	}
+
+	// Store current state of mouse
+	in->data[in->active].mouse = 0x0;
+	for ( int i = 0; i < 2; i++ )
+		in->data[in->active].mouse |= ( 0x1 & glfwGetMouseButton( i )) << i;
+
+//		if ( glfwGetMouseButton( GLFW_MOUSE_BUTTON_LEFT ) ) {
+//		}
+
 }
 
 //
@@ -90,3 +99,28 @@ int input_keybindReleased( input* in, keybind bind ) {
 int input_keybindWasHeld( input* in, keybind bind ) {
 	return input_keyWasHeld( in, in->keybinds[bind] );
 }
+
+//
+// *** Mouse
+//
+
+bool input_mouseHeld( input* in, int button ) {
+	return in->data[in->active].mouse & (0x1 << button);
+}
+
+bool input_mouseWasHeld( input* in, int button ) {
+	return in->data[in->active].mouse & (0x1 << button);
+}
+
+bool input_mousePressed( input* in, int button ) {
+	return input_mouseHeld( in, button ) && !input_mouseWasHeld( in, button );
+}
+
+bool input_mouseReleased( input* in, int button ) {
+	return !input_mouseHeld( in, button ) && input_mouseWasHeld( in, button );
+}
+
+void input_getMousePos( input* in, int* x, int* y ) {
+	glfwGetMousePos( x, y );
+}
+//		if ( glfwGetMouseButton(GLFW_MOUSE_BUTTON_LEFT) ) {

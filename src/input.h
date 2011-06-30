@@ -25,6 +25,9 @@
 #define KEY_Q		'Q'
 #define KEY_E		'E'
 
+// Mouse
+#define BUTTON_LEFT		GLFW_MOUSE_BUTTON_LEFT
+#define BUTTON_RIGHT	GLFW_MOUSE_BUTTON_RIGHT
 
 #endif // GLFW
 
@@ -37,8 +40,11 @@ typedef int keybind;
 // *** keybind defines
 #define INPUT_MAX_KEYBINDS 128
 
+// Keys stored as a packed bitmask
+// ie. each byte stores 8 flags for 8 keys respectively
 typedef struct input_data_s {
 	char keys[INPUT_KEYDATA_SIZE];
+	char mouse;
 } input_data;
 
 struct input_s {
@@ -79,4 +85,10 @@ int input_keybindHeld( input* in, int keybind );
 int input_keybindReleased( input* in, int keybind );
 int input_keybindWasHeld( input* in, int keybind );
 
+// *** Mouse
+
+bool input_mouseHeld( input* in, int button );
+bool input_mouseWasHeld( input* in, int button );
+bool input_mousePressed( input* in, int button );
+bool input_mouseReleased( input* in, int button );
 #endif // __INPUT_H__
