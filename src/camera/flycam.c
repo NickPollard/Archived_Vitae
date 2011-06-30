@@ -31,13 +31,13 @@ void flycam_input( flycam* cam, input* in  ) {
 		delta = 0.1f;
 
 	if ( input_keyHeld( in, KEY_W ))
-		fly_in.track.coord.z = delta;
-	if ( input_keyHeld( in, KEY_S ))
 		fly_in.track.coord.z = -delta;
+	if ( input_keyHeld( in, KEY_S ))
+		fly_in.track.coord.z = delta;
 	if ( input_keyHeld( in, KEY_UP ) || input_keyHeld( in, KEY_Q ))
-		fly_in.pan.coord.y = -delta;
+		fly_in.pan.coord.y = -0.01f;
 	if ( input_keyHeld( in, KEY_DOWN ) || input_keyHeld( in, KEY_E ))
-		fly_in.pan.coord.y = delta;
+		fly_in.pan.coord.y = 0.01f;
 	if ( input_keyHeld( in, KEY_LEFT ) || input_keyHeld( in, KEY_A ))
 		fly_in.track.coord.x = -delta;
 	if ( input_keyHeld( in, KEY_RIGHT ) || input_keyHeld( in, KEY_D ))
@@ -68,7 +68,9 @@ void flycam_process( flycam* cam, flycamInput* in ) {
 	// *** Absolute
 	Add( &cam->euler, &cam->euler, &in->pan );
 	matrix_fromEuler( cam->transform, &cam->euler );
-	vector translation_delta = matrixVecMul( cam->transform, &in->track );
+	matrix inverse;
+	matrix_inverse( inverse, cam->transform );
+	vector translation_delta = matrixVecMul( inverse, &in->track );
 	Add( &cam->translation, &cam->translation, &translation_delta );
 	matrix_setTranslation( cam->transform, &cam->translation );
 }
