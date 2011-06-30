@@ -45,29 +45,6 @@ input* input_create() {
 	memcpy( in->keybinds, input_keybinds, INPUT_MAX_KEYBINDS ); // init the keybinds to defaults
 	return in;
 }
-
-// tick the input, recording this frames input data from devices
-void input_tick( input* in, float dt ) {
-	in->active = in->active ^ 0x1;		// flip the key buffers (we effectively double buffer the key state)
-
-	// Store current state of keys
-	for ( int i = 0; i < ( KEY_COUNT / 8 ); i++ ) {
-		in->data[in->active].keys[i] = 0x0;
-		for ( int j = 0; j < 8 ; j++ ) {
-			in->data[in->active].keys[i] |= ( 0x1 & glfwGetKey( i * 8 + j ) ) << j;
-		}
-	}
-
-	// Store current state of mouse
-	in->data[in->active].mouse = 0x0;
-	for ( int i = 0; i < 2; i++ )
-		in->data[in->active].mouse |= ( 0x1 & glfwGetMouseButton( i )) << i;
-
-//		if ( glfwGetMouseButton( GLFW_MOUSE_BUTTON_LEFT ) ) {
-//		}
-
-}
-
 //
 // *** Keybinds
 //
@@ -121,6 +98,45 @@ bool input_mouseReleased( input* in, int button ) {
 }
 
 void input_getMousePos( input* in, int* x, int* y ) {
-	glfwGetMousePos( x, y );
+	*x = in->data[in->active].mouseX;
+	*y = in->data[in->active].mouseY;
 }
+
+void input_getMouseMove( input* in, int* x, int* y ) {
+	*x = in->data[in->active].mouseX - in->data[1 - in->active].mouseX;
+	*y = in->data[in->active].mouseY - in->data[1 - in->active].mouseY;
+}
+
+void input_getMouseDrag( input* in, int button, int* x, int* y ) {
+	if ( input_mouseHeld( in, button )) {
+		input_getMouseMove( in, x, y );
+	}
+	else {
+		*x = 0;
+		*y = 0;
+	}
+}
+
 //		if ( glfwGetMouseButton(GLFW_MOUSE_BUTTON_LEFT) ) {
+
+// tick the input, recording this frames input data from devices
+void input_tick( input* in, float dt ) {
+	in->active = in->active ^ 0x1;		// flip the key buffers (we effectively double buffer the key state)
+
+	// Store current state of keys
+	for ( int i = 0; i < ( KEY_COUNT / 8 ); i++ ) {
+		in->data[in->active].keys[i] = 0x0;
+		for ( int j = 0; j < 8 ; j++ ) {
+			in->data[in->active].keys[i] |= ( 0x1 & glfwGetKey( i * 8 + j ) ) << j;
+		}
+	}
+
+	// Store current state of mouse
+	in->data[in->active].mouse = 0x0;
+	for ( int i = 0; i < 2; i++ )
+		in->data[in->active].mouse |= ( 0x1 & glfwGetMouseButton( i )) << i;
+	
+	glfwGetMousePos( &in->data[in->active].mouseX, &in->data[in->active].mouseY );
+}
+
+

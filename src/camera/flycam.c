@@ -46,6 +46,18 @@ void flycam_input( flycam* cam, input* in  ) {
 															fly_in.track.coord.y,
 															fly_in.track.coord.z,
 															fly_in.track.coord.w );*/
+
+	float mouseScale = 0.005f;
+
+	int x = 0, y = 0;
+	input_getMouseDrag( in, BUTTON_LEFT, &x, &y );
+	printf( "x %d y %d\n", x, y );
+	// We cross assign x and y, as an x pan is a pan around the x axis, 
+	// aka a pitch with is from vertical movement
+	fly_in.pan.coord.y = (float)x * mouseScale;
+	fly_in.pan.coord.x = (float)y * mouseScale;
+
+
 	flycam_process( cam, &fly_in );
 }
 

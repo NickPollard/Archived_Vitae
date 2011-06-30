@@ -45,6 +45,8 @@ typedef int keybind;
 typedef struct input_data_s {
 	char keys[INPUT_KEYDATA_SIZE];
 	char mouse;
+	int mouseX;
+	int mouseY;
 } input_data;
 
 struct input_s {
@@ -91,4 +93,6 @@ bool input_mouseHeld( input* in, int button );
 bool input_mouseWasHeld( input* in, int button );
 bool input_mousePressed( input* in, int button );
 bool input_mouseReleased( input* in, int button );
+void input_getMouseMove( input* in, int* x, int* y );
+void input_getMouseDrag( input* in, int button, int* x, int* y );
 #endif // __INPUT_H__
