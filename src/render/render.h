@@ -31,4 +31,4 @@ void render_terminate();
 
 // Render the current scene
 // This is where the business happens
-void render(scene* s);
+void render( scene* s , int w, int h );

@@ -140,7 +140,7 @@ scene* test_scene_init( ) {
 	scene_setCamera(s, 0.f, 0.f, 10.f, 1.f);
 	scene_setAmbient( s, 0.2f, 0.2f, 0.2f, 1.f );
 
-//	scene_saveFile( s, "dat/test_scene.s" );
+	scene_saveFile( s, "dat/test_scene.s" );
 	scene* s2 = scene_loadFile( "dat/test_scene.s" );
 
 //	sceneData* data = scene_save( s );

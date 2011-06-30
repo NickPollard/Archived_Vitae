@@ -228,7 +228,7 @@ void run() {
 void engine_render( engine* e ) {
 	render_set3D( w, h );
 	render_clear();
-	render( theScene );
+	render( theScene, w, h );
 	engine_renderRenders( e );
 	glfwSwapBuffers(); // Send the 3d scene to the screen (flips display buffers)
 }
