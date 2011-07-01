@@ -9,7 +9,9 @@ enum tag_type {
 	typeAtom,
 	typeFunc,
 	typeModel,
-	typeTransform
+	typeTransform,
+	typeTranslation,
+	typeVector
 };
 
 typedef struct sterm_s {	int		type;

@@ -155,6 +155,14 @@ bool isTransform( sterm* s ) {
 	return ( s->type == typeTransform );
 }
 
+bool isTranslation( sterm* s ) {
+	return ( s->type == typeTranslation );
+}
+
+bool isVector( sterm* s ) {
+	return ( s->type == typeVector );
+}
+
 sterm* sterm_create( int tag, void* ptr ) {
 	sterm* term = malloc( sizeof( term ) );
 	term->type = tag;
@@ -437,6 +445,7 @@ sterm* eval_list( sterm* s ) {
 // TODO - could this be removed, just an slist but with the term above having the typeTransform?
 typedef struct transformData_s {
 	sterm* elements;
+	vector	translation;
 } transformData;
 
 transformData* transformData_create() {
@@ -450,6 +459,9 @@ void transformData_processElement( transformData* t, sterm* element ) {
 //		printf( "Adding child to Transform.\n" );
 		t->elements = cons( element, t->elements );
 	}
+	// If it's a translation, copy the vector to the transformData
+	if ( isTranslation( element ))
+		t->translation = *(vector*)element->head;
 }
 
 // Receives a heterogenous list of elements, some might be transform properties
@@ -459,7 +471,6 @@ void transformData_processElements( transformData* t, sterm* elements ) {
 	if ( elements->tail )
 		transformData_processElements( t, elements->tail );
 }
-
 
 // Creates a transformdata
 // with a list of all modelInstancs passed into it
@@ -476,6 +487,36 @@ void* s_transform( sterm* raw_elements ) {
 	}
 	sterm* t = sterm_create( typeTransform, tData );
 	return t;
+}
+
+// Creates a translation
+void* s_translation( sterm* raw_elements ) {
+	sterm* element = raw_elements;
+	// For now only allow vectors
+	assert( isVector( element ));
+	return NULL;
+}
+
+
+void* s_vector( sterm* raw_elements ) {
+	if ( raw_elements ) {
+		sterm* elements = eval_list( raw_elements );
+//		vector* v = vector_processElements( elements );
+		vector* v = mem_alloc( sizeof( vector ));
+		memset( v, 0, sizeof( vector ));
+		sterm* element = elements;
+		int i = 0;
+		while ( element && i < 4 ) {
+			v->val[i] = *(float*)element->head;
+			i++;
+			elements = elements->tail;
+
+			sterm* sv = sterm_create( typeVector, v );
+			return sv;
+		}
+	}
+	assert( 0 );
+	return NULL;
 }
 
 typedef struct modelData_s {

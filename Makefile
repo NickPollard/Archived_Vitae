@@ -36,6 +36,7 @@ $(EXECUTABLE)_debug : $(SRCS) $(OBJS_DBG)
 
 bin/debug/%.o : src/%.c
 	@mkdir -p bin/debug
+	@mkdir -p bin/debug/camera
 	@mkdir -p bin/debug/external
 	@mkdir -p bin/debug/mem
 	@mkdir -p bin/debug/render
@@ -45,6 +46,7 @@ bin/debug/%.o : src/%.c
 
 bin/%.o : src/%.c
 	@mkdir -p bin
+	@mkdir -p bin/camera
 	@mkdir -p bin/external
 	@mkdir -p bin/mem
 	@mkdir -p bin/render
