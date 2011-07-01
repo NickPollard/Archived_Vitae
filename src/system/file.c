@@ -236,21 +236,26 @@ void* s_concat( sterm* s );
 void* s_model( sterm* s );
 void* s_transform( sterm* s );
 void* s_scene( sterm* s );
+void* s_translation( sterm* s );
+void* s_vector( sterm* s );
 
-#define S_FUNC( atom, func )	if ( string_equal( data, atom ) ) { \
+#define S_FUNC( atom, func )	if ( string_equal( (const char*)data->head, atom ) ) { \
 									sterm* s = sterm_create( typeFunc, func ); \
 									return s; \
 								}
 
 // TODO PLACEHOLDER
 // ( should be a hash lookup or similar )
-void* lookup( const char* data ) {
+void* lookup( sterm* data ) {
 	S_FUNC( "print", s_print )
 	S_FUNC( "concat", s_concat )
 	S_FUNC( "model", s_model )
 	S_FUNC( "transform", s_transform )
 	S_FUNC( "scene", s_scene )
-	return (void*)data;
+	S_FUNC( "translation", s_translation )
+	S_FUNC( "vector", s_vector )
+
+	return data;
 }
 
 bool isFunction( sterm* s ) {
@@ -298,8 +303,9 @@ void debug_sterm_printList( sterm* term ) {
 
 void* eval( sterm* data ) {
 	if ( isAtom( data ) ) {
+//		printf( " Evalling: %s\n", (char*)data->head );
 		// It's either a function, a string, or a number
-		return lookup( (void*)getAtom( data ) );
+		return lookup( data );
 	}
 	else if ( isList( data ) ) {
 		// If evaluating a list, the head must eval to an atom
@@ -333,7 +339,10 @@ void* s_concat( sterm* s ) {
 	int size = 0;
 	char* string = NULL;
 	while( s ) {
-		const char* text = eval( s->head );
+		// TODO - fix this, need separate string type
+		// For now just assume atom
+		sterm* stext = eval( s->head );
+		const char* text = stext->head;
 		int extra = strlen( text );
 		char* tmp = malloc( sizeof( char ) * ( size + extra + 1 ) );
 		strncpy( tmp, string, size );
@@ -391,6 +400,11 @@ void test_sfile( ) {
 	sterm* s = parse_file( "dat/test2.s" );
 	eval( s );
 	sterm_free( s );
+
+	sterm* t = parse_string( "(transform (translation (vector 1.0 1.0 1.0 1.0)))" );
+	sterm* e = eval( t );
+	sterm_free( t );
+	sterm_free( e );
 
 	test_s_concat();
 //	test_s_scene();
@@ -451,6 +465,7 @@ typedef struct transformData_s {
 transformData* transformData_create() {
 	transformData* t =  (transformData*)mem_alloc( sizeof( transformData ));
 	t->elements = NULL;
+	t->translation = Vector( 0.f, 0.f, 0.f, 1.f );
 	return t;
 }
 
@@ -460,8 +475,10 @@ void transformData_processElement( transformData* t, sterm* element ) {
 		t->elements = cons( element, t->elements );
 	}
 	// If it's a translation, copy the vector to the transformData
-	if ( isTranslation( element ))
+	if ( isTranslation( element )) {
 		t->translation = *(vector*)element->head;
+		printf( "Transform loaded translation: %.2f, %.2f, %.2f, %.2f\n", t->translation.val[0], t->translation.val[1], t->translation.val[2], t->translation.val[3] );
+	}
 }
 
 // Receives a heterogenous list of elements, some might be transform properties
@@ -491,29 +508,42 @@ void* s_transform( sterm* raw_elements ) {
 
 // Creates a translation
 void* s_translation( sterm* raw_elements ) {
-	sterm* element = raw_elements;
+	printf( "s_translation\n" );
+	assert( raw_elements );
+	sterm* elements = eval_list( raw_elements );
+	sterm* element = elements;
 	// For now only allow vectors
-	assert( isVector( element ));
-	return NULL;
+	// Should be a list of one single vector
+	// So take the head and check that
+	assert( isVector( (sterm*)element->head ));
+	// For now, copy the vector head from the vector sterm
+	sterm* st = sterm_create( typeTranslation, ((sterm*)element->head)->head );
+//	sterm_free( element );
+	return st;
 }
 
 
 void* s_vector( sterm* raw_elements ) {
+	printf( "s_vector\n" );
 	if ( raw_elements ) {
+//		debug_sterm_printList( raw_elements );
 		sterm* elements = eval_list( raw_elements );
+//		debug_sterm_printList( elements );
 //		vector* v = vector_processElements( elements );
 		vector* v = mem_alloc( sizeof( vector ));
 		memset( v, 0, sizeof( vector ));
 		sterm* element = elements;
 		int i = 0;
 		while ( element && i < 4 ) {
-			v->val[i] = *(float*)element->head;
+			// dereference head twice, as we have a list of atoms of floats
+//			printf( "s_vector found value: %s\n", (const char*)((sterm*)element->head)->head );
+			v->val[i] = strtof( (const char*)((sterm*)element->head)->head, NULL );
 			i++;
-			elements = elements->tail;
-
-			sterm* sv = sterm_create( typeVector, v );
-			return sv;
+			element = element->tail;
 		}
+		printf( "Loaded vector: %.2f, %.2f, %.2f, %.2f.\n", v->val[0], v->val[1], v->val[2], v->val[3] );
+		sterm* sv = sterm_create( typeVector, v );
+		return sv;
 	}
 	assert( 0 );
 	return NULL;
@@ -555,8 +585,9 @@ void scene_processObjects( scene* s, transform* parent, sterm* objects );
 void scene_processTransform( scene* s, transform* parent, transformData* tData );
 
 void scene_processTransform( scene* s, transform* parent, transformData* tData ) {
-//	printf( "Transform!\n" );
+	printf( "Creating Transform! Translation: %.2f, %.2f, %.2f\n", tData->translation.val[0], tData->translation.val[1], tData->translation.val[2] );
 	transform* t = transform_create();
+	matrix_setTranslation( t->local, &tData->translation );
 	t->parent = parent;
 	scene_addTransform( s, t );
 

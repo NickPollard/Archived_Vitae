@@ -1,4 +1,5 @@
-( scene ( transform ( transform ( model ))
+( scene ( transform ( transform ( translation (vector 1.0 1.0 1.0 1.0))
+								( model ))
 					( transform ( model ))
 					( model )
 					( model )

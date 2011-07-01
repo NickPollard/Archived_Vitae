@@ -70,9 +70,9 @@ void render_applyCamera(camera* cam) {
 	// Negate as we're doing the inverse of camera
 	matrix cam_inverse;
 	matrix_inverse( cam_inverse, cam->trans->world );
-	matrix_print( cam->trans->world );
-	matrix_print( cam->trans->local );
-	matrix_print( cam_inverse );
+//	matrix_print( cam->trans->world );
+//	matrix_print( cam->trans->local );
+//	matrix_print( cam_inverse );
 
 /*
 	vector v = Vector( 0.4f, 0.2f, -3.f, 1.f );

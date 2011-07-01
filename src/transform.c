@@ -35,7 +35,7 @@ transform* transform_create() {
 	matrix_setIdentity( t->local );
 	matrix_setIdentity( t->world );
 	t->parent = NULL;
-	t->isDirty = 0;
+	t->isDirty = 1; // All transforms are initially dirty, to force initial update
 #if DEBUG_STRINGS
 	t->debug_name = debug_string( "Transform" );
 #endif
