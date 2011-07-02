@@ -29,9 +29,14 @@ void sterm_free( sterm* s );
 typedef struct inputStream_s {
 	const char* source; // Never changes once initialised
 	const char* stream; // Read head
+	const char* end;	// One-past-the-end
 } inputStream;
 
 
+inputStream* inputStream_create( const char* source );
+char* inputStream_nextToken( inputStream* stream );
+bool inputStream_endOfFile( inputStream* in );
+void inputStream_nextLine( inputStream* in );
 
 // *** File Operations
 

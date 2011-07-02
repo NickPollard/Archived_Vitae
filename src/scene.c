@@ -7,6 +7,7 @@
 #include "input.h"
 #include "light.h"
 #include "model.h"
+#include "model_loader.h"
 #include "mem/allocator.h"
 #include "render/debugdraw.h"
 #include "render/modelinstance.h"
@@ -93,42 +94,8 @@ void scene_free( scene* s ) {
 
 // Initialise a scene with some test data
 scene* test_scene_init( ) { 
-	/*
-	scene* s = scene_create();
-	s->cam = camera_create( s );
-	s->cam->trans = transform_createAndAdd( s );
-	scene_setCamera( s, 0.f, 0.f, 0.f, 1.f );
-	scene_setAmbient( s, 0.2f, 0.2f, 0.2f, 1.f );
+//	LoadObj( "dat/model/cube.obj" );
 
-	modelHandle testCube = model_getHandleFromFilename( "invalid.obj" );
-	modelInstance* testModelA = modelInstance_create( testCube );
-	modelInstance* testModelB = modelInstance_create( testCube );
-	transform* t2 = transform_createAndAdd( s );
-	transform* t = transform_createAndAdd( s );
-	t->parent = t2;
-	testModelA->trans = transform_createAndAdd( s );
-	testModelB->trans = transform_createAndAdd( s );
-	testModelA->trans->parent = t;
-	testModelB->trans->parent = t;
-	vector translate = Vector( -2.f, 0.f, 0.f, 1.f );
-	transform_setLocalTranslation(t, &translate);
-
-	scene_addModel(s, testModelA);
-	scene_addModel(s, testModelB);
-
-	scene_setAmbient(s, 0.2f, 0.2f, 0.2f, 1.f);
-
-	light* l = light_createWithTransform( s );
-	vector lightPos = {{ 1.f, 1.f, 1.f, 1.f }};
-	light_setPosition(l, &lightPos);
-	light_setDiffuse(l, 1.f, 0.f, 0.f, 1.f);
-	scene_addLight(s, l);
-
-	scene_setCamera(s, 0.f, 0.f, 10.f, 1.f);
-
-
-*/
-	
 	sterm* st = parse_file( "dat/test2.s" );
 	scene* s = eval( st );
 	sterm_free( st );

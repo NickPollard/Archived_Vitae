@@ -100,6 +100,7 @@ inputStream* inputStream_create( const char* source ) {
 	assert( in );
 	in->source = source;
 	in->stream = in->source;
+	in->end = in->source + strlen( in->source );
 	return in;
 }
 
@@ -125,6 +126,21 @@ char* inputStream_nextToken( inputStream* stream ) {
 	token[length] = '\0';
 	stream->stream = ptr; // Advance past the end of the token
 	return token;
+}
+
+// Check whether we have reached our end pointer
+bool inputStream_endOfFile( inputStream* in ) {
+	return in->stream >= in->end;
+}
+
+
+void inputStream_advancePast( inputStream* in, char c ) {
+	while ( *in->stream != c && !inputStream_endOfFile( in ))
+		in->stream++;
+}
+// Advance to just past the next end-of-line
+void inputStream_nextLine( inputStream* in ) {
+	inputStream_advancePast( in, '\n' );
 }
 
 //
@@ -477,7 +493,7 @@ void transformData_processElement( transformData* t, sterm* element ) {
 	// If it's a translation, copy the vector to the transformData
 	if ( isTranslation( element )) {
 		t->translation = *(vector*)element->head;
-		printf( "Transform loaded translation: %.2f, %.2f, %.2f, %.2f\n", t->translation.val[0], t->translation.val[1], t->translation.val[2], t->translation.val[3] );
+//		printf( "Transform loaded translation: %.2f, %.2f, %.2f, %.2f\n", t->translation.val[0], t->translation.val[1], t->translation.val[2], t->translation.val[3] );
 	}
 }
 
@@ -508,7 +524,6 @@ void* s_transform( sterm* raw_elements ) {
 
 // Creates a translation
 void* s_translation( sterm* raw_elements ) {
-	printf( "s_translation\n" );
 	assert( raw_elements );
 	sterm* elements = eval_list( raw_elements );
 	sterm* element = elements;
@@ -524,7 +539,6 @@ void* s_translation( sterm* raw_elements ) {
 
 
 void* s_vector( sterm* raw_elements ) {
-	printf( "s_vector\n" );
 	if ( raw_elements ) {
 //		debug_sterm_printList( raw_elements );
 		sterm* elements = eval_list( raw_elements );
@@ -541,7 +555,7 @@ void* s_vector( sterm* raw_elements ) {
 			i++;
 			element = element->tail;
 		}
-		printf( "Loaded vector: %.2f, %.2f, %.2f, %.2f.\n", v->val[0], v->val[1], v->val[2], v->val[3] );
+//		printf( "Loaded vector: %.2f, %.2f, %.2f, %.2f.\n", v->val[0], v->val[1], v->val[2], v->val[3] );
 		sterm* sv = sterm_create( typeVector, v );
 		return sv;
 	}
@@ -585,7 +599,7 @@ void scene_processObjects( scene* s, transform* parent, sterm* objects );
 void scene_processTransform( scene* s, transform* parent, transformData* tData );
 
 void scene_processTransform( scene* s, transform* parent, transformData* tData ) {
-	printf( "Creating Transform! Translation: %.2f, %.2f, %.2f\n", tData->translation.val[0], tData->translation.val[1], tData->translation.val[2] );
+//	printf( "Creating Transform! Translation: %.2f, %.2f, %.2f\n", tData->translation.val[0], tData->translation.val[1], tData->translation.val[2] );
 	transform* t = transform_create();
 	matrix_setTranslation( t->local, &tData->translation );
 	t->parent = parent;

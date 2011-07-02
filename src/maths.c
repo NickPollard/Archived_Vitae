@@ -369,10 +369,10 @@ void test_matrix() {
 
 	matrix_setIdentity( a );
 	float det = matrix_determinant( a );
-	printf(" identity det = %.2f\n", det );
+	printf("TEST: Maths.c: identity det = %.2f\n", det );
 	assert( f_eq( det, 1.f ));
 	det = matrix_determinant( c );
-	printf(" det = %.2f\n", det );
+	printf("TEST: Maths.c: det = %.2f\n", det );
 	assert( f_eq( det, 1.f ));
 
 	// Test Inverse
@@ -387,9 +387,8 @@ void test_matrix() {
 	a[0][1] = -2.f;
 	a[1][1] = 0.f;
 	matrix_inverse( c, a );
-	matrix_print( a );
-	matrix_print( c );
-	printf( "%.2f\n", c[0][0] );
+	//matrix_print( a );
+	//matrix_print( c );
 	assert( f_eq( c[1][0], -0.5f ) );
 
 	v = Vector( 0.4f, 0.2f, -3.f, 1.f );

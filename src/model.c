@@ -4,6 +4,7 @@
 #include "model.h"
 //-----------------------
 #include "maths.h"
+#include "model_loader.h"
 #include "engine.h"
 #include "mem/allocator.h"
 #include "render/modelinstance.h"
@@ -99,6 +100,9 @@ model* model_createTestCube( ) {
 	model* m = model_createModel(/* meshCount */ 1);
 	mesh* me = mesh_createTestCube();
 	m->meshes[0] = me;
+
+
+//	model* m = LoadObj( "dat/model/cube.obj" );
 	return m;
 }
 
