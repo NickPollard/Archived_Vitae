@@ -97,12 +97,12 @@ mesh* mesh_createMesh(int vertCount, int indexCount) {
 
 // Create a test model of a cube
 model* model_createTestCube( ) {
-	model* m = model_createModel(/* meshCount */ 1);
-	mesh* me = mesh_createTestCube();
-	m->meshes[0] = me;
+//	model* m = model_createModel(/* meshCount */ 1);
+//	mesh* me = mesh_createTestCube();
+//	m->meshes[0] = me;
 
 
-//	model* m = LoadObj( "dat/model/cube.obj" );
+	model* m = LoadObj( "dat/model/cityscape.obj" );
 	return m;
 }
 

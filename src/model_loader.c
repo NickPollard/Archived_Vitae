@@ -34,7 +34,7 @@ model* LoadObj( const char* filename ) {
 			for ( int i = 0; i < 3; i++ ) {
 				free( token );
 				token = inputStream_nextToken( stream );
-				indices[indexCount++] = atoi( token );
+				indices[indexCount++] = atoi( token ) - 1; // -1 as obj uses 1-based indices, not 0-based as we do
 			}
 			printf( " Face: %d %d %d \n", indices[indexCount-3], indices[indexCount-2], indices[indexCount-1] );
 		}
