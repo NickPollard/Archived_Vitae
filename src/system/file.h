@@ -11,6 +11,7 @@ enum tag_type {
 	typeModel,
 	typeTransform,
 	typeTranslation,
+	typeFilename,
 	typeVector
 };
 

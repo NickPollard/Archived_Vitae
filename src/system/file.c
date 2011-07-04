@@ -253,6 +253,7 @@ void* s_model( sterm* s );
 void* s_transform( sterm* s );
 void* s_scene( sterm* s );
 void* s_translation( sterm* s );
+void* s_filename( sterm* s );
 void* s_vector( sterm* s );
 
 #define S_FUNC( atom, func )	if ( string_equal( (const char*)data->head, atom ) ) { \
@@ -270,6 +271,7 @@ void* lookup( sterm* data ) {
 	S_FUNC( "scene", s_scene )
 	S_FUNC( "translation", s_translation )
 	S_FUNC( "vector", s_vector )
+	S_FUNC( "filename", s_filename )
 
 	return data;
 }
@@ -564,16 +566,35 @@ void* s_vector( sterm* raw_elements ) {
 }
 
 typedef struct modelData_s {
-
+	const char* filename;
 } modelData;
 
 modelData* modelData_create() {
-	return (modelData*)mem_alloc( sizeof( modelData ));
+	modelData* m = (modelData*)mem_alloc( sizeof( modelData ));
+	m->filename = "dat/model/sphere.obj";
+	return m;
 }
 
+// Creates a translation
+void* s_filename( sterm* raw_elements ) {
+	assert( raw_elements );
+	sterm* elements = eval_list( raw_elements );
+	sterm* element = elements;
+	// Should be a single string
+	// So take the head and check that
+	assert( isAtom( (sterm*)element->head ));
+	// For now, reference the string from the atom
+	// TODO - need to clear up string/atom memory ownership
+	sterm* sf = sterm_create( typeFilename, ((sterm*)element->head)->head );
+//	sterm_free( element );
+	return sf;
+}
 // Applies the properties to the modeldata
 void modelData_processProperty( modelData* m, sterm* property ) {
 	// TODO: implement
+	if ( property->type == typeFilename ) {
+		m->filename = property->head;
+	}
 }
 void modelData_processProperties( modelData* m, sterm* properties ) {
 	modelData_processProperty( m, properties->head );
@@ -612,8 +633,8 @@ void scene_processTransform( scene* s, transform* parent, transformData* tData )
 
 void scene_processModel( scene* s, transform* parent, modelData* mData ) {
 //	printf( "Model!\n" );
-	modelHandle testCube = model_getHandleFromFilename( "invalid.obj" );
-	modelInstance* m = modelInstance_create( testCube );
+	modelHandle handle = model_getHandleFromFilename( mData->filename );
+	modelInstance* m = modelInstance_create( handle );
 	m->trans = parent;
 	scene_addModel( s, m );
 }

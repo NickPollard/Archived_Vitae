@@ -154,7 +154,8 @@ model* model_getByHandle( modelHandle h ) {
 // Synchronously load a model from a given file
 model* model_loadFromFileSync( const char* filename ) {
 	// TODO: Implement
-	return model_createTestCube();
+//	return model_createTestCube();
+	return LoadObj( filename );
 }
 
 const char* model_getFileNameFromID( int id ) {
