@@ -45,12 +45,14 @@ model* LoadObj( const char* filename ) {
 
 	// Create the Vitae Model
 	model* mdl = model_createModel( 1 ); // Only one mesh by default
-	mesh* msh = mesh_createMesh( vertCount, indexCount );
+	mesh* msh = mesh_createMesh( vertCount, indexCount, indexCount / 3 /* For now, one normal per face */ );
 	mdl->meshes[0] = msh;
 
 	// Copy our loaded data into the Mesh structure
 	memcpy( msh->verts, vertices, vertCount * sizeof( vector ));
 	memcpy( msh->indices, indices, indexCount * sizeof( int ));
+
+	mesh_calculateNormals( msh );
 
 	return mdl;
 }

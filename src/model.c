@@ -25,7 +25,7 @@ void vgl_vertexDraw(vector* v) {
 
 // Create a test mesh of a cube
 mesh* mesh_createTestCube() {
-	mesh* m = mesh_createMesh(/*verts*/ 8, /*indices*/ 36);
+	mesh* m = mesh_createMesh(/*verts*/ 8, /*indices*/ 36, /*normals*/ 0);
 	Set(&m->verts[0], 1.f,  1.f,  1.f, 1.f);
 	Set(&m->verts[1], 1.f,  1.f, -1.f, 1.f);
 	Set(&m->verts[2], 1.f, -1.f,  1.f, 1.f);
@@ -81,18 +81,44 @@ mesh* mesh_createTestCube() {
 }
 
 // Create an empty mesh with vertCount distinct vertices and indexCount vertex indices
-mesh* mesh_createMesh(int vertCount, int indexCount) {
-	void* data = mem_alloc(sizeof(mesh) + 
-						(sizeof(vector) * vertCount) + 
-						(sizeof(int) * indexCount));
+mesh* mesh_createMesh( int vertCount, int indexCount, int normal_count ) {
+	void* data = mem_alloc( sizeof( mesh ) +
+						sizeof( vector ) * vertCount +
+						sizeof( int )	 * indexCount +
+						sizeof( int )	 * indexCount +	// Normal indices
+						sizeof( vector ) * normal_count );
 	mesh* m = data;
 	data += sizeof(mesh);
 	m->verts = data;
 	data += sizeof(vector) * vertCount;
 	m->indices = data;
+	data += sizeof( int ) * indexCount;
+	m->normals = data;
+	data += sizeof( vector ) * normal_count;
+	m->normal_indices = data;
+
 	m->vertCount = vertCount;
 	m->indexCount = indexCount;
+	m->normal_count = normal_count;
+
 	return m;
+}
+
+// Precalculate flat normals for a mesh
+void mesh_calculateNormals( mesh* m ) {
+	int j = 0;
+	for ( int i = 0; i < m->indexCount; i+=3 ) {
+		// For now, calculate the normals at runtime from the three points of the triangle
+		vector a, b, normal;
+		Sub( &a, &m->verts[m->indices[i]], &m->verts[m->indices[i + 1]] );
+		Sub( &b, &m->verts[m->indices[i]], &m->verts[m->indices[i + 2]] );
+		Cross( &normal, &a, &b );
+		Normalize( &normal, &normal );
+		m->normal_indices[i+0] = j;
+		m->normal_indices[i+1] = j;
+		m->normal_indices[i+2] = j;
+		m->normals[j++] = normal;
+	}
 }
 
 // Create a test model of a cube
@@ -119,18 +145,14 @@ void mesh_drawVerts( mesh* m ) {
 	glBegin( GL_TRIANGLES );
 	// Draw a triangle at a time
 	for ( int i = 0; i < m->indexCount; i += 3 ) {
-		// For now, calculate the normals at runtime from the three points of the triangle
-		vector a, b, normal;
-		Sub( &a, &m->verts[m->indices[i]], &m->verts[m->indices[i + 1]] );
-		Sub( &b, &m->verts[m->indices[i]], &m->verts[m->indices[i + 2]] );
-		Cross( &normal, &a, &b );
-		Normalize( &normal, &normal );
-		glNormal3fv( (GLfloat*)&normal );
 		glTexCoord2f( 0.f, 0.f ); // TODO - UVs in model format
-		vgl_vertexDraw( &m->verts[m->indices[i]] );
+		glNormal3fv( (GLfloat*)&m->normals[m->normal_indices[i + 0]] );
+		vgl_vertexDraw( &m->verts[m->indices[i + 0]] );
 		glTexCoord2f( 1.f, 0.f );
+		glNormal3fv( (GLfloat*)&m->normals[m->normal_indices[i + 1]] );
 		vgl_vertexDraw( &m->verts[m->indices[i + 1]] );
 		glTexCoord2f( 0.f, 1.f );
+		glNormal3fv( (GLfloat*)&m->normals[m->normal_indices[i + 2]] );
 		vgl_vertexDraw( &m->verts[m->indices[i + 2]] );
 	}
 	glEnd();
