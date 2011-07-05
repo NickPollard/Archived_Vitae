@@ -9,8 +9,10 @@ enum tag_type {
 	typeAtom,
 	typeFunc,
 	typeModel,
+	typeLight,
 	typeTransform,
 	typeTranslation,
+	typeDiffuse,
 	typeFilename,
 	typeVector
 };

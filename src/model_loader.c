@@ -33,7 +33,7 @@ model* LoadObj( const char* filename ) {
 				token = inputStream_nextToken( stream );
 				vertices[vert_count].val[i] = strtof( token, NULL );
 			}
-			printf( " Vertex: %.2f %.2f %.2f \n", vertices[vert_count].val[0], vertices[vert_count].val[1], vertices[vert_count].val[2] );
+			//printf( " Vertex: %.2f %.2f %.2f \n", vertices[vert_count].val[0], vertices[vert_count].val[1], vertices[vert_count].val[2] );
 			vert_count++;
 		}
 		if ( string_equal( token, "vn" )) {
@@ -43,7 +43,7 @@ model* LoadObj( const char* filename ) {
 				token = inputStream_nextToken( stream );
 				normals[normal_count].val[i] = strtof( token, NULL );
 			}
-			printf( " Normal: %.2f %.2f %.2f \n", normals[normal_count].val[0], normals[normal_count].val[1], normals[vert_count].val[2] );
+			//printf( " Normal: %.2f %.2f %.2f \n", normals[normal_count].val[0], normals[normal_count].val[1], normals[vert_count].val[2] );
 			normal_count++;
 		}
 		if ( string_equal( token, "f" )) {
@@ -78,18 +78,18 @@ model* LoadObj( const char* filename ) {
 				}
 				norm[i] = '\0';
 
-//				printf( "Vert: %s, UV: %s, Norm %s.\n", vert, uv, norm );
+//				//printf( "Vert: %s, UV: %s, Norm %s.\n", vert, uv, norm );
 
 				indices[index_count] = atoi( vert ) - 1; // -1 as obj uses 1-based indices, not 0-based as we do
 				normal_indices[index_count] = atoi( norm ) - 1; // -1 as obj uses 1-based indices, not 0-based as we do
 				index_count++;
 			}
-			printf( " Face: %d %d %d \n", indices[index_count-3], indices[index_count-2], indices[index_count-1] );
+			//printf( " Face: %d %d %d \n", indices[index_count-3], indices[index_count-2], indices[index_count-1] );
 		}
 		inputStream_nextLine( stream );
 	}
 
-	printf( "Parsed .obj file with %d verts and %d faces.\n", vert_count, index_count / 3 );
+	printf( "Parsed .obj file \"%s\" with %d verts and %d faces.\n", filename, vert_count, index_count / 3 );
 
 	// Create the Vitae Model
 	model* mdl = model_createModel( 1 ); // Only one mesh by default
@@ -106,74 +106,3 @@ model* LoadObj( const char* filename ) {
 
 	return mdl;
 }
-/*
-// Load an .obj file into Manta
-model* LoadObj( const char* filename, vector* objPosition )
-{
-	byte* buffer;
-	byte  lineBuffer[MAX_FILE_LINE_LENGTH];
-	bool  reachedEnd = false;
-	byte* position;
-
-	if (LoadFile(&buffer, filename))
-	{
-		int vertexCount = 0;
-		int polyCount = 0;
-		// Set vertex offset (-1 since obj is indexed from 1)
-		vertexOffset = scene->getVertexCount() - 1;
-		polyOffset = scene->getPolyCount();
-		// Loop through each line
-		position = buffer;
-		while (!reachedEnd)
-		{
-			reachedEnd = ReadLine(&position, lineBuffer);
-			switch (lineBuffer[0])
-			{
-				case 'v':
-					vertexCount++;
-					LoadObj_AddVertex(lineBuffer);
-					break;
-				case 'f':
-					polyCount++;
-					LoadObj_AddPolygon(lineBuffer);
-					break;
-				default:
-//					printf("-- Skipping line --\n");
-					break;
-			}
-		}
-		free(buffer);
-		return scene->addModel(objPosition, vertexOffset+1, vertexCount, polyOffset, polyCount);
-	}
-	return NULL;
-}
-
-vector LoadObj_AddVertex(const char* line)
-{
-	vector vertex;
-	const char* position = line+2;
-	byte wordBuffer[MAX_FILE_WORD_LENGTH];
-	ReadWord(&position, wordBuffer);
-	vertex.x = atof(wordBuffer);
-	ReadWord(&position, wordBuffer);
-	vertex.y = atof(wordBuffer);
-	ReadWord(&position, wordBuffer);
-	vertex.z = atof(wordBuffer);
-	vertex.w = 1.f;
-
-	return vector;
-}
-void LoadObj_AddPolygon(const char* line)
-{
-	int	val[3];
-	const char* position = line+2;
-	byte wordBuffer[MAX_FILE_WORD_LENGTH];
-	ReadWord(&position, wordBuffer);
-	val[0] = atoi(wordBuffer) + vertexOffset;
-	ReadWord(&position, wordBuffer);
-	val[1] = atoi(wordBuffer) + vertexOffset;
-	ReadWord(&position, wordBuffer);
-	val[2] = atoi(wordBuffer) + vertexOffset;
-
-	indicesAppend( val );
-}*/

@@ -137,15 +137,17 @@ void matrix_setIdentity(matrix m) {
 	m[3][3] = 1.f; }
 
 void vector_print( const vector* v ) {
-	printf( "Vector: %.4f, %.4f, %.4f, %.4f.\n", v->val[0], v->val[1], v->val[2], v->val[3] );
+	printf( "%.4f, %.4f, %.4f, %.4f", v->val[0], v->val[1], v->val[2], v->val[3] );
 }
 
 bool vector_equal( const vector* a, const vector* b ) {
 	for (int i = 0; i < 4; i++)
 		if ( !f_eq( ((float*)a)[i], ((float*)b)[i] ) ) {
-			printf( "vector_equal: vectors not equal.\n" );
+			printf( "vector_equal: vectors not equal.\nA: " );
 			vector_print( a );
+			printf( "\nB: " );
 			vector_print( b );
+			printf( "\n" );
 			return false;
 		}
 	return true;

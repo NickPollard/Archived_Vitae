@@ -105,6 +105,8 @@ void test_matrix();
 
 void matrix_print( matrix src );
 
+void vector_print( const vector* v );
+
 bool vector_equal( const vector* a, const vector* b );
 
 #endif // __MATHS_H__

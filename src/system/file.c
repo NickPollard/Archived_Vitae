@@ -6,6 +6,8 @@
 #include "render/modelinstance.h"
 #include <assert.h>
 // TEMP
+#include "light.h"
+#include "maths.h"
 #include "model.h"
 #include "render/modelinstance.h"
 #include "scene.h"
@@ -166,6 +168,9 @@ bool isList( sterm* s ) {
 bool isModel( sterm* s ) {
 	return ( s->type == typeModel );
 }
+bool isLight( sterm* s ) {
+	return ( s->type == typeLight );
+}
 
 bool isTransform( sterm* s ) {
 	return ( s->type == typeTransform );
@@ -173,6 +178,10 @@ bool isTransform( sterm* s ) {
 
 bool isTranslation( sterm* s ) {
 	return ( s->type == typeTranslation );
+}
+
+bool isDiffuse( sterm* s ) {
+	return ( s->type == typeDiffuse );
 }
 
 bool isVector( sterm* s ) {
@@ -250,9 +259,11 @@ scene* scene_load( slist* data ) {
 void* s_print( sterm* s );
 void* s_concat( sterm* s );
 void* s_model( sterm* s );
+void* s_light( sterm* s );
 void* s_transform( sterm* s );
 void* s_scene( sterm* s );
 void* s_translation( sterm* s );
+void* s_diffuse( sterm* s );
 void* s_filename( sterm* s );
 void* s_vector( sterm* s );
 
@@ -267,9 +278,11 @@ void* lookup( sterm* data ) {
 	S_FUNC( "print", s_print )
 	S_FUNC( "concat", s_concat )
 	S_FUNC( "model", s_model )
+	S_FUNC( "light", s_light )
 	S_FUNC( "transform", s_transform )
 	S_FUNC( "scene", s_scene )
 	S_FUNC( "translation", s_translation )
+	S_FUNC( "diffuse", s_diffuse )
 	S_FUNC( "vector", s_vector )
 	S_FUNC( "filename", s_filename )
 
@@ -488,7 +501,7 @@ transformData* transformData_create() {
 }
 
 void transformData_processElement( transformData* t, sterm* element ) {
-	if ( isModel( element ) || isTransform( element )) {
+	if ( isModel( element ) || isTransform( element ) || isLight( element)) {
 //		printf( "Adding child to Transform.\n" );
 		t->elements = cons( element, t->elements );
 	}
@@ -539,6 +552,20 @@ void* s_translation( sterm* raw_elements ) {
 	return st;
 }
 
+void* s_diffuse( sterm* raw_elements ) {
+	printf( "s_diffuse\n" );
+	assert( raw_elements );
+	sterm* elements = eval_list( raw_elements );
+	sterm* element = elements;
+	// For now only allow vectors
+	// Should be a list of one single vector
+	// So take the head and check that
+	assert( isVector( (sterm*)element->head ));
+	// For now, copy the vector head from the vector sterm
+	sterm* s_diff = sterm_create( typeDiffuse, ((sterm*)element->head)->head );
+//	sterm_free( element );
+	return s_diff;
+}
 
 void* s_vector( sterm* raw_elements ) {
 	if ( raw_elements ) {
@@ -615,6 +642,41 @@ void* s_model( sterm* raw_properties ) {
 	return m;
 }
 
+typedef struct lightData_s {
+	vector diffuse;
+} lightData;
+
+lightData* lightData_create( ) {
+	lightData* lData = malloc( sizeof( lightData ));
+	memset( lData, 0, sizeof( lightData ));
+	return lData;
+}
+
+void lightData_processProperty( lightData* l, sterm* property ) {
+	if ( isDiffuse( property )) {
+		l->diffuse = *(vector*)property->head;
+		printf( "Setting light diffuse: " );
+		vector_print( &l->diffuse );
+		printf( "\n" );
+	}
+}
+void lightData_processProperties( lightData* l, sterm* properties ) {
+	lightData_processProperty( l, properties->head );
+	if ( properties->tail )
+		lightData_processProperty( l, properties->tail );
+}
+
+void* s_light( sterm* raw_properties ) {
+	printf( "s_light\n" );
+	lightData* lData = lightData_create();
+	if ( raw_properties ) {
+		sterm* properties = eval_list( raw_properties );
+		lightData_processProperties( lData, properties );
+	}
+	sterm* l = sterm_create( typeLight, lData );
+	return l;
+}
+
 void scene_processObject( scene* s, transform* parent, sterm* object );
 void scene_processObjects( scene* s, transform* parent, sterm* objects );
 void scene_processTransform( scene* s, transform* parent, transformData* tData );
@@ -639,12 +701,22 @@ void scene_processModel( scene* s, transform* parent, modelData* mData ) {
 	scene_addModel( s, m );
 }
 
+void scene_processLight( scene* s, transform* parent, lightData* lData ) {
+	light* l = light_create();
+	vector* v = &lData->diffuse;
+	light_setDiffuse( l, v->val[0], v->val[1], v->val[2], v->val[3] );
+	l->trans = parent;
+	scene_addLight( s, l );
+}
+
 void scene_processObject( scene* s, transform* parent, sterm* object ) {
 	// TODO: implement	
 	if ( isTransform( object ))
 		scene_processTransform( s, parent, object->head );
 	if ( isModel( object ))
 		scene_processModel( s, parent, object->head );
+	if ( isLight( object ))
+		scene_processLight( s, parent, object->head );
 }
 
 void scene_processObjects( scene* s, transform* parent, sterm* objects ) {
