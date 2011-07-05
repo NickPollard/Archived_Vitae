@@ -142,6 +142,13 @@ model* model_createModel(int meshCount) {
 
 // Draw the verts of a mesh to the openGL buffer
 void mesh_drawVerts( mesh* m ) {
+	// Apply material properties
+	vector diffuse = Vector( 1.0, 1.0, 1.0, 1.0);
+	vector specular= Vector( 1.0, 1.0, 1.0, 1.0);
+	glMaterialfv( GL_FRONT, GL_DIFFUSE, (GLfloat*)&diffuse );
+	glMaterialfv( GL_FRONT, GL_SPECULAR, (GLfloat*)&specular );
+
+
 	glBegin( GL_TRIANGLES );
 	// Draw a triangle at a time
 	for ( int i = 0; i < m->indexCount; i += 3 ) {

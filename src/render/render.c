@@ -129,11 +129,11 @@ void render_terminate() {
 void render( scene* s, int w, int h ) {
 
 	render_set3D( w, h );
-	render_applyCamera( s->cam );
 
 	// Switch to the drawing perspective and initialise to the identity matrix
 	glMatrixMode(GL_MODELVIEW); 
 	glLoadIdentity();
+	render_applyCamera( s->cam );
 	glColor4f(1.f, 1.f, 1.f, 1.f);
 
 	render_lighting( s );

@@ -5,6 +5,9 @@
 //-----------------------
 #include "font.h"
 
+// GLFW Libraries
+#include <GL/glfw.h>
+
 void PrintDebugText( debugtextframe* frame, const char* string ) {
 	assert( strlen(string) < kDebugTextLineLength );
 	strncpy( frame->lines[frame->lineCount], string, kDebugTextLineLength );
@@ -25,6 +28,8 @@ void debugtextframe_tick( void* entity, float dt ) {
 }
 
 void debugtextframe_render( void* entity ) {
+	glEnable(GL_TEXTURE_2D);
+
 	debugtextframe* f = (debugtextframe*)entity;
 	float x = f->x;
 	float y = f->y;
@@ -34,4 +39,5 @@ void debugtextframe_render( void* entity ) {
 		y += f->lineHeight;
 	}
 	f->lineCount = 0;
+	glDisable(GL_TEXTURE_2D);
 }
