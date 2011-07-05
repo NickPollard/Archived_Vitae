@@ -117,7 +117,15 @@ model* model_createModel(int meshCount) {
 // Draw the verts of a mesh to the openGL buffer
 void mesh_drawVerts( mesh* m ) {
 	glBegin( GL_TRIANGLES );
+	// Draw a triangle at a time
 	for ( int i = 0; i < m->indexCount; i += 3 ) {
+		// For now, calculate the normals at runtime from the three points of the triangle
+		vector a, b, normal;
+		Sub( &a, &m->verts[m->indices[i]], &m->verts[m->indices[i + 1]] );
+		Sub( &b, &m->verts[m->indices[i]], &m->verts[m->indices[i + 2]] );
+		Cross( &normal, &a, &b );
+		Normalize( &normal, &normal );
+		glNormal3fv( (GLfloat*)&normal );
 		glTexCoord2f( 0.f, 0.f ); // TODO - UVs in model format
 		vgl_vertexDraw( &m->verts[m->indices[i]] );
 		glTexCoord2f( 1.f, 0.f );

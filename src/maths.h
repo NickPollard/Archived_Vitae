@@ -52,6 +52,10 @@ float Dot(vector* A, vector* B);
 // Vector cross product
 void Cross(vector* dst, vector* srcA, vector* srcB);
 
+// Normalise a vector
+// No use of restrict; dst *can* alias src
+void Normalize( vector* dst, vector* src );
+
 // Matrix Vector multiply
 vector matrixVecMul(matrix m, const vector* v);
 

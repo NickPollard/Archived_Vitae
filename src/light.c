@@ -41,6 +41,8 @@ void light_setPosition(light* l, vector* pos) {
 }
 
 void light_render(GLenum index, light* l) {
+	glEnable( index );
+
 	glLightfv(index, GL_DIFFUSE, (GLfloat*)(&l->diffuseCol));
 	glLightfv(index, GL_POSITION, (GLfloat*)matrix_getTranslation(l->trans->world));
 

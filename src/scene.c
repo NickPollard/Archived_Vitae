@@ -106,6 +106,10 @@ scene* test_scene_init( ) {
 	scene_setCamera(s, 0.f, 0.f, 10.f, 1.f);
 	scene_setAmbient( s, 0.2f, 0.2f, 0.2f, 1.f );
 
+	light* l = light_createWithTransform( s );
+	scene_addLight( s, l );
+	light_setDiffuse( l, 1.f, 0.f, 0.f, 1.f );
+
 	return s;
 
 //	scene_saveFile( s, "dat/test_scene.s" );

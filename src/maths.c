@@ -26,7 +26,7 @@ void Add(vector* dst, const vector* srcA, const vector* srcB) {
 		dst->val[i] = srcA->val[i] + srcB->val[i];
 }
 
-// Vector subtraction
+// Vector &subtraction
 void Sub(vector* dst, vector* srcA, vector* srcB) {
 	for (int i = 0; i < 4; i++)
 		dst->val[i] = srcA->val[i] - srcB->val[i];
@@ -43,6 +43,17 @@ void Cross(vector* dst, vector* srcA, vector* srcB) {
 	dst->coord.y = (srcA->coord.z * srcB->coord.x) - (srcA->coord.x * srcB->coord.z);
 	dst->coord.z = (srcA->coord.x * srcB->coord.y) - (srcA->coord.y * srcB->coord.x);
 	dst->coord.w = 1.f;
+}
+
+// Normalise a vector
+// No use of restrict; dst *can* alias src
+void Normalize( vector* dst, vector* src ) {
+	float length = src->coord.x * src->coord.x + src->coord.y * src->coord.y + src->coord.z * src->coord.z;
+	float invLength = 1.f / length;
+	dst->coord.x = src->coord.x * invLength;
+	dst->coord.y = src->coord.y * invLength;
+	dst->coord.z = src->coord.z * invLength;
+	dst->coord.w = src->coord.w; // Preserve the W coord? This seems right to me
 }
 
 // Matrix Vector multiply
