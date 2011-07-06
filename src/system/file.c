@@ -664,13 +664,13 @@ void lightData_processProperties( sterm* l, sterm* properties ) {
 	if ( properties->tail )
 		lightData_processProperties( l, properties->tail );
 }
-
+/*
 void map( sterm* list, function f ) {
 	f( list->head );
 	if ( list->tail )
 		map( list->tail, f );
 }
-
+*/
 void* s_light( sterm* raw_properties ) {
 	// Build as a list
 	vector* diffuse_vector = NULL; 

@@ -11,18 +11,30 @@
 #include "render/debugdraw.h"
 #include "render/modelinstance.h"
 #include "render/texture.h"
+#include "system/file.h"
 // temp
 #include "engine.h"
 
 // GLFW Libraries
 #include <GL/glfw.h>
 
-/*
+// *** Shader Pipeline
+
 typedef struct gl_resources_s {
 	GLuint vertex_buffer, element_buffer;
 	GLuint texture;
 
+	struct {
+		GLuint projection;
+		GLuint modelview;
+	} uniforms;
+
+	struct {
+		GLint position;
+	} attributes;
+
 	// Shader objects
+	GLuint vertex_shader, fragment_shader, program;
 } gl_resources;
 
 gl_resources resources;
@@ -33,14 +45,65 @@ GLuint gl_bufferCreate( GLenum target, const void* data, GLsizei size ) {
 	glBindBuffer( target, buffer );
 	// Usage hint can be: GL_[VARYING]_[USE]
 	// Varying: STATIC / DYNAMIC / STREAM
-	// Use: DRAW / READ / COPY */
-//	glBufferData( target, size, data, /*Usage hint*/ GL_STATIC_DRAW );
-/*	return buffer;
+	// Use: DRAW / READ / COPY
+	glBufferData( target, size, data, /*Usage hint*/ GL_STATIC_DRAW );
+	return buffer;
 }
-*/
 
+GLfloat vertex_buffer_data[8];
+GLshort element_buffer_data[8];
+
+void render_initResources() {
+	gl_bufferCreate( GL_ARRAY_BUFFER, vertex_buffer_data, sizeof( vertex_buffer_data ) );
+	gl_bufferCreate( GL_ELEMENT_ARRAY_BUFFER, element_buffer_data, sizeof( element_buffer_data ) );
+}
+
+void gl_dumpInfoLog( GLuint object ) {
+	GLint length;
+	char* log;
+	glGetShaderiv( object, GL_INFO_LOG_LENGTH, &length );
+	log = mem_alloc( sizeof( char ) * length );
+	glGetShaderInfoLog( object, length, NULL, log );
+	printf( "--- Begin Info Log ---\n" );
+	printf( "%s", log );
+	printf( "--- End Info Log ---\n" );
+	mem_free( log );
+}
+
+// Based on code from Joe's Blog: http://duriansoftware.com/joe/An-intro-to-modern-OpenGL.-Chapter-2.2:-Shaders.html
+GLuint render_compileShader( GLenum type, const char* path ) {
+	GLint length;
+	const char* source = vfile_contents( path, &length );
+	GLuint shader;
+	GLint shader_ok;
+
+	if ( !source ) {
+		printf( "Error: Cannot create Shader. File %s not found.\n", path );
+		assert( 0 );
+	}
+
+	shader = glCreateShader( type );
+	glShaderSource( shader, 1, (const GLchar**)&source, &length );
+	mem_free( (void*)source );
+	glCompileShader( shader );
+
+	glGetShaderiv( shader, GL_COMPILE_STATUS, &shader_ok );
+	if ( !shader_ok) {
+		printf( "Error: Failed to compile Shader from File %s.\n", path );
+		gl_dumpInfoLog( shader );
+		assert( 0 );
+	}
+
+	return shader;
+}
+
+void render_buildShaders() {
+	resources.vertex_shader = render_compileShader( GL_VERTEX_SHADER, "dat/shaders/phong_vertex.glsl" );
+	resources.fragment_shader = render_compileShader( GL_FRAGMENT_SHADER, "dat/shaders/phong_fragment.glsl" );
+}
 // Private Function declarations
-void render_buildShaders();
+
+// *** Fixed Function Pipeline
 
 void render_set3D( int w, int h ) {
 	glViewport(0, 0, w, h);
@@ -197,8 +260,4 @@ void render( scene* s, int w, int h ) {
 	font_renderString( 10.f, 30.f, "ABCDEFGHIJKLMNOPQRSTUVWXYZ.,/?|'@#!$%^&" );
 	font_renderString( 10.f, 50.f, "This is a test!" );
 */
-}
-
-void render_buildShaders() {
-
 }

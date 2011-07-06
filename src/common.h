@@ -1,6 +1,6 @@
 // Standard C libraries
-#ifndef __COMMON_H__
-#define __COMMON_H__
+#pragma once
+
 #include <stddef.h>
 #include <stdlib.h>
 #include <stdio.h>
@@ -11,6 +11,9 @@
 #include "common.fwd.h"
 
 #include "debug/debug.h"
+
+// For openGL compatibility
+#define GL_GLEXT_PROTOTYPES
 
 // Boolean defines
 #define true 1
@@ -42,16 +45,9 @@ inline unsigned long long rdtsc()
 	#undef rdtsc
 }
 
-typedef struct vec2_t {
-	float x;
-	float y;
-} vec2;
-
 // Printing
 #define printError( format, args... ) 	{ \
 											printf( "%sError%s: ", TERM_RED, TERM_WHITE ); \
 											printf( format, args ); \
 											printf( " [File: %s, Line: %d]\n", __FILE__, __LINE__ ); \
 										}
-
-#endif // __COMMON_H__
