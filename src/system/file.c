@@ -188,7 +188,9 @@ bool isTranslation( sterm* s ) {
 }
 
 bool isDiffuse( sterm* s ) {
-	return ( s->type == typeDiffuse );
+	return ( s->head &&
+		   ((sterm*)s->head)->type == typeAtom &&
+		    string_equal( ((sterm*)s->head)->head, "diffuse" ));
 }
 
 bool isVector( sterm* s ) {
@@ -569,7 +571,9 @@ void* s_diffuse( sterm* raw_elements ) {
 	// So take the head and check that
 	assert( isVector( (sterm*)element->head ));
 	// For now, copy the vector head from the vector sterm
-	sterm* s_diff = sterm_create( typeDiffuse, ((sterm*)element->head)->head );
+	sterm* s_diff = cons( sterm_create( typeAtom, "diffuse" ), 
+						cons( sterm_create( typeVector, ((sterm*)element->head)->head ), 
+							NULL ));
 //	sterm_free( element );
 	return s_diff;
 }
@@ -675,8 +679,10 @@ void lightData_processProperties( lightData* l, sterm* properties ) {
 */
 void lightData_processProperty( sterm* l, sterm* property ) {
 	if ( isDiffuse( property )) {
+		vector* diffuse = (vector*)((sterm*)property->tail->head)->head;
+
 		((sterm*)l->tail->head)->head = malloc( sizeof( vector ));
-		*(vector*)(((sterm*)l->tail->head)->head) = *(vector*)property->head;
+		*(vector*)(((sterm*)l->tail->head)->head) = *diffuse;
 		printf( "Setting light diffuse: " );
 		vector_print( ((sterm*)l->tail->head)->head );
 		printf( "\n" );
