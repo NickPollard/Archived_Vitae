@@ -168,8 +168,15 @@ bool isList( sterm* s ) {
 bool isModel( sterm* s ) {
 	return ( s->type == typeModel );
 }
+/*
 bool isLight( sterm* s ) {
 	return ( s->type == typeLight );
+}
+*/
+bool isLight( sterm* s ) {
+	return ( s->head &&
+		   ((sterm*)s->head)->type == typeAtom &&
+		    string_equal( ((sterm*)s->head)->head, "lightData" ));
 }
 
 bool isTransform( sterm* s ) {
@@ -651,7 +658,7 @@ lightData* lightData_create( ) {
 	memset( lData, 0, sizeof( lightData ));
 	return lData;
 }
-
+/*
 void lightData_processProperty( lightData* l, sterm* property ) {
 	if ( isDiffuse( property )) {
 		l->diffuse = *(vector*)property->head;
@@ -663,11 +670,28 @@ void lightData_processProperty( lightData* l, sterm* property ) {
 void lightData_processProperties( lightData* l, sterm* properties ) {
 	lightData_processProperty( l, properties->head );
 	if ( properties->tail )
-		lightData_processProperty( l, properties->tail );
+		lightData_processProperties( l, properties->tail );
+}
+*/
+void lightData_processProperty( sterm* l, sterm* property ) {
+	if ( isDiffuse( property )) {
+		((sterm*)l->tail->head)->head = malloc( sizeof( vector ));
+		*(vector*)(((sterm*)l->tail->head)->head) = *(vector*)property->head;
+		printf( "Setting light diffuse: " );
+		vector_print( ((sterm*)l->tail->head)->head );
+		printf( "\n" );
+	}
+}
+void lightData_processProperties( sterm* l, sterm* properties ) {
+	lightData_processProperty( l, properties->head );
+	if ( properties->tail )
+		lightData_processProperties( l, properties->tail );
 }
 
 void* s_light( sterm* raw_properties ) {
+	/*
 	printf( "s_light\n" );
+	// Build as a struct
 	lightData* lData = lightData_create();
 	if ( raw_properties ) {
 		sterm* properties = eval_list( raw_properties );
@@ -675,6 +699,21 @@ void* s_light( sterm* raw_properties ) {
 	}
 	sterm* l = sterm_create( typeLight, lData );
 	return l;
+*/
+	// Build as a list
+
+
+	vector* diffuse_vector = NULL; 
+	sterm* data = sterm_create( typeAtom, "lightData" );
+	sterm* diffuse = sterm_create( typeVector, diffuse_vector );
+	sterm* lData = cons( data, cons( diffuse, NULL ));
+	//sterm* lData = cons( data, cons( diffuse, cons( specular, NULL )));
+	if ( raw_properties ) {
+		sterm* properties = eval_list( raw_properties );
+		lightData_processProperties( lData, properties );
+	}
+
+	return lData;
 }
 
 void scene_processObject( scene* s, transform* parent, sterm* object );
@@ -700,10 +739,18 @@ void scene_processModel( scene* s, transform* parent, modelData* mData ) {
 	m->trans = parent;
 	scene_addModel( s, m );
 }
-
+/*
 void scene_processLight( scene* s, transform* parent, lightData* lData ) {
 	light* l = light_create();
 	vector* v = &lData->diffuse;
+	light_setDiffuse( l, v->val[0], v->val[1], v->val[2], v->val[3] );
+	l->trans = parent;
+	scene_addLight( s, l );
+}
+*/
+void scene_processLight( scene* s, transform* parent, sterm* lData ) {
+	light* l = light_create();
+	vector* v = ((sterm*)lData->tail->head)->head;
 	light_setDiffuse( l, v->val[0], v->val[1], v->val[2], v->val[3] );
 	l->trans = parent;
 	scene_addLight( s, l );
@@ -716,7 +763,7 @@ void scene_processObject( scene* s, transform* parent, sterm* object ) {
 	if ( isModel( object ))
 		scene_processModel( s, parent, object->head );
 	if ( isLight( object ))
-		scene_processLight( s, parent, object->head );
+		scene_processLight( s, parent, object );
 }
 
 void scene_processObjects( scene* s, transform* parent, sterm* objects ) {

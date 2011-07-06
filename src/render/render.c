@@ -17,6 +17,28 @@
 // GLFW Libraries
 #include <GL/glfw.h>
 
+/*
+typedef struct gl_resources_s {
+	GLuint vertex_buffer, element_buffer;
+	GLuint texture;
+
+	// Shader objects
+} gl_resources;
+
+gl_resources resources;
+
+GLuint gl_bufferCreate( GLenum target, const void* data, GLsizei size ) {
+	GLuint buffer; // The OpenGL object handle we generate
+	glGenBuffers( 1, &buffer );
+	glBindBuffer( target, buffer );
+	// Usage hint can be: GL_[VARYING]_[USE]
+	// Varying: STATIC / DYNAMIC / STREAM
+	// Use: DRAW / READ / COPY */
+//	glBufferData( target, size, data, /*Usage hint*/ GL_STATIC_DRAW );
+/*	return buffer;
+}
+*/
+
 // Private Function declarations
 void render_buildShaders();
 
