@@ -168,23 +168,24 @@ bool isList( sterm* s ) {
 bool isModel( sterm* s ) {
 	return ( s->type == typeModel );
 }
-/*
-bool isLight( sterm* s ) {
-	return ( s->type == typeLight );
-}
-*/
-bool isLight( sterm* s ) {
+
+bool isPropertyType( sterm* s, const char* propertyName ) {
 	return ( s->head &&
 		   ((sterm*)s->head)->type == typeAtom &&
-		    string_equal( ((sterm*)s->head)->head, "lightData" ));
+		    string_equal( ((sterm*)s->head)->head, propertyName ));
+}
+
+bool isLight( sterm* s ) {
+	return isPropertyType( s, "lightData" );
 }
 
 bool isTransform( sterm* s ) {
 	return ( s->type == typeTransform );
 }
 
+
 bool isTranslation( sterm* s ) {
-	return ( s->type == typeTranslation );
+	return isPropertyType( s, "translation" );
 }
 
 bool isDiffuse( sterm* s ) {
@@ -258,12 +259,6 @@ sterm* parse_file( const char* filename ) {
 #if 1
 
 // Load a scene from a .sc file (s-expression based)
-/*
-scene* scene_load( slist* data ) {
-	scene* s = scene_create();
-	process( data );
-}
-*/
 
 void* s_print( sterm* s );
 void* s_concat( sterm* s );
@@ -449,24 +444,6 @@ void test_sfile( ) {
 	test_s_concat();
 //	test_s_scene();
 }
-/*
-// Process a vector
-// Expects a list of floats
-void* vector_process( sterm* s ) {
-	vector v = vector_create();
-	v[3] = 0.f;
-	int i = 0;
-	while( s && i < 4 ) {
-		sterm result = eval( s->head );
-		assert( asFloat( result ) );
-		v[i] = asFloat( result );
-		i++;
-		s = s->tail;
-	}
-	assert( i > 2 );
-	return v;
-}
-*/
 
 /*
 // called once for each argument to scene
@@ -516,7 +493,9 @@ void transformData_processElement( transformData* t, sterm* element ) {
 	}
 	// If it's a translation, copy the vector to the transformData
 	if ( isTranslation( element )) {
-		t->translation = *(vector*)element->head;
+		vector* translation = (vector*)((sterm*)element->tail->head)->head;
+		t->translation = *translation;
+//		t->translation = *(vector*)element->head;
 //		printf( "Transform loaded translation: %.2f, %.2f, %.2f, %.2f\n", t->translation.val[0], t->translation.val[1], t->translation.val[2], t->translation.val[3] );
 	}
 }
@@ -546,6 +525,12 @@ void* s_transform( sterm* raw_elements ) {
 	return t;
 }
 
+sterm* sterm_createProperty( const char* property_name, int property_type, void* property_data ) {
+	return cons( sterm_create( typeAtom, (void*)property_name ), 
+				cons( sterm_create( property_type, property_data ), 
+					NULL ));
+}
+
 // Creates a translation
 void* s_translation( sterm* raw_elements ) {
 	assert( raw_elements );
@@ -556,9 +541,9 @@ void* s_translation( sterm* raw_elements ) {
 	// So take the head and check that
 	assert( isVector( (sterm*)element->head ));
 	// For now, copy the vector head from the vector sterm
-	sterm* st = sterm_create( typeTranslation, ((sterm*)element->head)->head );
+	sterm* s_trans = sterm_createProperty( "translation", typeVector, ((sterm*)element->head)->head );
 //	sterm_free( element );
-	return st;
+	return s_trans;
 }
 
 void* s_diffuse( sterm* raw_elements ) {
@@ -571,9 +556,10 @@ void* s_diffuse( sterm* raw_elements ) {
 	// So take the head and check that
 	assert( isVector( (sterm*)element->head ));
 	// For now, copy the vector head from the vector sterm
-	sterm* s_diff = cons( sterm_create( typeAtom, "diffuse" ), 
-						cons( sterm_create( typeVector, ((sterm*)element->head)->head ), 
-							NULL ));
+//	sterm* s_diff = cons( sterm_create( typeAtom, "diffuse" ), 
+//						cons( sterm_create( typeVector, ((sterm*)element->head)->head ), 
+//							NULL ));
+	sterm* s_diff = sterm_createProperty( "diffuse", typeVector, ((sterm*)element->head)->head );
 //	sterm_free( element );
 	return s_diff;
 }
@@ -662,21 +648,6 @@ lightData* lightData_create( ) {
 	memset( lData, 0, sizeof( lightData ));
 	return lData;
 }
-/*
-void lightData_processProperty( lightData* l, sterm* property ) {
-	if ( isDiffuse( property )) {
-		l->diffuse = *(vector*)property->head;
-		printf( "Setting light diffuse: " );
-		vector_print( &l->diffuse );
-		printf( "\n" );
-	}
-}
-void lightData_processProperties( lightData* l, sterm* properties ) {
-	lightData_processProperty( l, properties->head );
-	if ( properties->tail )
-		lightData_processProperties( l, properties->tail );
-}
-*/
 void lightData_processProperty( sterm* l, sterm* property ) {
 	if ( isDiffuse( property )) {
 		vector* diffuse = (vector*)((sterm*)property->tail->head)->head;
@@ -694,21 +665,14 @@ void lightData_processProperties( sterm* l, sterm* properties ) {
 		lightData_processProperties( l, properties->tail );
 }
 
+void map( sterm* list, function f ) {
+	f( list->head );
+	if ( list->tail )
+		map( list->tail, f );
+}
+
 void* s_light( sterm* raw_properties ) {
-	/*
-	printf( "s_light\n" );
-	// Build as a struct
-	lightData* lData = lightData_create();
-	if ( raw_properties ) {
-		sterm* properties = eval_list( raw_properties );
-		lightData_processProperties( lData, properties );
-	}
-	sterm* l = sterm_create( typeLight, lData );
-	return l;
-*/
 	// Build as a list
-
-
 	vector* diffuse_vector = NULL; 
 	sterm* data = sterm_create( typeAtom, "lightData" );
 	sterm* diffuse = sterm_create( typeVector, diffuse_vector );
@@ -745,15 +709,7 @@ void scene_processModel( scene* s, transform* parent, modelData* mData ) {
 	m->trans = parent;
 	scene_addModel( s, m );
 }
-/*
-void scene_processLight( scene* s, transform* parent, lightData* lData ) {
-	light* l = light_create();
-	vector* v = &lData->diffuse;
-	light_setDiffuse( l, v->val[0], v->val[1], v->val[2], v->val[3] );
-	l->trans = parent;
-	scene_addLight( s, l );
-}
-*/
+
 void scene_processLight( scene* s, transform* parent, sterm* lData ) {
 	light* l = light_create();
 	vector* v = ((sterm*)lData->tail->head)->head;
