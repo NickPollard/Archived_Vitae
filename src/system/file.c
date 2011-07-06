@@ -547,7 +547,6 @@ void* s_translation( sterm* raw_elements ) {
 }
 
 void* s_diffuse( sterm* raw_elements ) {
-	printf( "s_diffuse\n" );
 	assert( raw_elements );
 	sterm* elements = eval_list( raw_elements );
 	sterm* element = elements;

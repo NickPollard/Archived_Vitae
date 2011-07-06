@@ -20,22 +20,6 @@
 
 // *** Shader Pipeline
 
-typedef struct gl_resources_s {
-	GLuint vertex_buffer, element_buffer;
-	GLuint texture;
-
-	struct {
-		GLuint projection;
-		GLuint modelview;
-	} uniforms;
-
-	struct {
-		GLint position;
-	} attributes;
-
-	// Shader objects
-	GLuint vertex_shader, fragment_shader, program;
-} gl_resources;
 
 gl_resources resources;
 
@@ -50,20 +34,49 @@ GLuint gl_bufferCreate( GLenum target, const void* data, GLsizei size ) {
 	return buffer;
 }
 
-GLfloat vertex_buffer_data[8];
-GLshort element_buffer_data[8];
+GLfloat vertex_buffer_data[256];
+GLushort element_buffer_data[256];
 
 void render_initResources() {
-	gl_bufferCreate( GL_ARRAY_BUFFER, vertex_buffer_data, sizeof( vertex_buffer_data ) );
-	gl_bufferCreate( GL_ELEMENT_ARRAY_BUFFER, element_buffer_data, sizeof( element_buffer_data ) );
+	vertex_buffer_data[0] = 1.0f;
+	vertex_buffer_data[1] = 0.0f;
+	vertex_buffer_data[2] = 0.0f;
+	vertex_buffer_data[3] = 1.0f;
+
+	vertex_buffer_data[4] = 0.0f;
+	vertex_buffer_data[5] = 1.0f;
+	vertex_buffer_data[6] = 0.0f;
+	vertex_buffer_data[7] = 1.0f;
+
+	vertex_buffer_data[8] = -1.0f;
+	vertex_buffer_data[9] = 0.0f;
+	vertex_buffer_data[10] = 0.0f;
+	vertex_buffer_data[11] = 1.0f;
+
+	vertex_buffer_data[12] = 0.0f;
+	vertex_buffer_data[13] = -1.0f;
+	vertex_buffer_data[14] = 0.0f;
+	vertex_buffer_data[15] = 1.0f;
+
+	element_buffer_data[0] = 0;
+	element_buffer_data[1] = 1;
+	element_buffer_data[2] = 3;
+	element_buffer_data[3] = 2;
+
+	// OpenGL allocates space for our buffers, copies our data into them
+	resources.vertex_buffer = gl_bufferCreate( GL_ARRAY_BUFFER, vertex_buffer_data, sizeof( vertex_buffer_data ) );
+	resources.element_buffer = gl_bufferCreate( GL_ELEMENT_ARRAY_BUFFER, element_buffer_data, sizeof( element_buffer_data ) );
 }
 
-void gl_dumpInfoLog( GLuint object ) {
+typedef void (*func_getIV)( GLuint, GLenum, GLint* );
+typedef void (*func_getInfoLog)( GLuint, GLint, GLint*, GLchar* );
+
+void gl_dumpInfoLog( GLuint object, func_getIV getIV, func_getInfoLog getInfoLog ) {
 	GLint length;
 	char* log;
-	glGetShaderiv( object, GL_INFO_LOG_LENGTH, &length );
+	getIV( object, GL_INFO_LOG_LENGTH, &length );
 	log = mem_alloc( sizeof( char ) * length );
-	glGetShaderInfoLog( object, length, NULL, log );
+	getInfoLog( object, length, NULL, log );
 	printf( "--- Begin Info Log ---\n" );
 	printf( "%s", log );
 	printf( "--- End Info Log ---\n" );
@@ -90,16 +103,44 @@ GLuint render_compileShader( GLenum type, const char* path ) {
 	glGetShaderiv( shader, GL_COMPILE_STATUS, &shader_ok );
 	if ( !shader_ok) {
 		printf( "Error: Failed to compile Shader from File %s.\n", path );
-		gl_dumpInfoLog( shader );
+		gl_dumpInfoLog( shader, glGetShaderiv,  glGetShaderInfoLog);
 		assert( 0 );
 	}
 
 	return shader;
 }
 
+GLuint render_linkShaderProgram( GLuint vertex_shader, GLuint fragment_shader ) {
+	GLint program_ok;
+
+	GLuint program = glCreateProgram();
+	glAttachShader( program, vertex_shader );
+	glAttachShader( program, fragment_shader );
+	glLinkProgram( program );
+
+	glGetProgramiv( program, GL_LINK_STATUS, &program_ok );
+	if ( !program_ok ) {
+		printf( "Failed to link shader program.\n" );
+		gl_dumpInfoLog( program, glGetProgramiv,  glGetProgramInfoLog);
+		glDeleteProgram( program );
+		assert( 0 );
+	}
+
+	return program;
+}
+
 void render_buildShaders() {
 	resources.vertex_shader = render_compileShader( GL_VERTEX_SHADER, "dat/shaders/phong_vertex.glsl" );
 	resources.fragment_shader = render_compileShader( GL_FRAGMENT_SHADER, "dat/shaders/phong_fragment.glsl" );
+
+	resources.program = render_linkShaderProgram( resources.vertex_shader, resources.fragment_shader );
+
+	// Uniforms
+	resources.uniforms.projection = glGetUniformLocation( resources.program, "projection" );
+	resources.uniforms.modelview = glGetUniformLocation( resources.program, "modelview" );
+
+	// Attributes
+	resources.attributes.position = glGetAttribLocation( resources.program, "position" );
 }
 // Private Function declarations
 
@@ -201,6 +242,7 @@ void render_init() {
 
 	texture_init();
 
+	render_initResources();
 	render_buildShaders();
 }
 
@@ -209,10 +251,12 @@ void render_terminate() {
 	glfwTerminate();
 }
 
+void render_shader( scene* s );
+
 // Render the current scene
 // This is where the business happens
 void render( scene* s, int w, int h ) {
-
+/*
 	render_set3D( w, h );
 
 	// Switch to the drawing perspective and initialise to the identity matrix
@@ -223,41 +267,34 @@ void render( scene* s, int w, int h ) {
 
 	render_lighting( s );
 	render_scene( s );
-/*
-	glPushMatrix();
-	glBegin(GL_TRIANGLES);
-	glColor4f(1.f, 1.f, 1.f, 1.f);
-
-	glTexCoord2f(0.f, 0.f);
-	glNormal3f(0.f, 0.f, 1.f);
-	glVertex3f(0.f, 0.f, depth);
-
-	glTexCoord2f(1.f, 0.f);
-	glColor4f(1.f, 0.f, 1.f, 1.f);
-	glVertex3f(1.f, 0.f, depth);
-
-	glTexCoord2f(0.f, 1.f);
-	glColor4f(0.f, 1.f, 1.f, 1.f);
-	glVertex3f(0.f, 1.f, depth);
-
-	glTexCoord2f(1.f, 1.f);
-	glColor4f(1.f, 1.f, 1.f, 1.f);
-	glVertex3f(1.f, 2.f, depth);
-
-	glTexCoord2f(1.f, 0.f);
-	glColor4f(1.f, 1.f, 1.f, 1.f);
-	glVertex3f(1.f, 0.f, depth);
-
-	glTexCoord2f(0.f, 1.f);
-	glColor4f(1.f, 1.f, 1.f, 1.f);
-	glVertex3f(0.f, 2.f, depth);
-	glEnd();
-	glPopMatrix();
 	*/
+	render_shader( s );
+}
 
-/*
-	font_renderString( 10.f, 10.f, "a" );
-	font_renderString( 10.f, 30.f, "ABCDEFGHIJKLMNOPQRSTUVWXYZ.,/?|'@#!$%^&" );
-	font_renderString( 10.f, 50.f, "This is a test!" );
-*/
+// Shader version
+void render_shader( scene* s ) {
+	// Load our shader
+	glUseProgram( resources.program );
+
+	matrix projection;
+	matrix modelview;
+
+	matrix_setIdentity( projection );
+	matrix_setIdentity( modelview );
+
+	// Set up uniforms
+	glUniformMatrix4fv( resources.uniforms.projection, 1, /*transpose*/false, (GLfloat*)projection );
+	glUniformMatrix4fv( resources.uniforms.modelview, 1, /*transpose*/false, (GLfloat*)modelview );
+
+	glBindBuffer( GL_ARRAY_BUFFER, resources.vertex_buffer );
+	glVertexAttribPointer( resources.attributes.position, /*vec4*/ 4, GL_FLOAT, /*Normalized?*/GL_FALSE, sizeof(GLfloat)*4, (void*)0 );
+	glEnableVertexAttribArray( resources.attributes.position );
+
+	int count = 4;
+	glBindBuffer( GL_ELEMENT_ARRAY_BUFFER, resources.element_buffer );
+	glDrawElements( GL_TRIANGLE_STRIP, count, GL_UNSIGNED_SHORT, (void*)0 );
+
+	glDisableVertexAttribArray( resources.attributes.position );
+
+//	render_scene( s );
 }

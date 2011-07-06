@@ -2,6 +2,25 @@
 
 #include "scene.h"
 
+typedef struct gl_resources_s {
+	GLuint vertex_buffer, element_buffer;
+	GLuint texture;
+
+	struct {
+		GLuint projection;
+		GLuint modelview;
+	} uniforms;
+
+	struct {
+		GLint position;
+	} attributes;
+
+	// Shader objects
+	GLuint vertex_shader, fragment_shader, program;
+} gl_resources;
+
+extern gl_resources resources;
+
 /*
  *
  *  Static Functions

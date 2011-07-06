@@ -8,6 +8,7 @@
 #include "engine.h"
 #include "mem/allocator.h"
 #include "render/modelinstance.h"
+#include "render/render.h"
 #include "render/texture.h"
 #include "render/vgl.h"
 #include "system/string.h"
@@ -140,6 +141,39 @@ model* model_createModel(int meshCount) {
 	return m;
 }
 
+/*
+// Draw the verts of a mesh to the openGL buffer
+void mesh_drawVerts_shader( mesh* m ) {
+	// Apply material properties
+	vector diffuse = Vector( 1.0, 1.0, 1.0, 1.0);
+	vector specular= Vector( 1.0, 1.0, 1.0, 1.0);
+	glMaterialfv( GL_FRONT, GL_DIFFUSE, (GLfloat*)&diffuse );
+	glMaterialfv( GL_FRONT, GL_SPECULAR, (GLfloat*)&specular );
+
+
+	glBegin( GL_TRIANGLES );
+	// Draw a triangle at a time
+	for ( int i = 0; i < m->indexCount; i += 3 ) {
+		resources.vertex_buffer
+		vgl_vertexDraw( &m->verts[m->indices[i + 0]] );
+		vgl_vertexDraw( &m->verts[m->indices[i + 1]] );
+		vgl_vertexDraw( &m->verts[m->indices[i + 2]] );
+	}
+	glEnd();
+
+
+
+	glBindBuffer( GL_ARRAY_BUFFER, resources.vertex_buffer );
+	glVertexAttribPointer( resources.attributes.position, ?*vec4*? 4, GL_FLOAT, ?*Normalized?*?GL_FALSE, sizeof(GLfloat)*4, (void*)0 );
+	glEnableVertexAttribArray( resources.attributes.position );
+
+	glBindBuffer( GL_ELEMENT_ARRAY_BUFFER, resources.element_buffer );
+	glDrawElements( GL_TRIANGLES, m->indexCount, GL_UNSIGNED_SHORT, (void*)0 );
+
+
+
+}
+*/
 // Draw the verts of a mesh to the openGL buffer
 void mesh_drawVerts( mesh* m ) {
 	// Apply material properties
