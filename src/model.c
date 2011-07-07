@@ -128,7 +128,6 @@ model* model_createTestCube( ) {
 //	mesh* me = mesh_createTestCube();
 //	m->meshes[0] = me;
 
-
 	model* m = LoadObj( "dat/model/cityscape.obj" );
 	return m;
 }
@@ -140,8 +139,7 @@ model* model_createModel(int meshCount) {
 	m->meshCount = meshCount;
 	return m;
 }
-
-/*
+#if 0
 // Draw the verts of a mesh to the openGL buffer
 void mesh_drawVerts_shader( mesh* m ) {
 	// Apply material properties
@@ -150,30 +148,21 @@ void mesh_drawVerts_shader( mesh* m ) {
 	glMaterialfv( GL_FRONT, GL_DIFFUSE, (GLfloat*)&diffuse );
 	glMaterialfv( GL_FRONT, GL_SPECULAR, (GLfloat*)&specular );
 
+	// Make sure the current buffers point to our models
+	render_setBuffers( (float*)m->verts, 4 * m->vertCount, m->indices, m->indexCount );
 
-	glBegin( GL_TRIANGLES );
-	// Draw a triangle at a time
-	for ( int i = 0; i < m->indexCount; i += 3 ) {
-		resources.vertex_buffer
-		vgl_vertexDraw( &m->verts[m->indices[i + 0]] );
-		vgl_vertexDraw( &m->verts[m->indices[i + 1]] );
-		vgl_vertexDraw( &m->verts[m->indices[i + 2]] );
-	}
-	glEnd();
-
-
-
+	// Copy the verts to our vert buffer
 	glBindBuffer( GL_ARRAY_BUFFER, resources.vertex_buffer );
-	glVertexAttribPointer( resources.attributes.position, ?*vec4*? 4, GL_FLOAT, ?*Normalized?*?GL_FALSE, sizeof(GLfloat)*4, (void*)0 );
+
+	glVertexAttribPointer( resources.attributes.position, /*vec4*/ 4, GL_FLOAT, /*Normalized?*/ GL_FALSE, sizeof(GLfloat)*4, (void*)0 );
 	glEnableVertexAttribArray( resources.attributes.position );
 
 	glBindBuffer( GL_ELEMENT_ARRAY_BUFFER, resources.element_buffer );
-	glDrawElements( GL_TRIANGLES, m->indexCount, GL_UNSIGNED_SHORT, (void*)0 );
-
-
-
+	glDrawElements( GL_TRIANGLES, m->indexCount, GL_INT, (void*)0 );
+	glDisableVertexAttribArray( resources.attributes.position );
 }
-*/
+#endif
+
 // Draw the verts of a mesh to the openGL buffer
 void mesh_drawVerts( mesh* m ) {
 	// Apply material properties

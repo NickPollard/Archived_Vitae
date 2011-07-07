@@ -68,6 +68,11 @@ void render_initResources() {
 	resources.element_buffer = gl_bufferCreate( GL_ELEMENT_ARRAY_BUFFER, element_buffer_data, sizeof( element_buffer_data ) );
 }
 
+void render_setBuffers( float* vertex_buffer, int vertex_buffer_size, int* element_buffer, int element_buffer_size ) {
+	resources.vertex_buffer = gl_bufferCreate( GL_ARRAY_BUFFER, vertex_buffer, vertex_buffer_size );
+	resources.element_buffer = gl_bufferCreate( GL_ELEMENT_ARRAY_BUFFER, element_buffer, element_buffer_size );
+}
+
 typedef void (*func_getIV)( GLuint, GLenum, GLint* );
 typedef void (*func_getInfoLog)( GLuint, GLint, GLint*, GLchar* );
 
@@ -191,30 +196,10 @@ void render_lighting( scene* s ) {
 }
 
 void render_applyCamera(camera* cam) {
-//	glLoadIdentity();
-
 	// Negate as we're doing the inverse of camera
 	matrix cam_inverse;
 	matrix_inverse( cam_inverse, cam->trans->world );
-//	matrix_print( cam->trans->world );
-//	matrix_print( cam->trans->local );
-//	matrix_print( cam_inverse );
-
-/*
-	vector v = Vector( 0.4f, 0.2f, -3.f, 1.f );
-	vector v2 = matrixVecMul( cam->trans->world, &v );
-	v2 = matrixVecMul( cam_inverse, &v2 );
-	assert( vector_equal( &v, &v2 ));
-	*/
-
 	glMultMatrixf( (float*)cam_inverse );
-//	glMultMatrixf( (float*)cam->trans->world );
-
-//	const vector* translation = matrix_getTranslation( cam_inverse );
-//	glTranslatef( translation->coord.x, translation->coord.y, translation->coord.z );
-//	glMultMatrixf( (float*)cam->trans->local );
-//	const vector* v = camera_getTranslation( cam );
-//	glTranslatef( -(v->coord.x), -(v->coord.y), -(v->coord.z) );
 }
 
 // Clear information from last draw
@@ -271,6 +256,16 @@ void render( scene* s, int w, int h ) {
 	render_shader( s );
 }
 
+void render_perspectiveMatrix( matrix m, float fov, float aspect, float near, float far ) {
+	matrix_setIdentity( m );
+	m[0][0] = 1 / tan( fov );
+	m[1][1] = aspect / tan( fov );
+	m[2][2] = ( far + near )/( far - near );
+	m[2][3] = 1.f;
+	m[3][2] = -2.f * far * near / (far - near );
+	m[3][3] = 0.f;
+}
+
 // Shader version
 void render_shader( scene* s ) {
 	// Load our shader
@@ -282,6 +277,17 @@ void render_shader( scene* s ) {
 	matrix_setIdentity( projection );
 	matrix_setIdentity( modelview );
 
+	float fov = 120.f;
+	float aspect = 4.f/3.f;
+	float z_near = 1.f;
+	float z_far = 200.f;
+	matrix perspective;
+	render_perspectiveMatrix( perspective, fov, aspect, z_near, z_far );
+
+	matrix cam_inverse;
+	matrix_inverse( cam_inverse, s->cam->trans->world );
+	matrix_mul( projection, perspective, cam_inverse );
+
 	// Set up uniforms
 	glUniformMatrix4fv( resources.uniforms.projection, 1, /*transpose*/false, (GLfloat*)projection );
 	glUniformMatrix4fv( resources.uniforms.modelview, 1, /*transpose*/false, (GLfloat*)modelview );
@@ -290,11 +296,11 @@ void render_shader( scene* s ) {
 	glVertexAttribPointer( resources.attributes.position, /*vec4*/ 4, GL_FLOAT, /*Normalized?*/GL_FALSE, sizeof(GLfloat)*4, (void*)0 );
 	glEnableVertexAttribArray( resources.attributes.position );
 
-	int count = 4;
+//	int count = 4;
 	glBindBuffer( GL_ELEMENT_ARRAY_BUFFER, resources.element_buffer );
-	glDrawElements( GL_TRIANGLE_STRIP, count, GL_UNSIGNED_SHORT, (void*)0 );
+//	glDrawElements( GL_TRIANGLE_STRIP, count, GL_UNSIGNED_SHORT, (void*)0 );
 
 	glDisableVertexAttribArray( resources.attributes.position );
 
-//	render_scene( s );
+	render_scene( s );
 }

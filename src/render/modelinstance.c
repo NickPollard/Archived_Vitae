@@ -4,6 +4,7 @@
 #include "modelinstance.h"
 //-----------------------
 #include "model.h"
+#include "render/render.h"
 #include "transform.h"
 
 IMPLEMENT_POOL( modelInstance )
@@ -28,6 +29,10 @@ modelInstance* modelInstance_create( modelHandle m ) {
 void modelInstance_draw( modelInstance* instance ) {
 	glPushMatrix(); {
 		glMultMatrixf( matrix_getGlMatrix( instance->trans->world ));
+//		matrix modelview, ident;
+//		matrix_setIdentity( ident );
+//		matrix_mul( modelview, ident, instance->trans->world );
+//		glUniformMatrix4fv( resources.uniforms.modelview, 1, /*transpose*/false, (GLfloat*)modelview );
 		model_draw( model_fromInstance( instance ) );
 	} glPopMatrix();
 }

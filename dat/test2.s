@@ -1,4 +1,4 @@
-( scene ( transform ( transform ( translation (vector 2.0 2.0 2.0 1.0))
+( scene ( transform ( transform ( translation (vector 2.0 2.0 0.0 1.0))
 								( model (filename dat/model/smoothsphere2.obj)))
 					( transform ( translation (vector -2.0 0.0 0.0 1.0))
 								( model (filename dat/model/smoothsphere2.obj)))

@@ -21,6 +21,8 @@ typedef struct gl_resources_s {
 
 extern gl_resources resources;
 
+void render_setBuffers( float* vertex_buffer, int vertex_buffer_size, int* element_buffer, int element_buffer_size );
+
 /*
  *
  *  Static Functions
