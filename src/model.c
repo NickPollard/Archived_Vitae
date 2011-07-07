@@ -139,26 +139,43 @@ model* model_createModel(int meshCount) {
 	m->meshCount = meshCount;
 	return m;
 }
+
+GLfloat vertex_buffer_data_m[] = { 1.f, 0.f, 0.f, 1.f, 0.f, 1.f, 0.f, 1.f, -1.f, 0.f, 0.f, 1.f, 0.f, -1.f, -0.f, 1.f };
+GLushort element_buffer_data_m[] = { 0, 1, 3, 1, 3, 2 };
+
 // Draw the verts of a mesh to the openGL buffer
 void mesh_drawVerts_shader( mesh* m ) {
-	// Apply material properties
-	vector diffuse = Vector( 1.0, 1.0, 1.0, 1.0);
-	vector specular= Vector( 1.0, 1.0, 1.0, 1.0);
-	glMaterialfv( GL_FRONT, GL_DIFFUSE, (GLfloat*)&diffuse );
-	glMaterialfv( GL_FRONT, GL_SPECULAR, (GLfloat*)&specular );
+//	render_setBuffers( vertex_buffer_data_m, sizeof( vertex_buffer_data_m ), (int*)element_buffer_data_m, sizeof( element_buffer_data_m ) );
+	render_setBuffers( vertex_buffer_data_m, sizeof( vertex_buffer_data_m ), (int*)element_buffer_data_m, sizeof( element_buffer_data_m ) );
 
+	glBindBuffer( GL_ARRAY_BUFFER, resources.vertex_buffer );
+	glVertexAttribPointer( resources.attributes.position, /*vec4*/ 4, GL_FLOAT, /*Normalized?*/GL_FALSE, sizeof(GLfloat)*4, (void*)0 );
+	glEnableVertexAttribArray( resources.attributes.position );
+
+	int count = 6;
+	glBindBuffer( GL_ELEMENT_ARRAY_BUFFER, resources.element_buffer );
+	glDrawElements( GL_TRIANGLES, count, GL_UNSIGNED_SHORT, (void*)0 );
+
+	glDisableVertexAttribArray( resources.attributes.position );
+
+	// Apply material properties
 	// Make sure the current buffers point to our models
-	render_setBuffers( (float*)m->verts, 4 * m->vertCount, m->indices, m->indexCount );
+	//render_setBuffers( (float*)m->verts, 4 * m->vertCount * sizeof(GLfloat), m->indices, m->indexCount * sizeof(GLint));
+
+#if 0
+	render_setBuffers( vertex_buffer_data_m, sizeof( vertex_buffer_data_m ), (int*)element_buffer_data_m, sizeof( element_buffer_data_m ) );
 
 	// Copy the verts to our vert buffer
 	glBindBuffer( GL_ARRAY_BUFFER, resources.vertex_buffer );
-
 	glVertexAttribPointer( resources.attributes.position, /*vec4*/ 4, GL_FLOAT, /*Normalized?*/ GL_FALSE, sizeof(GLfloat)*4, (void*)0 );
 	glEnableVertexAttribArray( resources.attributes.position );
 
-	glBindBuffer( GL_ELEMENT_ARRAY_BUFFER, resources.element_buffer );
-	glDrawElements( GL_TRIANGLES, m->indexCount, GL_INT, (void*)0 );
+
+	glBindBuffer( GL_ELEMENT_ARRAY_BUFFE, resources.element_buffer );
+	glDrawElements( GL_TRIANGLE_STRIP, m->indexCount, GL_UNSIGNED_SHORT, (void*)0 );
+	
 	glDisableVertexAttribArray( resources.attributes.position );
+#endif
 }
 
 // Draw the verts of a mesh to the openGL buffer
@@ -195,7 +212,7 @@ mesh* model_getMesh(model* m, int i) {
 void model_draw( model* m ) {
 	vglBindTexture( g_texture_default );
 	for (int i = 0; i < m->meshCount; i++) {
-		mesh_drawVerts( model_getMesh( m, i ));
+		mesh_drawVerts_shader( model_getMesh( m, i ));
 	}
 }
 

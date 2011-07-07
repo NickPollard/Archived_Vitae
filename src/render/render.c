@@ -34,10 +34,14 @@ GLuint gl_bufferCreate( GLenum target, const void* data, GLsizei size ) {
 	return buffer;
 }
 
-GLfloat vertex_buffer_data[256];
-GLushort element_buffer_data[256];
+GLfloat vertex_buffer_data[] = { 1.f, 0.f, 0.f, 1.f, 0.f, 1.f, 0.f, 1.f, -1.f, 0.f, 0.f, 1.f, 0.f, -1.f, -0.f, 1.f };
+GLushort element_buffer_data[] = { 0, 1, 3, 2 };
+
+//GLfloat vertex_buffer_data[256];
+//GLushort element_buffer_data[256];
 
 void render_initResources() {
+	/*
 	vertex_buffer_data[0] = 1.0f;
 	vertex_buffer_data[1] = 0.0f;
 	vertex_buffer_data[2] = 0.0f;
@@ -61,11 +65,12 @@ void render_initResources() {
 	element_buffer_data[0] = 0;
 	element_buffer_data[1] = 1;
 	element_buffer_data[2] = 3;
-	element_buffer_data[3] = 2;
+	element_buffer_data[3] = 2;*/
 
 	// OpenGL allocates space for our buffers, copies our data into them
-	resources.vertex_buffer = gl_bufferCreate( GL_ARRAY_BUFFER, vertex_buffer_data, sizeof( vertex_buffer_data ) );
-	resources.element_buffer = gl_bufferCreate( GL_ELEMENT_ARRAY_BUFFER, element_buffer_data, sizeof( element_buffer_data ) );
+//	resources.vertex_buffer = gl_bufferCreate( GL_ARRAY_BUFFER, vertex_buffer_data, sizeof( vertex_buffer_data ) );
+//	resources.element_buffer = gl_bufferCreate( GL_ELEMENT_ARRAY_BUFFER, element_buffer_data, sizeof( element_buffer_data ) );
+//	render_setBuffers( vertex_buffer_data, sizeof( vertex_buffer_data ), (int*)element_buffer_data, sizeof( element_buffer_data ) );
 }
 
 void render_setBuffers( float* vertex_buffer, int vertex_buffer_size, int* element_buffer, int element_buffer_size ) {
@@ -291,8 +296,8 @@ void render_shader( scene* s ) {
 	// Set up uniforms
 //	glUniformMatrix4fv( resources.uniforms.projection, 1, /*transpose*/false, (GLfloat*)projection );
 //	glUniformMatrix4fv( resources.uniforms.modelview, 1, /*transpose*/false, (GLfloat*)modelview );
-
-	// Try checking the contents of our buffers
+#if 0
+	render_setBuffers( vertex_buffer_data, sizeof( vertex_buffer_data ), (int*)element_buffer_data, sizeof( element_buffer_data ) );
 
 	glBindBuffer( GL_ARRAY_BUFFER, resources.vertex_buffer );
 	glVertexAttribPointer( resources.attributes.position, /*vec4*/ 4, GL_FLOAT, /*Normalized?*/GL_FALSE, sizeof(GLfloat)*4, (void*)0 );
@@ -303,6 +308,6 @@ void render_shader( scene* s ) {
 	glDrawElements( GL_TRIANGLE_STRIP, count, GL_UNSIGNED_SHORT, (void*)0 );
 
 	glDisableVertexAttribArray( resources.attributes.position );
-
+#endif
 	render_scene( s );
 }

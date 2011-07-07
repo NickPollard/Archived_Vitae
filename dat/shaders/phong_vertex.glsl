@@ -8,8 +8,8 @@ attribute vec4 position;
 varying vec4 pos;
 
 // Uniform
-//uniform	mat4 modelview;
-//uniform	mat4 projection;
+uniform	mat4 modelview;
+uniform	mat4 projection;
 
 void main() {
 	gl_Position = position;

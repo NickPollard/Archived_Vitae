@@ -16,7 +16,7 @@ struct mesh_s {
 	vector*		verts;
 	//
 	int			indexCount;
-	int*		indices;
+	unsigned short*		indices;
 	//
 	int			normal_count;
 	vector*		normals;
@@ -48,7 +48,6 @@ void mesh_calculateNormals( mesh* m );
 
 // Draw the verts of a mesh to the openGL buffer
 void mesh_drawVerts(mesh* m);
-
 
 
 // *** Model Functions
