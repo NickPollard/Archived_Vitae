@@ -16,5 +16,5 @@ void main() {
 	pos = position;
 //	gl_Position = projection * modelview * position;
 	float scale = 0.5;
-	gl_Position = vec4( gl_Position.x * scale, gl_Position.y * scale, gl_Position.z, gl_Position.w);
+	gl_Position = vec4( gl_Position.x * scale, gl_Position.y * scale, 0.f, 1.f);
 }

@@ -146,15 +146,15 @@ GLushort element_buffer_data_m[] = { 0, 1, 3, 1, 3, 2 };
 // Draw the verts of a mesh to the openGL buffer
 void mesh_drawVerts_shader( mesh* m ) {
 //	render_setBuffers( vertex_buffer_data_m, sizeof( vertex_buffer_data_m ), (int*)element_buffer_data_m, sizeof( element_buffer_data_m ) );
-	render_setBuffers( vertex_buffer_data_m, sizeof( vertex_buffer_data_m ), (int*)element_buffer_data_m, sizeof( element_buffer_data_m ) );
+	render_setBuffers( (GLfloat*)m->verts, m->vertCount * 4 * sizeof( GLfloat ), (int*)m->indices, m->indexCount * sizeof( GLushort ) );
 
 	glBindBuffer( GL_ARRAY_BUFFER, resources.vertex_buffer );
 	glVertexAttribPointer( resources.attributes.position, /*vec4*/ 4, GL_FLOAT, /*Normalized?*/GL_FALSE, sizeof(GLfloat)*4, (void*)0 );
 	glEnableVertexAttribArray( resources.attributes.position );
 
-	int count = 6;
+//	int count = 6;
 	glBindBuffer( GL_ELEMENT_ARRAY_BUFFER, resources.element_buffer );
-	glDrawElements( GL_TRIANGLES, count, GL_UNSIGNED_SHORT, (void*)0 );
+	glDrawElements( GL_TRIANGLES, m->indexCount, GL_UNSIGNED_SHORT, (void*)0 );
 
 	glDisableVertexAttribArray( resources.attributes.position );
 
