@@ -270,7 +270,7 @@ void render_perspectiveMatrix( matrix m, float fov, float aspect, float near, fl
 void render_shader( scene* s ) {
 	// Load our shader
 	glUseProgram( resources.program );
-
+/*
 	matrix projection;
 	matrix modelview;
 
@@ -287,18 +287,20 @@ void render_shader( scene* s ) {
 	matrix cam_inverse;
 	matrix_inverse( cam_inverse, s->cam->trans->world );
 	matrix_mul( projection, perspective, cam_inverse );
-
+*/
 	// Set up uniforms
-	glUniformMatrix4fv( resources.uniforms.projection, 1, /*transpose*/false, (GLfloat*)projection );
-	glUniformMatrix4fv( resources.uniforms.modelview, 1, /*transpose*/false, (GLfloat*)modelview );
+//	glUniformMatrix4fv( resources.uniforms.projection, 1, /*transpose*/false, (GLfloat*)projection );
+//	glUniformMatrix4fv( resources.uniforms.modelview, 1, /*transpose*/false, (GLfloat*)modelview );
+
+	// Try checking the contents of our buffers
 
 	glBindBuffer( GL_ARRAY_BUFFER, resources.vertex_buffer );
 	glVertexAttribPointer( resources.attributes.position, /*vec4*/ 4, GL_FLOAT, /*Normalized?*/GL_FALSE, sizeof(GLfloat)*4, (void*)0 );
 	glEnableVertexAttribArray( resources.attributes.position );
 
-//	int count = 4;
+	int count = 4;
 	glBindBuffer( GL_ELEMENT_ARRAY_BUFFER, resources.element_buffer );
-//	glDrawElements( GL_TRIANGLE_STRIP, count, GL_UNSIGNED_SHORT, (void*)0 );
+	glDrawElements( GL_TRIANGLE_STRIP, count, GL_UNSIGNED_SHORT, (void*)0 );
 
 	glDisableVertexAttribArray( resources.attributes.position );
 

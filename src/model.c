@@ -139,7 +139,6 @@ model* model_createModel(int meshCount) {
 	m->meshCount = meshCount;
 	return m;
 }
-#if 0
 // Draw the verts of a mesh to the openGL buffer
 void mesh_drawVerts_shader( mesh* m ) {
 	// Apply material properties
@@ -161,7 +160,6 @@ void mesh_drawVerts_shader( mesh* m ) {
 	glDrawElements( GL_TRIANGLES, m->indexCount, GL_INT, (void*)0 );
 	glDisableVertexAttribArray( resources.attributes.position );
 }
-#endif
 
 // Draw the verts of a mesh to the openGL buffer
 void mesh_drawVerts( mesh* m ) {
