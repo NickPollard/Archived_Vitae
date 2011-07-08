@@ -12,13 +12,13 @@ model* LoadObj( const char* filename ) {
 	int vert_count = 0, index_count = 0, normal_count = 0;
 	vector	vertices[MAX_OBJ_VERTICES];
 	vector	normals[MAX_OBJ_NORMALS];
-	int		indices[MAX_OBJ_INDICES];
+	unsigned short		indices[MAX_OBJ_INDICES];
 	int		normal_indices[MAX_OBJ_INDICES];
 
 	// Initialise to 0;
 	memset( vertices, 0, sizeof( vector ) * MAX_OBJ_VERTICES );
 	memset( normals, 0, sizeof( vector ) * MAX_OBJ_NORMALS );
-	memset( indices, 0, sizeof( int ) * MAX_OBJ_INDICES );
+	memset( indices, 0, sizeof( unsigned short ) * MAX_OBJ_INDICES );
 
 	int file_length;
 	char* file_buffer = vfile_contents( filename, &file_length );
@@ -98,7 +98,7 @@ model* LoadObj( const char* filename ) {
 
 	// Copy our loaded data into the Mesh structure
 	memcpy( msh->verts, vertices, vert_count * sizeof( vector ));
-	memcpy( msh->indices, indices, index_count * sizeof( int ));
+	memcpy( msh->indices, indices, index_count * sizeof( unsigned short ));
 	memcpy( msh->normals, normals, normal_count * sizeof( vector ));
 	memcpy( msh->normal_indices, normal_indices, index_count * sizeof( int ));
 
