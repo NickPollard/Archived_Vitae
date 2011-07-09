@@ -12,9 +12,10 @@ uniform	mat4 modelview;
 uniform	mat4 projection;
 
 void main() {
-	gl_Position = position;
 	pos = position;
-//	gl_Position = projection * modelview * position;
-	float scale = 0.5;
-	gl_Position = vec4( gl_Position.x * scale, gl_Position.y * scale, 0.f, 1.f);
+	gl_Position = projection * modelview * position;
+//	float scale = 0.3;
+//	gl_Position.x = gl_Position.x * scale;
+//	gl_Position.y = gl_Position.y * scale;
+//	gl_Position = vec4( gl_Position.xyz, gl_Position.w );
 }

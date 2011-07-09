@@ -33,6 +33,7 @@ model* LoadObj( const char* filename ) {
 				token = inputStream_nextToken( stream );
 				vertices[vert_count].val[i] = strtof( token, NULL );
 			}
+			vertices[vert_count].coord.w = 1.f; // Force 1.0 w value for all vertices.
 			//printf( " Vertex: %.2f %.2f %.2f \n", vertices[vert_count].val[0], vertices[vert_count].val[1], vertices[vert_count].val[2] );
 			vert_count++;
 		}

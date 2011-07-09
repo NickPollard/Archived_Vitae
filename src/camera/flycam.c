@@ -14,7 +14,7 @@ flycam* flycam_create() {
 	f->pan_sensitivity = Vector(1.f, 1.f, 1.f, 0.f);
 	f->track_sensitivity = Vector(1.f, 1.f, 1.f, 0.f);
 	matrix_setIdentity( f->transform );
-	f->translation = Vector( 0.f, 0.f, 10.f, 1.f );
+	f->translation = Vector( 0.f, 0.f, 0.f, 1.f );
 	f->euler = Vector( 0.f, 0.f, 0.f, 0.f );
 	return f;
 }
@@ -30,10 +30,11 @@ void flycam_input( flycam* cam, input* in  ) {
 	if ( input_keyHeld( in, KEY_SHIFT ) )
 		delta = 0.1f;
 
+	// Cam now looks down the positive Z axis
 	if ( input_keyHeld( in, KEY_W ))
-		fly_in.track.coord.z = -delta;
-	if ( input_keyHeld( in, KEY_S ))
 		fly_in.track.coord.z = delta;
+	if ( input_keyHeld( in, KEY_S ))
+		fly_in.track.coord.z = -delta;
 	if ( input_mouseHeld( in, BUTTON_LEFT ) || input_keyHeld( in, KEY_Q ))
 		fly_in.pan.coord.y = -0.01f;
 	if ( input_mouseHeld( in, BUTTON_RIGHT ) || input_keyHeld( in, KEY_E ))
@@ -80,9 +81,11 @@ void flycam_process( flycam* cam, flycamInput* in ) {
 	// *** Absolute
 	Add( &cam->euler, &cam->euler, &in->pan );
 	matrix_fromEuler( cam->transform, &cam->euler );
-	matrix inverse;
-	matrix_inverse( inverse, cam->transform );
-	vector translation_delta = matrixVecMul( inverse, &in->track );
+//	matrix inverse;
+//	matrix_inverse( inverse, cam->transform );
+	// We have a translation in camera space
+	// Want to go to world space, so use normal (not inverse) cam transform
+	vector translation_delta = matrixVecMul( cam->transform, &in->track );
 	Add( &cam->translation, &cam->translation, &translation_delta );
 	matrix_setTranslation( cam->transform, &cam->translation );
 }

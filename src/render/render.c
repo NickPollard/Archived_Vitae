@@ -267,7 +267,7 @@ void render_perspectiveMatrix( matrix m, float fov, float aspect, float near, fl
 	m[1][1] = aspect / tan( fov );
 	m[2][2] = ( far + near )/( far - near );
 	m[2][3] = 1.f;
-	m[3][2] = -2.f * far * near / (far - near );
+	m[3][2] = (-2.f * far * near) / (far - near );
 	m[3][3] = 0.f;
 }
 
@@ -275,14 +275,13 @@ void render_perspectiveMatrix( matrix m, float fov, float aspect, float near, fl
 void render_shader( scene* s ) {
 	// Load our shader
 	glUseProgram( resources.program );
-/*
 	matrix projection;
 	matrix modelview;
 
 	matrix_setIdentity( projection );
 	matrix_setIdentity( modelview );
 
-	float fov = 120.f;
+	float fov = 0.8f; // In radians
 	float aspect = 4.f/3.f;
 	float z_near = 1.f;
 	float z_far = 200.f;
@@ -291,23 +290,14 @@ void render_shader( scene* s ) {
 
 	matrix cam_inverse;
 	matrix_inverse( cam_inverse, s->cam->trans->world );
+	matrix_print( cam_inverse );
+	matrix_print( s->cam->trans->world );
 	matrix_mul( projection, perspective, cam_inverse );
-*/
+//	matrix_cpy( projection, perspective );
+	
 	// Set up uniforms
-//	glUniformMatrix4fv( resources.uniforms.projection, 1, /*transpose*/false, (GLfloat*)projection );
-//	glUniformMatrix4fv( resources.uniforms.modelview, 1, /*transpose*/false, (GLfloat*)modelview );
-#if 0
-	render_setBuffers( vertex_buffer_data, sizeof( vertex_buffer_data ), (int*)element_buffer_data, sizeof( element_buffer_data ) );
+	glUniformMatrix4fv( resources.uniforms.projection, 1, /*transpose*/false, (GLfloat*)projection );
+	glUniformMatrix4fv( resources.uniforms.modelview, 1, /*transpose*/false, (GLfloat*)modelview );
 
-	glBindBuffer( GL_ARRAY_BUFFER, resources.vertex_buffer );
-	glVertexAttribPointer( resources.attributes.position, /*vec4*/ 4, GL_FLOAT, /*Normalized?*/GL_FALSE, sizeof(GLfloat)*4, (void*)0 );
-	glEnableVertexAttribArray( resources.attributes.position );
-
-	int count = 4;
-	glBindBuffer( GL_ELEMENT_ARRAY_BUFFER, resources.element_buffer );
-	glDrawElements( GL_TRIANGLE_STRIP, count, GL_UNSIGNED_SHORT, (void*)0 );
-
-	glDisableVertexAttribArray( resources.attributes.position );
-#endif
 	render_scene( s );
 }

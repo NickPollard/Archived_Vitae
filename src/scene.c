@@ -103,7 +103,7 @@ scene* test_scene_init( ) {
 	// Test Misc scene setup
 	s->cam = camera_create( s );
 	s->cam->trans = transform_createAndAdd( s );
-	scene_setCamera(s, 0.f, 0.f, 10.f, 1.f);
+	scene_setCamera(s, 0.f, 0.f, 0.f, 1.f);
 	scene_setAmbient( s, 0.2f, 0.2f, 0.2f, 1.f );
 
 	light* l = light_createWithTransform( s );
