@@ -290,7 +290,8 @@ void render_shader( scene* s ) {
 
 	matrix cam_inverse;
 	matrix_inverse( cam_inverse, s->cam->trans->world );
-	matrix_print( cam_inverse );
+//	matrix_print( cam_inverse );
+	printf( "Camera world.\n" );
 	matrix_print( s->cam->trans->world );
 	matrix_mul( projection, perspective, cam_inverse );
 //	matrix_cpy( projection, perspective );

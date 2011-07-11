@@ -60,21 +60,21 @@ void Normalize( vector* dst, vector* src ) {
 vector matrixVecMul( matrix m, const vector* v) {
 	vector out;
 	out.coord.x = m[0][0] * v->coord.x + 
-			m[0][1] * v->coord.y + 
-			m[0][2] * v->coord.z + 
-			m[0][3] * v->coord.w;
-	out.coord.y = m[1][0] * v->coord.x + 
-			m[1][1] * v->coord.y + 
-			m[1][2] * v->coord.z + 
-			m[1][3] * v->coord.w;
-	out.coord.z = m[2][0] * v->coord.x + 
-			m[2][1] * v->coord.y + 
-			m[2][2] * v->coord.z + 
-			m[2][3] * v->coord.w;
-	out.coord.w = m[3][0] * v->coord.x + 
-			m[3][1] * v->coord.y + 
-			m[3][2] * v->coord.z + 
-			m[3][3] * v->coord.w;
+					m[1][0] * v->coord.y + 
+					m[2][0] * v->coord.z + 
+					m[3][0] * v->coord.w;
+	out.coord.y = m[0][1] * v->coord.x + 
+					m[1][1] * v->coord.y + 
+					m[2][1] * v->coord.z + 
+					m[3][1] * v->coord.w;
+	out.coord.z = m[0][2] * v->coord.x + 
+					m[1][2] * v->coord.y + 
+					m[2][2] * v->coord.z + 
+					m[3][2] * v->coord.w;
+	out.coord.w = m[0][3] * v->coord.x + 
+					m[1][3] * v->coord.y + 
+					m[2][3] * v->coord.z + 
+					m[3][3] * v->coord.w;
 	return out;
 }
 
@@ -308,13 +308,19 @@ matrix matrix_build( quaternion rot, vec trans ) {
 	return m;
 }
 */
+
+// Create a rotation matrix representing a rotation about the Y-axis (Yaw)
+// of *angle* radians
+// NOTE: the angle must be in radians, not degrees
+// Axes are aligned as if +Z is into the screen, +Y is up, +X is right
+// A Positive Yaw rotation means to yaw right, ie. as if turning a corner to the right
 void matrix_rotY( matrix dst, float angle ) {
 	float sinTheta = sin( angle );
 	float cosTheta = cos( angle );
 	matrix_setIdentity( dst );
 	dst[0][0] = cosTheta;
-	dst[0][2] = sinTheta;
-	dst[2][0] = -sinTheta;
+	dst[0][2] = -sinTheta;
+	dst[2][0] = sinTheta;
 	dst[2][2] = cosTheta;
 }
 
@@ -332,6 +338,8 @@ void matrix_rotZ( matrix dst, float angle ) {
 // Create a rotation matrix representing a rotation about the X-axis (Pitch)
 // of *angle* radians
 // NOTE: the angle must be in radians, not degrees
+// Axes are aligned as if +Z is into the screen, +Y is up, +X is right
+// A positive rotation (pitch) means to pitch up (ie. lean back)
 void matrix_rotX( matrix dst, float angle ) {
 	float sinTheta = sin( angle );
 	float cosTheta = cos( angle );
