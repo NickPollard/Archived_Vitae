@@ -1,8 +1,10 @@
 #version 110
 // Phong Fragment Shader
 
-varying vec4 pos;
+// Varying
+varying vec4 frag_position;
+varying vec4 frag_normal;
 
 void main() {
-	gl_FragColor = vec4( pos.x, pos.y, pos.z, 1.0 );
+	gl_FragColor = vec4( frag_position.x, frag_position.y, frag_position.z, 1.0 );
 }

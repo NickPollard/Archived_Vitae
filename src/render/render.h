@@ -20,6 +20,7 @@ typedef struct gl_resources_s {
 } gl_resources;
 
 extern gl_resources resources;
+extern matrix modelview;
 
 void render_setBuffers( float* vertex_buffer, int vertex_buffer_size, int* element_buffer, int element_buffer_size );
 
@@ -53,3 +54,5 @@ void render_terminate();
 // Render the current scene
 // This is where the business happens
 void render( scene* s , int w, int h );
+
+void render_resetModelView( );

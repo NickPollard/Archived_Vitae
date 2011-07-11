@@ -20,7 +20,7 @@
 
 // *** Shader Pipeline
 
-
+matrix modelview, modelview_base;
 gl_resources resources;
 
 GLuint gl_bufferCreate( GLenum target, const void* data, GLsizei size ) {
@@ -271,12 +271,15 @@ void render_perspectiveMatrix( matrix m, float fov, float aspect, float near, fl
 	m[3][3] = 0.f;
 }
 
+void render_resetModelView( ) {
+	matrix_cpy( modelview, modelview_base );
+}
+
 // Shader version
 void render_shader( scene* s ) {
 	// Load our shader
 	glUseProgram( resources.program );
 	matrix projection;
-	matrix modelview;
 
 	matrix_setIdentity( projection );
 	matrix_setIdentity( modelview );
@@ -288,16 +291,11 @@ void render_shader( scene* s ) {
 	matrix perspective;
 	render_perspectiveMatrix( perspective, fov, aspect, z_near, z_far );
 
-	matrix cam_inverse;
-	matrix_inverse( cam_inverse, s->cam->trans->world );
-//	matrix_print( cam_inverse );
-	printf( "Camera world.\n" );
-	matrix_print( s->cam->trans->world );
-	matrix_mul( projection, perspective, cam_inverse );
-//	matrix_cpy( projection, perspective );
+	matrix_inverse( modelview_base, s->cam->trans->world );
+	render_resetModelView();
 	
 	// Set up uniforms
-	glUniformMatrix4fv( resources.uniforms.projection, 1, /*transpose*/false, (GLfloat*)projection );
+	glUniformMatrix4fv( resources.uniforms.projection, 1, /*transpose*/false, (GLfloat*)perspective );
 	glUniformMatrix4fv( resources.uniforms.modelview, 1, /*transpose*/false, (GLfloat*)modelview );
 
 	render_scene( s );
