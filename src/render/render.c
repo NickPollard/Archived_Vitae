@@ -151,6 +151,7 @@ void render_buildShaders() {
 
 	// Attributes
 	resources.attributes.position = glGetAttribLocation( resources.program, "position" );
+	resources.attributes.normal = glGetAttribLocation( resources.program, "normal" );
 }
 // Private Function declarations
 

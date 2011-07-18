@@ -128,6 +128,7 @@ model* model_createTestCube( ) {
 	return m;
 }
 
+
 // Create an empty model with meshCount submeshes
 model* model_createModel(int meshCount) {
 	model* m = mem_alloc(sizeof(model) +
@@ -141,13 +142,35 @@ GLushort element_buffer_data_m[] = { 0, 1, 3, 1, 3, 2 };
 
 // Draw the verts of a mesh to the openGL buffer
 void mesh_drawVerts( mesh* m ) {
+	// *** Test code
+	const int vec_size = sizeof(GLfloat) * 4;
+	const int stride = vec_size * 2;
+	/*
+	// For now, intermingle position and normal values for verts at runtime
+	for ( int i = 0; i < m->vertCount; i++ ) {
+		memcpy( &buffer[ i*stride + 0],			&m->verts[i],	vec_size );
+		memcpy( &buffer[ i*stride + vec_size],	&m->normals[i],	vec_size );
+	}
+	*/
+	vector vertex_buffer[512];
+	
+	for ( int i = 0; i < m->vertCount; i++ ) {
+		vertex_buffer[2*i] = m->verts[i];
+		vertex_buffer[2*i+1] = m->normals[i];
+	}
+
 	// Copy our data to the GPU
-	render_setBuffers( (GLfloat*)m->verts, m->vertCount * 4 * sizeof( GLfloat ), (int*)m->indices, m->indexCount * sizeof( GLushort ) );
+	GLsizei vertex_buffer_size = m->vertCount * stride;
+	render_setBuffers( (GLfloat*)vertex_buffer, vertex_buffer_size, (int*)m->indices, m->indexCount * sizeof( GLushort ) );
 
 	// Activate our buffers
 	glBindBuffer( GL_ARRAY_BUFFER, resources.vertex_buffer );
-	glVertexAttribPointer( resources.attributes.position, /*vec4*/ 4, GL_FLOAT, /*Normalized?*/GL_FALSE, sizeof(GLfloat)*4, (void*)0 );
+	// Set up position data
+	glVertexAttribPointer( resources.attributes.position, /*vec4*/ 4, GL_FLOAT, /*Normalized?*/GL_FALSE, stride, (void*)0 );
 	glEnableVertexAttribArray( resources.attributes.position );
+	// Set up normal data
+	glVertexAttribPointer( resources.attributes.normal, /*vec4*/ 4, GL_FLOAT, /*Normalized?*/GL_FALSE, stride, (void*)vec_size );
+	glEnableVertexAttribArray( resources.attributes.normal );
 
 	glBindBuffer( GL_ELEMENT_ARRAY_BUFFER, resources.element_buffer );
 
@@ -156,6 +179,7 @@ void mesh_drawVerts( mesh* m ) {
 
 	// Cleanup
 	glDisableVertexAttribArray( resources.attributes.position );
+	glDisableVertexAttribArray( resources.attributes.normal );
 }
 
 // Get the i-th submesh of a given model

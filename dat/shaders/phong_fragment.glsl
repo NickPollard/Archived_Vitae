@@ -6,5 +6,5 @@ varying vec4 frag_position;
 varying vec4 frag_normal;
 
 void main() {
-	gl_FragColor = vec4( frag_position.x, frag_position.y, frag_position.z, 1.0 );
+	gl_FragColor = vec4( frag_normal.x, frag_normal.y, frag_normal.z, 1.0 );
 }
