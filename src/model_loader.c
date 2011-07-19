@@ -44,6 +44,7 @@ model* LoadObj( const char* filename ) {
 				token = inputStream_nextToken( stream );
 				normals[normal_count].val[i] = strtof( token, NULL );
 			}
+			normals[normal_count].coord.w = 0.f; // Force 0.0 w value for all normals
 			//printf( " Normal: %.2f %.2f %.2f \n", normals[normal_count].val[0], normals[normal_count].val[1], normals[vert_count].val[2] );
 			normal_count++;
 		}
@@ -94,7 +95,7 @@ model* LoadObj( const char* filename ) {
 
 	// Create the Vitae Model
 	model* mdl = model_createModel( 1 ); // Only one mesh by default
-	mesh* msh = mesh_createMesh( vert_count, index_count, index_count / 3 /* For now, one normal per face */ );
+	mesh* msh = mesh_createMesh( vert_count, index_count, index_count );
 	mdl->meshes[0] = msh;
 
 	// Copy our loaded data into the Mesh structure
@@ -103,6 +104,7 @@ model* LoadObj( const char* filename ) {
 	memcpy( msh->normals, normals, normal_count * sizeof( vector ));
 	memcpy( msh->normal_indices, normal_indices, index_count * sizeof( int ));
 
+	mesh_buildBuffers( msh );
 //	mesh_calculateNormals( msh );
 
 	return mdl;

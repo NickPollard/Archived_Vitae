@@ -2,8 +2,14 @@
 #pragma once
 
 #include "common.fwd.h"
+#include "maths.h"
 
 #define MAX_SUBMESHES 4
+
+typedef struct vertex_s {
+	vector	position;
+	vector	normal;
+} vertex;
 
 // *** Mesh ***
 /*
@@ -15,13 +21,16 @@ struct mesh_s {
 	int			vertCount;
 	vector*		verts;
 	//
-	int			indexCount;
+	int			index_count;
 	unsigned short*		indices;
 	//
 	int			normal_count;
 	vector*		normals;
 	//
 	int*		normal_indices;
+
+	vertex*		vertex_buffer;
+	unsigned short*		element_buffer;
 };
 
 // *** Model ***
@@ -40,8 +49,8 @@ struct model_s {
 // Create a test mesh of a cube
 mesh* mesh_createTestCube();
 
-// Create an empty mesh with vertCount distinct vertices and indexCount vertex indices
-mesh* mesh_createMesh(int vertCount, int indexCount, int normal_count );
+// Create an empty mesh with vertCount distinct vertices and index_count vertex indices
+mesh* mesh_createMesh(int vertCount, int index_count, int normal_count );
 
 // Precalculate flat normals for a mesh
 void mesh_calculateNormals( mesh* m );
@@ -49,6 +58,7 @@ void mesh_calculateNormals( mesh* m );
 // Draw the verts of a mesh to the openGL buffer
 void mesh_drawVerts(mesh* m);
 
+void mesh_buildBuffers( mesh* m );
 
 // *** Model Functions
 

@@ -16,5 +16,5 @@ uniform	mat4 projection;
 void main() {
 	gl_Position = projection * modelview * position;
 	frag_position = gl_Position;
-	frag_normal = normal;
+	frag_normal = projection * modelview * normal;
 }

@@ -81,25 +81,25 @@ mesh* mesh_createTestCube() {
 	return m;
 }
 
-// Create an empty mesh with vertCount distinct vertices and indexCount vertex indices
-mesh* mesh_createMesh( int vertCount, int indexCount, int normal_count ) {
+// Create an empty mesh with vertCount distinct vertices and index_count vertex indices
+mesh* mesh_createMesh( int vertCount, int index_count, int normal_count ) {
 	void* data = mem_alloc( sizeof( mesh ) +
 						sizeof( vector ) * vertCount +
-						sizeof( int )	 * indexCount +
-						sizeof( int )	 * indexCount +	// Normal indices
+						sizeof( int )	 * index_count +
+						sizeof( int )	 * index_count +	// Normal indices
 						sizeof( vector ) * normal_count );
 	mesh* m = data;
 	data += sizeof(mesh);
 	m->verts = data;
 	data += sizeof(vector) * vertCount;
 	m->indices = data;
-	data += sizeof( int ) * indexCount;
+	data += sizeof( int ) * index_count;
 	m->normals = data;
 	data += sizeof( vector ) * normal_count;
 	m->normal_indices = data;
 
 	m->vertCount = vertCount;
-	m->indexCount = indexCount;
+	m->index_count = index_count;
 	m->normal_count = normal_count;
 
 	return m;
@@ -108,7 +108,7 @@ mesh* mesh_createMesh( int vertCount, int indexCount, int normal_count ) {
 // Precalculate flat normals for a mesh
 void mesh_calculateNormals( mesh* m ) {
 	int j = 0;
-	for ( int i = 0; i < m->indexCount; i+=3 ) {
+	for ( int i = 0; i < m->index_count; i+=3 ) {
 		// For now, calculate the normals at runtime from the three points of the triangle
 		vector a, b, normal;
 		Sub( &a, &m->verts[m->indices[i]], &m->verts[m->indices[i + 1]] );
@@ -140,42 +140,59 @@ model* model_createModel(int meshCount) {
 GLfloat vertex_buffer_data_m[] = { 1.f, 0.f, 0.f, 1.f, 0.f, 1.f, 0.f, 1.f, -1.f, 0.f, 0.f, 1.f, 0.f, -1.f, -0.f, 1.f };
 GLushort element_buffer_data_m[] = { 0, 1, 3, 1, 3, 2 };
 
+// Build a vertex buffer for the mesh, copying out vertices as necessary so that
+// each vertex-normal pair is covered
+// If fully smooth-shaded, can just use a single copy of each vertex
+// If not all smooth-shaded, will have to duplicate vertices
+void mesh_buildBuffers( mesh* m ) {
+	assert( !m->vertex_buffer );
+	assert( !m->element_buffer );
+	m->vertex_buffer = mem_alloc( sizeof( vertex ) * m->index_count );
+	m->element_buffer = mem_alloc( sizeof( GLushort ) * m->index_count );
+
+	bool all_smooth_shaded = false;
+	if ( all_smooth_shaded ) {
+
+	} else {
+		printf( "Build Buffers.\n" );
+		// allocate space
+
+		// For each element index
+		// Unroll the vertex/index bindings
+		for ( int i = 0; i < m->index_count; i++ ) {
+			printf( "Vert num: %d, index %d.\n", i, m->indices[i] );
+			// Copy the required vertex position
+			m->vertex_buffer[i].position = m->verts[m->indices[i]];
+			// Copy the required vertex normal
+			m->vertex_buffer[i].normal = m->normals[m->normal_indices[i]];
+			m->element_buffer[i] = i;
+			printf( "Vert: " );
+			vector_print( &m->vertex_buffer[i].position );
+			printf( "\n" );
+		}
+	}
+}
+
 // Draw the verts of a mesh to the openGL buffer
 void mesh_drawVerts( mesh* m ) {
-	// *** Test code
-	const int vec_size = sizeof(GLfloat) * 4;
-	const int stride = vec_size * 2;
-	/*
-	// For now, intermingle position and normal values for verts at runtime
-	for ( int i = 0; i < m->vertCount; i++ ) {
-		memcpy( &buffer[ i*stride + 0],			&m->verts[i],	vec_size );
-		memcpy( &buffer[ i*stride + vec_size],	&m->normals[i],	vec_size );
-	}
-	*/
-	vector vertex_buffer[512];
-	
-	for ( int i = 0; i < m->vertCount; i++ ) {
-		vertex_buffer[2*i] = m->verts[i];
-		vertex_buffer[2*i+1] = m->normals[i];
-	}
-
 	// Copy our data to the GPU
-	GLsizei vertex_buffer_size = m->vertCount * stride;
-	render_setBuffers( (GLfloat*)vertex_buffer, vertex_buffer_size, (int*)m->indices, m->indexCount * sizeof( GLushort ) );
+	// There are now <index_count> vertices, as we have unrolled them
+	GLsizei vertex_buffer_size = m->index_count * sizeof( vertex );
+	render_setBuffers( (GLfloat*)m->vertex_buffer, vertex_buffer_size, (int*)m->element_buffer, m->index_count * sizeof( GLushort ) );
 
 	// Activate our buffers
 	glBindBuffer( GL_ARRAY_BUFFER, resources.vertex_buffer );
 	// Set up position data
-	glVertexAttribPointer( resources.attributes.position, /*vec4*/ 4, GL_FLOAT, /*Normalized?*/GL_FALSE, stride, (void*)0 );
+	glVertexAttribPointer( resources.attributes.position, /*vec4*/ 4, GL_FLOAT, /*Normalized?*/GL_FALSE, sizeof( vertex ), (void*)offsetof( vertex, position) );
 	glEnableVertexAttribArray( resources.attributes.position );
 	// Set up normal data
-	glVertexAttribPointer( resources.attributes.normal, /*vec4*/ 4, GL_FLOAT, /*Normalized?*/GL_FALSE, stride, (void*)vec_size );
+	glVertexAttribPointer( resources.attributes.normal, /*vec4*/ 4, GL_FLOAT, /*Normalized?*/GL_FALSE, sizeof( vertex ), (void*)offsetof( vertex, normal ) );
 	glEnableVertexAttribArray( resources.attributes.normal );
 
 	glBindBuffer( GL_ELEMENT_ARRAY_BUFFER, resources.element_buffer );
 
 	// Draw!
-	glDrawElements( GL_TRIANGLES, m->indexCount, GL_UNSIGNED_SHORT, (void*)0 );
+	glDrawElements( GL_TRIANGLES, m->index_count, GL_UNSIGNED_SHORT, (void*)0 );
 
 	// Cleanup
 	glDisableVertexAttribArray( resources.attributes.position );
