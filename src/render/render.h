@@ -10,6 +10,7 @@ typedef struct gl_resources_s {
 		GLuint projection;
 		GLuint modelview;
 		GLuint light_position;
+		GLuint light_diffuse;
 	} uniforms;
 
 	struct {

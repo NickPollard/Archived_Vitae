@@ -61,6 +61,7 @@ void light_render(int index, light* l) {
 	glLightfv( index, GL_POSITION, (GLfloat*)matrix_getTranslation( l->trans->world ));
 	if ( index == 0 ) {
 		glUniform4fv( resources.uniforms.light_position, 1, (GLfloat*)matrix_getTranslation( l->trans->world) );
+		glUniform4fv( resources.uniforms.light_diffuse, 1, (GLfloat*)&l->diffuse_color );
 	}
 
 	// Attenuation

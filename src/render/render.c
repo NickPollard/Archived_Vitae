@@ -114,6 +114,7 @@ void render_buildShaders() {
 	resources.uniforms.modelview = glGetUniformLocation( resources.program, "modelview" );
 
 	resources.uniforms.light_position = glGetUniformLocation( resources.program, "light_position" );
+	resources.uniforms.light_diffuse = glGetUniformLocation( resources.program, "light_diffuse" );
 
 	// Attributes
 	resources.attributes.position = glGetAttribLocation( resources.program, "position" );
