@@ -62,6 +62,7 @@ void light_render(int index, light* l) {
 	if ( index == 0 ) {
 		glUniform4fv( resources.uniforms.light_position, 1, (GLfloat*)matrix_getTranslation( l->trans->world) );
 		glUniform4fv( resources.uniforms.light_diffuse, 1, (GLfloat*)&l->diffuse_color );
+		glUniform4fv( resources.uniforms.light_specular, 1, (GLfloat*)&l->specular_color );
 	}
 
 	// Attenuation

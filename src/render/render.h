@@ -1,16 +1,27 @@
 // render.h
-
+#pragma once
 #include "scene.h"
+
+#define SHADER_UNIFORMS( f ) \
+	f( projection ) \
+	f( modelview ) \
+	f( light_position ) \
+	f( light_diffuse ) \
+	f( light_specular )
+
+#define DECLARE_AS_GLUINT( var ) \
+	GLuint var;
 
 typedef struct gl_resources_s {
 	GLuint vertex_buffer, element_buffer;
 	GLuint texture;
 
 	struct {
-		GLuint projection;
+/*		GLuint projection;
 		GLuint modelview;
 		GLuint light_position;
-		GLuint light_diffuse;
+		GLuint light_diffuse; */
+		SHADER_UNIFORMS( DECLARE_AS_GLUINT )
 	} uniforms;
 
 	struct {

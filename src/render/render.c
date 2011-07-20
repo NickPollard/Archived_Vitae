@@ -110,11 +110,16 @@ void render_buildShaders() {
 	resources.program = render_linkShaderProgram( resources.vertex_shader, resources.fragment_shader );
 
 	// Uniforms
+	/*
 	resources.uniforms.projection = glGetUniformLocation( resources.program, "projection" );
 	resources.uniforms.modelview = glGetUniformLocation( resources.program, "modelview" );
 
 	resources.uniforms.light_position = glGetUniformLocation( resources.program, "light_position" );
 	resources.uniforms.light_diffuse = glGetUniformLocation( resources.program, "light_diffuse" );
+*/	
+#define GET_UNIFORM_LOCATION( var ) \
+	resources.uniforms.var = glGetUniformLocation( resources.program, #var );
+	SHADER_UNIFORMS( GET_UNIFORM_LOCATION )
 
 	// Attributes
 	resources.attributes.position = glGetAttribLocation( resources.program, "position" );

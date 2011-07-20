@@ -9,9 +9,9 @@ varying vec4 frag_normal;
 uniform mat4 modelview;
 uniform vec4 light_position;
 uniform vec4 light_diffuse;
+uniform vec4 light_specular;
 
 // Test Light values
-const vec4 light_specular = vec4( 0.5, 0.5, 0.5, 1.0 );
 const vec4 light_ambient = vec4( 0.2, 0.2, 0.2, 0.0 );
 
 const vec4 material_diffuse = vec4( 1.0, 1.0, 1.0, 1.0 );
