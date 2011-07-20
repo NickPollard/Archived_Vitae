@@ -6,6 +6,7 @@
 #include "transform.h"
 #include "mem/allocator.h"
 #include "render/debugdraw.h"
+#include "render/render.h"
 #include <assert.h>
 
 light* light_create() {
@@ -50,12 +51,17 @@ void light_setPosition(light* l, vector* pos) {
 	matrix_setTranslation(l->trans->local, pos);
 }
 
-void light_render(GLenum index, light* l) {
+void light_render(int index, light* l) {
 	glEnable( index );
 
 	glLightfv(index, GL_DIFFUSE, (GLfloat*)(&l->diffuse_color));
 	glLightfv(index, GL_SPECULAR, (GLfloat*)(&l->specular_color));
-	glLightfv(index, GL_POSITION, (GLfloat*)matrix_getTranslation(l->trans->world));
+
+	// Position
+	glLightfv( index, GL_POSITION, (GLfloat*)matrix_getTranslation( l->trans->world ));
+	if ( index == 0 ) {
+		glUniform4fv( resources.uniforms.light_position, 1, (GLfloat*)matrix_getTranslation( l->trans->world) );
+	}
 
 	// Attenuation
 	glLightf(index, GL_CONSTANT_ATTENUATION, (GLfloat)l->attenuationConstant);

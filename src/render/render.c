@@ -30,47 +30,11 @@ GLuint gl_bufferCreate( GLenum target, const void* data, GLsizei size ) {
 	// Usage hint can be: GL_[VARYING]_[USE]
 	// Varying: STATIC / DYNAMIC / STREAM
 	// Use: DRAW / READ / COPY
-	glBufferData( target, size, data, /*Usage hint*/ GL_STATIC_DRAW );
+	glBufferData( target, size, data, /*Usage hint*/ GL_STREAM_DRAW );
 	return buffer;
 }
 
-GLfloat vertex_buffer_data[] = { 1.f, 0.f, 0.f, 1.f, 0.f, 1.f, 0.f, 1.f, -1.f, 0.f, 0.f, 1.f, 0.f, -1.f, -0.f, 1.f };
-GLushort element_buffer_data[] = { 0, 1, 3, 2 };
-
-//GLfloat vertex_buffer_data[256];
-//GLushort element_buffer_data[256];
-
 void render_initResources() {
-	/*
-	vertex_buffer_data[0] = 1.0f;
-	vertex_buffer_data[1] = 0.0f;
-	vertex_buffer_data[2] = 0.0f;
-	vertex_buffer_data[3] = 1.0f;
-
-	vertex_buffer_data[4] = 0.0f;
-	vertex_buffer_data[5] = 1.0f;
-	vertex_buffer_data[6] = 0.0f;
-	vertex_buffer_data[7] = 1.0f;
-
-	vertex_buffer_data[8] = -1.0f;
-	vertex_buffer_data[9] = 0.0f;
-	vertex_buffer_data[10] = 0.0f;
-	vertex_buffer_data[11] = 1.0f;
-
-	vertex_buffer_data[12] = 0.0f;
-	vertex_buffer_data[13] = -1.0f;
-	vertex_buffer_data[14] = 0.0f;
-	vertex_buffer_data[15] = 1.0f;
-
-	element_buffer_data[0] = 0;
-	element_buffer_data[1] = 1;
-	element_buffer_data[2] = 3;
-	element_buffer_data[3] = 2;*/
-
-	// OpenGL allocates space for our buffers, copies our data into them
-//	resources.vertex_buffer = gl_bufferCreate( GL_ARRAY_BUFFER, vertex_buffer_data, sizeof( vertex_buffer_data ) );
-//	resources.element_buffer = gl_bufferCreate( GL_ELEMENT_ARRAY_BUFFER, element_buffer_data, sizeof( element_buffer_data ) );
-//	render_setBuffers( vertex_buffer_data, sizeof( vertex_buffer_data ), (int*)element_buffer_data, sizeof( element_buffer_data ) );
 }
 
 void render_setBuffers( float* vertex_buffer, int vertex_buffer_size, int* element_buffer, int element_buffer_size ) {
@@ -149,6 +113,8 @@ void render_buildShaders() {
 	resources.uniforms.projection = glGetUniformLocation( resources.program, "projection" );
 	resources.uniforms.modelview = glGetUniformLocation( resources.program, "modelview" );
 
+	resources.uniforms.light_position = glGetUniformLocation( resources.program, "light_position" );
+
 	// Attributes
 	resources.attributes.position = glGetAttribLocation( resources.program, "position" );
 	resources.attributes.normal = glGetAttribLocation( resources.program, "normal" );
@@ -197,8 +163,10 @@ void render_lighting( scene* s ) {
 
 	// Point Lights	
 	// according to www.opengl.org/sdk/dorcs/man/xhtml/glLight.xml this should work
-	for ( int i = 0; i < s->light_count; i++)
-		light_render( GL_LIGHT0 + i /* according to the oGL spec, this should work */, s->lights[i] );
+	for ( int i = 0; i < s->light_count; i++) {
+//		light_render( GL_LIGHT0 + i /* according to the oGL spec, this should work */, s->lights[i] );
+		light_render( i /* according to the oGL spec, this should work */, s->lights[i] );
+	}
 }
 
 void render_applyCamera(camera* cam) {
@@ -298,6 +266,8 @@ void render_shader( scene* s ) {
 	// Set up uniforms
 	glUniformMatrix4fv( resources.uniforms.projection, 1, /*transpose*/false, (GLfloat*)perspective );
 	glUniformMatrix4fv( resources.uniforms.modelview, 1, /*transpose*/false, (GLfloat*)modelview );
+
+	render_lighting( s );
 
 	render_scene( s );
 }

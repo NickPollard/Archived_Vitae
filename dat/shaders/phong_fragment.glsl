@@ -7,12 +7,12 @@ varying vec4 frag_normal;
 
 // Uniform
 uniform mat4 modelview;
+uniform vec4 light_position;
 
 // Test Light values
-const vec4 light_position = vec4( 1.0, 1.0, 1.0, 1.0 );
 const vec4 light_specular = vec4( 0.5, 0.5, 0.5, 1.0 );
 const vec4 light_diffuse = vec4( 1.0, 1.0, 1.0, 1.0 );
-const vec4 light_ambient = vec4( 0.2, 0.2, 0.2, 1.0 );
+const vec4 light_ambient = vec4( 0.2, 0.2, 0.2, 0.0 );
 
 const vec4 material_diffuse = vec4( 1.0, 0.0, 0.0, 1.0 );
 const vec4 material_specular = vec4( 1.0, 1.0, 1.0, 1.0 );
@@ -30,7 +30,7 @@ void main() {
 	vec4 spec_bounce = reflect( light_direction, frag_normal );
 	vec4 view_direction = normalize( frag_position );
 	float spec = max( 0.0, dot( spec_bounce, -view_direction ));
-	float shininess = 5.0;
+	float shininess = 3.0;
 	float specular = pow( spec, shininess );
 	vec4 specular_color = light_specular * specular;
 
