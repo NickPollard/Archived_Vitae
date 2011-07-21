@@ -160,15 +160,11 @@ void mesh_buildBuffers( mesh* m ) {
 		// For each element index
 		// Unroll the vertex/index bindings
 		for ( int i = 0; i < m->index_count; i++ ) {
-			printf( "Vert num: %d, index %d.\n", i, m->indices[i] );
 			// Copy the required vertex position
 			m->vertex_buffer[i].position = m->verts[m->indices[i]];
 			// Copy the required vertex normal
 			m->vertex_buffer[i].normal = m->normals[m->normal_indices[i]];
 			m->element_buffer[i] = i;
-			printf( "Vert: " );
-			vector_print( &m->vertex_buffer[i].position );
-			printf( "\n" );
 		}
 	}
 }

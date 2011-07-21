@@ -83,7 +83,9 @@ block* heap_findBlock( heapAllocator* heap, void* mem_addr ) {
 void heap_deallocate( heapAllocator* heap, void* data ) {
 	block* b = heap_findBlock( heap, data );
 	assert( b );
+#ifdef MEM_DEBUG_VERBOSE
 	printf("Allocator freed address: %x.\n", (unsigned int)b->data );
+#endif
 	b->free = true;
 
 	heap->total_free += b->size;
@@ -165,38 +167,35 @@ void test_allocator() {
 	heapAllocator* heap = heap_create( 4096 );
 
 	if (!heap) {
-		printf("Test: Failed: Allocator not created.\n");
+		printf("[ Failed ]\tAllocator not created.\n");
 	} else {
-		printf("Test: %sPassed%s: Allocator created succesfully.\n", TERM_GREEN, TERM_WHITE );
+		printf("[ %sPassed%s ]\tAllocator created succesfully.\n", TERM_GREEN, TERM_WHITE );
 	}
 //	if (heap->total_size == 4096) {
-//		printf("Test: Passed: Create Allocator of 4096 byte heap.\n");
+//		printf("[ Passed: Create Allocator of 4096 byte heap.\n");
 //	} else {
-//		printf("Test: Failed: Allocator has incorrect size (should be 4096).\n");
+//		printf("[ Failed ]\tAllocator has incorrect size (should be 4096).\n");
 //	}
 
 	void* a = heap_allocate( heap, 2048 );
 	memset( a, 0, 2048 );
-	printf( "Test: %sPassed%s: Allocated 2048 bytes succesfully.\n", TERM_GREEN, TERM_WHITE );
+	printf( "[ %sPassed%s ]\tAllocated 2048 bytes succesfully.\n", TERM_GREEN, TERM_WHITE );
 
 	void* b = heap_allocate( heap, 1024 );
 	memset( b, 0, 1024 );
-	printf( "Test: %sPassed%s: Allocated 2048 + 1024 bytes succesfully.\n", TERM_GREEN, TERM_WHITE );
+	printf( "[ %sPassed%s ]\tAllocated 2048 + 1024 bytes succesfully.\n", TERM_GREEN, TERM_WHITE );
 
 	heap_deallocate( heap, a );
-	printf( "Test: %sPassed%s: Deallocated 2048 bytes succesfully.\n", TERM_GREEN, TERM_WHITE );
+	printf( "[ %sPassed%s ]\tDeallocated 2048 bytes succesfully.\n", TERM_GREEN, TERM_WHITE );
 
 	heap_deallocate( heap, b );
-	printf( "Test: %sPassed%s: Deallocated 1024 bytes succesfully.\n", TERM_GREEN, TERM_WHITE );
+	printf( "[ %sPassed%s ]\tDeallocated 1024 bytes succesfully.\n", TERM_GREEN, TERM_WHITE );
 
 	a = heap_allocate( heap, 3072 );
 	memset( a, 0, 3072 );
-	printf( "Test: %sPassed%s: Allocated 3072 bytes succesfully.\n", TERM_GREEN, TERM_WHITE );
+	printf( "[ %sPassed%s ]\tAllocated 3072 bytes succesfully.\n", TERM_GREEN, TERM_WHITE );
 
 	b = heap_allocate( heap, 512 );
 	memset( b, 0, 512 );
-	printf( "Test: %sPassed%s: Allocated 512 bytes succesfully.\n", TERM_GREEN, TERM_WHITE );
-
-//	printf("Test: Passed: Allocate 2048 bytes from 4096 heap.\n");
-//	if (heap->total_allocated == 2048) && (heap->total_free) == 
+	printf( "[ %sPassed%s ]\tAllocated 512 bytes succesfully.\n", TERM_GREEN, TERM_WHITE );
 }
