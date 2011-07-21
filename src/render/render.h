@@ -5,6 +5,7 @@
 #define SHADER_UNIFORMS( f ) \
 	f( projection ) \
 	f( modelview ) \
+	f( worldspace ) \
 	f( light_position ) \
 	f( light_diffuse ) \
 	f( light_specular )
@@ -17,10 +18,6 @@ typedef struct gl_resources_s {
 	GLuint texture;
 
 	struct {
-/*		GLuint projection;
-		GLuint modelview;
-		GLuint light_position;
-		GLuint light_diffuse; */
 		SHADER_UNIFORMS( DECLARE_AS_GLUINT )
 	} uniforms;
 

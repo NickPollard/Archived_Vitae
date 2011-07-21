@@ -109,14 +109,6 @@ void render_buildShaders() {
 
 	resources.program = render_linkShaderProgram( resources.vertex_shader, resources.fragment_shader );
 
-	// Uniforms
-	/*
-	resources.uniforms.projection = glGetUniformLocation( resources.program, "projection" );
-	resources.uniforms.modelview = glGetUniformLocation( resources.program, "modelview" );
-
-	resources.uniforms.light_position = glGetUniformLocation( resources.program, "light_position" );
-	resources.uniforms.light_diffuse = glGetUniformLocation( resources.program, "light_diffuse" );
-*/	
 #define GET_UNIFORM_LOCATION( var ) \
 	resources.uniforms.var = glGetUniformLocation( resources.program, #var );
 	SHADER_UNIFORMS( GET_UNIFORM_LOCATION )
@@ -254,9 +246,6 @@ void render_resetModelView( ) {
 void render_shader( scene* s ) {
 	// Load our shader
 	glUseProgram( resources.program );
-	matrix projection;
-
-	matrix_setIdentity( projection );
 	matrix_setIdentity( modelview );
 
 	float fov = 0.8f; // In radians
@@ -272,6 +261,7 @@ void render_shader( scene* s ) {
 	// Set up uniforms
 	glUniformMatrix4fv( resources.uniforms.projection, 1, /*transpose*/false, (GLfloat*)perspective );
 	glUniformMatrix4fv( resources.uniforms.modelview, 1, /*transpose*/false, (GLfloat*)modelview );
+	glUniformMatrix4fv( resources.uniforms.worldspace, 1, /*transpose*/false, (GLfloat*)modelview );
 
 	render_lighting( s );
 
