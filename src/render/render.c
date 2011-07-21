@@ -103,6 +103,15 @@ GLuint render_linkShaderProgram( GLuint vertex_shader, GLuint fragment_shader ) 
 	return program;
 }
 
+GLuint render_getUniformLocation( GLuint program, const char* name ) {
+	GLuint location = glGetUniformLocation( program, name );
+	if ( location == -1 ) {
+		printf( "Error finding Uniform Location for shader uniform variable \"%s\".\n", name );
+	}
+	assert( location != -1 );
+	return location;
+}
+
 void render_buildShaders() {
 	resources.vertex_shader = render_compileShader( GL_VERTEX_SHADER, "dat/shaders/phong_vertex.glsl" );
 	resources.fragment_shader = render_compileShader( GL_FRAGMENT_SHADER, "dat/shaders/phong_fragment.glsl" );
@@ -110,7 +119,7 @@ void render_buildShaders() {
 	resources.program = render_linkShaderProgram( resources.vertex_shader, resources.fragment_shader );
 
 #define GET_UNIFORM_LOCATION( var ) \
-	resources.uniforms.var = glGetUniformLocation( resources.program, #var );
+	resources.uniforms.var = render_getUniformLocation( resources.program, #var );
 	SHADER_UNIFORMS( GET_UNIFORM_LOCATION )
 
 	// Attributes
@@ -242,16 +251,20 @@ void render_resetModelView( ) {
 	matrix_cpy( modelview, modelview_base );
 }
 
+void render_setUniform_matrix( GLuint uniform, matrix m ) {
+	glUniformMatrix4fv( uniform, 1, /*transpose*/false, (GLfloat*)m );
+}
+
 // Shader version
 void render_shader( scene* s ) {
 	// Load our shader
 	glUseProgram( resources.program );
 	matrix_setIdentity( modelview );
 
-	float fov = 0.8f; // In radians
-	float aspect = 4.f/3.f;
-	float z_near = 1.f;
-	float z_far = 200.f;
+	const float fov = 0.8f; // In radians
+	const float aspect = 4.f/3.f;
+	const float z_near = 1.f;
+	const float z_far = 200.f;
 	matrix perspective;
 	render_perspectiveMatrix( perspective, fov, aspect, z_near, z_far );
 
@@ -259,9 +272,9 @@ void render_shader( scene* s ) {
 	render_resetModelView();
 	
 	// Set up uniforms
-	glUniformMatrix4fv( resources.uniforms.projection, 1, /*transpose*/false, (GLfloat*)perspective );
-	glUniformMatrix4fv( resources.uniforms.modelview, 1, /*transpose*/false, (GLfloat*)modelview );
-	glUniformMatrix4fv( resources.uniforms.worldspace, 1, /*transpose*/false, (GLfloat*)modelview );
+	render_setUniform_matrix( resources.uniforms.projection, perspective );
+	render_setUniform_matrix( resources.uniforms.modelview, modelview );
+	render_setUniform_matrix( resources.uniforms.worldspace, modelview );
 
 	render_lighting( s );
 

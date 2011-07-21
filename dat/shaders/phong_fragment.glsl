@@ -15,7 +15,7 @@ uniform vec4 light_specular;
 const vec4 light_ambient = vec4( 0.2, 0.2, 0.2, 0.0 );
 
 const vec4 material_diffuse = vec4( 1.0, 1.0, 1.0, 1.0 );
-const vec4 material_specular = vec4( 0.0, 0.0, 1.0, 1.0 );
+const vec4 material_specular = vec4( 1.0, 1.0, 1.0, 1.0 );
 const float light_radius = 10.0;
 
 void main() {
@@ -35,7 +35,7 @@ void main() {
 	// Specular
 	vec4 spec_bounce = reflect( light_direction, frag_normal );
 	float spec = max( 0.0, dot( spec_bounce, -view_direction ));
-	float shininess = 3.0;
+	float shininess = 10.0;
 	float specular = pow( spec, shininess );
 	vec4 specular_color = light_specular * specular;
 

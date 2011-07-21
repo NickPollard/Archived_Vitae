@@ -36,6 +36,8 @@ void light_setDiffuse(light* l, float r, float g, float b, float a) {
 	l->diffuse_color.val[1] = g;
 	l->diffuse_color.val[2] = b;
 	l->diffuse_color.val[3] = a;
+	// TEST for now set specular as well
+	light_setSpecular( l, r, g, b, a );
 }
 
 // Set the specular component for the light
