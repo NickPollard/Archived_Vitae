@@ -174,18 +174,26 @@ void mesh_drawVerts( mesh* m ) {
 	// Copy our data to the GPU
 	// There are now <index_count> vertices, as we have unrolled them
 	GLsizei vertex_buffer_size = m->index_count * sizeof( vertex );
-	render_setBuffers( (GLfloat*)m->vertex_buffer, vertex_buffer_size, (int*)m->element_buffer, m->index_count * sizeof( GLushort ) );
+	GLsizei element_buffer_size = m->index_count * sizeof( GLushort );
+//	render_setBuffers( (GLfloat*)m->vertex_buffer, vertex_buffer_size, (int*)m->element_buffer, element_buffer_size );
 
-	// Activate our buffers
-	glBindBuffer( GL_ARRAY_BUFFER, resources.vertex_buffer );
-	// Set up position data
-	glVertexAttribPointer( resources.attributes.position, /*vec4*/ 4, GL_FLOAT, /*Normalized?*/GL_FALSE, sizeof( vertex ), (void*)offsetof( vertex, position) );
-	glEnableVertexAttribArray( resources.attributes.position );
-	// Set up normal data
-	glVertexAttribPointer( resources.attributes.normal, /*vec4*/ 4, GL_FLOAT, /*Normalized?*/GL_FALSE, sizeof( vertex ), (void*)offsetof( vertex, normal ) );
-	glEnableVertexAttribArray( resources.attributes.normal );
-
-	glBindBuffer( GL_ELEMENT_ARRAY_BUFFER, resources.element_buffer );
+	// *** Vertex Buffer
+	{
+		// Activate our buffers
+		glBindBuffer( GL_ARRAY_BUFFER, resources.vertex_buffer );
+		glBufferData( GL_ARRAY_BUFFER, vertex_buffer_size, m->vertex_buffer, GL_STREAM_DRAW );
+		// Set up position data
+		glVertexAttribPointer( resources.attributes.position, /*vec4*/ 4, GL_FLOAT, /*Normalized?*/GL_FALSE, sizeof( vertex ), (void*)offsetof( vertex, position) );
+		glEnableVertexAttribArray( resources.attributes.position );
+		// Set up normal data
+		glVertexAttribPointer( resources.attributes.normal, /*vec4*/ 4, GL_FLOAT, /*Normalized?*/GL_FALSE, sizeof( vertex ), (void*)offsetof( vertex, normal ) );
+		glEnableVertexAttribArray( resources.attributes.normal );
+	}
+	// *** Element Buffer
+	{
+		glBindBuffer( GL_ELEMENT_ARRAY_BUFFER, resources.element_buffer );
+		glBufferData( GL_ELEMENT_ARRAY_BUFFER, element_buffer_size, m->element_buffer, GL_STREAM_DRAW );
+	}
 
 	// Draw!
 	glDrawElements( GL_TRIANGLES, m->index_count, GL_UNSIGNED_SHORT, (void*)0 );

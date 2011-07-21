@@ -18,6 +18,8 @@
 // GLFW Libraries
 #include <GL/glfw.h>
 
+#define MAX_VERTEX_ARRAY_COUNT 1024
+
 // *** Shader Pipeline
 
 matrix modelview, modelview_base;
@@ -32,9 +34,6 @@ GLuint gl_bufferCreate( GLenum target, const void* data, GLsizei size ) {
 	// Use: DRAW / READ / COPY
 	glBufferData( target, size, data, /*Usage hint*/ GL_STREAM_DRAW );
 	return buffer;
-}
-
-void render_initResources() {
 }
 
 void render_setBuffers( float* vertex_buffer, int vertex_buffer_size, int* element_buffer, int element_buffer_size ) {
@@ -208,8 +207,12 @@ void render_init() {
 
 	texture_init();
 
-	render_initResources();
 	render_buildShaders();
+	// Allocate space for buffers
+	const GLsizei vertex_buffer_size = sizeof( vector ) * MAX_VERTEX_ARRAY_COUNT;
+	const GLsizei element_buffer_size = sizeof( GLushort ) * MAX_VERTEX_ARRAY_COUNT;
+	resources.vertex_buffer = gl_bufferCreate( GL_ARRAY_BUFFER, NULL, vertex_buffer_size );
+	resources.element_buffer = gl_bufferCreate( GL_ELEMENT_ARRAY_BUFFER, NULL, element_buffer_size );
 }
 
 // Terminate the 3D rendering
