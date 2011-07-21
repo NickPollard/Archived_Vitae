@@ -36,6 +36,10 @@ typedef union matrix_u {
 } matrix;
 */
 
+int max( int a, int b );
+int min( int a, int b );
+
+
 typedef float matrix[4][4];
 
 vector Vector(float x, float y, float z, float w);

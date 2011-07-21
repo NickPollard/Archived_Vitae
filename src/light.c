@@ -53,7 +53,7 @@ void light_setPosition(light* l, vector* pos) {
 	matrix_setTranslation(l->trans->local, pos);
 }
 
-void light_render(int index, light* l) {
+void light_render( int index, light* l ) {
 	glEnable( index );
 
 	glLightfv(index, GL_DIFFUSE, (GLfloat*)(&l->diffuse_color));
@@ -62,7 +62,7 @@ void light_render(int index, light* l) {
 	// Position
 	glLightfv( index, GL_POSITION, (GLfloat*)matrix_getTranslation( l->trans->world ));
 	if ( index == 0 ) {
-		glUniform4fv( resources.uniforms.light_position, 1, (GLfloat*)matrix_getTranslation( l->trans->world) );
+		glUniform4fv( resources.uniforms.light_position, 1, (GLfloat*)matrix_getTranslation( l->trans->world ) );
 		glUniform4fv( resources.uniforms.light_diffuse, 1, (GLfloat*)&l->diffuse_color );
 		glUniform4fv( resources.uniforms.light_specular, 1, (GLfloat*)&l->specular_color );
 	}
@@ -73,4 +73,36 @@ void light_render(int index, light* l) {
 	glLightf(index, GL_QUADRATIC_ATTENUATION, (GLfloat)l->attenuationQuadratic);
 	
 	debugdraw_cross( matrix_getTranslation( l->trans->world ), 1.f);
+}
+
+// Render a batch of lights to the shader
+// This sets up the uniform parameters for the lights in the shader
+// Will setup <count> lights from the array pointed to by <lights>
+void light_renderLights( int count, light** lights ) {
+	int light_count = max( count, MAX_RENDER_LIGHTS );
+
+	// the shader wants a struct of arrays, so we need to concatenate our
+	// data into that form.
+	// Extract the positions from each light into an array of positions
+	vector positions[MAX_RENDER_LIGHTS];
+	vector diffuses[MAX_RENDER_LIGHTS];
+	vector speculars[MAX_RENDER_LIGHTS];
+#if DEBUG_RENDER_LIGHTS
+	printf( "Lighting - rendering %d lights to the shader, with positions:\n", light_count );
+#endif
+	for ( int i = 0; i < light_count; i++ ) {
+		positions[i] = *matrix_getTranslation( lights[i]->trans->world );
+		diffuses[i] = lights[i]->diffuse_color;
+		speculars[i] = lights[i]->specular_color;
+#if DEBUG_RENDER_LIGHTS
+		printf( "\t" );
+		vector_print( &positions[i] );
+		printf( "\n" );
+#endif
+	}
+
+
+	glUniform4fv( resources.uniforms.light_position, light_count, (GLfloat*)positions );
+	glUniform4fv( resources.uniforms.light_diffuse, light_count, (GLfloat*)diffuses );
+	glUniform4fv( resources.uniforms.light_specular, light_count, (GLfloat*)speculars );
 }

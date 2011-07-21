@@ -1,9 +1,13 @@
 // light.h
-#ifndef __LIGHT_H__
-#define __LIGHT_H__
+#pragma once
 
 #include "common.fwd.h"
 #include "maths.h"
+
+#define DEBUG_RENDER_LIGHTS 0
+
+#define MAX_RENDER_LIGHTS 2
+
 
 // *** Light ***
 struct light_s {
@@ -28,7 +32,6 @@ void light_setDiffuse(light* l, float r, float g, float b, float a);
 void light_setSpecular( light* l, float r, float g, float b, float a );
 
 void light_render(int index, light* l);
+void light_renderLights( int count, light** lights );
 
 void light_setPosition(light* l, vector* pos);
-
-#endif // __LIGHT_H__

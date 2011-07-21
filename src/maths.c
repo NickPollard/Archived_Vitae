@@ -11,6 +11,15 @@ bool f_eq( float a, float b ) {
 	return fabsf( a - b ) < epsilon;
 }
 
+int max( int a, int b ) {
+	return a > b ? a : b;
+}
+int min( int a, int b ) {
+	return a < b ? a : b;
+}
+
+// *** Vectors
+
 vector Vector(float x, float y, float z, float w) {
 	vector v;
 	v.coord.x = x;
