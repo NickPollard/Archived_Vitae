@@ -34,8 +34,24 @@ function player_yaw( p, y ) {
 	vitae_physic_yaw( p.physic, y )
 }
 
-function player_fire( p ) {
+projectile_model = "bullet.obj"
 
+function player_fire( p ) {
+	local g = {}
+	-- Create a new Projectile
+	g = gameobject_create( projectile_model );
+	-- Position it at the correct muzzle position and rotation
+	gun_transform = vitae_attach_transform( g.model, "bullet_spawn" )
+	vitae_transform_setWorldSpace( g.transform, gun_transform )
+	speed = 10.0
+	velocity = gun_transform * vector( 0.0, 0.0, speed, 0.0 )
+	vitae_physic_setVelocity( g.physic, vitae_attach_position( g.model, "bullet_spawn" )
+
+	vitae_physic_onCollision( function onBulletHit( bullet, target ) {
+		gameobject_destroy( bullet )
+		gameobject_destroy( target )
+		vitae_particle_spawn( "explosion.part", translation( bullet.transform ) )
+	} )
 }
 
 -- Create a player. The player is a specialised form of Gameobject
