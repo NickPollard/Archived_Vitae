@@ -124,15 +124,8 @@ void engine_handleKeyPress(engine* e, uchar key, int x, int y) {
 // Set the camera perspective and tell OpenGL how to convert 
 // from coordinates to pixel values
 void handleResize(int w_, int h_) {
-	/*
-	glViewport(0, 0, w, h);
-	glMatrixMode(GL_PROJECTION);
-	glLoadIdentity();
-	gluPerspective(45.0, (double)w / (double)h, 1.0, 200.0);
-	*/
 	w = w_;
 	h = h_;
-	//render_set3D( w, h );
 }
 
 float angle = 340.f;
@@ -239,42 +232,9 @@ void engine_run(engine* e) {
 	int running = true;
 	handleResize(640, 480);	// Call once to init
 	while (running) {
-
 		engine_tick(e);
-		
 		engine_render( e );
-
 		running = !input_keyPressed(e->input, KEY_ESC) && glfwGetWindowParam(GLFW_OPENED);
-
-		if (input_keyHeld( e->input, KEY_UP)) {
-			depth += 0.01f;
-			camY += 0.01f;
-		}
-		if (input_keyHeld( e->input, KEY_DOWN)) {
-			depth -= 0.01f;
-			camY -= 0.01f;
-		}
-		if (input_keyHeld( e->input, KEY_LEFT)) {
-			camX -= 0.01f;
-		}
-		if (input_keyHeld( e->input, KEY_RIGHT)) {
-			camX += 0.01f;
-		}
-
-		static int mouseX = 0;
-		static int mouseY = 0;
-		int x, y;
-		float mouseScale = 0.01f;
-
-		glfwGetMousePos(&x, &y);
-		if ( glfwGetMouseButton(GLFW_MOUSE_BUTTON_LEFT) ) {
-			camX -= (float)(x - mouseX) * mouseScale;	
-			camY += (float)(y - mouseY) * mouseScale;	
-		}
-		mouseX = x;
-		mouseY = y;
-
-//		scene_setCamera(theScene, camX, camY, 10.f, 1.f);
 	}
 }
 
