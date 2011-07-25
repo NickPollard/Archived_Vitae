@@ -92,7 +92,9 @@ void engine_tick( engine* e ) {
 	engine_tickTickers( e, dt );
 
 	if ( e->onTick && luaCallback_enabled( e->onTick ) ) {
-//		printf("Calling engine::onTick handler: %s\n", e->onTick->func);
+#if DEBUG_LUA
+		printf("Calling engine::onTick handler: %s\n", e->onTick->func);
+#endif
 		LUA_CALL( e->lua, e->onTick->func );
 	}
 
@@ -134,14 +136,7 @@ float depth = 8.f;
 
 // Initialise the Lua subsystem so that it is ready for use
 void engine_initLua(engine* e, int argc, char** argv) {
-	e->lua = lua_open();
-	luaL_openlibs(e->lua);	// Load the Lua libs into our lua state
-	if (luaL_loadfile(e->lua, "src/lua/main.lua") || lua_pcall(e->lua, 0, 0, 0))
-		printf("Error loading lua!\n");
-
-	lua_registerFunction(e->lua, LUA_registerCallback, "registerEventHandler");
-
-	LUA_CALL(e->lua, "init");
+	e->lua = vlua_create( "src/lua/main.lua" );
 }
 
 // Create a new engine

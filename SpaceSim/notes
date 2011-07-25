@@ -1,0 +1,36 @@
+* SpaceSim *
+
+** Craft/Weapon/System Types **
+
+- Big Bad Voodoo Shield (other craft in certain radius invincible until this one dead)
+- Temporary invulnerability shield ( lasts short duration )
+- Disabling EMP ( other craft cannot - steer/accelarate/move/fire/shield )
+- Healing/Repair ( restore other craft/self health? )
+- temp extra damage/attack speed/spash/other weapon modifiers
+
+- Forward firing direct ( beam / projectile )
+- Dumb rockets (splash)
+- Homing Missiles
+- Clusters
+- Mines (drop behind, time delay / proximity )
+- Special Mines (eg. emp, shield?)
+- Slow ( weapons? Slowing laser? Drop slow mines eg. earthbind totem? )
+- Weapon types/resistances?
+- Immunity/shield piercing weapons ( eg. use to destroy shield generators )
+- range
+- temporary speed boost
+- nova ( PBAoE )
+
+- Fighter (fast, light)
+- Bomber (slow, heavy)
+- Destroyer ( big, slow, heavy )
+- Carrier ( big, slow, light, spawns fighters )
+- Support ( big, slow, repairs/heals/replenishes )
+
+- combos - eg. temp invuln shield can affect nearby allies
+
+** tactics **
+
+- Some bosses need to have their own missiles follow you and then aim back at them
+- some need to destroy shield generators firsst
+- Some need to destroy certain other ships first

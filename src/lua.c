@@ -41,12 +41,37 @@ void luaInterface_registerCallback(luaInterface* i, const char* name, const char
 	callBack->enabled = true;
 }
 
-int LUA_registerCallback(lua_State* l) {
+int LUA_registerCallback( lua_State* l ) {
 	printf("Register callback!\n");
 	return 0;
 }
 
-void lua_registerFunction(lua_State* l, lua_CFunction func, const char* name) {
-    lua_pushcfunction(l, func);
-    lua_setglobal(l, name);
+int LUA_print( lua_State* l ) {
+	if ( lua_isstring( l, 1 ) ) {
+		const char* string = lua_tostring( l, 1 );
+		printf( "LUA: %s\n", string );
+	} else
+		printf( "Error: LUA: Tried to print a non-string object from Lua.\n" );
+	return 0;
+}
+
+void lua_registerFunction( lua_State* l, lua_CFunction func, const char* name ) {
+    lua_pushcfunction( l, func );
+    lua_setglobal( l, name );
+}
+
+// Create a Lua State and load it's initial contents from <filename>
+lua_State* vlua_create( const char* filename ) {
+	lua_State* state = lua_open();
+	luaL_openlibs( state );	// Load the Lua libs into our lua state
+	if ( luaL_loadfile( state, filename ) || lua_pcall( state, 0, 0, 0))
+		printf("Error: Failed loading lua from file %s!\n", filename );
+
+	lua_registerFunction( state, LUA_registerCallback, "registerEventHandler" );
+	lua_registerFunction( state, LUA_print, "vprint" );
+
+	// *** Always call init
+	LUA_CALL( state, "init" );
+
+	return state;
 }

@@ -1,6 +1,5 @@
 // engine.h
-#ifndef __ENGINE_H__
-#define __ENGINE_H__
+#pragma once
 
 #include "base/list.h"
 #include "lua.h"
@@ -9,6 +8,8 @@
 
 // Lua Libraries
 #include <lua.h>
+
+#define DEBUG_LUA false
 
 extern scene* theScene;
 
@@ -81,5 +82,3 @@ void engine_addTicker( engine* e, void* entity, tickfunc tick );
 void engine_addRender( engine* e, void* entity, renderfunc render );
 
 void handleResize(int w, int h);
-
-#endif // __ENGINE_H__

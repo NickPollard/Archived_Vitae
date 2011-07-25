@@ -7,6 +7,8 @@ function init()
 
 --	registerEventHandler(engine, onTick, "tick")
 	registerEventHandler()
+
+--	vprint( "Hello" )
 end
 
 function handleKeyPress(keyCode)
@@ -20,4 +22,5 @@ end
 
 function tick()
 	counter = counter + 1
+--	print( "tick" )
 end

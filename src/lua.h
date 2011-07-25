@@ -1,5 +1,4 @@
-#ifndef __LUA_H__
-#define __LUA_H__
+#pragma once
 
 // Lua Libraries
 #include <lauxlib.h>
@@ -53,4 +52,5 @@ int LUA_registerCallback(lua_State* l);
 
 void lua_registerFunction(lua_State* l, lua_CFunction func, const char* name);
 
-#endif // __LUA_H__
+// Create a Lua State and load it's initial contents from <filename>
+lua_State* vlua_create( const char* filename );
