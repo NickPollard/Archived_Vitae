@@ -4,6 +4,12 @@
 //---------------------
 #include "mem/allocator.h"
 
+// temp
+#include "render/modelinstance.h"
+#include "model.h"
+#include "scene.h"
+#include "engine.h"
+
 
 // Is the luaCallback currently enabled?
 int luaCallback_enabled(luaCallback* l) {
@@ -55,6 +61,22 @@ int LUA_print( lua_State* l ) {
 	return 0;
 }
 
+int LUA_createModelInstance( lua_State* l ) {
+	if ( lua_isstring( l, 1 ) ) {
+		const char* filename = lua_tostring( l, 1 );
+		printf( "LUA: Creating instance of model \"%s\"\n", filename );
+		modelInstance* m = modelInstance_create( model_getHandleFromFilename( filename ) );
+		// TODO - fix static reference
+		scene* s = theScene;
+		transform* t = transform_create();
+		m->trans = t;
+		scene_addModel( s, m );
+		scene_addTransform( s, t );
+	} else
+		printf( "Error: LUA: No filename specified for vcreateModelInstance().\n" );
+	return 0;
+}
+
 void lua_registerFunction( lua_State* l, lua_CFunction func, const char* name ) {
     lua_pushcfunction( l, func );
     lua_setglobal( l, name );
@@ -69,6 +91,7 @@ lua_State* vlua_create( const char* filename ) {
 
 	lua_registerFunction( state, LUA_registerCallback, "registerEventHandler" );
 	lua_registerFunction( state, LUA_print, "vprint" );
+	lua_registerFunction( state, LUA_createModelInstance, "vcreateModelInstance" );
 
 	// *** Always call init
 	LUA_CALL( state, "init" );

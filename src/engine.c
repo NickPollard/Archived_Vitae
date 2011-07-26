@@ -157,6 +157,9 @@ void engine_init(engine* e, int argc, char** argv) {
 
 	timer_init(e->timer);
 	
+	// *** Init Memory
+	transform_initPool();
+	modelInstance_initPool();
 
 	// *** Initialise OpenGL
 	render_init(e, argc, argv);
@@ -167,9 +170,6 @@ void engine_init(engine* e, int argc, char** argv) {
 	// *** Initialise Lua
 	engine_initLua(e, argc, argv);
 	luaInterface_registerCallback(e->callbacks, "onTick", "tick");
-
-	transform_initPool();
-	modelInstance_initPool();
 
 	// TEST
 	test_engine_init( e );

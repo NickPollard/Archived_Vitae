@@ -8,6 +8,7 @@ function init()
 --	registerEventHandler(engine, onTick, "tick")
 	registerEventHandler()
 
+	spawn = true
 --	vprint( "Hello" )
 end
 
@@ -23,4 +24,9 @@ end
 function tick()
 	counter = counter + 1
 --	print( "tick" )
+	if spawn then
+		vcreateModelInstance( "dat/model/smoothsphere2.obj" )
+		spawn = false
+	end
+
 end
