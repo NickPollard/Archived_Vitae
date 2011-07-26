@@ -25,7 +25,11 @@ function tick()
 	counter = counter + 1
 --	print( "tick" )
 	if spawn then
-		vcreateModelInstance( "dat/model/smoothsphere2.obj" )
+		t = vcreateModelInstance( "dat/model/smoothsphere2.obj" )
+		vprint( "created modl" )
+		vsetWorldSpacePosition( t, 0.0, 10.0, 0.0 )
+		vprint( "set pos" )
+		vprint( string.format( "%s", t ) )
 		spawn = false
 	end
 

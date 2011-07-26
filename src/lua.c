@@ -9,6 +9,7 @@
 #include "model.h"
 #include "scene.h"
 #include "engine.h"
+#include "transform.h"
 
 
 // Is the luaCallback currently enabled?
@@ -47,6 +48,10 @@ void luaInterface_registerCallback(luaInterface* i, const char* name, const char
 	callBack->enabled = true;
 }
 
+
+// ***
+
+
 int LUA_registerCallback( lua_State* l ) {
 	printf("Register callback!\n");
 	return 0;
@@ -72,10 +77,40 @@ int LUA_createModelInstance( lua_State* l ) {
 		m->trans = t;
 		scene_addModel( s, m );
 		scene_addTransform( s, t );
-	} else
+		printf( "Transform pointer: %d.\n", (int)t );
+		int pointer = (int)t;
+		lua_pushnumber( l, (double)pointer );
+		return 1;
+	} else {
 		printf( "Error: LUA: No filename specified for vcreateModelInstance().\n" );
+		return 0;
+	}
+}
+
+int LUA_setWorldSpacePosition( lua_State* l ) {
+	if (lua_isnumber( l, 1 ) &&
+		   	lua_isnumber( l, 2 ) &&
+			lua_isnumber( l, 3 ) &&
+			lua_isnumber( l, 4 )) {
+		int pointer = (int)lua_tonumber( l, 1 );
+		transform* t = (transform*)pointer;
+		assert( t );
+		float x = lua_tonumber( l, 2 );
+		float y = lua_tonumber( l, 3 );
+		float z = lua_tonumber( l, 4 );
+		vector v = Vector( x, y, z, 1.0 );
+		matrix m;
+		matrix_cpy( m, t->world );
+		matrix_setTranslation( m, &v );
+		printf( "Transform pointer: %d.\n", (int)t );
+		transform_setWorldSpace( t, m );
+	}
 	return 0;
 }
+
+
+// ***
+
 
 void lua_registerFunction( lua_State* l, lua_CFunction func, const char* name ) {
     lua_pushcfunction( l, func );
@@ -92,6 +127,7 @@ lua_State* vlua_create( const char* filename ) {
 	lua_registerFunction( state, LUA_registerCallback, "registerEventHandler" );
 	lua_registerFunction( state, LUA_print, "vprint" );
 	lua_registerFunction( state, LUA_createModelInstance, "vcreateModelInstance" );
+	lua_registerFunction( state, LUA_setWorldSpacePosition, "vsetWorldSpacePosition" );
 
 	// *** Always call init
 	LUA_CALL( state, "init" );
