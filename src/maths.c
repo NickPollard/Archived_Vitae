@@ -54,6 +54,13 @@ void Cross(vector* dst, vector* srcA, vector* srcB) {
 	dst->coord.w = 1.f;
 }
 
+void vecScale( vector* dst, vector* src, float scale ) {
+	dst->coord.x = src->coord.x * scale;
+	dst->coord.y = src->coord.y * scale;
+	dst->coord.z = src->coord.z * scale;
+	dst->coord.w = src->coord.w;
+}
+
 // Normalise a vector
 // No use of restrict; dst *can* alias src
 void Normalize( vector* dst, vector* src ) {

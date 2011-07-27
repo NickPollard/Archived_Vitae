@@ -9,6 +9,7 @@
 #include "model.h"
 #include "model_loader.h"
 #include "mem/allocator.h"
+#include "physic.h"
 #include "render/debugdraw.h"
 #include "render/modelinstance.h"
 #include "system/file.h"
@@ -93,18 +94,24 @@ void scene_free( scene* s ) {
 }
 
 // Initialise a scene with some test data
-scene* test_scene_init( ) { 
+scene* test_scene_init( engine* e ) { 
 //	LoadObj( "dat/model/cube.obj" );
 
 	sterm* st = parse_file( "dat/test2.s" );
 	scene* s = eval( st );
 	sterm_free( st );
+	s->eng = e;
 
 	// Test Misc scene setup
 	s->cam = camera_create( s );
 	s->cam->trans = transform_createAndAdd( s );
 	scene_setCamera(s, 0.f, 0.f, 0.f, 1.f);
 	scene_setAmbient( s, 0.2f, 0.2f, 0.2f, 1.f );
+
+	physic* p = physic_create();
+	p->trans = scene_model( s, 0 )->trans;
+	p->velocity = Vector( 0.1f, 0.f, 0.f, 0.f );
+	engine_addTicker( s->eng, p, physic_tick );
 
 	return s;
 

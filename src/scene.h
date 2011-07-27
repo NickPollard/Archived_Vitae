@@ -10,6 +10,7 @@
 #define __SCENE_H__
 
 #include "common.fwd.h"
+#include "engine.h"
 #include "maths.h"
 #include "transform.h"
 
@@ -24,6 +25,7 @@
 
 // *** Scene ***
 struct scene_s {
+	engine*		eng;
 	int			model_count;
 	modelInstance**	modelInstances;
 	//
@@ -96,7 +98,7 @@ light* scene_light( scene* s, int i );
 void scene_addLight( scene* s, light* l );
 
 // Initialise a scene with some test data
-scene* test_scene_init();
+scene* test_scene_init( engine* e );
 
 void test_scene_tick(scene* s, float dt);
 

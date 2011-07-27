@@ -60,6 +60,8 @@ void Cross(vector* dst, vector* srcA, vector* srcB);
 // No use of restrict; dst *can* alias src
 void Normalize( vector* dst, vector* src );
 
+void vecScale( vector* dst, vector* src, float scale );
+
 // Matrix Vector multiply
 vector matrixVecMul(matrix m, const vector* v);
 

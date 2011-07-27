@@ -59,7 +59,7 @@ void test_engine_init( engine* e ) {
 	sterm_free( data );
 	*/
 	
-	theScene = test_scene_init();
+	theScene = test_scene_init( e );
 	theScene->debugtext = e->debugtext;
 
 	fcam = flycam_create();

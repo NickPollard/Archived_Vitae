@@ -27,6 +27,13 @@ void transform_setWorldSpace( transform* t, matrix world ) {
 //	t->local = t->world * inverse( t->parent->world );
 }
 
+void transform_setWorldSpacePosition( transform* t, vector* position ) {
+	matrix m;
+	matrix_cpy( m, t->world );
+	matrix_setTranslation( m, position );
+	transform_setWorldSpace( t, m );
+}
+
 void transform_setLocalSpace();
 
 // Create a new default transform
