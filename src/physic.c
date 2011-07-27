@@ -20,5 +20,8 @@ void physic_tick( void* data, float dt ) {
 	vecScale( &delta, &p->velocity, dt );
 	vector position;
 	Add( &position, &delta, matrix_getTranslation( p->trans->world ));
+	printf( "Physic Setting world space position to: " );
+	vector_print( &position );
+	printf( "\n" );
 	transform_setWorldSpacePosition( p->trans, &position );
 }

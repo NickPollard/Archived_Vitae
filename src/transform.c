@@ -24,6 +24,7 @@ void transform_setWorldSpace( transform* t, matrix world ) {
 		matrix_cpy( t->local, world );
 
 	transform_markDirty( t );
+	transform_concatenate( t );
 //	t->local = t->world * inverse( t->parent->world );
 }
 
@@ -31,7 +32,13 @@ void transform_setWorldSpacePosition( transform* t, vector* position ) {
 	matrix m;
 	matrix_cpy( m, t->world );
 	matrix_setTranslation( m, position );
+	printf( "Setting world space position to: " );
+	vector_print( position );
+	printf( "\n" );
 	transform_setWorldSpace( t, m );
+	printf( "World space position set to: " );
+	vector_print( matrix_getTranslation( t->world ));
+	printf( "\n" );
 }
 
 void transform_setLocalSpace();

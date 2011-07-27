@@ -10,6 +10,7 @@
 #include "scene.h"
 #include "transform.h"
 #include "camera/flycam.h"
+#include "camera/velcam.h"
 #include "render/debugdraw.h"
 #include "render/modelinstance.h"
 #include "render/render.h"
@@ -31,7 +32,7 @@ IMPLEMENT_LIST(delegate)
 // *** Static Hacks
 scene* theScene = NULL;
 engine* static_engine_hack;
-flycam* fcam;
+velcam* fcam;
 int w = 640, h = 480;
 
 float camX = 0.f;
@@ -62,8 +63,9 @@ void test_engine_init( engine* e ) {
 	theScene = test_scene_init( e );
 	theScene->debugtext = e->debugtext;
 
-	fcam = flycam_create();
-	flycam_setTarget( fcam, theScene->cam );
+	fcam = velcam_create( e );
+	scene_addTransform( theScene, fcam->trans );
+	velcam_setTarget( fcam, theScene->cam );
 }
 
 /*
@@ -73,7 +75,7 @@ void test_engine_init( engine* e ) {
  */
 
 void engine_input( engine* e ) {
-	flycam_input( fcam, e->input );
+	velcam_input( fcam, e->input );
 
 	scene_input( theScene, e->input );
 }
@@ -87,7 +89,7 @@ void engine_tick( engine* e ) {
 	input_tick( e->input, dt );
 	scene_tick( theScene, dt );
 
-	flycam_tick( fcam, dt );
+	velcam_tick( fcam, dt );
 
 	engine_tickTickers( e, dt );
 

@@ -108,11 +108,12 @@ scene* test_scene_init( engine* e ) {
 	scene_setCamera(s, 0.f, 0.f, 0.f, 1.f);
 	scene_setAmbient( s, 0.2f, 0.2f, 0.2f, 1.f );
 
+	/*
 	physic* p = physic_create();
 	p->trans = scene_model( s, 0 )->trans;
 	p->velocity = Vector( 0.1f, 0.f, 0.f, 0.f );
 	engine_addTicker( s->eng, p, physic_tick );
-
+*/
 	return s;
 
 //	scene_saveFile( s, "dat/test_scene.s" );

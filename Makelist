@@ -14,6 +14,7 @@ SRCS =	src/camera.c \
 		src/time.c \
 		src/transform.c \
 		src/camera/flycam.c \
+		src/camera/velcam.c \
 		src/mem/allocator.c \
 		src/render/debugdraw.c \
 		src/render/modelinstance.c \
