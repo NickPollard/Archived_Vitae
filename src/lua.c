@@ -10,6 +10,7 @@
 #include "scene.h"
 #include "engine.h"
 #include "transform.h"
+#include "input.h"
 
 
 // Is the luaCallback currently enabled?
@@ -108,6 +109,19 @@ int LUA_setWorldSpacePosition( lua_State* l ) {
 	return 0;
 }
 
+int LUA_keyPressed( lua_State* l ) {
+	if ( lua_isnumber( l, 1 ) ) {
+		int key = (int)lua_tonumber( l, 1 );
+		// TODO - unstatic this!
+		input* in = static_engine_hack->input;
+		bool pressed = input_keyPressed( in, key );
+		lua_pushboolean( l, pressed );
+		return 1;
+	}
+	printf( "Error: Lua: keyPressed called without key specified.\n" );
+	return 0;
+}
+
 
 // ***
 
@@ -128,6 +142,7 @@ lua_State* vlua_create( const char* filename ) {
 	lua_registerFunction( state, LUA_print, "vprint" );
 	lua_registerFunction( state, LUA_createModelInstance, "vcreateModelInstance" );
 	lua_registerFunction( state, LUA_setWorldSpacePosition, "vsetWorldSpacePosition" );
+	lua_registerFunction( state, LUA_keyPressed, "vkeyPressed" );
 
 	// *** Always call init
 	LUA_CALL( state, "init" );

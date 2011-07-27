@@ -34,6 +34,8 @@ typedef struct {
 	debugtextframe* debugtext;
 } engine;
 
+extern engine* static_engine_hack;
+
 /*
  *
  *  Static Functions

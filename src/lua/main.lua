@@ -21,16 +21,24 @@ function handleKeyPress(keyCode)
 	return counter
 end
 
+function start()
+	t = vcreateModelInstance( "dat/model/smoothsphere2.obj" )
+	vsetWorldSpacePosition( t, 0.0, 10.0, 0.0 )
+	spawn = false
+end
+
 function tick()
 	counter = counter + 1
---	print( "tick" )
 	if spawn then
-		t = vcreateModelInstance( "dat/model/smoothsphere2.obj" )
-		vprint( "created modl" )
-		vsetWorldSpacePosition( t, 0.0, 10.0, 0.0 )
-		vprint( "set pos" )
-		vprint( string.format( "%s", t ) )
-		spawn = false
+		start()
 	end
 
+	spacebar = 65
+	if vkeyPressed( spacebar ) then
+		onPressSpace()
+	end
+end
+
+function onPressSpace()
+	vprint( "Spacebar pressed!" )
 end
