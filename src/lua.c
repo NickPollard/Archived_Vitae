@@ -12,6 +12,7 @@
 #include "transform.h"
 #include "input.h"
 
+void lua_keycodes( lua_State* l );
 
 // Is the luaCallback currently enabled?
 int luaCallback_enabled(luaCallback* l) {
@@ -144,8 +145,32 @@ lua_State* vlua_create( const char* filename ) {
 	lua_registerFunction( state, LUA_setWorldSpacePosition, "vsetWorldSpacePosition" );
 	lua_registerFunction( state, LUA_keyPressed, "vkeyPressed" );
 
+	lua_keycodes( state );
+
 	// *** Always call init
 	LUA_CALL( state, "init" );
 
 	return state;
+}
+
+// Sets a field for the table that is assumed to be on the top of the Lua stack
+void lua_setfieldi( lua_State* l, const char* key, int value ) {
+	lua_pushstring( l, key );
+	lua_pushnumber( l, (double)value );
+	lua_settable( l, -3 ); // The table is at -3, as we have the key and the value on top
+}
+// Sets a field for the table that is assumed to be on the top of the Lua stack
+void lua_setfieldf( lua_State* l, const char* key, float value ) {
+	lua_pushstring( l, key );
+	lua_pushnumber( l, (double)value );
+	lua_settable( l, -3 ); // The table is at -3, as we have the key and the value on top
+}
+
+void lua_keycodes( lua_State* l ) {
+	lua_newtable( l ); // Create a table
+	lua_setfieldi( l, "w", KEY_W );
+	lua_setfieldi( l, "a", KEY_A );
+	lua_setfieldi( l, "s", KEY_S );
+	lua_setfieldi( l, "d", KEY_D );
+	lua_setglobal( l, "key" ); // store the table in the 'key' global variable
 }

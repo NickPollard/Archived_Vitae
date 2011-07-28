@@ -75,12 +75,8 @@ void velcam_process( velcam* cam, velcamInput* in ) {
 	matrix_fromEuler( m, &cam->euler );
 	// We have a translation in camera space
 	// Want to go to world space, so use normal (not inverse) cam transform
-	//vector translation_delta = matrixVecMul( m, &in->track );
-	vector translation_delta = Vector( 0.f, 0.f, 0.f, 0.f );
+	vector translation_delta = matrixVecMul( m, &in->track );
 	Add( &cam->translation, matrix_getTranslation( cam->trans->world ), &translation_delta );
-	printf( "Translation: " );
-	vector_print( &cam->translation );
-	printf( "\n" );
 	matrix_setTranslation( m, &cam->translation );
 	transform_setWorldSpace( cam->trans, m );
 }
@@ -95,7 +91,7 @@ void velcam_tick( velcam* f, float dt ) {
 	vector vel;
 	vector forward = Vector( 0.f, 0.f, 1.f, 0.f );
 	vel = matrixVecMul( f->trans->world, &forward );
-	float speed = 5.f;
+	float speed = 0.f;
 	vecScale( &vel, &vel, speed );
 	f->phys->velocity = vel;
 	transform_setWorldSpace( f->camera_target->trans, f->trans->world );

@@ -25,6 +25,8 @@ function start()
 	t = vcreateModelInstance( "dat/model/smoothsphere2.obj" )
 	vsetWorldSpacePosition( t, 0.0, 10.0, 0.0 )
 	spawn = false
+
+	vprint( string.format("%d %d %d %d", key.w, key.a, key.s, key.d) )
 end
 
 function tick()
@@ -33,12 +35,11 @@ function tick()
 		start()
 	end
 
-	spacebar = 65
-	if vkeyPressed( spacebar ) then
-		onPressSpace()
+	if vkeyPressed( key.a ) then
+		onPressA()
 	end
 end
 
-function onPressSpace()
-	vprint( "Spacebar pressed!" )
+function onPressA()
+	vprint( "A pressed!" )
 end
