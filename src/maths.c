@@ -36,7 +36,7 @@ void Add(vector* dst, const vector* srcA, const vector* srcB) {
 }
 
 // Vector &subtraction
-void Sub(vector* dst, vector* srcA, vector* srcB) {
+void Sub(vector* dst, const vector* srcA, const vector* srcB) {
 	for (int i = 0; i < 4; i++)
 		dst->val[i] = srcA->val[i] - srcB->val[i];
 }
@@ -288,12 +288,15 @@ const GLfloat* matrix_getGlMatrix( matrix m ) {
 
 // Multiply two matrices together
 void matrix_mul( matrix dst, matrix m1, matrix m2 ) {
+	matrix m;
 	for ( int i = 0; i < 4; i++ ) {
 		for ( int j = 0; j < 4; j++ ) {
-			dst[i][j] = m1[0][j] * m2[i][0]
+			m[i][j] = m1[0][j] * m2[i][0]
 						+ m1[1][j] * m2[i][1]
 						+ m1[2][j] * m2[i][2]
-						+ m1[3][j] * m2[i][3]; }}}
+						+ m1[3][j] * m2[i][3]; }}
+	matrix_cpy( dst, m );
+}
 
 // Copy one matrix to another
 void matrix_cpy( matrix dst, matrix src ) { 

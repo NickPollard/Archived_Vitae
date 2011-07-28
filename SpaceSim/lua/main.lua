@@ -39,7 +39,7 @@ function gameobject_create( model )
 	vphysic_setTransform( g.physic, g.transform )
 	vscene_addModel( scene, g.model )
 	vphysic_activate( g.physic )
-	vphysic_setVelocity( g.physic, 0.0, 1.0, 0.0 )
+	vphysic_setVelocity( g.physic, 0.0, 0.0, 0.0 )
 	return g
 end
 
@@ -73,8 +73,8 @@ end
 --]]
 
 -- Create a player. The player is a specialised form of Gameobject
-function player_create()
-	vprint( "player_create" )
+function playership_create()
+	vprint( "playership_create" )
 	local p = gameobject_create( "dat/model/ship.obj" )
 	--[[
 	vitae_register_keybind( "accelerate", "w", player_accelerate( p, acceleration ) )
@@ -83,6 +83,7 @@ function player_create()
 	vitae_register_keybind( "yaw right", "d", player_yaw( p, -yaw) )
 	vitae_register_keybind( "fire", "space", player_fire( p ) )
 --]]
+	p.speed = 0.0
 	return p
 end
 
@@ -99,10 +100,30 @@ function start()
 
 	-- We create a player object which is a game-specific Lua class
 	-- The player class itself creates several native C classes in the engine
-	player_ship = player_create()
+	player_ship = playership_create()
 end
 
 wave_interval_time = 10.0
+
+function playership_tick()
+	acceleration = 1.0
+	yaw = 0.01
+	if vkeyHeld( key.w ) then
+		player_ship.speed = player_ship.speed + acceleration
+		vprint( "Speed: " .. player_ship.speed )
+	end
+	if vkeyHeld( key.s ) then
+		player_ship.speed = player_ship.speed - acceleration
+		vprint( "Speed: " .. player_ship.speed )
+	end
+	if vkeyHeld( key.a ) then
+		vtransform_yaw( player_ship.transform, -yaw );
+	end
+	if vkeyHeld( key.d ) then
+		vtransform_yaw( player_ship.transform, yaw );
+	end
+	vphysic_setVelocity( player_ship.physic, 0.0, 0.0, player_ship.speed )
+end
 
 -- Called once per frame to update the current Lua State
 function tick()
@@ -112,10 +133,13 @@ function tick()
 		start()
 	end
 
+	playership_tick()
+--[[
 	if wave_complete( current_wave ) then
 		current_wave = current_wave + 1
 		vitae_countdown_trigger( wave_interval_time, spawn_wave( current_wave ))
 	end
+--]]
 end
 
 -- Called on termination to clean up after itself

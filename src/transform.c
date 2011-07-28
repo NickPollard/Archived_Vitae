@@ -29,10 +29,23 @@ void transform_setWorldSpace( transform* t, matrix world ) {
 }
 
 void transform_setWorldSpacePosition( transform* t, vector* position ) {
+	// Concat in case world space rotation is not up to date
+	// Could we just set localspace position actually?
+	/*
+	transform_concatenate( t );
 	matrix m;
 	matrix_cpy( m, t->world );
 	matrix_setTranslation( m, position );
 	transform_setWorldSpace( t, m );
+	*/
+	if ( !t->parent ) {
+		matrix_setTranslation( t->local, position );
+	} else {
+		vector position_local;
+		Sub( &position_local, position, matrix_getTranslation( t->parent->world ));
+		matrix_setTranslation( t->local, &position_local );
+	}
+	transform_concatenate( t );
 }
 
 void transform_setLocalSpace();
@@ -147,4 +160,12 @@ void transform_printDebug( transform* t, debugtextframe* f ) {
 			t->world[3][2] );
 #endif
 	PrintDebugText( f, string );
+}
+
+void transform_yaw( transform* t, float yaw ) {
+	printf( "t yaw\n" );
+	matrix m;
+	vector angles = Vector( 0.f, yaw, 0.f, 0.f );
+	matrix_fromEuler( m, &angles );
+	matrix_mul( t->local, t->local, m );
 }

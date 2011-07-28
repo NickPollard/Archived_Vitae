@@ -161,7 +161,7 @@ vector lua_tovector3( lua_State* l, int i ) {
 }
 
 int LUA_physic_setVelocity( lua_State* l ) {
-	printf( "lua physic setVelocity.\n" );
+//	printf( "lua physic setVelocity.\n" );
 	physic* p = lua_toptr( l, 1 );
 	vector v = lua_tovector3( l, 2 );
 	v.coord.w = 0.f;
@@ -202,7 +202,25 @@ int LUA_keyPressed( lua_State* l ) {
 	printf( "Error: Lua: keyPressed called without key specified.\n" );
 	return 0;
 }
+int LUA_keyHeld( lua_State* l ) {
+	if ( lua_isnumber( l, 1 ) ) {
+		int key = (int)lua_tonumber( l, 1 );
+		// TODO - unstatic this!
+		input* in = static_engine_hack->input;
+		bool held = input_keyHeld( in, key );
+		lua_pushboolean( l, held );
+		return 1;
+	}
+	printf( "Error: Lua: keyHeld called without key specified.\n" );
+	return 0;
+}
 
+int LUA_transform_yaw( lua_State* l ) {
+	transform* t = lua_toptr( l, 1 );
+	float yaw = lua_tonumber( l, 2 );
+	transform_yaw( t, yaw );
+	return 0;
+}
 
 void lua_makeConstantPtr( lua_State* l, const char* name, void* ptr ) {
 	lua_pushptr( l, ptr );
@@ -225,18 +243,26 @@ lua_State* vlua_create( const char* filename ) {
 		assert( 0 );
 	}
 
+	// *** General
 	lua_registerFunction( state, LUA_registerCallback, "registerEventHandler" );
 	lua_registerFunction( state, LUA_print, "vprint" );
+	// *** Input
+	lua_registerFunction( state, LUA_keyPressed, "vkeyPressed" );
+	lua_registerFunction( state, LUA_keyHeld, "vkeyHeld" );
+	// *** Scene
 	lua_registerFunction( state, LUA_createModelInstance, "vcreateModelInstance" );
 	lua_registerFunction( state, LUA_createphysic, "vcreatePhysic" );
 	lua_registerFunction( state, LUA_createtransform, "vcreateTransform" );
 	lua_registerFunction( state, LUA_setWorldSpacePosition, "vsetWorldSpacePosition" );
-	lua_registerFunction( state, LUA_keyPressed, "vkeyPressed" );
 	lua_registerFunction( state, LUA_model_setTransform, "vmodel_setTransform" );
 	lua_registerFunction( state, LUA_physic_setTransform, "vphysic_setTransform" );
 	lua_registerFunction( state, LUA_scene_addModel, "vscene_addModel" );
 	lua_registerFunction( state, LUA_physic_activate, "vphysic_activate" );
 	lua_registerFunction( state, LUA_physic_setVelocity, "vphysic_setVelocity" );
+	lua_registerFunction( state, LUA_transform_yaw, "vtransform_yaw" );
+
+
+
 	lua_keycodes( state );
 
 	// *** Always call init

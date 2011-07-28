@@ -48,7 +48,7 @@ vector Vector(float x, float y, float z, float w);
 void Add(vector* dst, const vector* srcA, const vector* srcB);
 
 // Vector subtraction
-void Sub(vector *dst, vector* srcA, vector* srcB);
+void Sub(vector *dst, const vector* srcA, const vector* srcB);
 
 // Vector dot product
 float Dot(vector* A, vector* B);
