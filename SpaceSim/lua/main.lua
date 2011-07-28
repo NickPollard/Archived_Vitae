@@ -11,7 +11,10 @@ C and only controlled remotely by Lua
 
 ]]--
 
+-- player - this object contains general data about the player
 player = nil
+-- player_ship - the actual ship entity flying around
+player_ship = nil
 
 --[[ Vitae C functions exposed for Lua 
 
@@ -26,12 +29,17 @@ vitae_model_setTransform( model, transform )		- Sets the transform of the modeli
 -- A gameobject has a visual representation (model), a physical entity for velocity and momentum (physic)
 -- and a transform for locating it in space (transform)
 function gameobject_create( model )
+	vprint( "gameobject_create" )
+	vprint( model )
 	local g = {}
-	g.model = vitae_model_load( model )
-	g.physic = vitae_physic()
-	g.transform = vitae_transform()
-	vitae_model_setTransform( g.model, g.transform )
-	vitae_physic_setTransform( g.physic, g.transform )
+	g.model = vcreateModelInstance( model )
+	g.physic = vcreatePhysic()
+	g.transform = vcreateTransform()
+	vmodel_setTransform( g.model, g.transform )
+	vphysic_setTransform( g.physic, g.transform )
+	vscene_addModel( scene, g.model )
+	vphysic_activate( g.physic )
+	vphysic_setVelocity( g.physic, 0.0, 1.0, 0.0 )
 	return g
 end
 
@@ -43,8 +51,8 @@ function player_yaw( p, y )
 	vitae_physic_yaw( p.physic, y )
 end
 
-projectile_model = "bullet.obj"
-
+projectile_model = "dat/model/smoothsphere2.obj"
+--[[
 function player_fire( p )
 	local g = {}
 	-- Create a new Projectile
@@ -62,31 +70,48 @@ function player_fire( p )
 		vitae_particle_spawn( "explosion.part", translation( bullet.transform ) )
 	end )
 end
+--]]
 
 -- Create a player. The player is a specialised form of Gameobject
 function player_create()
-	local p = game_object_create( "smoothsphere.obj" )
+	vprint( "player_create" )
+	local p = gameobject_create( "dat/model/ship.obj" )
+	--[[
 	vitae_register_keybind( "accelerate", "w", player_accelerate( p, acceleration ) )
 	vitae_register_keybind( "decelerate", "s", player_accelerate( p, -acceleration ) )
 	vitae_register_keybind( "yaw left", "a", player_yaw( p, yaw) )
 	vitae_register_keybind( "yaw right", "d", player_yaw( p, -yaw) )
-
 	vitae_register_keybind( "fire", "space", player_fire( p ) )
+--]]
 	return p
 end
 
+starting = true
 
 -- Set up the Lua State
 function init()
+	vprint( "init" )
+	starting = true
+end
+
+function start()
+	vprint( "start" )
+
 	-- We create a player object which is a game-specific Lua class
 	-- The player class itself creates several native C classes in the engine
-	player = player_create()
+	player_ship = player_create()
 end
 
 wave_interval_time = 10.0
 
 -- Called once per frame to update the current Lua State
 function tick()
+	if starting then
+		vprint( "tick" )
+		starting = false
+		start()
+	end
+
 	if wave_complete( current_wave ) then
 		current_wave = current_wave + 1
 		vitae_countdown_trigger( wave_interval_time, spawn_wave( current_wave ))

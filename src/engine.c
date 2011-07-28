@@ -62,6 +62,7 @@ void test_engine_init( engine* e ) {
 	
 	theScene = test_scene_init( e );
 	theScene->debugtext = e->debugtext;
+	lua_setScene( e->lua, theScene );
 
 	fcam = velcam_create( e );
 	scene_addTransform( theScene, fcam->trans );
@@ -138,7 +139,7 @@ float depth = 8.f;
 
 // Initialise the Lua subsystem so that it is ready for use
 void engine_initLua(engine* e, int argc, char** argv) {
-	e->lua = vlua_create( "src/lua/main.lua" );
+	e->lua = vlua_create( "SpaceSim/lua/main.lua" );
 }
 
 // Create a new engine

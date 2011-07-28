@@ -17,6 +17,7 @@ void modelInstance_initPool() {
 
 modelInstance* modelInstance_createEmpty( ) {
 	modelInstance* i = pool_modelInstance_allocate( static_modelInstance_pool );
+	memset( i, 0, sizeof( modelInstance ));
 	return i;
 }
 

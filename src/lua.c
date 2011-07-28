@@ -11,8 +11,24 @@
 #include "engine.h"
 #include "transform.h"
 #include "input.h"
+#include "physic.h"
 
 void lua_keycodes( lua_State* l );
+
+// *** Helpers ***
+
+void lua_assertnumber( lua_State* l, int index ) {
+	assert( lua_isnumber( l, index ));
+}
+void* lua_toptr( lua_State* l, int index ) {
+	lua_assertnumber( l, index );
+	int ptr = lua_tonumber( l, index );
+	return (void*)ptr;
+}
+
+
+// ***
+
 
 // Is the luaCallback currently enabled?
 int luaCallback_enabled(luaCallback* l) {
@@ -68,20 +84,19 @@ int LUA_print( lua_State* l ) {
 	return 0;
 }
 
+void lua_pushptr( lua_State* l, void* ptr ) {
+	int pointer = (int)ptr;
+	lua_pushnumber( l, (double)pointer );
+}
+
 int LUA_createModelInstance( lua_State* l ) {
 	if ( lua_isstring( l, 1 ) ) {
 		const char* filename = lua_tostring( l, 1 );
 		printf( "LUA: Creating instance of model \"%s\"\n", filename );
 		modelInstance* m = modelInstance_create( model_getHandleFromFilename( filename ) );
-		// TODO - fix static reference
-		scene* s = theScene;
-		transform* t = transform_create();
-		m->trans = t;
-		scene_addModel( s, m );
-		scene_addTransform( s, t );
-		printf( "Transform pointer: %d.\n", (int)t );
-		int pointer = (int)t;
-		lua_pushnumber( l, (double)pointer );
+
+		printf( "Model pointer: %d.\n", (int)m );
+		lua_pushptr( l, m );
 		return 1;
 	} else {
 		printf( "Error: LUA: No filename specified for vcreateModelInstance().\n" );
@@ -89,13 +104,78 @@ int LUA_createModelInstance( lua_State* l ) {
 	}
 }
 
+// vscene_addModel( scene, model )
+int LUA_scene_addModel( lua_State* l ) {
+	printf( "Lua_scene_addModel\n" );
+	scene* s = lua_toptr( l, 1 );	
+	modelInstance* m = lua_toptr( l, 2 );	
+// TODO - fix static reference
+//		scene* s = theScene;
+//		transform* t = transform_create();
+//		m->trans = t;
+//		scene_addModel( s, m );
+//		scene_addTransform( s, t );
+	scene_addModel( s, m );
+	return 0;
+}
+
+#define LUA_CREATE_( type, func ) \
+int LUA_create##type( lua_State* l ) { \
+	printf( "Create %s\n", #type ); \
+	type* ptr = func(); \
+	lua_pushptr( l, ptr ); \
+	return 1; \
+}
+
+LUA_CREATE_( transform, transform_create )
+LUA_CREATE_( physic, physic_create )
+
+
+int LUA_model_setTransform( lua_State* l ) {
+	printf( "lua model set transform\n" );
+	lua_assertnumber( l, 1 );
+	lua_assertnumber( l, 2 );
+	modelInstance* m = lua_toptr( l, 1 );
+	transform* t = lua_toptr( l, 2 );
+	m->trans = t;
+	return 0;
+}
+
+int LUA_physic_setTransform( lua_State* l ) {
+	printf( "lua physic set transform\n" );
+	physic* p = lua_toptr( l, 1 );
+	transform* t = lua_toptr( l, 2 );
+	p->trans = t;
+	return 0;
+}
+
+int LUA_physic_activate( lua_State* l ) {
+	printf( "lua physic activate.\n" );
+	physic* p = lua_toptr( l, 1 );
+	engine_addTicker( static_engine_hack, p, physic_tick );
+	return 0;
+}
+
+vector lua_tovector3( lua_State* l, int i ) {
+	return Vector( lua_tonumber( l, i ), lua_tonumber( l, i+1 ), lua_tonumber( l, i+2 ), 0.f );
+}
+
+int LUA_physic_setVelocity( lua_State* l ) {
+	printf( "lua physic setVelocity.\n" );
+	physic* p = lua_toptr( l, 1 );
+	vector v = lua_tovector3( l, 2 );
+	v.coord.w = 0.f;
+	p->velocity = v;
+	return 0;
+}
+
+
 int LUA_setWorldSpacePosition( lua_State* l ) {
 	if (lua_isnumber( l, 1 ) &&
 		   	lua_isnumber( l, 2 ) &&
 			lua_isnumber( l, 3 ) &&
 			lua_isnumber( l, 4 )) {
-		int pointer = (int)lua_tonumber( l, 1 );
-		transform* t = (transform*)pointer;
+		transform* t = lua_toptr( l, 1 );
 		assert( t );
 		float x = lua_tonumber( l, 2 );
 		float y = lua_tonumber( l, 3 );
@@ -124,6 +204,10 @@ int LUA_keyPressed( lua_State* l ) {
 }
 
 
+void lua_makeConstantPtr( lua_State* l, const char* name, void* ptr ) {
+	lua_pushptr( l, ptr );
+	lua_setglobal( l, name ); // Store in the global variable named <name>
+}
 // ***
 
 
@@ -136,15 +220,23 @@ void lua_registerFunction( lua_State* l, lua_CFunction func, const char* name ) 
 lua_State* vlua_create( const char* filename ) {
 	lua_State* state = lua_open();
 	luaL_openlibs( state );	// Load the Lua libs into our lua state
-	if ( luaL_loadfile( state, filename ) || lua_pcall( state, 0, 0, 0))
+	if ( luaL_loadfile( state, filename ) || lua_pcall( state, 0, 0, 0)) {
 		printf("Error: Failed loading lua from file %s!\n", filename );
+		assert( 0 );
+	}
 
 	lua_registerFunction( state, LUA_registerCallback, "registerEventHandler" );
 	lua_registerFunction( state, LUA_print, "vprint" );
 	lua_registerFunction( state, LUA_createModelInstance, "vcreateModelInstance" );
+	lua_registerFunction( state, LUA_createphysic, "vcreatePhysic" );
+	lua_registerFunction( state, LUA_createtransform, "vcreateTransform" );
 	lua_registerFunction( state, LUA_setWorldSpacePosition, "vsetWorldSpacePosition" );
 	lua_registerFunction( state, LUA_keyPressed, "vkeyPressed" );
-
+	lua_registerFunction( state, LUA_model_setTransform, "vmodel_setTransform" );
+	lua_registerFunction( state, LUA_physic_setTransform, "vphysic_setTransform" );
+	lua_registerFunction( state, LUA_scene_addModel, "vscene_addModel" );
+	lua_registerFunction( state, LUA_physic_activate, "vphysic_activate" );
+	lua_registerFunction( state, LUA_physic_setVelocity, "vphysic_setVelocity" );
 	lua_keycodes( state );
 
 	// *** Always call init
@@ -152,6 +244,12 @@ lua_State* vlua_create( const char* filename ) {
 
 	return state;
 }
+
+void lua_setScene( lua_State* l, scene* s ) {
+	lua_makeConstantPtr( l, "scene", theScene );
+}
+
+
 
 // Sets a field for the table that is assumed to be on the top of the Lua stack
 void lua_setfieldi( lua_State* l, const char* key, int value ) {
