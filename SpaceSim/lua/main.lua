@@ -108,21 +108,25 @@ wave_interval_time = 10.0
 function playership_tick()
 	acceleration = 1.0
 	yaw = 0.01
-	if vkeyHeld( key.w ) then
+	if vkeyHeld( key.up ) then
 		player_ship.speed = player_ship.speed + acceleration
-		vprint( "Speed: " .. player_ship.speed )
 	end
-	if vkeyHeld( key.s ) then
+	if vkeyHeld( key.down ) then
 		player_ship.speed = player_ship.speed - acceleration
-		vprint( "Speed: " .. player_ship.speed )
 	end
-	if vkeyHeld( key.a ) then
+	if vkeyHeld( key.left ) then
 		vtransform_yaw( player_ship.transform, -yaw );
 	end
-	if vkeyHeld( key.d ) then
+	if vkeyHeld( key.right ) then
 		vtransform_yaw( player_ship.transform, yaw );
 	end
 	vphysic_setVelocity( player_ship.physic, 0.0, 0.0, player_ship.speed )
+---[[
+	ship_v = Vector( 0.0, 0.0, player_ship.speed, 0.0 )
+--	vector_print( ship_v )
+--	world_v = matrixVecMul( player_ship.transform, ship_v )
+--	vphysic_setVelocity( player_ship.physic, world_v )
+	--]]
 end
 
 -- Called once per frame to update the current Lua State

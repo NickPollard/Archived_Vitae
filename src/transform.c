@@ -163,7 +163,6 @@ void transform_printDebug( transform* t, debugtextframe* f ) {
 }
 
 void transform_yaw( transform* t, float yaw ) {
-	printf( "t yaw\n" );
 	matrix m;
 	vector angles = Vector( 0.f, yaw, 0.f, 0.f );
 	matrix_fromEuler( m, &angles );

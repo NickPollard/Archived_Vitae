@@ -13,6 +13,10 @@
 #include "input.h"
 #include "physic.h"
 
+#define MAX_LUA_VECTORS 64
+vector lua_vectors[MAX_LUA_VECTORS];
+int lua_vector_count;
+
 void lua_keycodes( lua_State* l );
 
 // *** Helpers ***
@@ -28,6 +32,17 @@ void* lua_toptr( lua_State* l, int index ) {
 
 
 // ***
+
+void lua_init() {
+	// the vector count starts at 0, is reset to 0 every frame
+	// this is for storing temporary vectors
+	lua_vector_count = 0;
+}
+
+void lua_preTick( float dt ) {
+	// reset vectors at the start of every tick
+	lua_vector_count = 0;
+}
 
 
 // Is the luaCallback currently enabled?
@@ -222,6 +237,31 @@ int LUA_transform_yaw( lua_State* l ) {
 	return 0;
 }
 
+vector* lua_createVector( float x, float y, float z, float w ) {
+	if ( !(lua_vector_count < 64) )
+		lua_vector_count = 0;
+	assert( lua_vector_count < 64 );
+	printf( "Allocating lua temporary vector num: %d\n", lua_vector_count );
+	vector* v = &lua_vectors[lua_vector_count++];
+	*v = Vector( x, y, z, w );
+	return v;
+}
+
+// Make a vector in Lua
+// This is using light userdata?
+int LUA_vector( lua_State* l ) {
+	float x = lua_tonumber( l, 1 );
+	float y = lua_tonumber( l, 2 );
+	float z = lua_tonumber( l, 3 );
+	float w = lua_tonumber( l, 4 );
+	vector* v = lua_createVector( x, y, z, w );
+	printf( "Created temporary Lua Vector: " );
+	vector_print( v );
+	printf( "\n" );
+	lua_pushptr( l, v );
+	return 1;
+}
+
 void lua_makeConstantPtr( lua_State* l, const char* name, void* ptr ) {
 	lua_pushptr( l, ptr );
 	lua_setglobal( l, name ); // Store in the global variable named <name>
@@ -246,6 +286,8 @@ lua_State* vlua_create( const char* filename ) {
 	// *** General
 	lua_registerFunction( state, LUA_registerCallback, "registerEventHandler" );
 	lua_registerFunction( state, LUA_print, "vprint" );
+	// *** Vector
+	lua_registerFunction( state, LUA_vector, "Vector" );
 	// *** Input
 	lua_registerFunction( state, LUA_keyPressed, "vkeyPressed" );
 	lua_registerFunction( state, LUA_keyHeld, "vkeyHeld" );
@@ -296,5 +338,9 @@ void lua_keycodes( lua_State* l ) {
 	lua_setfieldi( l, "a", KEY_A );
 	lua_setfieldi( l, "s", KEY_S );
 	lua_setfieldi( l, "d", KEY_D );
+	lua_setfieldi( l, "up", KEY_UP );
+	lua_setfieldi( l, "down", KEY_DOWN );
+	lua_setfieldi( l, "left", KEY_LEFT );
+	lua_setfieldi( l, "right", KEY_RIGHT );
 	lua_setglobal( l, "key" ); // store the table in the 'key' global variable
 }

@@ -85,6 +85,8 @@ void engine_input( engine* e ) {
 void engine_tick( engine* e ) {
 	float dt = timer_getDelta( e->timer );
 
+	lua_preTick( dt );
+
 	engine_input( e );
 
 	input_tick( e->input, dt );
