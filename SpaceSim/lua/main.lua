@@ -120,12 +120,11 @@ function playership_tick()
 	if vkeyHeld( key.right ) then
 		vtransform_yaw( player_ship.transform, yaw );
 	end
-	vphysic_setVelocity( player_ship.physic, 0.0, 0.0, player_ship.speed )
+--	vphysic_setVelocity( player_ship.physic, 0.0, 0.0, player_ship.speed )
 ---[[
 	ship_v = Vector( 0.0, 0.0, player_ship.speed, 0.0 )
---	vector_print( ship_v )
---	world_v = matrixVecMul( player_ship.transform, ship_v )
---	vphysic_setVelocity( player_ship.physic, world_v )
+	world_v = vtransformVector( player_ship.transform, ship_v )
+	vphysic_setVelocity( player_ship.physic, world_v )
 	--]]
 end
 

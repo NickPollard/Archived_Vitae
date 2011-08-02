@@ -178,9 +178,10 @@ vector lua_tovector3( lua_State* l, int i ) {
 int LUA_physic_setVelocity( lua_State* l ) {
 //	printf( "lua physic setVelocity.\n" );
 	physic* p = lua_toptr( l, 1 );
-	vector v = lua_tovector3( l, 2 );
-	v.coord.w = 0.f;
-	p->velocity = v;
+//	vector v = lua_tovector3( l, 2 );
+	vector* v = lua_toptr( l, 2 );
+//	v.coord.w = 0.f;
+	p->velocity = *v;
 	return 0;
 }
 
@@ -237,13 +238,12 @@ int LUA_transform_yaw( lua_State* l ) {
 	return 0;
 }
 
-vector* lua_createVector( float x, float y, float z, float w ) {
+vector* lua_createVector( ) {
 	if ( !(lua_vector_count < 64) )
 		lua_vector_count = 0;
 	assert( lua_vector_count < 64 );
 	printf( "Allocating lua temporary vector num: %d\n", lua_vector_count );
 	vector* v = &lua_vectors[lua_vector_count++];
-	*v = Vector( x, y, z, w );
 	return v;
 }
 
@@ -255,10 +255,23 @@ int LUA_vector( lua_State* l ) {
 	float z = lua_tonumber( l, 3 );
 	float w = lua_tonumber( l, 4 );
 	vector* v = lua_createVector( x, y, z, w );
+	*v = Vector( x, y, z, w );
 	printf( "Created temporary Lua Vector: " );
 	vector_print( v );
 	printf( "\n" );
 	lua_pushptr( l, v );
+	return 1;
+}
+
+int LUA_transformVector( lua_State* l ) {
+	transform* t = lua_toptr( l, 1 );
+	vector* v = lua_toptr( l, 2 );
+	vector* _v = lua_createVector();
+	*_v = matrixVecMul( t->world, v );
+	printf( "Created temporary Lua Vector: " );
+	vector_print( _v );
+	printf( "\n" );
+	lua_pushptr( l, _v );
 	return 1;
 }
 
@@ -302,6 +315,7 @@ lua_State* vlua_create( const char* filename ) {
 	lua_registerFunction( state, LUA_physic_activate, "vphysic_activate" );
 	lua_registerFunction( state, LUA_physic_setVelocity, "vphysic_setVelocity" );
 	lua_registerFunction( state, LUA_transform_yaw, "vtransform_yaw" );
+	lua_registerFunction( state, LUA_transformVector, "vtransformVector" );
 
 
 
