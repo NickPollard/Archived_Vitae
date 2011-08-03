@@ -39,7 +39,9 @@ function gameobject_create( model )
 	vphysic_setTransform( g.physic, g.transform )
 	vscene_addModel( scene, g.model )
 	vphysic_activate( g.physic )
-	vphysic_setVelocity( g.physic, 0.0, 0.0, 0.0 )
+--	vphysic_setVelocity( g.physic, 0.0, 0.0, 0.0 )
+	v = Vector( 0.0, 0.0, 0.0, 0.0 )
+	vphysic_setVelocity( g.physic, v )
 	return g
 end
 
