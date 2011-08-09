@@ -42,12 +42,12 @@ void Sub(vector* dst, const vector* srcA, const vector* srcB) {
 }
 
 // Vector dot product
-float Dot(vector* A, vector* B) {
+float Dot( const vector* A, const vector* B ) {
 	return (A->coord.x * B->coord.x + A->coord.y + B->coord.y + A->coord.z + B->coord.z);
 }
 
 // Vector cross product
-void Cross(vector* dst, vector* srcA, vector* srcB) {
+void Cross(vector* dst, const vector* srcA, const vector* srcB) {
 	dst->coord.x = (srcA->coord.y * srcB->coord.z) - (srcA->coord.z * srcB->coord.y);
 	dst->coord.y = (srcA->coord.z * srcB->coord.x) - (srcA->coord.x * srcB->coord.z);
 	dst->coord.z = (srcA->coord.x * srcB->coord.y) - (srcA->coord.y * srcB->coord.x);
@@ -143,6 +143,9 @@ void matrix_setTranslation(matrix m, const vector* v) {
 // Get the translation component of a 4x4 matrix
 const vector* matrix_getTranslation(matrix m) {
 	return (vector*)m[3]; }
+
+const vector* matrix_getCol( matrix m, int i ) {
+	return (vector*)m[i]; }
 
 // Initialise a matrix to the identity
 void matrix_setIdentity(matrix m) {
@@ -316,12 +319,28 @@ matrix matrix_fromQuat( quaternion q ) {
 	matrix m;
 	return m;
 }
+*/
 
 quaternion quat_fromMatrix( matrix m ) {
 	quaternion q;
+	// Need to calculate axis and angle of rotation
+	// Quaternion is:
+	// v s where v is sin(2t) . axis
+	// s is cos(2t)
+
+	vector* z_old = NULL;
+	const vector* z_new = matrix_getCol( m, 2 );
+	// The axis of rotation must be perpendicular to both old and new angles
+	// If both Z axis are identical, the axis of rotation must be the Z axis
+	vector axis; 
+	Cross( &axis, z_old, z_new );
+	float cos_t = Dot( z_old, z_new );
+	float t = acos( cos_t );
+	(void)t;
 	return q;
 }
 
+/*
 matrix matrix_build( quaternion rot, vec trans ) {
 	matrix m;
 	return m;

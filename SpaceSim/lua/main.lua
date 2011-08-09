@@ -78,6 +78,7 @@ end
 function playership_create()
 	vprint( "playership_create" )
 	local p = gameobject_create( "dat/model/ship.obj" )
+
 	--[[
 	vitae_register_keybind( "accelerate", "w", player_accelerate( p, acceleration ) )
 	vitae_register_keybind( "decelerate", "s", player_accelerate( p, -acceleration ) )
@@ -103,17 +104,19 @@ function start()
 	-- We create a player object which is a game-specific Lua class
 	-- The player class itself creates several native C classes in the engine
 	player_ship = playership_create()
+	vchasecam_follow( player_ship.transform );
 end
 
 wave_interval_time = 10.0
 
 function playership_tick()
 	acceleration = 1.0
-	yaw = 0.01
-	if vkeyHeld( key.up ) then
+	yaw = 0.02
+	pitch = 0.02
+	if vkeyHeld( key.w ) then
 		player_ship.speed = player_ship.speed + acceleration
 	end
-	if vkeyHeld( key.down ) then
+	if vkeyHeld( key.s ) then
 		player_ship.speed = player_ship.speed - acceleration
 	end
 	if vkeyHeld( key.left ) then
@@ -122,12 +125,15 @@ function playership_tick()
 	if vkeyHeld( key.right ) then
 		vtransform_yaw( player_ship.transform, yaw );
 	end
---	vphysic_setVelocity( player_ship.physic, 0.0, 0.0, player_ship.speed )
----[[
+	if vkeyHeld( key.up ) then
+		vtransform_pitch( player_ship.transform, -pitch );
+	end
+	if vkeyHeld( key.down ) then
+		vtransform_pitch( player_ship.transform, pitch );
+	end
 	ship_v = Vector( 0.0, 0.0, player_ship.speed, 0.0 )
 	world_v = vtransformVector( player_ship.transform, ship_v )
 	vphysic_setVelocity( player_ship.physic, world_v )
-	--]]
 end
 
 -- Called once per frame to update the current Lua State

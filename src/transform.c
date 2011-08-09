@@ -168,3 +168,10 @@ void transform_yaw( transform* t, float yaw ) {
 	matrix_fromEuler( m, &angles );
 	matrix_mul( t->local, t->local, m );
 }
+
+void transform_pitch( transform* t, float pitch ) {
+	matrix m;
+	vector angles = Vector( pitch, 0.f, 0.f, 0.f );
+	matrix_fromEuler( m, &angles );
+	matrix_mul( t->local, t->local, m );
+}

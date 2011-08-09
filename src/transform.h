@@ -50,4 +50,6 @@ void transform_setWorldSpace( transform* t, matrix world );
 void transform_setWorldSpacePosition( transform* t, vector* position );
 
 void transform_yaw( transform* t, float yaw );
+void transform_pitch( transform* t, float pitch );
+
 #endif // __TRANSFORM_H__

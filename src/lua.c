@@ -5,6 +5,7 @@
 #include "mem/allocator.h"
 
 // temp
+#include "camera/chasecam.h"
 #include "render/modelinstance.h"
 #include "model.h"
 #include "scene.h"
@@ -238,11 +239,17 @@ int LUA_transform_yaw( lua_State* l ) {
 	return 0;
 }
 
+int LUA_transform_pitch( lua_State* l ) {
+	transform* t = lua_toptr( l, 1 );
+	float pitch = lua_tonumber( l, 2 );
+	transform_pitch( t, pitch );
+	return 0;
+}
+
 vector* lua_createVector( ) {
 	if ( !(lua_vector_count < 64) )
 		lua_vector_count = 0;
 	assert( lua_vector_count < 64 );
-	printf( "Allocating lua temporary vector num: %d\n", lua_vector_count );
 	vector* v = &lua_vectors[lua_vector_count++];
 	return v;
 }
@@ -256,9 +263,6 @@ int LUA_vector( lua_State* l ) {
 	float w = lua_tonumber( l, 4 );
 	vector* v = lua_createVector( x, y, z, w );
 	*v = Vector( x, y, z, w );
-	printf( "Created temporary Lua Vector: " );
-	vector_print( v );
-	printf( "\n" );
 	lua_pushptr( l, v );
 	return 1;
 }
@@ -268,11 +272,18 @@ int LUA_transformVector( lua_State* l ) {
 	vector* v = lua_toptr( l, 2 );
 	vector* _v = lua_createVector();
 	*_v = matrixVecMul( t->world, v );
-	printf( "Created temporary Lua Vector: " );
-	vector_print( _v );
-	printf( "\n" );
 	lua_pushptr( l, _v );
 	return 1;
+}
+
+int LUA_chasecam_follow( lua_State* l ) {
+	printf( "LUA chasecam_follow\n" );
+	transform* t = lua_toptr( l, 1 );
+	chasecam* c = chasecam_create();
+	engine_addTicker( static_engine_hack, (void*)c, chasecam_tick );	
+	c->cam = theScene->cam;
+	c->target = t;
+	return 0;
 }
 
 void lua_makeConstantPtr( lua_State* l, const char* name, void* ptr ) {
@@ -315,7 +326,10 @@ lua_State* vlua_create( const char* filename ) {
 	lua_registerFunction( state, LUA_physic_activate, "vphysic_activate" );
 	lua_registerFunction( state, LUA_physic_setVelocity, "vphysic_setVelocity" );
 	lua_registerFunction( state, LUA_transform_yaw, "vtransform_yaw" );
+	lua_registerFunction( state, LUA_transform_pitch, "vtransform_pitch" );
 	lua_registerFunction( state, LUA_transformVector, "vtransformVector" );
+	// *** Camera
+	lua_registerFunction( state, LUA_chasecam_follow, "vchasecam_follow" );
 
 
 

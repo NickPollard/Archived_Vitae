@@ -51,10 +51,10 @@ void Add(vector* dst, const vector* srcA, const vector* srcB);
 void Sub(vector *dst, const vector* srcA, const vector* srcB);
 
 // Vector dot product
-float Dot(vector* A, vector* B);
+float Dot( const vector* A, const vector* B );
 
 // Vector cross product
-void Cross(vector* dst, vector* srcA, vector* srcB);
+void Cross(vector* dst, const vector* srcA, const vector* srcB);
 
 // Normalise a vector
 // No use of restrict; dst *can* alias src
