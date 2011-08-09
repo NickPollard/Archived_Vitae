@@ -54,7 +54,7 @@ void Cross(vector* dst, const vector* srcA, const vector* srcB) {
 	dst->coord.w = 1.f;
 }
 
-void vecScale( vector* dst, vector* src, float scale ) {
+void vector_scale( vector* dst, vector* src, float scale ) {
 	dst->coord.x = src->coord.x * scale;
 	dst->coord.y = src->coord.y * scale;
 	dst->coord.z = src->coord.z * scale;
@@ -70,6 +70,16 @@ void Normalize( vector* dst, vector* src ) {
 	dst->coord.y = src->coord.y * invLength;
 	dst->coord.z = src->coord.z * invLength;
 	dst->coord.w = src->coord.w; // Preserve the W coord? This seems right to me
+}
+
+vector vector_lerp( vector* from, vector* to, float amount ) {
+	vector v;
+	float inv = 1.f - amount;
+	v.coord.x = from->coord.x * inv + to->coord.x * amount;
+	v.coord.y = from->coord.y * inv + to->coord.y * amount;
+	v.coord.z = from->coord.z * inv + to->coord.z * amount;
+	v.coord.w = from->coord.w * inv + to->coord.w * amount;
+	return v;
 }
 
 // Matrix Vector multiply

@@ -1,9 +1,14 @@
 // chasecam.h
 #pragma once
 
+#include "maths.h"
+
 typedef struct chasecam_s {
 	transform*	target;
 	camera*		cam;
+
+	quaternion	rotation;
+	vector		position;
 } chasecam;
 
 #define DEFAULT_CREATE_HEAD(type) \

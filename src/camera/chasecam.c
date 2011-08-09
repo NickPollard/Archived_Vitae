@@ -6,21 +6,30 @@
 #include "camera.h"
 #include "transform.h"
 
-DEFAULT_CREATE_SRC(chasecam)
+chasecam* chasecam_create() {
+	chasecam* c = mem_alloc( sizeof( chasecam ));
+	memset( c, 0, sizeof( chasecam ));
+	c->position = Vector( 0.f, 0.f, 0.f, 1.f );
+	return c;
+}
 
 void chasecam_tick( void* data, float dt ) {
 	chasecam* c = (chasecam*) data;
 
 	// Calculate the position as the offset from the chase target
-	float offset_distance = -10.f;
+	float offset_distance = -15.f;
 	vector offset = Vector( 0.f, 0.f, offset_distance, 1.f );
 	vector position = matrixVecMul( c->target->world, &offset );
+
+	float lerp = fminf( 1.f, 4.f * dt );
+	c->position = vector_lerp( &c->position, &position, lerp );
+
 
 	matrix world_space;
 	// Rotation
 	matrix_cpy( world_space, c->target->world );
 	// Position
-	matrix_setTranslation( world_space, &position );
+	matrix_setTranslation( world_space, &c->position );
 
 	transform_setWorldSpace( c->cam->trans, world_space );	
 }

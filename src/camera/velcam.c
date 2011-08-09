@@ -93,7 +93,7 @@ void velcam_tick( velcam* f, float dt ) {
 	vector forward = Vector( 0.f, 0.f, 1.f, 0.f );
 	vel = matrixVecMul( f->trans->world, &forward );
 	float speed = 0.f;
-	vecScale( &vel, &vel, speed );
+	vector_scale( &vel, &vel, speed );
 	f->phys->velocity = vel;
 	transform_setWorldSpace( f->camera_target->trans, f->trans->world );
 }

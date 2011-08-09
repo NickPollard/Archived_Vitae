@@ -17,7 +17,7 @@ void physic_tick( void* data, float dt ) {
 	assert( p->trans );
 
 	vector delta;
-	vecScale( &delta, &p->velocity, dt );
+	vector_scale( &delta, &p->velocity, dt );
 	vector position;
 	Add( &position, &delta, matrix_getTranslation( p->trans->world ));
 	transform_setWorldSpacePosition( p->trans, &position );
