@@ -17,8 +17,7 @@ void chasecam_tick( void* data, float dt ) {
 	chasecam* c = (chasecam*) data;
 
 	// Calculate the position as the offset from the chase target
-	float offset_distance = -15.f;
-	vector offset = Vector( 0.f, 0.f, offset_distance, 1.f );
+	vector offset = Vector( 0.f, 3.f, -15.f, 1.f );
 	vector position = matrixVecMul( c->target->world, &offset );
 
 	float lerp = fminf( 1.f, 4.f * dt );

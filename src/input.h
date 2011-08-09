@@ -15,6 +15,7 @@
 // Other
 #define KEY_ESC		GLFW_KEY_ESC
 #define KEY_SHIFT	GLFW_KEY_LSHIFT
+#define KEY_SPACE	GLFW_KEY_SPACE
 
 #define KEY_T		'T'
 #define KEY_L		'L'

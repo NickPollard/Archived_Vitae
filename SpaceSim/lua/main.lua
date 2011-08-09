@@ -44,22 +44,29 @@ function gameobject_create( model )
 	vphysic_setVelocity( g.physic, v )
 	return g
 end
-
+--[[
 function player_accelerate( p, a )
 	vitae_physic_accelerate( p.physic, a )
 end
+--]]
 
 function player_yaw( p, y )
 	vitae_physic_yaw( p.physic, y )
 end
 
 projectile_model = "dat/model/smoothsphere2.obj"
---[[
 function player_fire( p )
 	local g = {}
 	-- Create a new Projectile
 	g = gameobject_create( projectile_model );
 	-- Position it at the correct muzzle position and rotation
+	vtransform_setWorldSpaceByTransform( g.transform, p.transform )
+	-- Apply initial velocity
+	bullet_speed = 150.0;
+	ship_v = Vector( 0.0, 0.0, bullet_speed, 0.0 )
+	world_v = vtransformVector( p.transform, ship_v )
+	vphysic_setVelocity( g.physic, world_v );
+	--[[
 	gun_transform = vitae_attach_transform( g.model, "bullet_spawn" )
 	vitae_transform_setWorldSpace( g.transform, gun_transform )
 	speed = 10.0
@@ -71,8 +78,8 @@ function player_fire( p )
 		gameobject_destroy( target )
 		vitae_particle_spawn( "explosion.part", translation( bullet.transform ) )
 	end )
-end
 --]]
+end
 
 -- Create a player. The player is a specialised form of Gameobject
 function playership_create()
@@ -131,6 +138,13 @@ function playership_tick()
 	if vkeyHeld( input, key.down ) then
 		vtransform_pitch( player_ship.transform, pitch );
 	end
+
+	-- Gunfire
+	if vkeyPressed( input, key.space ) then
+		player_fire( player_ship )
+	end
+
+
 	ship_v = Vector( 0.0, 0.0, player_ship.speed, 0.0 )
 	world_v = vtransformVector( player_ship.transform, ship_v )
 	vphysic_setVelocity( player_ship.physic, world_v )

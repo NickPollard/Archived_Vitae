@@ -135,9 +135,15 @@ int LUA_scene_addModel( lua_State* l ) {
 	return 0;
 }
 
+#if LUA_DEBUG
+#define LUA_DEBUG_PRINT(...) printf(__VA_ARGS__)
+#else
+#define LUA_DEBUG_PRINT(...)
+#endif
+
 #define LUA_CREATE_( type, func ) \
 int LUA_create##type( lua_State* l ) { \
-	printf( "Create %s\n", #type ); \
+	LUA_DEBUG_PRINT( "Create %s\n", #type ); \
 	type* ptr = func(); \
 	lua_pushptr( l, ptr ); \
 	return 1; \
@@ -148,7 +154,7 @@ LUA_CREATE_( physic, physic_create )
 
 
 int LUA_model_setTransform( lua_State* l ) {
-	printf( "lua model set transform\n" );
+	LUA_DEBUG_PRINT( "lua model set transform\n" );
 	lua_assertnumber( l, 1 );
 	lua_assertnumber( l, 2 );
 	modelInstance* m = lua_toptr( l, 1 );
@@ -158,7 +164,7 @@ int LUA_model_setTransform( lua_State* l ) {
 }
 
 int LUA_physic_setTransform( lua_State* l ) {
-	printf( "lua physic set transform\n" );
+	LUA_DEBUG_PRINT( "lua physic set transform\n" );
 	physic* p = lua_toptr( l, 1 );
 	transform* t = lua_toptr( l, 2 );
 	p->trans = t;
@@ -166,7 +172,7 @@ int LUA_physic_setTransform( lua_State* l ) {
 }
 
 int LUA_physic_activate( lua_State* l ) {
-	printf( "lua physic activate.\n" );
+	LUA_DEBUG_PRINT( "lua physic activate.\n" );
 	engine* e = lua_toptr( l, 1 );
 	physic* p = lua_toptr( l, 2 );
 	startTick( e, p, physic_tick );
@@ -178,7 +184,7 @@ vector lua_tovector3( lua_State* l, int i ) {
 }
 
 int LUA_physic_setVelocity( lua_State* l ) {
-//	printf( "lua physic setVelocity.\n" );
+//	LUA_DEBUG_PRINT( "lua physic setVelocity.\n" );
 	physic* p = lua_toptr( l, 1 );
 //	vector v = lua_tovector3( l, 2 );
 	vector* v = lua_toptr( l, 2 );
@@ -276,7 +282,7 @@ int LUA_transformVector( lua_State* l ) {
 }
 
 int LUA_chasecam_follow( lua_State* l ) {
-	printf( "LUA chasecam_follow\n" );
+	LUA_DEBUG_PRINT( "LUA chasecam_follow\n" );
 	engine* e = lua_toptr( l, 1 );
 	transform* t = lua_toptr( l, 2 );
 	chasecam* c = chasecam_create();
@@ -285,6 +291,14 @@ int LUA_chasecam_follow( lua_State* l ) {
 	c->target = t;
 	return 0;
 }
+
+int LUA_transform_setWorldSpaceByTransform( lua_State* l ) {
+	transform* dst = lua_toptr( l, 1 );
+	transform* src = lua_toptr( l, 2 );
+	transform_setWorldSpace( dst, src->world );
+	return 0;
+}
+
 
 void lua_makeConstantPtr( lua_State* l, const char* name, void* ptr ) {
 	lua_pushptr( l, ptr );
@@ -328,6 +342,7 @@ lua_State* vlua_create( engine* e, const char* filename ) {
 	lua_registerFunction( l, LUA_transform_yaw, "vtransform_yaw" );
 	lua_registerFunction( l, LUA_transform_pitch, "vtransform_pitch" );
 	lua_registerFunction( l, LUA_transformVector, "vtransformVector" );
+	lua_registerFunction( l, LUA_transform_setWorldSpaceByTransform, "vtransform_setWorldSpaceByTransform" );
 	// *** Camera
 	lua_registerFunction( l, LUA_chasecam_follow, "vchasecam_follow" );
 
@@ -371,5 +386,6 @@ void lua_keycodes( lua_State* l ) {
 	lua_setfieldi( l, "down", KEY_DOWN );
 	lua_setfieldi( l, "left", KEY_LEFT );
 	lua_setfieldi( l, "right", KEY_RIGHT );
+	lua_setfieldi( l, "space", KEY_SPACE );
 	lua_setglobal( l, "key" ); // store the table in the 'key' global variable
 }

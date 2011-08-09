@@ -4,6 +4,8 @@
 #include <lauxlib.h>
 #include <lualib.h>
 
+#define LUA_DEBUG false
+
 #define LUA_CALL(lua, func)					\
 	lua_getglobal(lua, func);				\
 	lua_pcall(lua,	/* args */			0,	\
