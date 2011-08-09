@@ -244,6 +244,13 @@ int LUA_transform_yaw( lua_State* l ) {
 	return 0;
 }
 
+int LUA_transform_roll( lua_State* l ) {
+	transform* t = lua_toptr( l, 1 );
+	float roll = lua_tonumber( l, 2 );
+	transform_roll( t, roll );
+	return 0;
+}
+
 int LUA_transform_pitch( lua_State* l ) {
 	transform* t = lua_toptr( l, 1 );
 	float pitch = lua_tonumber( l, 2 );
@@ -341,6 +348,7 @@ lua_State* vlua_create( engine* e, const char* filename ) {
 	lua_registerFunction( l, LUA_physic_setVelocity, "vphysic_setVelocity" );
 	lua_registerFunction( l, LUA_transform_yaw, "vtransform_yaw" );
 	lua_registerFunction( l, LUA_transform_pitch, "vtransform_pitch" );
+	lua_registerFunction( l, LUA_transform_roll, "vtransform_roll" );
 	lua_registerFunction( l, LUA_transformVector, "vtransformVector" );
 	lua_registerFunction( l, LUA_transform_setWorldSpaceByTransform, "vtransform_setWorldSpaceByTransform" );
 	// *** Camera

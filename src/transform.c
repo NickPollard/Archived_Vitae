@@ -175,3 +175,10 @@ void transform_pitch( transform* t, float pitch ) {
 	matrix_fromEuler( m, &angles );
 	matrix_mul( t->local, t->local, m );
 }
+
+void transform_roll( transform* t, float roll ) {
+	matrix m;
+	vector angles = Vector( 0.f, 0.f, roll , 0.f );
+	matrix_fromEuler( m, &angles );
+	matrix_mul( t->local, t->local, m );
+}

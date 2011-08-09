@@ -62,7 +62,7 @@ function player_fire( p )
 	-- Position it at the correct muzzle position and rotation
 	vtransform_setWorldSpaceByTransform( g.transform, p.transform )
 	-- Apply initial velocity
-	bullet_speed = 150.0;
+	bullet_speed = 350.0;
 	ship_v = Vector( 0.0, 0.0, bullet_speed, 0.0 )
 	world_v = vtransformVector( p.transform, ship_v )
 	vphysic_setVelocity( g.physic, world_v );
@@ -118,7 +118,7 @@ wave_interval_time = 10.0
 
 function playership_tick()
 	acceleration = 1.0
-	yaw = 0.02
+	roll = 0.02
 	pitch = 0.02
 	if vkeyHeld( input, key.w ) then
 		player_ship.speed = player_ship.speed + acceleration
@@ -127,10 +127,10 @@ function playership_tick()
 		player_ship.speed = player_ship.speed - acceleration
 	end
 	if vkeyHeld( input, key.left ) then
-		vtransform_yaw( player_ship.transform, -yaw );
+		vtransform_roll( player_ship.transform, -roll );
 	end
 	if vkeyHeld( input, key.right ) then
-		vtransform_yaw( player_ship.transform, yaw );
+		vtransform_roll( player_ship.transform, roll );
 	end
 	if vkeyHeld( input, key.up ) then
 		vtransform_pitch( player_ship.transform, -pitch );

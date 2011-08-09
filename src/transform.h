@@ -51,5 +51,6 @@ void transform_setWorldSpacePosition( transform* t, vector* position );
 
 void transform_yaw( transform* t, float yaw );
 void transform_pitch( transform* t, float pitch );
+void transform_roll( transform* t, float roll );
 
 #endif // __TRANSFORM_H__
