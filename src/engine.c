@@ -8,6 +8,7 @@
 #include "lua.h"
 #include "maths.h"
 #include "model.h"
+#include "particle.h"
 #include "scene.h"
 #include "transform.h"
 #include "camera/flycam.h"
@@ -57,22 +58,16 @@ void test_engine_init( engine* e ) {
 	engine_addRender( e, (void*)f, debugtextframe_render );
 	e->debugtext = f;
 
-	/*
-	sterm* data = parse_string( "(scene (model))" );
-	theScene = eval( data );
-	sterm_free( data );
-	*/
-	
 	theScene = test_scene_init( e );
 	theScene->debugtext = e->debugtext;
 	lua_setScene( e->lua, theScene );
-/*
-	// Velcam
-	fcam = velcam_create( e );
-	scene_addTransform( theScene, fcam->trans );
-	velcam_setTarget( fcam, theScene->cam );
-	*/
 
+	particleEmitter* p = particleEmitter_create();
+	p->size = 10.f;
+	p->velocity = Vector( 0.f, 1.f, 1.f, 0.f );
+	p->spawn_interval = 1.f;
+	engine_addRender( e, p, particleEmitter_render );
+	startTick( e, p, particleEmitter_tick );
 }
 
 /*
