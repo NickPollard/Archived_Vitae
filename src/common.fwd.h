@@ -2,6 +2,7 @@
 #define __COMMON_FWD_H__
 
 struct heapAllocator_s;
+struct engine_s;
 struct debugtextframe_s;
 struct input_s;
 struct camera_s;
@@ -14,6 +15,7 @@ struct scene_s;
 union vector_u;
 
 typedef struct heapAllocator_s heapAllocator;
+typedef struct engine_s engine;
 typedef struct camera_s camera;
 typedef struct debugtextframe_s debugtextframe;
 typedef struct input_s input;

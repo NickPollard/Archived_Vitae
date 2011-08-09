@@ -20,7 +20,8 @@ velcam* velcam_create( engine* e ) {
 	f->trans = transform_create();
 	f->phys = physic_create();
 	f->phys->trans = f->trans;
-	engine_addTicker( e, f->phys, physic_tick );
+
+	startTick( e, (void*)f->phys, physic_tick );
 	return f;
 }
 

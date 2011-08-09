@@ -55,6 +55,6 @@ int LUA_registerCallback(lua_State* l);
 void lua_registerFunction(lua_State* l, lua_CFunction func, const char* name);
 
 // Create a Lua State and load it's initial contents from <filename>
-lua_State* vlua_create( const char* filename );
+lua_State* vlua_create( engine* e, const char* filename );
 
 void lua_setScene( lua_State* l, scene* s );

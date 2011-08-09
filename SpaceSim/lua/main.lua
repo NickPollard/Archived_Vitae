@@ -38,7 +38,7 @@ function gameobject_create( model )
 	vmodel_setTransform( g.model, g.transform )
 	vphysic_setTransform( g.physic, g.transform )
 	vscene_addModel( scene, g.model )
-	vphysic_activate( g.physic )
+	vphysic_activate( engine, g.physic )
 --	vphysic_setVelocity( g.physic, 0.0, 0.0, 0.0 )
 	v = Vector( 0.0, 0.0, 0.0, 0.0 )
 	vphysic_setVelocity( g.physic, v )
@@ -104,7 +104,7 @@ function start()
 	-- We create a player object which is a game-specific Lua class
 	-- The player class itself creates several native C classes in the engine
 	player_ship = playership_create()
-	vchasecam_follow( player_ship.transform );
+	vchasecam_follow( engine, player_ship.transform );
 end
 
 wave_interval_time = 10.0
@@ -113,22 +113,22 @@ function playership_tick()
 	acceleration = 1.0
 	yaw = 0.02
 	pitch = 0.02
-	if vkeyHeld( key.w ) then
+	if vkeyHeld( input, key.w ) then
 		player_ship.speed = player_ship.speed + acceleration
 	end
-	if vkeyHeld( key.s ) then
+	if vkeyHeld( input, key.s ) then
 		player_ship.speed = player_ship.speed - acceleration
 	end
-	if vkeyHeld( key.left ) then
+	if vkeyHeld( input, key.left ) then
 		vtransform_yaw( player_ship.transform, -yaw );
 	end
-	if vkeyHeld( key.right ) then
+	if vkeyHeld( input, key.right ) then
 		vtransform_yaw( player_ship.transform, yaw );
 	end
-	if vkeyHeld( key.up ) then
+	if vkeyHeld( input, key.up ) then
 		vtransform_pitch( player_ship.transform, -pitch );
 	end
-	if vkeyHeld( key.down ) then
+	if vkeyHeld( input, key.down ) then
 		vtransform_pitch( player_ship.transform, pitch );
 	end
 	ship_v = Vector( 0.0, 0.0, player_ship.speed, 0.0 )

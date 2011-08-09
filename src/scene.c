@@ -97,9 +97,9 @@ void scene_free( scene* s ) {
 scene* test_scene_init( engine* e ) { 
 //	LoadObj( "dat/model/cube.obj" );
 
-	sterm* st = parse_file( "dat/test2.s" );
-	scene* s = eval( st );
-	sterm_free( st );
+	sterm* stree = parse_file( "dat/test2.s" );
+	scene* s = eval( stree );
+	sterm_free( stree );
 	s->eng = e;
 
 	// Test Misc scene setup

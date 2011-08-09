@@ -26,7 +26,8 @@
 // *** Scene ***
 struct scene_s {
 	engine*		eng;
-	int			model_count;
+
+	int				model_count;
 	modelInstance**	modelInstances;
 	//
 	int			light_count;
@@ -49,7 +50,7 @@ typedef struct sceneData_s {
 	int			transform_count;
 	transform*	transforms;
 	//
-	int			model_count;
+	int				model_count;
 	modelInstance*	modelInstances;
 	//
 	int			light_count;
@@ -68,42 +69,45 @@ void scene_static_init( );
 scene* scene_create();
 
 // Traverse the transform graph, updating worldspace transforms
-void scene_concatenateTransforms(scene* s);
+void	scene_concatenateTransforms(scene* s);
 
 // Process input for the scene
-void scene_input( scene* s, input* in );
+void	scene_input( scene* s, input* in );
 
 // Update the scene
-void scene_tick(scene* s, float dt);
+void	scene_tick(scene* s, float dt);
 
-void scene_renderLighting(scene* s);
+// *** Render Methods
+void	scene_renderLighting(scene* s);
+void	scene_render(scene* s);
 
-void scene_render(scene* s);
-
-void scene_setAmbient(scene* s, float r, float g, float b, float a);
-
-void scene_setCamera(scene* s, float x, float y, float z, float w);
+//
+// *** Accessors
+//
+void		scene_setAmbient(scene* s, float r, float g, float b, float a);
+void		scene_setCamera(scene* s, float x, float y, float z, float w);
 
 // Transform Access
-transform* scene_transform( scene* s, int i );
-void scene_addTransform( scene* s, transform* t );
-int scene_transformIndex( scene* s, transform* t );
+transform*	scene_transform( scene* s, int i );
+void		scene_addTransform( scene* s, transform* t );
+int			scene_transformIndex( scene* s, transform* t );
 
 // ModelInstance Access
 modelInstance* scene_model( scene* s, int i );
-void scene_addModel(scene* s, modelInstance* m);
+void		scene_addModel(scene* s, modelInstance* m);
 
 // Light Access
-light* scene_light( scene* s, int i );
-void scene_addLight( scene* s, light* l );
+light*		scene_light( scene* s, int i );
+void		scene_addLight( scene* s, light* l );
 
-// Initialise a scene with some test data
-scene* test_scene_init( engine* e );
-
-void test_scene_tick(scene* s, float dt);
-
-
+// Load & Save
 sceneData* scene_save( scene* s );
 scene* scene_load( sceneData* data );
 void sceneData_free( sceneData* data );
+
+// ### TEST #############################
+// Initialise a scene with some test data
+scene* test_scene_init( engine* e );
+void test_scene_tick(scene* s, float dt);
+
 #endif // __SCENE_H__

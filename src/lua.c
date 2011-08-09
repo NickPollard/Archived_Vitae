@@ -167,8 +167,9 @@ int LUA_physic_setTransform( lua_State* l ) {
 
 int LUA_physic_activate( lua_State* l ) {
 	printf( "lua physic activate.\n" );
-	physic* p = lua_toptr( l, 1 );
-	engine_addTicker( static_engine_hack, p, physic_tick );
+	engine* e = lua_toptr( l, 1 );
+	physic* p = lua_toptr( l, 2 );
+	startTick( e, p, physic_tick );
 	return 0;
 }
 
@@ -208,10 +209,9 @@ int LUA_setWorldSpacePosition( lua_State* l ) {
 }
 
 int LUA_keyPressed( lua_State* l ) {
-	if ( lua_isnumber( l, 1 ) ) {
-		int key = (int)lua_tonumber( l, 1 );
-		// TODO - unstatic this!
-		input* in = static_engine_hack->input;
+	if ( lua_isnumber( l, 2 ) ) {
+		input* in = lua_toptr( l, 1 );
+		int key = (int)lua_tonumber( l, 2 );
 		bool pressed = input_keyPressed( in, key );
 		lua_pushboolean( l, pressed );
 		return 1;
@@ -220,10 +220,9 @@ int LUA_keyPressed( lua_State* l ) {
 	return 0;
 }
 int LUA_keyHeld( lua_State* l ) {
-	if ( lua_isnumber( l, 1 ) ) {
-		int key = (int)lua_tonumber( l, 1 );
-		// TODO - unstatic this!
-		input* in = static_engine_hack->input;
+	if ( lua_isnumber( l, 2 ) ) {
+		input* in = lua_toptr( l, 1 );
+		int key = (int)lua_tonumber( l, 2 );
 		bool held = input_keyHeld( in, key );
 		lua_pushboolean( l, held );
 		return 1;
@@ -278,9 +277,10 @@ int LUA_transformVector( lua_State* l ) {
 
 int LUA_chasecam_follow( lua_State* l ) {
 	printf( "LUA chasecam_follow\n" );
-	transform* t = lua_toptr( l, 1 );
+	engine* e = lua_toptr( l, 1 );
+	transform* t = lua_toptr( l, 2 );
 	chasecam* c = chasecam_create();
-	engine_addTicker( static_engine_hack, (void*)c, chasecam_tick );	
+	startTick( e, (void*)c, chasecam_tick );	
 	c->cam = theScene->cam;
 	c->target = t;
 	return 0;
@@ -298,47 +298,48 @@ void lua_registerFunction( lua_State* l, lua_CFunction func, const char* name ) 
     lua_setglobal( l, name );
 }
 
-// Create a Lua State and load it's initial contents from <filename>
-lua_State* vlua_create( const char* filename ) {
-	lua_State* state = lua_open();
-	luaL_openlibs( state );	// Load the Lua libs into our lua state
-	if ( luaL_loadfile( state, filename ) || lua_pcall( state, 0, 0, 0)) {
+// Create a Lua l and load it's initial contents from <filename>
+lua_State* vlua_create( engine* e, const char* filename ) {
+	lua_State* l = lua_open();
+	luaL_openlibs( l );	// Load the Lua libs into our lua l
+	if ( luaL_loadfile( l, filename ) || lua_pcall( l, 0, 0, 0)) {
 		printf("Error: Failed loading lua from file %s!\n", filename );
 		assert( 0 );
 	}
 
 	// *** General
-	lua_registerFunction( state, LUA_registerCallback, "registerEventHandler" );
-	lua_registerFunction( state, LUA_print, "vprint" );
+	lua_registerFunction( l, LUA_registerCallback, "registerEventHandler" );
+	lua_registerFunction( l, LUA_print, "vprint" );
 	// *** Vector
-	lua_registerFunction( state, LUA_vector, "Vector" );
+	lua_registerFunction( l, LUA_vector, "Vector" );
 	// *** Input
-	lua_registerFunction( state, LUA_keyPressed, "vkeyPressed" );
-	lua_registerFunction( state, LUA_keyHeld, "vkeyHeld" );
+	lua_registerFunction( l, LUA_keyPressed, "vkeyPressed" );
+	lua_registerFunction( l, LUA_keyHeld, "vkeyHeld" );
 	// *** Scene
-	lua_registerFunction( state, LUA_createModelInstance, "vcreateModelInstance" );
-	lua_registerFunction( state, LUA_createphysic, "vcreatePhysic" );
-	lua_registerFunction( state, LUA_createtransform, "vcreateTransform" );
-	lua_registerFunction( state, LUA_setWorldSpacePosition, "vsetWorldSpacePosition" );
-	lua_registerFunction( state, LUA_model_setTransform, "vmodel_setTransform" );
-	lua_registerFunction( state, LUA_physic_setTransform, "vphysic_setTransform" );
-	lua_registerFunction( state, LUA_scene_addModel, "vscene_addModel" );
-	lua_registerFunction( state, LUA_physic_activate, "vphysic_activate" );
-	lua_registerFunction( state, LUA_physic_setVelocity, "vphysic_setVelocity" );
-	lua_registerFunction( state, LUA_transform_yaw, "vtransform_yaw" );
-	lua_registerFunction( state, LUA_transform_pitch, "vtransform_pitch" );
-	lua_registerFunction( state, LUA_transformVector, "vtransformVector" );
+	lua_registerFunction( l, LUA_createModelInstance, "vcreateModelInstance" );
+	lua_registerFunction( l, LUA_createphysic, "vcreatePhysic" );
+	lua_registerFunction( l, LUA_createtransform, "vcreateTransform" );
+	lua_registerFunction( l, LUA_setWorldSpacePosition, "vsetWorldSpacePosition" );
+	lua_registerFunction( l, LUA_model_setTransform, "vmodel_setTransform" );
+	lua_registerFunction( l, LUA_physic_setTransform, "vphysic_setTransform" );
+	lua_registerFunction( l, LUA_scene_addModel, "vscene_addModel" );
+	lua_registerFunction( l, LUA_physic_activate, "vphysic_activate" );
+	lua_registerFunction( l, LUA_physic_setVelocity, "vphysic_setVelocity" );
+	lua_registerFunction( l, LUA_transform_yaw, "vtransform_yaw" );
+	lua_registerFunction( l, LUA_transform_pitch, "vtransform_pitch" );
+	lua_registerFunction( l, LUA_transformVector, "vtransformVector" );
 	// *** Camera
-	lua_registerFunction( state, LUA_chasecam_follow, "vchasecam_follow" );
+	lua_registerFunction( l, LUA_chasecam_follow, "vchasecam_follow" );
 
+	lua_makeConstantPtr( l, "engine", e );
+	lua_makeConstantPtr( l, "input", e->input );
 
-
-	lua_keycodes( state );
+	lua_keycodes( l );
 
 	// *** Always call init
-	LUA_CALL( state, "init" );
+	LUA_CALL( l, "init" );
 
-	return state;
+	return l;
 }
 
 void lua_setScene( lua_State* l, scene* s ) {

@@ -18,7 +18,7 @@ extern float depth;
 DEF_LIST(delegate)
 #define kDefaultDelegateSize 16
 
-typedef struct {
+struct engine_s {
 	// *** General
 	frame_timer* timer;
 	input* input;
@@ -32,7 +32,7 @@ typedef struct {
 	delegatelist* renders;
 
 	debugtextframe* debugtext;
-} engine;
+};
 
 extern engine* static_engine_hack;
 
@@ -45,14 +45,14 @@ extern engine* static_engine_hack;
 // init - initialises the application
 void init(int argc, char** argv);
 
-// run - executes the main loop of the application
-void run();
-
 /*
  *
  *  Engine Methods
  *
  */
+
+// Create an engine
+engine* engine_create();
 
 // Initialise the engine
 void engine_init(engine* e, int argc, char** argv);
@@ -80,7 +80,8 @@ void engine_handleKeyPress(engine* e, uchar key, int x, int y);
 
 // Look for a delegate of the right type to add this entity too
 // If one is not found, create one
-void engine_addTicker( engine* e, void* entity, tickfunc tick );
+//void engine_addTicker( engine* e, void* entity, tickfunc tick );
+void startTick( engine* e, void* entity, tickfunc tick );
 void engine_addRender( engine* e, void* entity, renderfunc render );
 
 void handleResize(int w, int h);

@@ -11,13 +11,11 @@
 #include "mem/allocator.h"
 #include "system/file.h"
 
+#define TEST true
+
 // ###################################
 
-int main(int argc, char** argv) {
-	printf("Loading Vitae.\n");
-
-	init(argc, argv);
-
+void test() {
 	// Memory Tests
 	test_allocator();
 
@@ -25,8 +23,26 @@ int main(int argc, char** argv) {
 	test_sfile();
 
 	test_matrix();
+}
 
-	run();
+// ###################################
+
+int main(int argc, char** argv) {
+	printf("Loading Vitae.\n");
+
+	init(argc, argv);
+
+	// *** Initialise Engine
+	engine* e = engine_create();
+	engine_init( e, argc, argv );
+	static_engine_hack = e;
+
+#if TEST
+	test();
+#endif
+
+//	run();
+	engine_run( e );
 
 	// Exit Gracefully
 	return 0;

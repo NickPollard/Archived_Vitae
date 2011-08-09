@@ -5,6 +5,7 @@
 #include "mem/allocator.h"
 #include "font.h"
 #include "input.h"
+#include "lua.h"
 #include "maths.h"
 #include "model.h"
 #include "scene.h"
@@ -42,6 +43,7 @@ float camY = 0.f;
 // Function Declarations
 void engine_tickTickers( engine* e, float dt );
 void engine_renderRenders( engine* e );
+void engine_addTicker( engine* e, void* entity, tickfunc tick );
 
 /*
  *
@@ -91,8 +93,6 @@ void engine_tick( engine* e ) {
 
 	lua_preTick( dt );
 
-	engine_input( e );
-
 	input_tick( e->input, dt );
 	scene_tick( theScene, dt );
 
@@ -139,13 +139,9 @@ void handleResize(int w_, int h_) {
 	h = h_;
 }
 
-float angle = 340.f;
-
-float depth = 8.f;
-
 // Initialise the Lua subsystem so that it is ready for use
 void engine_initLua(engine* e, int argc, char** argv) {
-	e->lua = vlua_create( "SpaceSim/lua/main.lua" );
+	e->lua = vlua_create( e, "SpaceSim/lua/main.lua" );
 }
 
 // Create a new engine
@@ -195,9 +191,11 @@ void init(int argc, char** argv) {
 	scene_static_init();
 
 	// *** Initialise Engine
+	/*
 	engine* e = engine_create();
 	engine_init(e, argc, argv);
 	static_engine_hack = e;
+	*/
 
 }
 
@@ -218,9 +216,11 @@ void engine_terminate(engine* e) {
 }
 
 // static_run
+/*
 void run() {
 	engine_run( static_engine_hack );
 }
+*/
 
 void engine_render( engine* e ) {
 	render_set3D( w, h );
@@ -236,9 +236,10 @@ void engine_run(engine* e) {
 	int running = true;
 	handleResize(640, 480);	// Call once to init
 	while (running) {
-		engine_tick(e);
+		engine_input( e );
+		engine_tick( e );
 		engine_render( e );
-		running = !input_keyPressed(e->input, KEY_ESC) && glfwGetWindowParam(GLFW_OPENED);
+		running = !input_keyPressed( e->input, KEY_ESC ) && glfwGetWindowParam( GLFW_OPENED );
 	}
 }
 
@@ -318,6 +319,9 @@ void engine_addTicker( engine* e, void* entity, tickfunc tick ) {
 	if ( !d )
 		d = engine_addTickDelegate( e, tick );
 	delegate_add( d, entity);
+}
+void startTick( engine* e, void* entity, tickfunc tick ) {
+	engine_addTicker( e, entity, tick );
 }
 
 void engine_addRender( engine* e, void* entity, renderfunc render ) {
