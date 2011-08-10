@@ -6,6 +6,8 @@
 #include "model.h"
 #include "render/render.h"
 
+float property_samplef( property* p, float time );
+
 particleEmitter* particleEmitter_create() {
 	particleEmitter* p = mem_alloc( sizeof( particleEmitter ));
 	memset( p, 0, sizeof( particleEmitter ));
@@ -32,6 +34,7 @@ void particleEmitter_addParticle( particleEmitter* e ) {
 	particle* p = &e->particles[index];
 	e->count++;
 	p->position	= Vector( 0.f, 0.f, 0.f, 1.f );
+	p->age = 0.f;
 }
 
 void particleEmitter_tick( void* data, float dt ) {
@@ -41,6 +44,7 @@ void particleEmitter_tick( void* data, float dt ) {
 	vector_scale ( &delta, &e->velocity, dt );
 	for ( int i = 0; i < e->count; i++ ) {
 		int index = (e->start + i) % kmax_particles;
+		e->particles[index].age += dt;
 		Add( &e->particles[index].position, &e->particles[index].position, &delta );
 	}
 
@@ -62,7 +66,8 @@ void particleEmitter_render( void* data ) {
 
 	for ( int i = 0; i < p->count; i++ ) {
 		int index = (p->start + i) % kmax_particles;
-		particle_quad( &vertex_buffer[index*4], &p->particles[index].position, p->size );
+		float size = property_samplef( p->size, p->particles[index].age );
+		particle_quad( &vertex_buffer[index*4], &p->particles[index].position, size );
 		// TODO: Indices can be initialised once
 		element_buffer[i*6+0] = index*4+0;
 		element_buffer[i*6+1] = index*4+1;
@@ -137,11 +142,13 @@ float property_samplef( property* p, float time ) {
 		t_before = t_after;
 		t_after = p->data[after*p->stride];
 	}
-	after = clamp( after, 0, p->count );
-	int before = clamp( after - 1, 0, p->count );
-	assert( t_before <= time );
-	assert( t_after >= time );
+	int before = clamp( after - 1, 0, p->count-1 );
+	after = clamp( after, 0, p->count-1 );
+//	assert( t_before <= time );
+//	assert( t_after >= time );
 	float factor = map_range( time, t_before, t_after );
+	if ( after == before )
+		factor = 0.f;
 	assert( factor <= 1.f && factor >= 0.f );
 	float value = lerp( p->data[before*p->stride+1], p->data[after*p->stride+1], factor );
 	printf( "Time: %.2f, T_before: %.2f, T_after: %.2f, Value: %2f\n", time, t_before, t_after, value );
@@ -159,5 +166,5 @@ void test_property() {
 	property_samplef( p, 1.5f );
 	property_samplef( p, 3.0f );
 
-	assert( 0 );
+//	assert( 0 );
 }

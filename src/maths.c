@@ -27,7 +27,7 @@ float lerp( float a, float b, float factor ) {
 }
 
 float map_range( float point, float begin, float end ) {
-	return ( point - begin / end - begin );
+	return ( point - begin ) / ( end - begin );
 }
 
 // *** Vectors

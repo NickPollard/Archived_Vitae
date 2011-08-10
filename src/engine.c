@@ -63,8 +63,10 @@ void test_engine_init( engine* e ) {
 	lua_setScene( e->lua, theScene );
 
 	particleEmitter* p = particleEmitter_create();
-	p->size = 1.f;
-	p->velocity = Vector( 0.f, 1.f, 1.f, 0.f );
+	p->size = property_create( 2 );
+	property_addf( p->size, 0.f, 2.f );
+	property_addf( p->size, 10.f, 0.1f );
+	p->velocity = Vector( 0.f, 1.f, 0.f, 0.f );
 	p->spawn_interval = 1.f;
 	engine_addRender( e, p, particleEmitter_render );
 	startTick( e, p, particleEmitter_tick );

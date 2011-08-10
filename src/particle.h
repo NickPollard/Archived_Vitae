@@ -8,6 +8,7 @@
 #define kmax_property_values 16
 
 typedef struct particle_s {
+	float age;
 	vector position;
 } particle;
 
@@ -21,7 +22,8 @@ typedef struct particleEmitter_s {
 	particle	particles[kmax_particles];
 	int		start;
 	int		count;
-	float	size;
+//	float	size;
+	property* size;
 	float	spawn_interval;
 	float	next_spawn;
 	vector	velocity;
@@ -33,3 +35,6 @@ void particleEmitter_render( void* data );
 void particleEmitter_tick( void* e, float dt );
 
 void test_property();
+
+property* property_create( int stride );
+void property_addf( property* p, float time, float value );
