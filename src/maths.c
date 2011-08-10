@@ -18,6 +18,18 @@ int min( int a, int b ) {
 	return a < b ? a : b;
 }
 
+int clamp( int a, int bottom, int top ) {
+	return min( max( a, bottom), top);
+}
+
+float lerp( float a, float b, float factor ) {
+	return a * (1.f - factor) + b * factor;
+}
+
+float map_range( float point, float begin, float end ) {
+	return ( point - begin / end - begin );
+}
+
 // *** Vectors
 
 vector Vector(float x, float y, float z, float w) {

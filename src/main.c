@@ -8,6 +8,7 @@
 #include "common.h"
 #include "engine.h"
 #include "maths.h"
+#include "particle.h"
 #include "mem/allocator.h"
 #include "system/file.h"
 
@@ -23,6 +24,8 @@ void test() {
 	test_sfile();
 
 	test_matrix();
+
+	test_property();
 }
 
 // ###################################

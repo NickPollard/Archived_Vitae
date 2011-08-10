@@ -5,12 +5,21 @@
 #define kmax_particle_verts 512
 #define kmax_particles 128
 
+#define kmax_property_values 16
+
 typedef struct particle_s {
 	vector position;
 } particle;
 
+typedef struct property_s {
+	int count;
+	int stride;
+	float* data;
+} property;
+
 typedef struct particleEmitter_s {
 	particle	particles[kmax_particles];
+	int		start;
 	int		count;
 	float	size;
 	float	spawn_interval;
@@ -22,3 +31,5 @@ particleEmitter* particleEmitter_create();
 void particleEmitter_addParticle( particleEmitter* p );
 void particleEmitter_render( void* data );
 void particleEmitter_tick( void* e, float dt );
+
+void test_property();

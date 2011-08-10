@@ -28,7 +28,9 @@ void particle_quad( vertex* dst, vector* point, float size ) {
 }
 
 void particleEmitter_addParticle( particleEmitter* e ) {
-	particle* p = &e->particles[e->count++];
+	int index = (e->start + e->count) % kmax_particles;
+	particle* p = &e->particles[index];
+	e->count++;
 	p->position	= Vector( 0.f, 0.f, 0.f, 1.f );
 }
 
@@ -38,7 +40,8 @@ void particleEmitter_tick( void* data, float dt ) {
 	vector delta;
 	vector_scale ( &delta, &e->velocity, dt );
 	for ( int i = 0; i < e->count; i++ ) {
-		Add( &e->particles[i].position, &e->particles[i].position, &delta );
+		int index = (e->start + i) % kmax_particles;
+		Add( &e->particles[index].position, &e->particles[index].position, &delta );
 	}
 
 	// Spawn new particle
@@ -58,14 +61,15 @@ void particleEmitter_render( void* data ) {
 	GLushort element_buffer[kmax_particle_verts];
 
 	for ( int i = 0; i < p->count; i++ ) {
-		particle_quad( &vertex_buffer[i*4], &p->particles[i].position, p->size );
+		int index = (p->start + i) % kmax_particles;
+		particle_quad( &vertex_buffer[index*4], &p->particles[index].position, p->size );
 		// TODO: Indices can be initialised once
-		element_buffer[i*6+0] = i*4+0;
-		element_buffer[i*6+1] = i*4+1;
-		element_buffer[i*6+2] = i*4+2;
-		element_buffer[i*6+3] = i*4+0;
-		element_buffer[i*6+4] = i*4+1;
-		element_buffer[i*6+5] = i*4+3;
+		element_buffer[i*6+0] = index*4+0;
+		element_buffer[i*6+1] = index*4+1;
+		element_buffer[i*6+2] = index*4+2;
+		element_buffer[i*6+3] = index*4+0;
+		element_buffer[i*6+4] = index*4+1;
+		element_buffer[i*6+5] = index*4+3;
 	}
 
 	int index_count = 6 * p->count;
@@ -108,4 +112,52 @@ void particleEmitter_render( void* data ) {
 	// Cleanup
 	glDisableVertexAttribArray( resources.attributes.position );
 	glDisableVertexAttribArray( resources.attributes.normal );
+}
+
+property* property_create( int stride ) {
+	property* p = mem_alloc( sizeof( property ));
+	memset( p, 0, sizeof( property ));
+	p->stride = stride;
+	p->data = mem_alloc( sizeof( float ) * p->stride * kmax_property_values );
+	return p;
+}
+
+void property_addf( property* p, float time, float value ) {
+	assert( p->count < kmax_property_values );
+	p->data[p->count * p->stride] = time;
+	p->data[p->count * p->stride + 1] = value;
+	p->count++;
+}
+
+float property_samplef( property* p, float time ) {
+	float t_after = 0.f, t_before = 0.f;
+	int after = -1;
+	while ( t_after < time && after < p->count ) {
+		after++;
+		t_before = t_after;
+		t_after = p->data[after*p->stride];
+	}
+	after = clamp( after, 0, p->count );
+	int before = clamp( after - 1, 0, p->count );
+	assert( t_before <= time );
+	assert( t_after >= time );
+	float factor = map_range( time, t_before, t_after );
+	assert( factor <= 1.f && factor >= 0.f );
+	float value = lerp( p->data[before*p->stride+1], p->data[after*p->stride+1], factor );
+	printf( "Time: %.2f, T_before: %.2f, T_after: %.2f, Value: %2f\n", time, t_before, t_after, value );
+
+	return value;
+}
+
+void test_property() {
+	property* p = property_create( 2 );
+	property_addf( p, 0.f, 0.f );
+	property_addf( p, 1.f, 3.f );
+	property_addf( p, 2.f, 2.f );
+	property_addf( p, 3.f, 3.f );
+	property_samplef( p, 0.75f );
+	property_samplef( p, 1.5f );
+	property_samplef( p, 3.0f );
+
+	assert( 0 );
 }
