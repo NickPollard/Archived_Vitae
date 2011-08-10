@@ -68,6 +68,7 @@ void test_engine_init( engine* e ) {
 	property_addf( p->size, 10.f, 0.1f );
 	p->velocity = Vector( 0.f, 1.f, 0.f, 0.f );
 	p->spawn_interval = 1.f;
+	p->trans = transform_create();
 	engine_addRender( e, p, particleEmitter_render );
 	startTick( e, p, particleEmitter_tick );
 }

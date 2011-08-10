@@ -61,6 +61,11 @@ void particleEmitter_render( void* data ) {
 	printf( "Render!\n" );
 	particleEmitter* p = data;
 
+	// set modelview matrix
+	render_resetModelView();
+	matrix_mul( modelview, modelview, p->trans->world );
+	glUniformMatrix4fv( resources.uniforms.modelview, 1, /*transpose*/false, (GLfloat*)modelview );
+
 	vertex vertex_buffer[kmax_particle_verts];
 	GLushort element_buffer[kmax_particle_verts];
 

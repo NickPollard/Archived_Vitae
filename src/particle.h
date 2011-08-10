@@ -19,6 +19,7 @@ typedef struct property_s {
 } property;
 
 typedef struct particleEmitter_s {
+	transform*	trans;
 	particle	particles[kmax_particles];
 	int		start;
 	int		count;
