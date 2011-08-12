@@ -33,6 +33,10 @@ void particleEmitter_addParticle( particleEmitter* e ) {
 	int index = (e->start + e->count) % kmax_particles;
 	particle* p = &e->particles[index];
 	e->count++;
+	if ( e->count > kmax_particles ) {
+		e->count--;
+		e->start++;
+	}
 	p->position	= Vector( 0.f, 0.f, 0.f, 1.f );
 	p->age = 0.f;
 }
@@ -58,7 +62,6 @@ void particleEmitter_tick( void* data, float dt ) {
 
 // Render a particleEmitter system
 void particleEmitter_render( void* data ) {
-	printf( "Render!\n" );
 	particleEmitter* p = data;
 
 	// set modelview matrix
@@ -73,6 +76,7 @@ void particleEmitter_render( void* data ) {
 		int index = (p->start + i) % kmax_particles;
 		float size = property_samplef( p->size, p->particles[index].age );
 		particle_quad( &vertex_buffer[index*4], &p->particles[index].position, size );
+		assert( i*6 + 5 < kmax_particle_verts );
 		// TODO: Indices can be initialised once
 		element_buffer[i*6+0] = index*4+0;
 		element_buffer[i*6+1] = index*4+1;
@@ -83,7 +87,6 @@ void particleEmitter_render( void* data ) {
 	}
 
 	int index_count = 6 * p->count;
-	printf( "particleEmitter rendering %d indices.\n", index_count );
 	/*
 	for ( int i = 0; i < index_count; i++ ) {
 		printf( "Index: %d. Position: ", element_buffer[i] );
@@ -156,7 +159,7 @@ float property_samplef( property* p, float time ) {
 		factor = 0.f;
 	assert( factor <= 1.f && factor >= 0.f );
 	float value = lerp( p->data[before*p->stride+1], p->data[after*p->stride+1], factor );
-	printf( "Time: %.2f, T_before: %.2f, T_after: %.2f, Value: %2f\n", time, t_before, t_after, value );
+//	printf( "Time: %.2f, T_before: %.2f, T_after: %.2f, Value: %2f\n", time, t_before, t_after, value );
 
 	return value;
 }

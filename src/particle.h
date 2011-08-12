@@ -2,8 +2,8 @@
 #pragma once
 #include "maths.h"
 
-#define kmax_particle_verts 512
 #define kmax_particles 128
+#define kmax_particle_verts (kmax_particles * 6)
 
 #define kmax_property_values 16
 

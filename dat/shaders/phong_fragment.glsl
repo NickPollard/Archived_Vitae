@@ -15,6 +15,10 @@ uniform vec4 light_specular[LIGHT_COUNT];
 
 // Test Light values
 const vec4 light_ambient = vec4( 0.2, 0.2, 0.2, 0.0 );
+// Directional Light
+const vec4 directional_light_direction = vec4( 1.0, 1.0, 1.0, 0.0 );
+const vec4 directional_light_diffuse = vec4( 0.5, 0.5, 0.3, 1.0 );
+const vec4 directional_light_specular = vec4( 0.5, 0.5, 0.3, 1.0 );
 
 const vec4 material_diffuse = vec4( 1.0, 1.0, 1.0, 1.0 );
 const vec4 material_specular = vec4( 0.0, 0.0, 0.0, 1.0 );
@@ -28,6 +32,23 @@ void main() {
 
 	vec4 total_diffuse_color = light_ambient;
 	vec4 total_specular_color = vec4( 0.0, 0.0, 0.0, 0.0 );
+
+	// Directional light
+	{
+		// Ambient + Diffuse
+		vec4 light_direction = normalize( worldspace * directional_light_direction );
+		float diffuse = max( 0.0, dot( -light_direction, frag_normal )) * 1.0;
+		vec4 diffuse_color = directional_light_diffuse * diffuse;
+		total_diffuse_color += diffuse_color;
+
+		// Specular
+		vec4 spec_bounce = reflect( light_direction, frag_normal );
+		float spec = max( 0.0, dot( spec_bounce, -view_direction ));
+		float shininess = 10.0;
+		float specular = pow( spec, shininess );
+		vec4 specular_color = directional_light_specular * specular;
+		total_specular_color += specular_color;
+	}
 
 	for ( int i = 0; i < LIGHT_COUNT; i++ ) {
 		// Per-light calculations
