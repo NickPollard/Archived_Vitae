@@ -73,15 +73,28 @@ void vector_scale( vector* dst, vector* src, float scale ) {
 	dst->coord.w = src->coord.w;
 }
 
+float vector_length( const vector* v ) {
+	float length = sqrt( v->coord.x * v->coord.x + v->coord.y * v->coord.y + v->coord.z * v->coord.z );
+	return length;
+}
 // Normalise a vector
 // No use of restrict; dst *can* alias src
 void Normalize( vector* dst, vector* src ) {
-	float length = src->coord.x * src->coord.x + src->coord.y * src->coord.y + src->coord.z * src->coord.z;
+	float length = vector_length( src );
 	float invLength = 1.f / length;
 	dst->coord.x = src->coord.x * invLength;
 	dst->coord.y = src->coord.y * invLength;
 	dst->coord.z = src->coord.z * invLength;
 	dst->coord.w = src->coord.w; // Preserve the W coord? This seems right to me
+}
+
+bool isNormalized( const vector* v ) {
+#if 0
+	printf( "IsNormalized: Vector v: " );
+	vector_print( v );
+	printf( ", length: %.10f\n", vector_length( v ));
+#endif
+	return f_eq( 1.f, vector_length( v ));
 }
 
 vector vector_lerp( vector* from, vector* to, float amount ) {
@@ -305,6 +318,19 @@ void matrix_inverse( matrix inverse, matrix src ) {
 	matrix adjugate;
 	matrix_transpose( adjugate, cofactors );
 	matrix_scalarMul( inverse, adjugate, invDet );
+
+#if 1
+	vector a, b, c;
+	a = Vector( 0.5f, 1.2f, 3.0f, 1.0 );
+	b = matrixVecMul( src, &a );
+	c = matrixVecMul( inverse, &b );
+	printf( "Inverse testing vectors: " );
+	vector_print( &a );
+	printf( "\n" );
+	vector_print( &c );
+	printf( "\n" );
+//	assert( vector_equal( &a, &c ));
+#endif
 }
 
 // Convert a V matrix to an OGL matrix

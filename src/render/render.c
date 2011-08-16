@@ -108,6 +108,7 @@ GLuint render_getUniformLocation( GLuint program, const char* name ) {
 		printf( "Error finding Uniform Location for shader uniform variable \"%s\".\n", name );
 	}
 	assert( location != -1 );
+	printf( "RENDER: Got shader uniform location for \"%s\": 0x%x\n", name, location );
 	return location;
 }
 
@@ -133,11 +134,11 @@ void render_set3D( int w, int h ) {
 	glViewport(0, 0, w, h);
 	glMatrixMode(GL_PROJECTION);
 	glLoadIdentity();
-	gluPerspective(45.0, (double)w / (double)h, 1.0, 200.0);
+	gluPerspective(45.0, (double)w / (double)h, 1.0, 500.0);
 
-	glEnable( GL_DEPTH_TEST );
-	glDepthFunc( GL_LEQUAL );
-	glDepthMask( GL_TRUE );
+//	glEnable( GL_DEPTH_TEST );
+//	glDepthFunc( GL_LEQUAL );
+//	glDepthMask( GL_TRUE );
 }
 
 void render_set2D() {
@@ -174,13 +175,14 @@ void render_lighting( scene* s ) {
 		light_render( i, s->lights[i] );
 	}*/
 }
-
+/*
 void render_applyCamera(camera* cam) {
 	// Negate as we're doing the inverse of camera
 	matrix cam_inverse;
 	matrix_inverse( cam_inverse, cam->trans->world );
 	glMultMatrixf( (float*)cam_inverse );
 }
+*/
 
 // Clear information from last draw
 void render_clear() {
@@ -198,7 +200,7 @@ void render_init() {
 	glfwSetWindowSizeCallback(handleResize);
 
 	printf("RENDERING: Initialising OpenGL rendering settings.\n");
-	glEnable(GL_DEPTH_TEST);
+//	glEnable(GL_DEPTH_TEST);
 	glEnable(GL_LIGHTING);
 	glEnable(GL_NORMALIZE);
 //	glEnable(GL_TEXTURE_2D);
@@ -250,12 +252,34 @@ void render_perspectiveMatrix( matrix m, float fov, float aspect, float near, fl
 	m[3][3] = 0.f;
 }
 
+void render_validateMatrix( matrix m ) {
+	for ( int i = 0; i < 3; i++ ) {
+		assert( isNormalized( matrix_getCol( m, i ) ));
+	}
+	assert( f_eq( m[0][3], 0.f ));
+	assert( f_eq( m[1][3], 0.f ));
+	assert( f_eq( m[2][3], 0.f ));
+	assert( f_eq( m[3][3], 1.f ));
+}
+
 void render_resetModelView( ) {
 	matrix_cpy( modelview, modelview_base );
 }
 
 void render_setUniform_matrix( GLuint uniform, matrix m ) {
 	glUniformMatrix4fv( uniform, 1, /*transpose*/false, (GLfloat*)m );
+}
+
+// Takes a uniform and an OpenGL texture name (GLuint)
+// It binds the given texture to an available texture unit
+// and sets the uniform to that
+void render_setUniform_texture( GLuint uniform, GLuint texture ) {
+	// Activate a texture unit
+	glActiveTexture( GL_TEXTURE0 );
+	// Bind the texture to that texture unit
+	glBindTexture( GL_TEXTURE_2D, texture );
+	glUniform1i( uniform, 0 );
+
 }
 
 // Shader version
@@ -267,17 +291,22 @@ void render_shader( scene* s ) {
 	const float fov = 0.8f; // In radians
 	const float aspect = 4.f/3.f;
 	const float z_near = 1.f;
-	const float z_far = 200.f;
+	const float z_far = 500.f;
 	matrix perspective;
 	render_perspectiveMatrix( perspective, fov, aspect, z_near, z_far );
 
+	render_validateMatrix( s->cam->trans->world );
 	matrix_inverse( modelview_base, s->cam->trans->world );
+	render_validateMatrix( modelview );
 	render_resetModelView();
 	
 	// Set up uniforms
 	render_setUniform_matrix( resources.uniforms.projection, perspective );
 	render_setUniform_matrix( resources.uniforms.modelview, modelview );
 	render_setUniform_matrix( resources.uniforms.worldspace, modelview );
+
+	// Textures
+//	render_setUniform_texture( resources.uniforms.the_texture, g_texture_default );
 
 	render_lighting( s );
 

@@ -4,6 +4,8 @@
 // Varying
 varying vec4 frag_position;
 varying vec4 frag_normal;
+varying vec4 projected_frag_position;
+varying vec4 test_color;
 
 const int LIGHT_COUNT = 2;
 
@@ -12,6 +14,8 @@ uniform mat4 worldspace;
 uniform vec4 light_position[LIGHT_COUNT];
 uniform vec4 light_diffuse[LIGHT_COUNT];
 uniform vec4 light_specular[LIGHT_COUNT];
+
+uniform mat4 projection;
 
 // Test Light values
 const vec4 light_ambient = vec4( 0.2, 0.2, 0.2, 0.0 );
@@ -70,7 +74,13 @@ void main() {
 		total_specular_color += specular_color;
 
 	}
-	gl_FragColor =	total_specular_color * material_specular + 
-					total_diffuse_color * material_diffuse;
+//	gl_FragColor =	total_specular_color * material_specular + 
+//					total_diffuse_color * material_diffuse;
+
+	gl_FragColor = vec4( 1.0, 1.0, 1.0, 1.0 );
+//	gl_FragColor = vec4( frag_position.z/50.0, frag_position.z-/50.0, frag_position.z/50.0, 1.0 );
+//	gl_FragColor = vec4( projected_frag_position.x / projected_frag_position.w, projected_frag_position.y / projected_frag_position.w, projected_frag_position.z / projected_frag_position.w, 1.0 );
+//	gl_FragColor = test_color;
+
 	
 }

@@ -28,6 +28,8 @@
 // GLFW Libraries
 #include <GL/glfw.h>
 
+#define USE_VELCAM 1
+
 IMPLEMENT_LIST(delegate)
 
 // System libraries
@@ -35,11 +37,10 @@ IMPLEMENT_LIST(delegate)
 // *** Static Hacks
 scene* theScene = NULL;
 engine* static_engine_hack;
-//velcam* fcam;
+#if USE_VELCAM
+velcam* fcam;
+#endif
 int w = 640, h = 480;
-
-float camX = 0.f;
-float camY = 0.f;
 
 // Function Declarations
 void engine_tickTickers( engine* e, float dt );
@@ -71,6 +72,11 @@ void test_engine_init( engine* e ) {
 	p->trans = transform_create();
 	engine_addRender( e, p, particleEmitter_render );
 	startTick( e, p, particleEmitter_tick );
+
+#if USE_VELCAM
+	fcam = velcam_create( e );
+	fcam->camera_target = theScene->cam;
+#endif
 }
 
 /*
@@ -80,7 +86,9 @@ void test_engine_init( engine* e ) {
  */
 
 void engine_input( engine* e ) {
-//	velcam_input( fcam, e->input );
+#if USE_VELCAM
+	velcam_input( fcam, e->input );
+#endif
 
 	scene_input( theScene, e->input );
 }
@@ -94,7 +102,9 @@ void engine_tick( engine* e ) {
 	input_tick( e->input, dt );
 	scene_tick( theScene, dt );
 
-//	velcam_tick( fcam, dt );
+#if USE_VELCAM
+	velcam_tick( fcam, dt );
+#endif
 
 	engine_tickTickers( e, dt );
 

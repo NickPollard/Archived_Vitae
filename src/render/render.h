@@ -5,10 +5,11 @@
 #define SHADER_UNIFORMS( f ) \
 	f( projection ) \
 	f( modelview ) \
-	f( worldspace ) \
+	f(worldspace ) \
 	f( light_position ) \
 	f( light_diffuse ) \
 	f( light_specular )
+
 
 #define DECLARE_AS_GLUINT( var ) \
 	GLuint var;
@@ -67,3 +68,6 @@ void render_terminate();
 void render( scene* s , int w, int h );
 
 void render_resetModelView( );
+
+void render_validateMatrix( matrix m );
+

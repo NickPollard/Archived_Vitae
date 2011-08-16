@@ -111,7 +111,7 @@ function start()
 	-- We create a player object which is a game-specific Lua class
 	-- The player class itself creates several native C classes in the engine
 	player_ship = playership_create()
-	vchasecam_follow( engine, player_ship.transform );
+--	vchasecam_follow( engine, player_ship.transform );
 end
 
 wave_interval_time = 10.0

@@ -8,6 +8,7 @@
 #include "input.h"
 #include "transform.h"
 #include "mem/allocator.h"
+#include "render/render.h" // TODO: remove
 
 // velcam constructor
 velcam* velcam_create( engine* e ) {
@@ -74,6 +75,7 @@ void velcam_process( velcam* cam, velcamInput* in ) {
 	Add( &cam->euler, &cam->euler, &in->pan );
 	matrix m;
 	matrix_fromEuler( m, &cam->euler );
+	render_validateMatrix( m );
 	// We have a translation in camera space
 	// Want to go to world space, so use normal (not inverse) cam transform
 	vector translation_delta = matrixVecMul( m, &in->track );
@@ -89,6 +91,7 @@ void velcam_setTarget( velcam* f, camera* c ) {
 
 // Update the velcam, setting the target data to latest
 void velcam_tick( velcam* f, float dt ) {
+	assert( f->camera_target );
 	vector vel;
 	vector forward = Vector( 0.f, 0.f, 1.f, 0.f );
 	vel = matrixVecMul( f->trans->world, &forward );

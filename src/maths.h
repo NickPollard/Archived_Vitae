@@ -36,6 +36,8 @@ typedef union matrix_u {
 } matrix;
 */
 
+bool f_eq( float a, float b );
+
 int max( int a, int b );
 int min( int a, int b );
 
@@ -65,6 +67,7 @@ void Cross(vector* dst, const vector* srcA, const vector* srcB);
 // Normalise a vector
 // No use of restrict; dst *can* alias src
 void Normalize( vector* dst, vector* src );
+bool isNormalized( const vector* v );
 
 void vector_scale( vector* dst, vector* src, float scale );
 
@@ -86,6 +89,7 @@ void matrix_setColumn(matrix m, int col, const vector* v);
 
 // Set a row in a matrix to a given vector
 void matrix_setRow(matrix m, int row, const vector* v);
+const vector* matrix_getCol( matrix m, int i );
 
 // Set the translation component of a 4x4 matrix
 void matrix_setTranslation(matrix m, const vector* v);
