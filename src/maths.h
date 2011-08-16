@@ -66,7 +66,7 @@ void Cross(vector* dst, const vector* srcA, const vector* srcB);
 
 // Normalise a vector
 // No use of restrict; dst *can* alias src
-void Normalize( vector* dst, vector* src );
+void Normalize( vector* dst, const vector* src );
 bool isNormalized( const vector* v );
 
 void vector_scale( vector* dst, vector* src, float scale );
@@ -114,6 +114,8 @@ void matrix_cpy(matrix dst, matrix src);
 
 // Build a rotation matrix from given Euler Angles
 void matrix_fromEuler( matrix dst, vector* euler_angles );
+
+void matrix_normalize( matrix m );
 
 // Build a rotation quaternion from Euler Angle values
 quaternion quaternion_fromEuler( vector* euler_angles );

@@ -5,7 +5,7 @@
 //----------------------
 #include <assert.h>
 
-static const float epsilon = 0.00001f;
+static const float epsilon = 0.0001f;
 
 bool f_eq( float a, float b ) {
 	return fabsf( a - b ) < epsilon;
@@ -79,7 +79,7 @@ float vector_length( const vector* v ) {
 }
 // Normalise a vector
 // No use of restrict; dst *can* alias src
-void Normalize( vector* dst, vector* src ) {
+void Normalize( vector* dst, const vector* src ) {
 	float length = vector_length( src );
 	float invLength = 1.f / length;
 	dst->coord.x = src->coord.x * invLength;
@@ -418,6 +418,15 @@ void matrix_fromRotTrans( matrix dst, quaternion* rotation, vector* translation 
 	// TODO: implement
 	printf( "Not Yet Implemented: matrix_fromRotTrans \n");
 	assert( 0 );
+}
+
+// Normalize the axes to be unit axes
+void matrix_normalize( matrix m ) {
+	vector v;
+	for ( int i = 0; i < 4; i++ ) {
+	   	Normalize( &v, matrix_getCol( m, i ));
+		matrix_setColumn( m, i, &v );
+	}
 }
 
 /*
