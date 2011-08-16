@@ -9,7 +9,7 @@
 #include <GL/glfw.h>
 
 // Globals
-GLuint g_texture_default;
+GLuint g_texture_default = 0;
 
 void texture_init() {
 	g_texture_default = texture_loadTGA( "assets/img/test64rgb.tga" );

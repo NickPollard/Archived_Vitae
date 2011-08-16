@@ -28,6 +28,7 @@ void debugtextframe_tick( void* entity, float dt ) {
 }
 
 void debugtextframe_render( void* entity ) {
+	assert( 0 );
 	glEnable(GL_TEXTURE_2D);
 
 	debugtextframe* f = (debugtextframe*)entity;

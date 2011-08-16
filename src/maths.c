@@ -369,7 +369,7 @@ void matrix_inverse( matrix inverse, matrix src ) {
 	matrix_transpose( adjugate, cofactors );
 	matrix_scalarMul( inverse, adjugate, invDet );
 
-#if 1
+#if 0
 	vector a, b, c;
 	a = Vector( 0.5f, 1.2f, 3.0f, 1.0 );
 	b = matrixVecMul( src, &a );

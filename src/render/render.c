@@ -102,8 +102,8 @@ GLuint render_linkShaderProgram( GLuint vertex_shader, GLuint fragment_shader ) 
 	return program;
 }
 
-GLuint render_getUniformLocation( GLuint program, const char* name ) {
-	GLuint location = glGetUniformLocation( program, name );
+GLint render_getUniformLocation( GLuint program, const char* name ) {
+	GLint location = glGetUniformLocation( program, name );
 	if ( location == -1 ) {
 		printf( "Error finding Uniform Location for shader uniform variable \"%s\".\n", name );
 	}
@@ -113,8 +113,8 @@ GLuint render_getUniformLocation( GLuint program, const char* name ) {
 }
 
 void render_buildShaders() {
-	resources.vertex_shader = render_compileShader( GL_VERTEX_SHADER, "dat/shaders/phong_vertex.glsl" );
-	resources.fragment_shader = render_compileShader( GL_FRAGMENT_SHADER, "dat/shaders/phong_fragment.glsl" );
+	resources.vertex_shader = render_compileShader( GL_VERTEX_SHADER, "dat/shaders/phong.v.glsl" );
+	resources.fragment_shader = render_compileShader( GL_FRAGMENT_SHADER, "dat/shaders/phong.f.glsl" );
 
 	resources.program = render_linkShaderProgram( resources.vertex_shader, resources.fragment_shader );
 
@@ -132,9 +132,9 @@ void render_buildShaders() {
 
 void render_set3D( int w, int h ) {
 	glViewport(0, 0, w, h);
-	glMatrixMode(GL_PROJECTION);
-	glLoadIdentity();
-	gluPerspective(45.0, (double)w / (double)h, 1.0, 500.0);
+//	glMatrixMode(GL_PROJECTION);
+//	glLoadIdentity();
+//	gluPerspective(45.0, (double)w / (double)h, 1.0, 500.0);
 
 	glEnable( GL_DEPTH_TEST );
 	glDepthFunc( GL_LEQUAL );
@@ -201,11 +201,11 @@ void render_init() {
 
 	printf("RENDERING: Initialising OpenGL rendering settings.\n");
 	glEnable(GL_DEPTH_TEST);
-	glEnable(GL_LIGHTING);
-	glEnable(GL_NORMALIZE);
+//	glEnable(GL_LIGHTING);
+//	glEnable(GL_NORMALIZE);
 //	glEnable(GL_TEXTURE_2D);
-	glShadeModel(GL_SMOOTH);
-	glEnable(GL_COLOR_MATERIAL);
+//	glShadeModel(GL_SMOOTH);
+//	glEnable(GL_COLOR_MATERIAL);
 
 	texture_init();
 
@@ -277,6 +277,7 @@ void render_setUniform_texture( GLuint uniform, GLuint texture ) {
 	// Activate a texture unit
 	glActiveTexture( GL_TEXTURE0 );
 	// Bind the texture to that texture unit
+	printf( "binding texture: %d.\n", texture );
 	glBindTexture( GL_TEXTURE_2D, texture );
 	glUniform1i( uniform, 0 );
 
@@ -306,7 +307,7 @@ void render_shader( scene* s ) {
 	render_setUniform_matrix( resources.uniforms.worldspace, modelview );
 
 	// Textures
-//	render_setUniform_texture( resources.uniforms.the_texture, g_texture_default );
+	render_setUniform_texture( resources.uniforms.tex, g_texture_default );
 
 	render_lighting( s );
 

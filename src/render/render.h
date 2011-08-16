@@ -8,18 +8,19 @@
 	f(worldspace ) \
 	f( light_position ) \
 	f( light_diffuse ) \
-	f( light_specular )
+	f( light_specular ) \
+	f( tex )
 
 
-#define DECLARE_AS_GLUINT( var ) \
-	GLuint var;
+#define DECLARE_AS_GLINT( var ) \
+	GLint var;
 
 typedef struct gl_resources_s {
 	GLuint vertex_buffer, element_buffer;
 	GLuint texture;
 
 	struct {
-		SHADER_UNIFORMS( DECLARE_AS_GLUINT )
+		SHADER_UNIFORMS( DECLARE_AS_GLINT )
 	} uniforms;
 
 	struct {

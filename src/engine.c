@@ -54,13 +54,16 @@ void engine_addTicker( engine* e, void* entity, tickfunc tick );
  */
 
 void test_engine_init( engine* e ) {
+#if 0
 	debugtextframe* f = debugtextframe_create( 10.f, 10.f, 20.f );
 	engine_addTicker( e, (void*)f, debugtextframe_tick );
 	engine_addRender( e, (void*)f, debugtextframe_render );
 	e->debugtext = f;
+#endif
+	
 
 	theScene = test_scene_init( e );
-	theScene->debugtext = e->debugtext;
+//	theScene->debugtext = e->debugtext;
 	lua_setScene( e->lua, theScene );
 
 	particleEmitter* p = particleEmitter_create();

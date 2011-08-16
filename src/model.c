@@ -210,7 +210,7 @@ mesh* model_getMesh(model* m, int i) {
 
 // Draw each submesh of a model
 void model_draw( model* m ) {
-	vglBindTexture( g_texture_default );
+//	vglBindTexture( g_texture_default );
 	for (int i = 0; i < m->meshCount; i++) {
 		mesh_drawVerts( model_getMesh( m, i ));
 	}
