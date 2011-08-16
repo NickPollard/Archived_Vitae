@@ -28,7 +28,7 @@
 // GLFW Libraries
 #include <GL/glfw.h>
 
-#define USE_VELCAM 1
+#define USE_VELCAM 0
 
 IMPLEMENT_LIST(delegate)
 

@@ -74,13 +74,8 @@ void main() {
 		total_specular_color += specular_color;
 
 	}
-//	gl_FragColor =	total_specular_color * material_specular + 
-//					total_diffuse_color * material_diffuse;
-
-	gl_FragColor = vec4( 1.0, 1.0, 1.0, 1.0 );
-//	gl_FragColor = vec4( frag_position.z/50.0, frag_position.z-/50.0, frag_position.z/50.0, 1.0 );
-//	gl_FragColor = vec4( projected_frag_position.x / projected_frag_position.w, projected_frag_position.y / projected_frag_position.w, projected_frag_position.z / projected_frag_position.w, 1.0 );
-//	gl_FragColor = test_color;
+	gl_FragColor =	total_specular_color * material_specular + 
+					total_diffuse_color * material_diffuse;
 
 	
 }

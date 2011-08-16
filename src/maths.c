@@ -252,6 +252,7 @@ float matrix_determinantFromCofactors( matrix m, matrix cofactors ) {
 }
 
 
+
 void matrix_transpose( matrix dst, matrix src ) {
 	for ( int i = 0; i < 4; i++ ) {
 		for ( int j = i; j < 4; j++ ) {
@@ -261,11 +262,46 @@ void matrix_transpose( matrix dst, matrix src ) {
 	}
 }
 
+void test_create_matrix( matrix m ) {
+	float k = 0.f;
+	for ( int i = 0; i < 4; i++ ) {
+		for ( int j = 0; j < 4; j++ ) {
+			m[i][j] = k;
+			k += 1.f;
+		}
+	}
+}
+
+void test_matrix_transpose( ) {
+	matrix dst, src;
+	test_create_matrix( src );
+	matrix_transpose( dst, src );
+	matrix_print( src );
+	matrix_print( dst );
+	for ( int i = 0; i < 4; i++ ) {
+		for ( int j = 0; j < 4; j++ ) {
+			assert( f_eq( dst[i][j], src[j][i] ));
+		}
+	}
+}
+
 void matrix_scalarMul( matrix dst, matrix src, float scalar ) {
 	float* srcf = (float*)src;
 	float* dstf = (float*)dst;
 	for ( int i = 0; i < 16; i++ )
 		dstf[i] = srcf[i] * scalar;
+}
+
+void test_matrix_scalarMul( ) {
+	matrix dst, src;
+	float scale = 0.5f;
+	test_create_matrix( src );
+	matrix_scalarMul( dst, src, scale );
+	for ( int i = 0; i < 4; i++ ) {
+		for ( int j = 0; j < 4; j++ ) {
+			assert( f_eq( dst[i][j], src[i][j]*scale ));
+		}
+	}
 }
 
 // Matrix inverse
@@ -311,9 +347,23 @@ void matrix_inverse( matrix inverse, matrix src ) {
 	cofactors[0][3] = -(src[1][2]*tC - src[2][2]*tE + src[3][2]*tB);
 	cofactors[1][3] = src[0][2]*tC - src[2][2]*tF + src[3][2]*tD;
 	cofactors[2][3] = -(src[0][2]*tE - src[1][2]*tF + src[3][2]*tA);
-	cofactors[3][3] = src[0][2]*tB - src[2][2]*tD + src[2][2]*tA;
+	cofactors[3][3] = src[0][2]*tB - src[1][2]*tD + src[2][2]*tA;
 
-	float invDet = 1.f / matrix_determinantFromCofactors( src, cofactors );
+	float other_det = + tA * bC
+						- tD * bE
+						+ tF * bB
+						+ tB * bF
+						- tE * bD
+						+ tC * bA;
+
+	/*
+	float det = matrix_determinantFromCofactors( src, cofactors );
+	printf( "det: %.6f, other_det: %.6f\n", det, other_det  );
+	assert( f_eq( det, other_det ));
+	*/
+
+	//float invDet = 1.f / matrix_determinantFromCofactors( src, cofactors );
+	float invDet = 1.f / other_det;
 
 	matrix adjugate;
 	matrix_transpose( adjugate, cofactors );
@@ -324,12 +374,20 @@ void matrix_inverse( matrix inverse, matrix src ) {
 	a = Vector( 0.5f, 1.2f, 3.0f, 1.0 );
 	b = matrixVecMul( src, &a );
 	c = matrixVecMul( inverse, &b );
+
+	printf( "det: %.6f\n", other_det );
+	printf( "Inverse:\n" );
+	matrix_print( src );
+	matrix_print( inverse );
+
+	/*
 	printf( "Inverse testing vectors: " );
 	vector_print( &a );
 	printf( "\n" );
 	vector_print( &c );
 	printf( "\n" );
-//	assert( vector_equal( &a, &c ));
+	*/
+	assert( vector_equal( &a, &c ));
 #endif
 }
 
@@ -437,10 +495,10 @@ void matrix_rotX( matrix dst, float angle ) {
 }
 
 void matrix_print( matrix src ) {
-	printf( "{ %.2f, %.2f, %.2f, %.2f\n ", src[0][0], src[1][0], src[2][0], src[3][0] );
-	printf( "  %.2f, %.2f, %.2f, %.2f\n ", src[0][1], src[1][1], src[2][1], src[3][1] );
-	printf( "  %.2f, %.2f, %.2f, %.2f\n ", src[0][2], src[1][2], src[2][2], src[3][2] );
-	printf( "  %.2f, %.2f, %.2f, %.2f }\n ", src[0][3], src[1][3], src[2][3], src[3][3] );
+	printf( "{ %.6f, %.6f, %.6f, %.6f\n ", src[0][0], src[1][0], src[2][0], src[3][0] );
+	printf( "  %.6f, %.6f, %.6f, %.6f\n ", src[0][1], src[1][1], src[2][1], src[3][1] );
+	printf( "  %.6f, %.6f, %.6f, %.6f\n ", src[0][2], src[1][2], src[2][2], src[3][2] );
+	printf( "  %.6f, %.6f, %.6f, %.6f }\n ", src[0][3], src[1][3], src[2][3], src[3][3] );
 }
 
 // Build a rotation matrix from given Euler Angles
@@ -482,6 +540,9 @@ void test_matrix() {
 	printf("TEST: Maths.c: det = %.2f\n", det );
 	assert( f_eq( det, 1.f ));
 
+	test_matrix_transpose();
+	test_matrix_scalarMul();
+
 	// Test Inverse
 	// Inverse of Identity should be identity 
 	matrix_setIdentity( a );
@@ -502,5 +563,6 @@ void test_matrix() {
 	vector v2 = matrixVecMul( a, &v );
 	v2 = matrixVecMul( c, &v2 );
 	assert( vector_equal( &v, &v2 ));
+
 
 }

@@ -136,9 +136,9 @@ void render_set3D( int w, int h ) {
 	glLoadIdentity();
 	gluPerspective(45.0, (double)w / (double)h, 1.0, 500.0);
 
-//	glEnable( GL_DEPTH_TEST );
-//	glDepthFunc( GL_LEQUAL );
-//	glDepthMask( GL_TRUE );
+	glEnable( GL_DEPTH_TEST );
+	glDepthFunc( GL_LEQUAL );
+	glDepthMask( GL_TRUE );
 }
 
 void render_set2D() {
@@ -200,7 +200,7 @@ void render_init() {
 	glfwSetWindowSizeCallback(handleResize);
 
 	printf("RENDERING: Initialising OpenGL rendering settings.\n");
-//	glEnable(GL_DEPTH_TEST);
+	glEnable(GL_DEPTH_TEST);
 	glEnable(GL_LIGHTING);
 	glEnable(GL_NORMALIZE);
 //	glEnable(GL_TEXTURE_2D);
