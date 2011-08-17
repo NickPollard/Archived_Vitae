@@ -11,6 +11,7 @@
 #include "particle.h"
 #include "mem/allocator.h"
 #include "system/file.h"
+#include "system/string.h"
 
 #define TEST true
 
@@ -26,6 +27,8 @@ void test() {
 	test_matrix();
 
 	test_property();
+
+	test_string();
 }
 
 // ###################################

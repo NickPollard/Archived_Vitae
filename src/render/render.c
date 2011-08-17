@@ -42,9 +42,6 @@ void render_setBuffers( float* vertex_buffer, int vertex_buffer_size, int* eleme
 	resources.element_buffer = gl_bufferCreate( GL_ELEMENT_ARRAY_BUFFER, element_buffer, element_buffer_size );
 }
 
-typedef void (*func_getIV)( GLuint, GLenum, GLint* );
-typedef void (*func_getInfoLog)( GLuint, GLint, GLint*, GLchar* );
-
 void gl_dumpInfoLog( GLuint object, func_getIV getIV, func_getInfoLog getInfoLog ) {
 	GLint length;
 	char* log;
@@ -57,90 +54,16 @@ void gl_dumpInfoLog( GLuint object, func_getIV getIV, func_getInfoLog getInfoLog
 	mem_free( log );
 }
 
-// Based on code from Joe's Blog: http://duriansoftware.com/joe/An-intro-to-modern-OpenGL.-Chapter-2.2:-Shaders.html
-GLuint render_compileShader( GLenum type, const char* path ) {
-	GLint length;
-	const char* source = vfile_contents( path, &length );
-	GLuint shader;
-	GLint shader_ok;
-
-	if ( !source ) {
-		printf( "Error: Cannot create Shader. File %s not found.\n", path );
-		assert( 0 );
-	}
-
-	shader = glCreateShader( type );
-	glShaderSource( shader, 1, (const GLchar**)&source, &length );
-	mem_free( (void*)source );
-	glCompileShader( shader );
-
-	glGetShaderiv( shader, GL_COMPILE_STATUS, &shader_ok );
-	if ( !shader_ok) {
-		printf( "Error: Failed to compile Shader from File %s.\n", path );
-		gl_dumpInfoLog( shader, glGetShaderiv,  glGetShaderInfoLog);
-		assert( 0 );
-	}
-
-	return shader;
-}
-
-GLuint render_linkShaderProgram( GLuint vertex_shader, GLuint fragment_shader ) {
-	GLint program_ok;
-
-	GLuint program = glCreateProgram();
-	glAttachShader( program, vertex_shader );
-	glAttachShader( program, fragment_shader );
-	glLinkProgram( program );
-
-	glGetProgramiv( program, GL_LINK_STATUS, &program_ok );
-	if ( !program_ok ) {
-		printf( "Failed to link shader program.\n" );
-		gl_dumpInfoLog( program, glGetProgramiv,  glGetProgramInfoLog);
-		glDeleteProgram( program );
-		assert( 0 );
-	}
-
-	return program;
-}
-
-GLint render_getUniformLocation( GLuint program, const char* name ) {
-	GLint location = glGetUniformLocation( program, name );
-	if ( location == -1 ) {
-		printf( "Error finding Uniform Location for shader uniform variable \"%s\".\n", name );
-	}
-	assert( location != -1 );
-	printf( "RENDER: Got shader uniform location for \"%s\": 0x%x\n", name, location );
-	return location;
-}
-
-GLuint	render_buildShader( const char* vertex_file, const char* fragment_file ) {
-	shader_findUniforms( vertex_file );
-	shader_findUniforms( fragment_file );
-	GLuint vertex_shader = render_compileShader( GL_VERTEX_SHADER, vertex_file );
-	GLuint fragment_shader = render_compileShader( GL_FRAGMENT_SHADER, fragment_file );
-	return render_linkShaderProgram( vertex_shader, fragment_shader );
-}
-
 void render_buildShaders() {
-	/*
-	resources.vertex_shader = render_compileShader( GL_VERTEX_SHADER, "dat/shaders/phong.v.glsl" );
-	resources.fragment_shader = render_compileShader( GL_FRAGMENT_SHADER, "dat/shaders/phong.f.glsl" );
-	resources.program = render_linkShaderProgram( resources.vertex_shader, resources.fragment_shader );
-
-	resources.particle_vertex_shader = render_compileShader( GL_VERTEX_SHADER, "dat/shaders/textured_phong.v.glsl" );
-	resources.particle_fragment_shader = render_compileShader( GL_FRAGMENT_SHADER, "dat/shaders/textured_phong.f.glsl" );
-	resources.particle_program = render_linkShaderProgram( resources.particle_vertex_shader, resources.particle_fragment_shader );
-	*/
-
-	resources.program = render_buildShader( "dat/shaders/phong.v.glsl", "dat/shaders/phong.f.glsl" );
-	resources.particle_program = render_buildShader( "dat/shaders/textured_phong.v.glsl", "dat/shaders/textured_phong.f.glsl" );
+	resources.program = shader_build( "dat/shaders/phong.v.glsl", "dat/shaders/phong.f.glsl" );
+	resources.particle_program = shader_build( "dat/shaders/textured_phong.v.glsl", "dat/shaders/textured_phong.f.glsl" );
 
 #define GET_UNIFORM_LOCATION( var ) \
-	resources.uniforms.var = render_getUniformLocation( resources.program, #var );
+	resources.uniforms.var = shader_getUniformLocation( resources.program, #var );
 	SHADER_UNIFORMS( GET_UNIFORM_LOCATION )
 
 #define GET_UNIFORM_LOCATION_PARTICLE( var ) \
-	resources.particle_uniforms.var = render_getUniformLocation( resources.particle_program, #var );
+	resources.particle_uniforms.var = shader_getUniformLocation( resources.particle_program, #var );
 	SHADER_UNIFORMS( GET_UNIFORM_LOCATION_PARTICLE )
 	// Attributes
 	resources.attributes.position = glGetAttribLocation( resources.program, "position" );

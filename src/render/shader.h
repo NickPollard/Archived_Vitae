@@ -10,4 +10,7 @@ typedef struct shader_s {
 } shader;
 
 // temp TODO: remove
-void shader_findUniforms( const char* src );
+void shader_findUniforms( GLuint program, const char* src );
+GLuint shader_compile( GLenum type, const char* path, const char* source );
+GLuint	shader_build( const char* vertex_path, const char* fragment_path );
+GLint shader_getUniformLocation( GLuint program, const char* name );

@@ -119,12 +119,16 @@ void block_merge( heapAllocator* heap, block* first, block* second ) {
 	assert( second );
 	assert( first->free );								// Both must be empty
 	assert( second == (first->data + first->size) );	// Contiguous
+	assert( first->next == second );
+	assert( second->prev == first );
 
 	heap->total_free += sizeof( block );
 	heap->total_allocated -= sizeof( block );
 
 	first->size += second->size + sizeof( block );
 	first->next = second->next;
+	if ( second->next )
+		second->next->prev = first;
 	first->free = true;
 }
 
@@ -157,6 +161,8 @@ void block_insertAfter( block* before, block* after ) {
 	after->next = before->next;
 	after->prev = before;
 	before->next = after;
+	if ( after->next )
+		after->next->prev = after;
 }
 
 // Create and initialise a block in a given piece of memory of *size* bytes
