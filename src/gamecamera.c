@@ -14,7 +14,7 @@ void gamecamera_update( gamecamera* c, float dt ) {
 }
 
 gamecamera* gamecamera_create() {
-	gamecamera* c = malloc( sizeof( gamecamera ) );
+	gamecamera* c = mem_alloc( sizeof( gamecamera ) );
 	memset( c, 0, sizeof( gamecamera ) );
 	return c;
 }

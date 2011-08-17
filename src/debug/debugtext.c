@@ -3,6 +3,7 @@
 #include "common.h"
 #include "debugtext.h"
 //-----------------------
+#include "mem/allocator.h"
 #include "font.h"
 
 // GLFW Libraries
@@ -16,7 +17,7 @@ void PrintDebugText( debugtextframe* frame, const char* string ) {
 }
 
 debugtextframe* debugtextframe_create( float x, float y, float lineHeight) {
-	debugtextframe* f = malloc( sizeof( debugtextframe ));
+	debugtextframe* f = mem_alloc( sizeof( debugtextframe ));
 	memset( f, 0, sizeof( debugtextframe ));
 	f->x = x;
 	f->y = y;

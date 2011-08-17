@@ -10,6 +10,7 @@
 #include "scene.h"
 #include "render/debugdraw.h"
 #include "render/modelinstance.h"
+#include "render/shader.h"
 #include "render/texture.h"
 #include "system/file.h"
 // temp
@@ -112,16 +113,35 @@ GLint render_getUniformLocation( GLuint program, const char* name ) {
 	return location;
 }
 
+GLuint	render_buildShader( const char* vertex_file, const char* fragment_file ) {
+	shader_findUniforms( vertex_file );
+	shader_findUniforms( fragment_file );
+	GLuint vertex_shader = render_compileShader( GL_VERTEX_SHADER, vertex_file );
+	GLuint fragment_shader = render_compileShader( GL_FRAGMENT_SHADER, fragment_file );
+	return render_linkShaderProgram( vertex_shader, fragment_shader );
+}
+
 void render_buildShaders() {
+	/*
 	resources.vertex_shader = render_compileShader( GL_VERTEX_SHADER, "dat/shaders/phong.v.glsl" );
 	resources.fragment_shader = render_compileShader( GL_FRAGMENT_SHADER, "dat/shaders/phong.f.glsl" );
-
 	resources.program = render_linkShaderProgram( resources.vertex_shader, resources.fragment_shader );
+
+	resources.particle_vertex_shader = render_compileShader( GL_VERTEX_SHADER, "dat/shaders/textured_phong.v.glsl" );
+	resources.particle_fragment_shader = render_compileShader( GL_FRAGMENT_SHADER, "dat/shaders/textured_phong.f.glsl" );
+	resources.particle_program = render_linkShaderProgram( resources.particle_vertex_shader, resources.particle_fragment_shader );
+	*/
+
+	resources.program = render_buildShader( "dat/shaders/phong.v.glsl", "dat/shaders/phong.f.glsl" );
+	resources.particle_program = render_buildShader( "dat/shaders/textured_phong.v.glsl", "dat/shaders/textured_phong.f.glsl" );
 
 #define GET_UNIFORM_LOCATION( var ) \
 	resources.uniforms.var = render_getUniformLocation( resources.program, #var );
 	SHADER_UNIFORMS( GET_UNIFORM_LOCATION )
 
+#define GET_UNIFORM_LOCATION_PARTICLE( var ) \
+	resources.particle_uniforms.var = render_getUniformLocation( resources.particle_program, #var );
+	SHADER_UNIFORMS( GET_UNIFORM_LOCATION_PARTICLE )
 	// Attributes
 	resources.attributes.position = glGetAttribLocation( resources.program, "position" );
 	resources.attributes.normal = glGetAttribLocation( resources.program, "normal" );
@@ -277,7 +297,6 @@ void render_setUniform_texture( GLuint uniform, GLuint texture ) {
 	// Activate a texture unit
 	glActiveTexture( GL_TEXTURE0 );
 	// Bind the texture to that texture unit
-	printf( "binding texture: %d.\n", texture );
 	glBindTexture( GL_TEXTURE_2D, texture );
 	glUniform1i( uniform, 0 );
 

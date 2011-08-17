@@ -276,8 +276,8 @@ void test_matrix_transpose( ) {
 	matrix dst, src;
 	test_create_matrix( src );
 	matrix_transpose( dst, src );
-	matrix_print( src );
-	matrix_print( dst );
+//	matrix_print( src );
+//	matrix_print( dst );
 	for ( int i = 0; i < 4; i++ ) {
 		for ( int j = 0; j < 4; j++ ) {
 			assert( f_eq( dst[i][j], src[j][i] ));

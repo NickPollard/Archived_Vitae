@@ -3,6 +3,7 @@
 #include "common.h"
 #include "input.h"
 //---------------------
+#include "mem/allocator.h"
 
 // GLFW Libraries
 #include <GL/glfw.h>
@@ -38,7 +39,7 @@ int input_keyReleased( input* in, int key ) {
 }
 
 input* input_create() {
-	input* in = malloc( sizeof( input ));
+	input* in = mem_alloc( sizeof( input ));
 	memset( in, 0, sizeof( input));
 	in->active = 0;
 	memset( in->data, 0, sizeof( input_data ) * INPUT_DATA_FRAMES );

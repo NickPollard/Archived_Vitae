@@ -29,7 +29,7 @@ model* LoadObj( const char* filename ) {
 		if ( string_equal( token, "v" )) {
 			// Vertex
 			for ( int i = 0; i < 3; i++ ) {
-				free( token );
+				mem_free( token );
 				token = inputStream_nextToken( stream );
 				vertices[vert_count].val[i] = strtof( token, NULL );
 			}
@@ -40,7 +40,7 @@ model* LoadObj( const char* filename ) {
 		if ( string_equal( token, "vn" )) {
 			// Vertex Normal
 			for ( int i = 0; i < 3; i++ ) {
-				free( token );
+				mem_free( token );
 				token = inputStream_nextToken( stream );
 				normals[normal_count].val[i] = strtof( token, NULL );
 			}
@@ -51,7 +51,7 @@ model* LoadObj( const char* filename ) {
 		if ( string_equal( token, "f" )) {
 			// Face (indices)
 			for ( int i = 0; i < 3; i++ ) {
-				free( token );
+				mem_free( token );
 				token = inputStream_nextToken( stream );
 				// Need to split into 3 parts (vert/tex/normal) by /
 				int len = strlen( token );

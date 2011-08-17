@@ -8,6 +8,8 @@
 #define static_heap_size (64 << 20) // In MegaBytes
 heapAllocator* static_heap = NULL;
 
+void heap_dumpBlocks( heapAllocator* heap );
+
 // Default allocate from the static heap
 // Passes straight through to heap_allocate()
 void* mem_alloc( size_t bytes ) {
@@ -33,6 +35,7 @@ void* heap_allocate( heapAllocator* heap, int size ) {
 #endif
 	block* b = heap_findEmptyBlock( heap, size );
 	if ( !b ) {
+		heap_dumpBlocks( heap );
 		printError( "HeapAllocator out of memory on request for %d bytes. Total size: %d bytes, Used size: %d bytes\n", size, heap->total_size, heap->total_allocated );
 		assert( 0 );
 	}
@@ -56,6 +59,14 @@ void* heap_allocate( heapAllocator* heap, int size ) {
 	printf("Allocator returned address: %x.\n", (unsigned int)b->data );
 #endif
 	return b->data;
+}
+
+void heap_dumpBlocks( heapAllocator* heap ) {
+	block* b = heap->first;
+	while ( b ) {
+		printf( "Block: ptr 0x%x, data: 0x%x, size %d, free %d\n", (unsigned int)b, (unsigned int)b->data, b->size, b->free );
+		b = b->next;
+	}
 }
 
 // Find a block of at least *min_size* bytes
@@ -106,7 +117,7 @@ void block_merge( heapAllocator* heap, block* first, block* second ) {
 //	printf( "Allocator: Merging Blocks\n" );
 	assert( first );
 	assert( second );
-	assert( second->free );								// Second must be empty (not necessarily first!)
+	assert( first->free );								// Both must be empty
 	assert( second == (first->data + first->size) );	// Contiguous
 
 	heap->total_free += sizeof( block );

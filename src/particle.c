@@ -14,21 +14,6 @@ particleEmitter* particleEmitter_create() {
 	return p;
 }
 
-// Output the 4 verts of the quad to the target vertex array
-// both position and normals
-void particle_quad( vertex* dst, vector* point, float size ) {
-	vector offset = Vector( size, size, 0.f, 0.f );
-	Add( &dst[0].position, point, &offset );
-	dst[0].normal = Vector( 0.f, 0.f, 1.f, 0.f );
-	Sub( &dst[1].position, point, &offset );
-	dst[1].normal = Vector( 0.f, 0.f, 1.f, 0.f );
-	offset.coord.y = -size;
-	Add( &dst[2].position, point, &offset );
-	dst[2].normal = Vector( 0.f, 0.f, 1.f, 0.f );
-	Sub( &dst[3].position, point, &offset );
-	dst[3].normal = Vector( 0.f, 0.f, 1.f, 0.f );
-}
-
 void particleEmitter_addParticle( particleEmitter* e ) {
 	int index = (e->start + e->count) % kmax_particles;
 	particle* p = &e->particles[index];
@@ -60,8 +45,31 @@ void particleEmitter_tick( void* data, float dt ) {
 	}
 }
 
+typedef struct particle_vertex_s {
+	vector	position;
+	vector	normal;
+} particle_vertex;
+
+// Output the 4 verts of the quad to the target vertex array
+// both position and normals
+void particle_quad( particle_vertex* dst, vector* point, float size ) {
+	vector offset = Vector( size, size, 0.f, 0.f );
+	Add( &dst[0].position, point, &offset );
+	dst[0].normal = Vector( 0.f, 0.f, 1.f, 0.f );
+	Sub( &dst[1].position, point, &offset );
+	dst[1].normal = Vector( 0.f, 0.f, 1.f, 0.f );
+	offset.coord.y = -size;
+	Add( &dst[2].position, point, &offset );
+	dst[2].normal = Vector( 0.f, 0.f, 1.f, 0.f );
+	Sub( &dst[3].position, point, &offset );
+	dst[3].normal = Vector( 0.f, 0.f, 1.f, 0.f );
+}
+
 // Render a particleEmitter system
 void particleEmitter_render( void* data ) {
+	// switch to particle shader
+	glUseProgram( resources.particle_program );
+
 	particleEmitter* p = data;
 
 	// set modelview matrix
@@ -69,7 +77,7 @@ void particleEmitter_render( void* data ) {
 	matrix_mul( modelview, modelview, p->trans->world );
 	glUniformMatrix4fv( resources.uniforms.modelview, 1, /*transpose*/false, (GLfloat*)modelview );
 
-	vertex vertex_buffer[kmax_particle_verts];
+	particle_vertex vertex_buffer[kmax_particle_verts];
 	GLushort element_buffer[kmax_particle_verts];
 
 	for ( int i = 0; i < p->count; i++ ) {
@@ -99,7 +107,7 @@ void particleEmitter_render( void* data ) {
 //	assert( 0 );
 	// Copy our data to the GPU
 	// There are now <index_count> vertices, as we have unrolled them
-	GLsizei vertex_buffer_size = index_count * sizeof( vertex );
+	GLsizei vertex_buffer_size = index_count * sizeof( particle_vertex );
 	GLsizei element_buffer_size = index_count * sizeof( GLushort );
 	// *** Vertex Buffer
 	{
@@ -107,10 +115,10 @@ void particleEmitter_render( void* data ) {
 		glBindBuffer( GL_ARRAY_BUFFER, resources.vertex_buffer );
 		glBufferData( GL_ARRAY_BUFFER, vertex_buffer_size, vertex_buffer, GL_STREAM_DRAW );
 		// Set up position data
-		glVertexAttribPointer( resources.attributes.position, /*vec4*/ 4, GL_FLOAT, /*Normalized?*/GL_FALSE, sizeof( vertex ), (void*)offsetof( vertex, position) );
+		glVertexAttribPointer( resources.attributes.position, /*vec4*/ 4, GL_FLOAT, /*Normalized?*/GL_FALSE, sizeof( particle_vertex ), (void*)offsetof( particle_vertex, position) );
 		glEnableVertexAttribArray( resources.attributes.position );
 		// Set up normal data
-		glVertexAttribPointer( resources.attributes.normal, /*vec4*/ 4, GL_FLOAT, /*Normalized?*/GL_FALSE, sizeof( vertex ), (void*)offsetof( vertex, normal ) );
+		glVertexAttribPointer( resources.attributes.normal, /*vec4*/ 4, GL_FLOAT, /*Normalized?*/GL_FALSE, sizeof( particle_vertex ), (void*)offsetof( particle_vertex, normal ) );
 		glEnableVertexAttribArray( resources.attributes.normal );
 	}
 	// *** Element Buffer

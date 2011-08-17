@@ -22,6 +22,9 @@ typedef struct gl_resources_s {
 	struct {
 		SHADER_UNIFORMS( DECLARE_AS_GLINT )
 	} uniforms;
+	struct {
+		SHADER_UNIFORMS( DECLARE_AS_GLINT )
+	} particle_uniforms;
 
 	struct {
 		GLint position;
@@ -30,6 +33,7 @@ typedef struct gl_resources_s {
 
 	// Shader objects
 	GLuint vertex_shader, fragment_shader, program;
+	GLuint particle_vertex_shader, particle_fragment_shader, particle_program;
 } gl_resources;
 
 extern gl_resources resources;

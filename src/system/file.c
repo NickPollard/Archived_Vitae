@@ -98,7 +98,7 @@ void inputStream_reset( inputStream* in ) {
 }
 
 inputStream* inputStream_create( const char* source ) {
-	inputStream* in = malloc( sizeof( inputStream ));
+	inputStream* in = mem_alloc( sizeof( inputStream ));
 	assert( in );
 	in->source = source;
 	in->stream = in->source;
@@ -123,7 +123,7 @@ char* inputStream_nextToken( inputStream* stream ) {
 	}
 	// make a copy of it
 	int length = ptr - stream->stream;
-	char* token = malloc( sizeof( char ) * (length + 1) );
+	char* token = mem_alloc( sizeof( char ) * (length + 1) );
 	strncpy( token, stream->stream, length );
 	token[length] = '\0';
 	stream->stream = ptr; // Advance past the end of the token
@@ -151,7 +151,7 @@ void inputStream_nextLine( inputStream* in ) {
 
 /*
 slist* slist_create() {
-	slist* s = malloc( sizeof( slist ));
+	slist* s = mem_alloc( sizeof( slist ));
 	memset( s, 0, sizeof( slist ));
 	return s;
 }
@@ -199,7 +199,7 @@ bool isVector( sterm* s ) {
 }
 
 sterm* sterm_create( int tag, void* ptr ) {
-	sterm* term = malloc( sizeof( term ) );
+	sterm* term = mem_alloc( sizeof( sterm ) );
 	term->type = tag;
 	term->head = ptr;
 	term->tail = NULL;
@@ -211,11 +211,11 @@ sterm* sterm_create( int tag, void* ptr ) {
 sterm* parse( inputStream* stream ) {
 	char* token = inputStream_nextToken( stream );
 	if ( isListEnd( *token ) ) {
-		free( token ); // It's a bracket, discard it
+		mem_free( token ); // It's a bracket, discard it
 		return NULL;
 	}
 	if ( isListStart( *token ) ) {
-		free( token ); // It's a bracket, discard it
+		mem_free( token ); // It's a bracket, discard it
 		sterm* list = sterm_create( typeList, NULL );
 		sterm* s = list;
 
@@ -242,7 +242,7 @@ sterm* parse( inputStream* stream ) {
 sterm* parse_string( const char* string ) {
 	inputStream* stream = inputStream_create( string );
 	sterm* s = parse( stream );
-	free( stream );
+	mem_free( stream );
 	return s;
 }
 
@@ -358,15 +358,15 @@ void* eval( sterm* data ) {
 
 void sterm_free( sterm* s ) {
 	if ( isAtom( s ) ) {
-		free( s->head );
-		free( s );
+		mem_free( s->head );
+		mem_free( s );
 	}
 	if ( isList( s ) ) {
 		if ( s->tail )
 			sterm_free( s->tail );
 		if ( s->head )
 			sterm_free( s->head );
-		free( s );
+		mem_free( s );
 	}
 }
 
@@ -379,10 +379,11 @@ void* s_concat( sterm* s ) {
 		sterm* stext = eval( s->head );
 		const char* text = stext->head;
 		int extra = strlen( text );
-		char* tmp = malloc( sizeof( char ) * ( size + extra + 1 ) );
+		char* tmp = mem_alloc( sizeof( char ) * ( size + extra + 1 ) );
 		strncpy( tmp, string, size );
 		strncpy( tmp + size, text, extra );
-		free( string );
+		if ( string )
+			mem_free( string );
 		string = tmp;
 		size += extra;
 		string[size] = '\0';
@@ -643,7 +644,7 @@ typedef struct lightData_s {
 } lightData;
 
 lightData* lightData_create( ) {
-	lightData* lData = malloc( sizeof( lightData ));
+	lightData* lData = mem_alloc( sizeof( lightData ));
 	memset( lData, 0, sizeof( lightData ));
 	return lData;
 }
@@ -651,7 +652,7 @@ void lightData_processProperty( sterm* l, sterm* property ) {
 	if ( isDiffuse( property )) {
 		vector* diffuse = (vector*)((sterm*)property->tail->head)->head;
 
-		((sterm*)l->tail->head)->head = malloc( sizeof( vector ));
+		((sterm*)l->tail->head)->head = mem_alloc( sizeof( vector ));
 		*(vector*)(((sterm*)l->tail->head)->head) = *diffuse;
 		printf( "Setting light diffuse: " );
 		vector_print( ((sterm*)l->tail->head)->head );
