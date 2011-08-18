@@ -11,6 +11,7 @@
 #include "particle.h"
 #include "mem/allocator.h"
 #include "system/file.h"
+#include "system/hash.h"
 #include "system/string.h"
 
 #define TEST true
@@ -20,6 +21,8 @@
 void test() {
 	// Memory Tests
 	test_allocator();
+
+	test_hash();
 
 	// System Tests
 	test_sfile();

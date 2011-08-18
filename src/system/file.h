@@ -36,6 +36,7 @@ typedef struct inputStream_s {
 
 inputStream* inputStream_create( const char* source );
 char* inputStream_nextToken( inputStream* stream );
+void inputStream_skipToken( inputStream* stream );
 bool inputStream_endOfFile( inputStream* in );
 void inputStream_nextLine( inputStream* in );
 

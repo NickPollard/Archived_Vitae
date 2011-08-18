@@ -130,6 +130,23 @@ char* inputStream_nextToken( inputStream* stream ) {
 	return token;
 }
 
+// Returns the next token as a c string, advances the inputstream to the token's end
+void inputStream_skipToken( inputStream* stream ) {
+	// parse leading whitespace
+	while ( isWhiteSpace( *stream->stream ) )
+			stream->stream++;
+	// measure the length of the token - ptr should become one-past-the-end
+	const char* ptr = stream->stream;
+	while ( !isWhiteSpace( *ptr ) && !isTerminator( *ptr )) {
+		if ( isListStart( *ptr ) || isListEnd( *ptr ) ) {
+			if ( ( ptr - stream->stream ) == 0 ) // if parenthesis is first char, push pas it
+				ptr++;	
+			break;
+		}
+		ptr++;
+	}
+	stream->stream = ptr; // Advance past the end of the token
+}
 // Check whether we have reached our end pointer
 bool inputStream_endOfFile( inputStream* in ) {
 	return in->stream >= in->end;

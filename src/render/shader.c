@@ -40,6 +40,7 @@ typedef struct shaderConstantBinding_s {
 // Register the shader constant of the given name, returning it's address, or if it
 // already exists then use that
 void* shader_registerConstant( const char* name ) {
+//	hash_findOrAdd( shader_constants, name );
 	return NULL;
 	/*
 	// TODO should be a hashmap eventually
@@ -51,13 +52,13 @@ void* shader_registerConstant( const char* name ) {
 	*/
 }
 
+// Find the program location for a named Uniform variable in the given program
 GLint shader_getUniformLocation( GLuint program, const char* name ) {
 	GLint location = glGetUniformLocation( program, name );
 	if ( location == -1 ) {
 		printf( "Error finding Uniform Location for shader uniform variable \"%s\".\n", name );
 	}
 	assert( location != -1 );
-//	printf( "RENDER: Got shader uniform location for \"%s\": 0x%x\n", name, location );
 	return location;
 }
 
@@ -69,6 +70,7 @@ void shader_createBinding( GLuint shader_program, const char* variable_name ) {
 	binding.value = shader_registerConstant( variable_name );
 	printf( "SHADER: Created Shader binding for \"%s\" at location 0x%x\n", variable_name, binding.program_location );
 }
+
 // Find a list of uniform variable names in a shader source file
 void shader_findUniforms( GLuint shader_program, const char* src ) {
 	inputStream* stream = inputStream_create( src );
@@ -76,21 +78,20 @@ void shader_findUniforms( GLuint shader_program, const char* src ) {
 	while ( !inputStream_endOfFile( stream )) {
 		token = inputStream_nextToken( stream );
 		if ( string_equal( token, "uniform" ) && !inputStream_endOfFile( stream )) {
+			// Advance two tokens (the next is the type declaration, the second is the variable name)
 			mem_free( token );
+			inputStream_skipToken( stream ); // Skip the variable type declaration
 			token = inputStream_nextToken( stream );
-			mem_free( token );
-			token = inputStream_nextToken( stream );
+			// Now we have the name
 			const char* name = string_trim( token );
-
-//			printf( "SHADER: Found Uniform variable named \"%s\".\n", name );
 			shader_createBinding( shader_program, name );
-
 			mem_free( (void*)name );
 		}
 		mem_free( token );
 	}
 }
 
+// Compile a GLSL shader object from the given source code
 // Based on code from Joe's Blog: http://duriansoftware.com/joe/An-intro-to-modern-OpenGL.-Chapter-2.2:-Shaders.html
 GLuint shader_compile( GLenum type, const char* path, const char* source ) {
 	GLint length;
@@ -116,6 +117,7 @@ GLuint shader_compile( GLenum type, const char* path, const char* source ) {
 	return shader;
 }
 
+// Link two given shader objects into a full shader program
 GLuint shader_link( GLuint vertex_shader, GLuint fragment_shader ) {
 	GLint program_ok;
 
@@ -135,6 +137,7 @@ GLuint shader_link( GLuint vertex_shader, GLuint fragment_shader ) {
 	return program;
 }
 
+// Build a GLSL shader program from given vertex and fragment shader source pathnames
 GLuint	shader_build( const char* vertex_path, const char* fragment_path ) {
 	int length = 0;
 	const char* vertex_file = vfile_contents( vertex_path, &length );
