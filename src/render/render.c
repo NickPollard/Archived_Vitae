@@ -60,26 +60,22 @@ void render_buildShaders() {
 	resources.shader_particle = shader_load( "dat/shaders/textured_phong.v.glsl", "dat/shaders/textured_phong.f.glsl" );
 
 #define GET_UNIFORM_LOCATION( var ) \
-	resources.uniforms.var = shader_getUniformLocation( resources.shader_default->program, #var );
+	resources.uniforms.var = shader_findConstant( mhash( #var )); \
+	assert( resources.uniforms.var != NULL );
 	SHADER_UNIFORMS( GET_UNIFORM_LOCATION )
 
 #define GET_UNIFORM_LOCATION_PARTICLE( var ) \
-	resources.particle_uniforms.var = shader_getUniformLocation( resources.shader_particle->program, #var );
+	resources.uniforms.var = shader_findConstant( mhash( #var ));
 	SHADER_UNIFORMS( GET_UNIFORM_LOCATION_PARTICLE )
+
 	// Attributes
 	resources.attributes.position = glGetAttribLocation( resources.shader_default->program, "position" );
 	resources.attributes.normal = glGetAttribLocation( resources.shader_default->program, "normal" );
 }
 // Private Function declarations
 
-// *** Fixed Function Pipeline
-
 void render_set3D( int w, int h ) {
 	glViewport(0, 0, w, h);
-//	glMatrixMode(GL_PROJECTION);
-//	glLoadIdentity();
-//	gluPerspective(45.0, (double)w / (double)h, 1.0, 500.0);
-
 	glEnable( GL_DEPTH_TEST );
 	glDepthFunc( GL_LEQUAL );
 	glDepthMask( GL_TRUE );
@@ -114,10 +110,6 @@ void render_lighting( scene* s ) {
 
 	// Point Lights	
 	light_renderLights( s->light_count, s->lights );
-	/*
-	for ( int i = 0; i < s->light_count; i++) {
-		light_render( i, s->lights[i] );
-	}*/
 }
 /*
 void render_applyCamera(camera* cam) {
@@ -145,11 +137,6 @@ void render_init() {
 
 	printf("RENDERING: Initialising OpenGL rendering settings.\n");
 	glEnable(GL_DEPTH_TEST);
-//	glEnable(GL_LIGHTING);
-//	glEnable(GL_NORMALIZE);
-//	glEnable(GL_TEXTURE_2D);
-//	glShadeModel(GL_SMOOTH);
-//	glEnable(GL_COLOR_MATERIAL);
 
 	texture_init();
 
@@ -228,6 +215,7 @@ void render_setUniform_texture( GLuint uniform, GLuint texture ) {
 
 }
 
+
 // Shader version
 void render_shader( scene* s ) {
 	// Load our shader
@@ -245,18 +233,14 @@ void render_shader( scene* s ) {
 	matrix_inverse( modelview_base, s->cam->trans->world );
 	render_validateMatrix( modelview );
 	render_resetModelView();
-	
-	GLint* projection = shader_findConstant( mhash( "projection" ));
-//	printf( "RENDER: Projection variable is at 0x%x, current location is 0x%x\n", (unsigned int)projection, *projection );
-	render_setUniform_matrix( *projection, perspective );	
 
 	// Set up uniforms
-	//render_setUniform_matrix( resources.uniforms.projection, perspective );
-	render_setUniform_matrix( resources.uniforms.modelview, modelview );
-	render_setUniform_matrix( resources.uniforms.worldspace, modelview );
+	render_setUniform_matrix( *resources.uniforms.projection, perspective );
+	render_setUniform_matrix( *resources.uniforms.modelview, modelview );
+	render_setUniform_matrix( *resources.uniforms.worldspace, modelview );
 
 	// Textures
-	render_setUniform_texture( resources.uniforms.tex, g_texture_default );
+	render_setUniform_texture( *resources.uniforms.tex, g_texture_default );
 
 	render_lighting( s );
 

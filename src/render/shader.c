@@ -62,6 +62,14 @@ void shader_buildDictionary( shaderDictionary* dict, GLuint shader_program, cons
 			mem_free( token );
 			token = inputStream_nextToken( stream );
 			const char* name = string_trim( token );
+			// If it's an array remove the array specification
+			char* c = (char*)name;
+			int length = strlen(name );
+			while ( c < name + length ) {
+				if ( *c == '[' )
+					*c = '\0';
+				c++;
+			}
 
 			shaderDictionary_addBinding( dict, shader_createBinding( shader_program, type, name ));
 
@@ -131,28 +139,6 @@ void shader_init() {
 }
 
 void shader_bindConstant( shaderConstantBinding binding ) {
-//	printf( "Binding constant from address 0x%x to program location: 0x%x. ", (unsigned int)binding.value, binding.program_location );
-	// Need to call different functions depending on type
-#if 0
-	switch ( binding.type ) {
-		case uniform_matrix:
-			printf( "Type = Matrix.\n" );
-			break;
-		case uniform_vector:
-			printf( "Type = vector.\n" );
-			break;
-		case uniform_tex2D:
-			printf( "Type = tex2D.\n" );
-			break;
-		case uniform_int:
-			printf( "Type = int.\n" );
-			break;
-		default:
-			printf( "ERROR: Attempting to bind unknown uniform type!\n" );
-			assert( 0 );
-			break;
-	}
-#endif
 	*binding.value = binding.program_location;
 }
 

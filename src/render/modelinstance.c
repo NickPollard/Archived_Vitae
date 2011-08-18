@@ -30,7 +30,7 @@ modelInstance* modelInstance_create( modelHandle m ) {
 void modelInstance_draw( modelInstance* instance ) {
 		render_resetModelView();
 		matrix_mul( modelview, modelview, instance->trans->world );
-		glUniformMatrix4fv( resources.uniforms.modelview, 1, /*transpose*/false, (GLfloat*)modelview );
+		render_setUniform_matrix( *resources.uniforms.modelview, modelview );
 
 		model_draw( model_fromInstance( instance ) );
 }

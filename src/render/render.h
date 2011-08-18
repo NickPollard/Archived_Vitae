@@ -12,18 +12,18 @@
 	f( tex )
 
 
-#define DECLARE_AS_GLINT( var ) \
-	GLint var;
+#define DECLARE_AS_GLINT_P( var ) \
+	GLint* var;
 
 typedef struct gl_resources_s {
 	GLuint vertex_buffer, element_buffer;
 	GLuint texture;
 
 	struct {
-		SHADER_UNIFORMS( DECLARE_AS_GLINT )
+		SHADER_UNIFORMS( DECLARE_AS_GLINT_P )
 	} uniforms;
 	struct {
-		SHADER_UNIFORMS( DECLARE_AS_GLINT )
+		SHADER_UNIFORMS( DECLARE_AS_GLINT_P )
 	} particle_uniforms;
 
 	struct {
@@ -76,6 +76,7 @@ void render_terminate();
 void render( scene* s , int w, int h );
 
 void render_resetModelView( );
+void render_setUniform_matrix( GLuint uniform, matrix m );
 
 void render_validateMatrix( matrix m );
 

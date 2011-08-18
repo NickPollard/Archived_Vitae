@@ -62,9 +62,9 @@ void light_render( int index, light* l ) {
 	// Position
 	glLightfv( index, GL_POSITION, (GLfloat*)matrix_getTranslation( l->trans->world ));
 	if ( index == 0 ) {
-		glUniform4fv( resources.uniforms.light_position, 1, (GLfloat*)matrix_getTranslation( l->trans->world ) );
-		glUniform4fv( resources.uniforms.light_diffuse, 1, (GLfloat*)&l->diffuse_color );
-		glUniform4fv( resources.uniforms.light_specular, 1, (GLfloat*)&l->specular_color );
+		glUniform4fv( *resources.uniforms.light_position, 1, (GLfloat*)matrix_getTranslation( l->trans->world ) );
+		glUniform4fv( *resources.uniforms.light_diffuse, 1, (GLfloat*)&l->diffuse_color );
+		glUniform4fv( *resources.uniforms.light_specular, 1, (GLfloat*)&l->specular_color );
 	}
 
 	// Attenuation
@@ -102,7 +102,7 @@ void light_renderLights( int count, light** lights ) {
 	}
 
 
-	glUniform4fv( resources.uniforms.light_position, light_count, (GLfloat*)positions );
-	glUniform4fv( resources.uniforms.light_diffuse, light_count, (GLfloat*)diffuses );
-	glUniform4fv( resources.uniforms.light_specular, light_count, (GLfloat*)speculars );
+	glUniform4fv( *resources.uniforms.light_position, light_count, (GLfloat*)positions );
+	glUniform4fv( *resources.uniforms.light_diffuse, light_count, (GLfloat*)diffuses );
+	glUniform4fv( *resources.uniforms.light_specular, light_count, (GLfloat*)speculars );
 }
