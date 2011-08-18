@@ -2,6 +2,7 @@
 #include "common.h"
 #include "hash.h"
 //-----------------------
+#include "mem/allocator.h"
 
 unsigned int mhash( const char* src ) {
 	unsigned int seed = 0x0;
@@ -20,6 +21,37 @@ void* hashtable_find( hashtable, key ) {
 	return NULL;
 }
 */
+
+map* map_create( int max, int stride ) {
+	printf( "map_create\n" );
+	map* m = mem_alloc( sizeof( map ));
+	m->max = max;
+	m->count = 0;
+	m->stride = stride;
+	m->keys = mem_alloc( sizeof( int ) * max );
+	m->values = mem_alloc( stride * max );
+	memset( m->keys, 0, sizeof( int ) * max );
+	memset( m->values, 0, stride * max );
+	return m;
+}
+
+void* map_find( map* m, int key ) {
+	printf( "map_find\n" );
+	for ( int i = 0; i < m->count; i++ ) {
+		if ( m->keys[i] == key )
+			return m->values + (i * m->stride);
+	}
+	return NULL;
+}
+
+void map_add( map* m, int key, void* value ) {
+	printf( "map_add\n" );
+	assert( m->count < m->max );
+	int i = m->count;
+	m->keys[i] = key;
+	memcpy( m->values + (i * m->stride), value, m->stride );
+	m->count++;
+}
 
 // *** Test
 

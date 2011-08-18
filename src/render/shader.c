@@ -7,7 +7,6 @@
 #include "render/render.h"
 #include "system/file.h"
 #include "system/string.h"
-// temp
 #include "system/hash.h"
 
 // Register the shader constant of the given name, returning it's address, or if it
@@ -56,7 +55,7 @@ shaderConstantBinding shader_createBinding( GLuint shader_program, const char* v
 }
 
 void shaderDictionary_addBinding( shaderDictionary* d, shaderConstantBinding b ) {
-	assert( d->count < MAX_SHADER_CONSTANT_BINDINGS );
+	assert( d->count < kMaxShaderConstantBindings );
 	d->bindings[d->count++] = b;
 }
 
@@ -139,6 +138,19 @@ GLuint	shader_build( const char* vertex_path, const char* fragment_path, const c
 	return program;
 }
 
+#define kMaxShaderConstants 128
+map* shader_constants = NULL;
+
+void shader_init() {
+	shader_constants = map_create( kMaxShaderConstants, sizeof( GLuint ));
+
+	int key = mhash( "modelview" );
+	GLuint value = 0x3;
+	map_add( shader_constants, key, &value );
+	GLuint* modelview = map_find( shader_constants, key );
+	assert( *modelview = value );
+}
+
 void shader_bindConstant( shaderConstantBinding binding ) {
 	printf( "Binding constant from address 0x%x to program location: 0x%x. ", (unsigned int)binding.value, binding.program_location );
 	// Need to call different functions depending on type
@@ -146,19 +158,16 @@ void shader_bindConstant( shaderConstantBinding binding ) {
 	switch ( binding.type ) {
 		case uniform_matrix:
 			printf( "Type = Matrix.\n" );
-//			glUniformMatrix4fv( binding.program_location, 1, /*transpose*/false, (GLfloat*)binding.value );
+
 			break;
 		case uniform_vector:
 			printf( "Type = vector.\n" );
-//			glUniform1i( binding.program_location, *(int*)binding.value );
 			break;
 		case uniform_tex2D:
 			printf( "Type = tex2D.\n" );
-//			glUniform1i( binding.program_location, *(int*)binding.value );
 			break;
 		case uniform_int:
 			printf( "Type = int.\n" );
-//			glUniform1i( binding.program_location, *(int*)binding.value );
 			break;
 		default:
 			printf( "ERROR: Attempting to bind unknown uniform type!\n" );
@@ -169,7 +178,7 @@ void shader_bindConstant( shaderConstantBinding binding ) {
 }
 
 void shader_bindConstants( shader* s ) {
-	assert( s->dict.count < MAX_SHADER_CONSTANT_BINDINGS );
+	assert( s->dict.count < kMaxShaderConstantBindings );
 	for ( int i = 0; i < s->dict.count; i++ ) {
 		shader_bindConstant( s->dict.bindings[i] );
 	}

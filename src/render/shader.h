@@ -5,7 +5,7 @@
 #include <GL/glfw.h>
 
 // The maximum number of constants that a single shader can use
-#define MAX_SHADER_CONSTANT_BINDINGS 32
+#define kMaxShaderConstantBindings 32
 
 enum uniform_type {
 	uniform_unknown,
@@ -23,13 +23,20 @@ typedef struct shaderConstantBinding_s {
 
 typedef struct shaderDictionary_s {
 	int count;
-	shaderConstantBinding bindings[MAX_SHADER_CONSTANT_BINDINGS];
+	shaderConstantBinding bindings[kMaxShaderConstantBindings];
 } shaderDictionary;
 
 typedef struct shader_s {
 	GLuint program;				// The Linked OpenGL shader program, containing vertex and fragment shaders;
 	shaderDictionary	dict;	// Dictionary of shader constant lookups
 } shader;
+
+// *** Static
+
+void shader_init();
+
+
+// **** Member
 
 // Compile a GLSL shader object from the given source code
 GLuint shader_compile( GLenum type, const char* path, const char* source );

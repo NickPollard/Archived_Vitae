@@ -160,6 +160,8 @@ void render_init() {
 
 	texture_init();
 
+	shader_init();
+
 	render_buildShaders();
 	// Allocate space for buffers
 	const GLsizei vertex_buffer_size = sizeof( vector ) * MAX_VERTEX_ARRAY_COUNT;
@@ -255,6 +257,8 @@ void render_shader( scene* s ) {
 	render_setUniform_matrix( resources.uniforms.projection, perspective );
 	render_setUniform_matrix( resources.uniforms.modelview, modelview );
 	render_setUniform_matrix( resources.uniforms.worldspace, modelview );
+
+//	shader_setUniform( shaderconstants.worldspace, modelview );
 
 	// Textures
 	render_setUniform_texture( resources.uniforms.tex, g_texture_default );
