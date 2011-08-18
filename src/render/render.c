@@ -55,8 +55,16 @@ void gl_dumpInfoLog( GLuint object, func_getIV getIV, func_getInfoLog getInfoLog
 }
 
 void render_buildShaders() {
-	resources.program = shader_build( "dat/shaders/phong.v.glsl", "dat/shaders/phong.f.glsl" );
-	resources.particle_program = shader_build( "dat/shaders/textured_phong.v.glsl", "dat/shaders/textured_phong.f.glsl" );
+	shader* s = shader_load( "dat/shaders/phong.v.glsl", "dat/shaders/phong.f.glsl" );
+	resources.program = s->program;
+	shader* s_ = shader_load( "dat/shaders/textured_phong.v.glsl", "dat/shaders/textured_phong.f.glsl" );
+	resources.particle_program = s_->program;
+
+	shader_bindConstants( s );
+	shader_bindConstants( s_ );
+
+	mem_free( s );
+	mem_free( s_ );
 
 #define GET_UNIFORM_LOCATION( var ) \
 	resources.uniforms.var = shader_getUniformLocation( resources.program, #var );

@@ -7,35 +7,8 @@
 #include "render/render.h"
 #include "system/file.h"
 #include "system/string.h"
-/*
-// Activate the shader for use in rendering
-void shader_activate( shader* s ) {
-	// Bind the shader program for use
-	glUseProgram( s->program );
-
-	// Set up shader constants ( GLSL Uniform variables )
-	for ( each shader_constant in shader ) {
-		GLuint location = glGetUniformLocation( program, shader_constant );
-		render_setUniform( location, render_getConstant( shader_constant ));
-	}
-}
-
-// Load a shader from GLSL files
-shader* shader_load( const char* vertex_name, const char* fragment_name ) {
-	shader* s = mem_alloc( sizeof( shader ));
-	memset( s, 0, sizeof( shader ));
-	s->program = render_buildShader( vertex_name, fragment_name );
-
-	shader_buildDictionary( vertex_name );
-	shader_buildDictionary( fragment_name );
-	return s;
-}
-
-*/
-typedef struct shaderConstantBinding_s {
-	void*		value;
-	GLint		program_location;
-} shaderConstantBinding;
+// temp
+#include "system/hash.h"
 
 // Register the shader constant of the given name, returning it's address, or if it
 // already exists then use that
@@ -63,16 +36,33 @@ GLint shader_getUniformLocation( GLuint program, const char* name ) {
 }
 
 // Create a binding for the given variable within the given program
-void shader_createBinding( GLuint shader_program, const char* variable_name ) {
+shaderConstantBinding shader_createBinding( GLuint shader_program, const char* variable_type, const char* variable_name ) {
 	// For each one create a binding
 	shaderConstantBinding binding;
 	binding.program_location = shader_getUniformLocation( shader_program, variable_name );
 	binding.value = shader_registerConstant( variable_name );
-	printf( "SHADER: Created Shader binding for \"%s\" at location 0x%x\n", variable_name, binding.program_location );
+
+	// TODO: Make this into an easy lookup table
+	binding.type = uniform_unknown;
+	if ( string_equal( "vec4", variable_type ))
+		binding.type = uniform_vector;
+	if ( string_equal( "mat4", variable_type ))
+		binding.type = uniform_matrix;
+	if ( string_equal( "sampler2D", variable_type ))
+		binding.type = uniform_tex2D;
+
+	printf( "SHADER: Created Shader binding for \"%s\" at location 0x%x, type: %s\n", variable_name, binding.program_location, variable_type );
+	return binding;
+}
+
+void shaderDictionary_addBinding( shaderDictionary* d, shaderConstantBinding b ) {
+	assert( d->count < MAX_SHADER_CONSTANT_BINDINGS );
+	d->bindings[d->count++] = b;
 }
 
 // Find a list of uniform variable names in a shader source file
-void shader_findUniforms( GLuint shader_program, const char* src ) {
+void shader_buildDictionary( shaderDictionary* dict, GLuint shader_program, const char* src ) {
+	// Find a list of uniform variable names
 	inputStream* stream = inputStream_create( src );
 	char* token;
 	while ( !inputStream_endOfFile( stream )) {
@@ -80,12 +70,16 @@ void shader_findUniforms( GLuint shader_program, const char* src ) {
 		if ( string_equal( token, "uniform" ) && !inputStream_endOfFile( stream )) {
 			// Advance two tokens (the next is the type declaration, the second is the variable name)
 			mem_free( token );
-			inputStream_skipToken( stream ); // Skip the variable type declaration
 			token = inputStream_nextToken( stream );
-			// Now we have the name
+			const char* type = string_trim( token );
+			mem_free( token );
+			token = inputStream_nextToken( stream );
 			const char* name = string_trim( token );
-			shader_createBinding( shader_program, name );
+
+			shaderDictionary_addBinding( dict, shader_createBinding( shader_program, type, name ));
+
 			mem_free( (void*)name );
+			mem_free( (void*)type );
 		}
 		mem_free( token );
 	}
@@ -138,42 +132,79 @@ GLuint shader_link( GLuint vertex_shader, GLuint fragment_shader ) {
 }
 
 // Build a GLSL shader program from given vertex and fragment shader source pathnames
-GLuint	shader_build( const char* vertex_path, const char* fragment_path ) {
-	int length = 0;
-	const char* vertex_file = vfile_contents( vertex_path, &length );
-	const char* fragment_file = vfile_contents( fragment_path, &length );
+GLuint	shader_build( const char* vertex_path, const char* fragment_path, const char* vertex_file, const char* fragment_file ) {
 	GLuint vertex_shader = shader_compile( GL_VERTEX_SHADER, vertex_path, vertex_file );
 	GLuint fragment_shader = shader_compile( GL_FRAGMENT_SHADER, fragment_path, fragment_file );
 	GLuint program = shader_link( vertex_shader, fragment_shader );
-	shader_findUniforms( program, vertex_file );
-	shader_findUniforms( program, fragment_file );
-	mem_free( (void*)vertex_file );			// Cast away const to free, we allocated this ourselves
-	mem_free( (void*)fragment_file	);		// Cast away const to free, "
 	return program;
 }
-/*
-// Build a dictionary of shader constant lookups
-void shader_buildDictionary( const char* src, GLuint shader_program ) {
-#define MAX_SHADER_CONSTANT_NAMES 64
-	int shader_constant_count;
-	const char* names[MAX_SHADER_CONSTANT_NAMES]
-	// Find a list of uniform variable names
 
-
-
-	const char* variable_name;
-
-	// For each one create a binding
-	shaderConstantBinding binding;
-	binding.program_location = glGetUniformLocation( shader_program, variable_name );
-	binding.value = shaderconstant_lookup( variable_name );
-
+void shader_bindConstant( shaderConstantBinding binding ) {
+	printf( "Binding constant from address 0x%x to program location: 0x%x. ", (unsigned int)binding.value, binding.program_location );
+	// Need to call different functions depending on type
+#if 1
+	switch ( binding.type ) {
+		case uniform_matrix:
+			printf( "Type = Matrix.\n" );
+//			glUniformMatrix4fv( binding.program_location, 1, /*transpose*/false, (GLfloat*)binding.value );
+			break;
+		case uniform_vector:
+			printf( "Type = vector.\n" );
+//			glUniform1i( binding.program_location, *(int*)binding.value );
+			break;
+		case uniform_tex2D:
+			printf( "Type = tex2D.\n" );
+//			glUniform1i( binding.program_location, *(int*)binding.value );
+			break;
+		case uniform_int:
+			printf( "Type = int.\n" );
+//			glUniform1i( binding.program_location, *(int*)binding.value );
+			break;
+		default:
+			printf( "ERROR: Attempting to bind unknown uniform type!\n" );
+			assert( 0 );
+			break;
+	}
+#endif
 }
 
 void shader_bindConstants( shader* s ) {
-	for (every shader_constant) {
-		value = shaderconstant_lookup( shader_constant.uniform_name );
-		setUniform( shader_constant.program_location, value );
+	assert( s->dict.count < MAX_SHADER_CONSTANT_BINDINGS );
+	for ( int i = 0; i < s->dict.count; i++ ) {
+		shader_bindConstant( s->dict.bindings[i] );
 	}
 }
-*/
+
+// Activate the shader for use in rendering
+void shader_activate( shader* s ) {
+	// Bind the shader program for use
+	glUseProgram( s->program );
+
+	// Set up shader constants ( GLSL Uniform variables )
+	shader_bindConstants( s );
+}
+
+// Load a shader from GLSL files
+shader* shader_load( const char* vertex_name, const char* fragment_name ) {
+	shader* s = mem_alloc( sizeof( shader ));
+	memset( s, 0, sizeof( shader ));
+	s->dict.count = 0;
+
+	// Load source code
+	int length = 0;
+	const char* vertex_file = vfile_contents( vertex_name, &length );
+	const char* fragment_file = vfile_contents( fragment_name, &length );
+
+	// Build the shader program
+	s->program = shader_build( vertex_name, fragment_name, vertex_file, fragment_file );
+
+	// Build our dictionaries
+	shader_buildDictionary( &s->dict, s->program, vertex_file );
+	shader_buildDictionary( &s->dict, s->program, fragment_file );
+
+	// Clear up memory
+	mem_free( (void*)vertex_file );			// Cast away const to free, we allocated this ourselves
+	mem_free( (void*)fragment_file	);		// Cast away const to free, "
+
+	return s;
+}

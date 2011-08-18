@@ -4,16 +4,41 @@
 // GLFW Libraries
 #include <GL/glfw.h>
 
+// The maximum number of constants that a single shader can use
+#define MAX_SHADER_CONSTANT_BINDINGS 32
+
+enum uniform_type {
+	uniform_unknown,
+	uniform_matrix,
+	uniform_vector,
+	uniform_tex2D,
+	uniform_int
+};
+
+typedef struct shaderConstantBinding_s {
+	void*		value;
+	GLint		program_location;
+	int			type;
+} shaderConstantBinding;
+
+typedef struct shaderDictionary_s {
+	int count;
+	shaderConstantBinding bindings[MAX_SHADER_CONSTANT_BINDINGS];
+} shaderDictionary;
+
 typedef struct shader_s {
 	GLuint program;				// The Linked OpenGL shader program, containing vertex and fragment shaders;
-//	shaderDictionary	dict;	// Dictionary of shader constant lookups
+	shaderDictionary	dict;	// Dictionary of shader constant lookups
 } shader;
 
 // Compile a GLSL shader object from the given source code
 GLuint shader_compile( GLenum type, const char* path, const char* source );
 
-// Build a GLSL shader program from given vertex and fragment shader source pathnames
-GLuint	shader_build( const char* vertex_path, const char* fragment_path );
+// Load a shader from GLSL files
+shader* shader_load( const char* vertex_name, const char* fragment_name );
 
 // Find the program location for a named Uniform variable in the given program
 GLint shader_getUniformLocation( GLuint program, const char* name );
+
+
+void shader_bindConstants( shader* s );
