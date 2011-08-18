@@ -23,7 +23,6 @@ void* hashtable_find( hashtable, key ) {
 */
 
 map* map_create( int max, int stride ) {
-	printf( "map_create\n" );
 	map* m = mem_alloc( sizeof( map ));
 	m->max = max;
 	m->count = 0;
@@ -36,7 +35,6 @@ map* map_create( int max, int stride ) {
 }
 
 void* map_find( map* m, int key ) {
-	printf( "map_find\n" );
 	for ( int i = 0; i < m->count; i++ ) {
 		if ( m->keys[i] == key )
 			return m->values + (i * m->stride);
@@ -45,12 +43,37 @@ void* map_find( map* m, int key ) {
 }
 
 void map_add( map* m, int key, void* value ) {
-	printf( "map_add\n" );
+	assert( map_find( m, key) == NULL );
 	assert( m->count < m->max );
 	int i = m->count;
 	m->keys[i] = key;
-	memcpy( m->values + (i * m->stride), value, m->stride );
+	if ( value ) // Allow NULL in which case don't copy
+		memcpy( m->values + (i * m->stride), value, m->stride );
 	m->count++;
+}
+
+void* map_findOrAdd( map* m, int key ) {
+	void* data = map_find( m, key );
+	if ( !data ) {
+		data = m->values + (m->count * m->stride);
+		map_add( m, key, NULL );
+	}
+	return data;
+}
+
+void map_delete( map* m ) {
+	mem_free( m->keys );
+	mem_free( m->values );
+	mem_free( m );
+}
+
+void test_map() {
+	map* test_map = map_create( 16, sizeof( unsigned int ));
+	int key = mhash( "modelview" );
+	unsigned int value = 0x3;
+	map_add( test_map, key, &value );
+	unsigned int* modelview = map_find( test_map, key );
+	assert( *modelview = value );
 }
 
 // *** Test
@@ -60,6 +83,9 @@ void test_murmurHash( const char* source ) {
 }
 
 void test_hash() {
+
+	test_map();
+
 	test_murmurHash( "test" );
 	test_murmurHash( "blarg" );
 	test_murmurHash( "scrund" );

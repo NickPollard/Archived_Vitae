@@ -19,5 +19,7 @@ typedef struct map_s {
 } map;
 
 map*	map_create( int max, int stride );
+void	map_delete( map* m );
 void*	map_find( map* m, int key );
 void	map_add( map* m, int key, void* value );
+void* map_findOrAdd( map* m, int key );

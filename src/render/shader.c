@@ -9,20 +9,8 @@
 #include "system/string.h"
 #include "system/hash.h"
 
-// Register the shader constant of the given name, returning it's address, or if it
-// already exists then use that
-void* shader_registerConstant( const char* name ) {
-//	hash_findOrAdd( shader_constants, name );
-	return NULL;
-	/*
-	// TODO should be a hashmap eventually
-	for ( int i = 0; i < shaderconstant_count; i++ ) {
-		if ( shader_constant.name = name )
-			return shader_constant.value
-	}
-	return NULL;
-	*/
-}
+#define kMaxShaderConstants 128
+map* shader_constants = NULL;
 
 // Find the program location for a named Uniform variable in the given program
 GLint shader_getUniformLocation( GLuint program, const char* name ) {
@@ -39,7 +27,7 @@ shaderConstantBinding shader_createBinding( GLuint shader_program, const char* v
 	// For each one create a binding
 	shaderConstantBinding binding;
 	binding.program_location = shader_getUniformLocation( shader_program, variable_name );
-	binding.value = shader_registerConstant( variable_name );
+	binding.value = map_findOrAdd( shader_constants, mhash( variable_name ));
 
 	// TODO: Make this into an easy lookup table
 	binding.type = uniform_unknown;
@@ -50,7 +38,7 @@ shaderConstantBinding shader_createBinding( GLuint shader_program, const char* v
 	if ( string_equal( "sampler2D", variable_type ))
 		binding.type = uniform_tex2D;
 
-	printf( "SHADER: Created Shader binding for \"%s\" at location 0x%x, type: %s\n", variable_name, binding.program_location, variable_type );
+	printf( "SHADER: Created Shader binding 0x%x for \"%s\" at location 0x%x, type: %s\n", (unsigned int)binding.value, variable_name, binding.program_location, variable_type );
 	return binding;
 }
 
@@ -138,17 +126,8 @@ GLuint	shader_build( const char* vertex_path, const char* fragment_path, const c
 	return program;
 }
 
-#define kMaxShaderConstants 128
-map* shader_constants = NULL;
-
 void shader_init() {
-	shader_constants = map_create( kMaxShaderConstants, sizeof( GLuint ));
-
-	int key = mhash( "modelview" );
-	GLuint value = 0x3;
-	map_add( shader_constants, key, &value );
-	GLuint* modelview = map_find( shader_constants, key );
-	assert( *modelview = value );
+	shader_constants = map_create( kMaxShaderConstants, sizeof( GLint ));
 }
 
 void shader_bindConstant( shaderConstantBinding binding ) {
@@ -158,7 +137,6 @@ void shader_bindConstant( shaderConstantBinding binding ) {
 	switch ( binding.type ) {
 		case uniform_matrix:
 			printf( "Type = Matrix.\n" );
-
 			break;
 		case uniform_vector:
 			printf( "Type = vector.\n" );
@@ -175,6 +153,11 @@ void shader_bindConstant( shaderConstantBinding binding ) {
 			break;
 	}
 #endif
+	*binding.value = binding.program_location;
+}
+
+GLint* shader_findConstant( int key ) {
+	return map_find( shader_constants, key );
 }
 
 void shader_bindConstants( shader* s ) {

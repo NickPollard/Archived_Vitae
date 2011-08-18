@@ -16,7 +16,7 @@ enum uniform_type {
 };
 
 typedef struct shaderConstantBinding_s {
-	void*		value;
+	GLint*		value;
 	GLint		program_location;
 	int			type;
 } shaderConstantBinding;
@@ -49,3 +49,4 @@ GLint shader_getUniformLocation( GLuint program, const char* name );
 
 
 void shader_bindConstants( shader* s );
+GLint* shader_findConstant( int key );

@@ -13,6 +13,7 @@
 #include "render/shader.h"
 #include "render/texture.h"
 #include "system/file.h"
+#include "system/hash.h"
 // temp
 #include "engine.h"
 
@@ -253,12 +254,14 @@ void render_shader( scene* s ) {
 	render_validateMatrix( modelview );
 	render_resetModelView();
 	
+	GLint* projection = shader_findConstant( mhash( "projection" ));
+	printf( "RENDER: Projection variable is at 0x%x\n", (unsigned int)projection );
+	render_setUniform_matrix( *projection, perspective );	
+
 	// Set up uniforms
-	render_setUniform_matrix( resources.uniforms.projection, perspective );
+	//render_setUniform_matrix( resources.uniforms.projection, perspective );
 	render_setUniform_matrix( resources.uniforms.modelview, modelview );
 	render_setUniform_matrix( resources.uniforms.worldspace, modelview );
-
-//	shader_setUniform( shaderconstants.worldspace, modelview );
 
 	// Textures
 	render_setUniform_texture( resources.uniforms.tex, g_texture_default );
