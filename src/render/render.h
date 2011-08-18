@@ -34,6 +34,9 @@ typedef struct gl_resources_s {
 	// Shader objects
 	GLuint vertex_shader, fragment_shader, program;
 	GLuint particle_vertex_shader, particle_fragment_shader, particle_program;
+
+	shader* shader_default;
+	shader* shader_particle;
 } gl_resources;
 
 extern gl_resources resources;

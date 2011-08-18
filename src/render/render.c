@@ -56,27 +56,19 @@ void gl_dumpInfoLog( GLuint object, func_getIV getIV, func_getInfoLog getInfoLog
 }
 
 void render_buildShaders() {
-	shader* s = shader_load( "dat/shaders/phong.v.glsl", "dat/shaders/phong.f.glsl" );
-	resources.program = s->program;
-	shader* s_ = shader_load( "dat/shaders/textured_phong.v.glsl", "dat/shaders/textured_phong.f.glsl" );
-	resources.particle_program = s_->program;
-
-	shader_bindConstants( s );
-	shader_bindConstants( s_ );
-
-	mem_free( s );
-	mem_free( s_ );
+	resources.shader_default = shader_load( "dat/shaders/phong.v.glsl", "dat/shaders/phong.f.glsl" );
+	resources.shader_particle = shader_load( "dat/shaders/textured_phong.v.glsl", "dat/shaders/textured_phong.f.glsl" );
 
 #define GET_UNIFORM_LOCATION( var ) \
-	resources.uniforms.var = shader_getUniformLocation( resources.program, #var );
+	resources.uniforms.var = shader_getUniformLocation( resources.shader_default->program, #var );
 	SHADER_UNIFORMS( GET_UNIFORM_LOCATION )
 
 #define GET_UNIFORM_LOCATION_PARTICLE( var ) \
-	resources.particle_uniforms.var = shader_getUniformLocation( resources.particle_program, #var );
+	resources.particle_uniforms.var = shader_getUniformLocation( resources.shader_particle->program, #var );
 	SHADER_UNIFORMS( GET_UNIFORM_LOCATION_PARTICLE )
 	// Attributes
-	resources.attributes.position = glGetAttribLocation( resources.program, "position" );
-	resources.attributes.normal = glGetAttribLocation( resources.program, "normal" );
+	resources.attributes.position = glGetAttribLocation( resources.shader_default->program, "position" );
+	resources.attributes.normal = glGetAttribLocation( resources.shader_default->program, "normal" );
 }
 // Private Function declarations
 
@@ -239,7 +231,7 @@ void render_setUniform_texture( GLuint uniform, GLuint texture ) {
 // Shader version
 void render_shader( scene* s ) {
 	// Load our shader
-	glUseProgram( resources.program );
+	shader_activate( resources.shader_default );
 	matrix_setIdentity( modelview );
 
 	const float fov = 0.8f; // In radians
@@ -255,7 +247,7 @@ void render_shader( scene* s ) {
 	render_resetModelView();
 	
 	GLint* projection = shader_findConstant( mhash( "projection" ));
-	printf( "RENDER: Projection variable is at 0x%x\n", (unsigned int)projection );
+//	printf( "RENDER: Projection variable is at 0x%x, current location is 0x%x\n", (unsigned int)projection, *projection );
 	render_setUniform_matrix( *projection, perspective );	
 
 	// Set up uniforms

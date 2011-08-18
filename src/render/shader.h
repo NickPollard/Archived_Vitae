@@ -26,10 +26,10 @@ typedef struct shaderDictionary_s {
 	shaderConstantBinding bindings[kMaxShaderConstantBindings];
 } shaderDictionary;
 
-typedef struct shader_s {
+struct shader_s {
 	GLuint program;				// The Linked OpenGL shader program, containing vertex and fragment shaders;
 	shaderDictionary	dict;	// Dictionary of shader constant lookups
-} shader;
+};
 
 // *** Static
 
@@ -47,6 +47,7 @@ shader* shader_load( const char* vertex_name, const char* fragment_name );
 // Find the program location for a named Uniform variable in the given program
 GLint shader_getUniformLocation( GLuint program, const char* name );
 
+// Activate the shader for use in rendering
+void shader_activate( shader* s );
 
-void shader_bindConstants( shader* s );
 GLint* shader_findConstant( int key );

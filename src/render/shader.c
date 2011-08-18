@@ -131,9 +131,9 @@ void shader_init() {
 }
 
 void shader_bindConstant( shaderConstantBinding binding ) {
-	printf( "Binding constant from address 0x%x to program location: 0x%x. ", (unsigned int)binding.value, binding.program_location );
+//	printf( "Binding constant from address 0x%x to program location: 0x%x. ", (unsigned int)binding.value, binding.program_location );
 	// Need to call different functions depending on type
-#if 1
+#if 0
 	switch ( binding.type ) {
 		case uniform_matrix:
 			printf( "Type = Matrix.\n" );

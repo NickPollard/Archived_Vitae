@@ -12,6 +12,7 @@ struct modelInstance_s;
 struct transform_s;
 struct mesh_s;
 struct scene_s;
+struct shader_s;
 union vector_u;
 
 typedef struct heapAllocator_s heapAllocator;
@@ -27,6 +28,7 @@ typedef struct transform_s transform;
 typedef union vector_u vector;
 typedef union vector_u color;
 typedef struct scene_s scene;
+typedef struct shader_s shader;
 
 typedef int modelHandle; // A Handle into the model array
 

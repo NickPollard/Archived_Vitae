@@ -68,7 +68,7 @@ void particle_quad( particle_vertex* dst, vector* point, float size ) {
 // Render a particleEmitter system
 void particleEmitter_render( void* data ) {
 	// switch to particle shader
-	glUseProgram( resources.particle_program );
+//	glUseProgram( resources.particle_program );
 
 	particleEmitter* p = data;
 
