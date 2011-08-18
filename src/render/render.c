@@ -25,6 +25,8 @@
 // *** Shader Pipeline
 
 matrix modelview, modelview_base;
+matrix perspective;
+
 gl_resources resources;
 
 GLuint gl_bufferCreate( GLenum target, const void* data, GLsizei size ) {
@@ -226,7 +228,6 @@ void render_shader( scene* s ) {
 	const float aspect = 4.f/3.f;
 	const float z_near = 1.f;
 	const float z_far = 500.f;
-	matrix perspective;
 	render_perspectiveMatrix( perspective, fov, aspect, z_near, z_far );
 
 	render_validateMatrix( s->cam->trans->world );

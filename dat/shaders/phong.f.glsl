@@ -12,7 +12,7 @@ uniform mat4 worldspace;
 uniform vec4 light_position[LIGHT_COUNT];
 uniform vec4 light_diffuse[LIGHT_COUNT];
 uniform vec4 light_specular[LIGHT_COUNT];
-uniform sampler2D tex;
+//uniform sampler2D tex;
 
 // Test Light values
 const vec4 light_ambient = vec4( 0.2, 0.2, 0.2, 0.0 );
@@ -72,10 +72,10 @@ void main() {
 		total_specular_color += specular_color;
 
 	}
-//	gl_FragColor =	total_specular_color * material_specular + 
-//					total_diffuse_color * material_diffuse;
+	gl_FragColor =	total_specular_color * material_specular + 
+					total_diffuse_color * material_diffuse;
 
-	gl_FragColor = texture2D( tex, frag_position.xy );
+//	gl_FragColor = texture2D( tex, frag_position.xy );
 //	gl_FragColor.x = uv.x;
 //	gl_FragColor.y = uv.y;
 //	gl_FragColor = vec4( uv.x, uv.y, 0.0, 1.0 );

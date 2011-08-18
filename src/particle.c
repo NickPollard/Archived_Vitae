@@ -5,6 +5,8 @@
 #include "mem/allocator.h"
 #include "model.h"
 #include "render/render.h"
+#include "render/shader.h"
+#include "render/texture.h"
 
 float property_samplef( property* p, float time );
 
@@ -68,14 +70,22 @@ void particle_quad( particle_vertex* dst, vector* point, float size ) {
 // Render a particleEmitter system
 void particleEmitter_render( void* data ) {
 	// switch to particle shader
-//	glUseProgram( resources.particle_program );
+	shader_activate( resources.shader_particle );
+
+	// Set up uniforms
+	render_setUniform_matrix( *resources.uniforms.projection, perspective );
+	render_setUniform_matrix( *resources.uniforms.modelview, modelview );
+	render_setUniform_matrix( *resources.uniforms.worldspace, modelview );
+
+	// Textures
+	render_setUniform_texture( *resources.uniforms.tex, g_texture_default );
 
 	particleEmitter* p = data;
 
 	// set modelview matrix
 	render_resetModelView();
 	matrix_mul( modelview, modelview, p->trans->world );
-	glUniformMatrix4fv( resources.uniforms.modelview, 1, /*transpose*/false, (GLfloat*)modelview );
+	render_setUniform_matrix( *resources.uniforms.modelview, modelview );
 
 	particle_vertex vertex_buffer[kmax_particle_verts];
 	GLushort element_buffer[kmax_particle_verts];

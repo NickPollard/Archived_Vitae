@@ -41,6 +41,7 @@ typedef struct gl_resources_s {
 
 extern gl_resources resources;
 extern matrix modelview;
+extern matrix perspective;
 
 void render_setBuffers( float* vertex_buffer, int vertex_buffer_size, int* element_buffer, int element_buffer_size );
 
@@ -77,6 +78,7 @@ void render( scene* s , int w, int h );
 
 void render_resetModelView( );
 void render_setUniform_matrix( GLuint uniform, matrix m );
+void render_setUniform_texture( GLuint uniform, GLuint texture );
 
 void render_validateMatrix( matrix m );
 
