@@ -78,7 +78,7 @@ void particleEmitter_render( void* data ) {
 	render_setUniform_matrix( *resources.uniforms.worldspace, modelview );
 
 	// Textures
-	render_setUniform_texture( *resources.uniforms.tex, g_texture_default );
+//	render_setUniform_texture( *resources.uniforms.tex, g_texture_default );
 
 	particleEmitter* p = data;
 

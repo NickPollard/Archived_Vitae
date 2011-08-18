@@ -74,6 +74,7 @@ void main() {
 	}
 	gl_FragColor =	total_specular_color * material_specular + 
 					total_diffuse_color * material_diffuse;
+	gl_FragColor.w = 1.0;
 
 //	gl_FragColor = texture2D( tex, frag_position.xy );
 //	gl_FragColor.x = uv.x;

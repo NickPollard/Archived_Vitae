@@ -139,6 +139,8 @@ void render_init() {
 
 	printf("RENDERING: Initialising OpenGL rendering settings.\n");
 	glEnable(GL_DEPTH_TEST);
+	glEnable(GL_BLEND);
+	glBlendFunc( GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA );	// Standard Alpha Blending
 
 	texture_init();
 
@@ -241,7 +243,7 @@ void render_shader( scene* s ) {
 	render_setUniform_matrix( *resources.uniforms.worldspace, modelview );
 
 	// Textures
-	render_setUniform_texture( *resources.uniforms.tex, g_texture_default );
+//	render_setUniform_texture( *resources.uniforms.tex, g_texture_default );
 
 	render_lighting( s );
 

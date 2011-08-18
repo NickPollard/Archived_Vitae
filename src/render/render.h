@@ -5,11 +5,10 @@
 #define SHADER_UNIFORMS( f ) \
 	f( projection ) \
 	f( modelview ) \
-	f(worldspace ) \
+	f( worldspace ) \
 	f( light_position ) \
 	f( light_diffuse ) \
-	f( light_specular ) \
-	f( tex )
+	f( light_specular )
 
 
 #define DECLARE_AS_GLINT_P( var ) \
