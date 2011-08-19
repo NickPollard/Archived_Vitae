@@ -9,8 +9,10 @@
 #include "mem/allocator.h"
 #include "render/modelinstance.h"
 #include "render/render.h"
+#include "render/shader.h"
 #include "render/texture.h"
 #include "render/vgl.h"
+#include "system/hash.h"
 #include "system/string.h"
 
 #define maxModels 256
@@ -177,17 +179,19 @@ void mesh_drawVerts( mesh* m ) {
 	GLsizei element_buffer_size = m->index_count * sizeof( GLushort );
 //	render_setBuffers( (GLfloat*)m->vertex_buffer, vertex_buffer_size, (int*)m->element_buffer, element_buffer_size );
 
+	GLint position = *(shader_findConstant( mhash( "position" )));
+	GLint normal = *(shader_findConstant( mhash( "normal" )));
 	// *** Vertex Buffer
 	{
 		// Activate our buffers
 		glBindBuffer( GL_ARRAY_BUFFER, resources.vertex_buffer );
 		glBufferData( GL_ARRAY_BUFFER, vertex_buffer_size, m->vertex_buffer, GL_STREAM_DRAW );
 		// Set up position data
-		glVertexAttribPointer( resources.attributes.position, /*vec4*/ 4, GL_FLOAT, /*Normalized?*/GL_FALSE, sizeof( vertex ), (void*)offsetof( vertex, position) );
-		glEnableVertexAttribArray( resources.attributes.position );
+		glVertexAttribPointer( position, /*vec4*/ 4, GL_FLOAT, /*Normalized?*/GL_FALSE, sizeof( vertex ), (void*)offsetof( vertex, position) );
+		glEnableVertexAttribArray( position );
 		// Set up normal data
-		glVertexAttribPointer( resources.attributes.normal, /*vec4*/ 4, GL_FLOAT, /*Normalized?*/GL_FALSE, sizeof( vertex ), (void*)offsetof( vertex, normal ) );
-		glEnableVertexAttribArray( resources.attributes.normal );
+		glVertexAttribPointer( normal, /*vec4*/ 4, GL_FLOAT, /*Normalized?*/GL_FALSE, sizeof( vertex ), (void*)offsetof( vertex, normal ) );
+		glEnableVertexAttribArray( normal );
 	}
 	// *** Element Buffer
 	{
@@ -199,8 +203,8 @@ void mesh_drawVerts( mesh* m ) {
 	glDrawElements( GL_TRIANGLES, m->index_count, GL_UNSIGNED_SHORT, (void*)0 );
 
 	// Cleanup
-	glDisableVertexAttribArray( resources.attributes.position );
-	glDisableVertexAttribArray( resources.attributes.normal );
+	glDisableVertexAttribArray( position );
+	glDisableVertexAttribArray( normal );
 }
 
 // Get the i-th submesh of a given model

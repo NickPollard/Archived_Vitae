@@ -131,20 +131,23 @@ void particleEmitter_render( void* data ) {
 	// There are now <index_count> vertices, as we have unrolled them
 	GLsizei vertex_buffer_size = index_count * sizeof( particle_vertex );
 	GLsizei element_buffer_size = index_count * sizeof( GLushort );
+	GLint position = *(shader_findConstant( mhash( "position" )));
+	GLint normal = *(shader_findConstant( mhash( "normal" )));
+	GLint uv = *(shader_findConstant( mhash( "uv" )));
 	// *** Vertex Buffer
 	{
 		// Activate our buffers
 		glBindBuffer( GL_ARRAY_BUFFER, resources.vertex_buffer );
 		glBufferData( GL_ARRAY_BUFFER, vertex_buffer_size, vertex_buffer, GL_STREAM_DRAW );
 		// Set up position data
-		glVertexAttribPointer( resources.attributes.position, /*vec4*/ 4, GL_FLOAT, /*Normalized?*/GL_FALSE, sizeof( particle_vertex ), (void*)offsetof( particle_vertex, position) );
-		glEnableVertexAttribArray( resources.attributes.position );
+		glVertexAttribPointer( position, /*vec4*/ 4, GL_FLOAT, /*Normalized?*/GL_FALSE, sizeof( particle_vertex ), (void*)offsetof( particle_vertex, position) );
+		glEnableVertexAttribArray( position );
 		// Set up normal data
-		glVertexAttribPointer( resources.attributes.normal, /*vec4*/ 4, GL_FLOAT, /*Normalized?*/GL_FALSE, sizeof( particle_vertex ), (void*)offsetof( particle_vertex, normal ) );
-		glEnableVertexAttribArray( resources.attributes.normal );
+		glVertexAttribPointer( normal, /*vec4*/ 4, GL_FLOAT, /*Normalized?*/GL_FALSE, sizeof( particle_vertex ), (void*)offsetof( particle_vertex, normal ) );
+		glEnableVertexAttribArray( normal );
 		// Set up texcoord data
-		glVertexAttribPointer( resources.attributes.uv, /*vec4*/ 4, GL_FLOAT, /*Normalized?*/GL_FALSE, sizeof( particle_vertex ), (void*)offsetof( particle_vertex, uv ) );
-		glEnableVertexAttribArray( resources.attributes.uv );
+		glVertexAttribPointer( uv, /*vec4*/ 4, GL_FLOAT, /*Normalized?*/GL_FALSE, sizeof( particle_vertex ), (void*)offsetof( particle_vertex, uv ) );
+		glEnableVertexAttribArray( uv );
 	}
 	// *** Element Buffer
 	{
@@ -156,8 +159,9 @@ void particleEmitter_render( void* data ) {
 	glDrawElements( GL_TRIANGLES, index_count, GL_UNSIGNED_SHORT, (void*)0 );
 
 	// Cleanup
-	glDisableVertexAttribArray( resources.attributes.position );
-	glDisableVertexAttribArray( resources.attributes.normal );
+	glDisableVertexAttribArray( position );
+	glDisableVertexAttribArray( normal );
+	glDisableVertexAttribArray( uv );
 }
 
 property* property_create( int stride ) {

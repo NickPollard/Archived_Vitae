@@ -15,10 +15,12 @@ map* shader_constants = NULL;
 // Find the program location for a named Uniform variable in the given program
 GLint shader_getUniformLocation( GLuint program, const char* name ) {
 	GLint location = glGetUniformLocation( program, name );
-	if ( location == -1 ) {
+/*
+   if ( location == -1 ) {
 		printf( "Error finding Uniform Location for shader uniform variable \"%s\".\n", name );
 	}
 	assert( location != -1 );
+*/
 	return location;
 }
 
@@ -34,6 +36,8 @@ shaderConstantBinding shader_createBinding( GLuint shader_program, const char* v
 	// For each one create a binding
 	shaderConstantBinding binding;
 	binding.program_location = shader_getUniformLocation( shader_program, variable_name );
+	if ( binding.program_location == -1 )
+		binding.program_location = shader_getAttributeLocation( shader_program, variable_name );
 	binding.value = map_findOrAdd( shader_constants, mhash( variable_name ));
 
 	// TODO: Make this into an easy lookup table
@@ -62,7 +66,7 @@ void shader_buildDictionary( shaderDictionary* dict, GLuint shader_program, cons
 	char* token;
 	while ( !inputStream_endOfFile( stream )) {
 		token = inputStream_nextToken( stream );
-		if ( string_equal( token, "uniform" ) && !inputStream_endOfFile( stream )) {
+		if (( string_equal( token, "uniform" ) || string_equal( token, "attribute" )) && !inputStream_endOfFile( stream )) {
 			// Advance two tokens (the next is the type declaration, the second is the variable name)
 			mem_free( token );
 			token = inputStream_nextToken( stream );
