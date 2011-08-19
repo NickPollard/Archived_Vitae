@@ -49,6 +49,7 @@ void shaderDictionary_addBinding( shaderDictionary* d, shaderConstantBinding b )
 
 // Find a list of uniform variable names in a shader source file
 void shader_buildDictionary( shaderDictionary* dict, GLuint shader_program, const char* src ) {
+	printf( "SHADER: Building Shader Dictionary.z\n" );
 	// Find a list of uniform variable names
 	inputStream* stream = inputStream_create( src );
 	char* token;
@@ -83,8 +84,8 @@ void shader_buildDictionary( shaderDictionary* dict, GLuint shader_program, cons
 // Compile a GLSL shader object from the given source code
 // Based on code from Joe's Blog: http://duriansoftware.com/joe/An-intro-to-modern-OpenGL.-Chapter-2.2:-Shaders.html
 GLuint shader_compile( GLenum type, const char* path, const char* source ) {
-	GLint length;
-	GLuint shader;
+	GLint length = strlen( source );
+	GLuint glShader;
 	GLint shader_ok;
 
 	if ( !source ) {
@@ -92,18 +93,22 @@ GLuint shader_compile( GLenum type, const char* path, const char* source ) {
 		assert( 0 );
 	}
 
-	shader = glCreateShader( type );
-	glShaderSource( shader, 1, (const GLchar**)&source, &length );
-	glCompileShader( shader );
+	glShader = glCreateShader( type );
+	printf( "Shader created.\n" );
+	printf( "Shader source: %s\n", source );
+	glShaderSource( glShader, 1, (const GLchar**)&source, &length );
+	printf( "Shader source loaded.\n" );
+	glCompileShader( glShader );
+	printf( "Shader compiled.\n" );
 
-	glGetShaderiv( shader, GL_COMPILE_STATUS, &shader_ok );
+	glGetShaderiv( glShader, GL_COMPILE_STATUS, &shader_ok );
 	if ( !shader_ok) {
 		printf( "Error: Failed to compile Shader from File %s.\n", path );
-		gl_dumpInfoLog( shader, glGetShaderiv,  glGetShaderInfoLog);
+		gl_dumpInfoLog( glShader, glGetShaderiv,  glGetShaderInfoLog);
 		assert( 0 );
 	}
 
-	return shader;
+	return glShader;
 }
 
 // Link two given shader objects into a full shader program
@@ -164,6 +169,7 @@ void shader_activate( shader* s ) {
 
 // Load a shader from GLSL files
 shader* shader_load( const char* vertex_name, const char* fragment_name ) {
+	printf( "SHADER: Loading Shader (Vertex: \"%s\", Fragment: \"%s\")\n", vertex_name, fragment_name );
 	shader* s = mem_alloc( sizeof( shader ));
 	memset( s, 0, sizeof( shader ));
 	s->dict.count = 0;
