@@ -78,7 +78,7 @@ void main() {
 
 	gl_FragColor = texture2D( tex, texcoord );
 //	gl_FragColor = vec4( texcoord, 0.f, 0.3 );
-	gl_FragColor.w = 0.3;
+//	gl_FragColor.w = 0.3;
 //	gl_FragColor = vec4( 1.0, 1.0, 0.0, 0.3 );
 
 	

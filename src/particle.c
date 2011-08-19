@@ -10,10 +10,12 @@
 #include "system/hash.h"
 
 float property_samplef( property* p, float time );
+GLint particle_texture = 0;
 
 particleEmitter* particleEmitter_create() {
 	particleEmitter* p = mem_alloc( sizeof( particleEmitter ));
 	memset( p, 0, sizeof( particleEmitter ));
+	particle_texture = texture_loadTGA( "assets/img/star_rgba64.tga" );
 	return p;
 }
 
@@ -90,7 +92,7 @@ void particleEmitter_render( void* data ) {
 	// Textures
 	GLint* tex = shader_findConstant( mhash( "tex" ));
 	if ( tex )
-		render_setUniform_texture( *tex, g_texture_default );
+		render_setUniform_texture( *tex, particle_texture );
 
 	particleEmitter* p = data;
 

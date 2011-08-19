@@ -81,8 +81,8 @@ void *read_tga(const char *filename, int *width, int *height)
         fclose(f);
         return NULL;
     }
-    if (header.bits_per_pixel != 24) {
-        fprintf(stderr, "%s is not a 24-bit uncompressed RGB tga file\n", filename);
+    if (header.bits_per_pixel != 32) {
+        fprintf(stderr, "%s is not a 32-bit uncompressed RGB tga file\n", filename);
         fclose(f);
         return NULL;
     }

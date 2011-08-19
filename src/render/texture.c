@@ -37,10 +37,10 @@ GLuint texture_loadTGA( const char* filename ) {
 
 	glTexImage2D( GL_TEXTURE_2D,
 		   			0,			// No Mipmaps for now
-					GL_RGB8,	// 3-channel, 8-bits per channel (32-bit stride)
+					GL_RGBA8,	// 3-channel, 8-bits per channel (32-bit stride)
 					(GLsizei)w, (GLsizei)h,
 					0,			// Border, unused
-					GL_BGR,		// TGA uses BGR order internally
+					GL_BGRA,		// TGA uses BGR order internally
 					GL_UNSIGNED_BYTE,	// 8-bits per channel
 					img );
 
