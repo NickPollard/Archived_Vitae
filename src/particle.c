@@ -7,6 +7,7 @@
 #include "render/render.h"
 #include "render/shader.h"
 #include "render/texture.h"
+#include "system/hash.h"
 
 float property_samplef( property* p, float time );
 
@@ -50,6 +51,7 @@ void particleEmitter_tick( void* data, float dt ) {
 typedef struct particle_vertex_s {
 	vector	position;
 	vector	normal;
+	vector	uv;
 } particle_vertex;
 
 // Output the 4 verts of the quad to the target vertex array
@@ -58,13 +60,21 @@ void particle_quad( particle_vertex* dst, vector* point, float size ) {
 	vector offset = Vector( size, size, 0.f, 0.f );
 	Add( &dst[0].position, point, &offset );
 	dst[0].normal = Vector( 0.f, 0.f, 1.f, 0.f );
+	dst[0].uv = Vector( 1.f, 1.f, 0.f, 0.f );
+
 	Sub( &dst[1].position, point, &offset );
 	dst[1].normal = Vector( 0.f, 0.f, 1.f, 0.f );
+	dst[1].uv = Vector( 0.f, 0.f, 0.f, 0.f );
+
 	offset.coord.y = -size;
+
 	Add( &dst[2].position, point, &offset );
 	dst[2].normal = Vector( 0.f, 0.f, 1.f, 0.f );
+	dst[2].uv = Vector( 1.f, 0.f, 0.f, 0.f );
+
 	Sub( &dst[3].position, point, &offset );
 	dst[3].normal = Vector( 0.f, 0.f, 1.f, 0.f );
+	dst[3].uv = Vector( 0.f, 1.f, 0.f, 0.f );
 }
 
 // Render a particleEmitter system
@@ -78,7 +88,9 @@ void particleEmitter_render( void* data ) {
 	render_setUniform_matrix( *resources.uniforms.worldspace, modelview );
 
 	// Textures
-//	render_setUniform_texture( *resources.uniforms.tex, g_texture_default );
+	GLint* tex = shader_findConstant( mhash( "tex" ));
+	if ( tex )
+		render_setUniform_texture( *tex, g_texture_default );
 
 	particleEmitter* p = data;
 
@@ -130,6 +142,9 @@ void particleEmitter_render( void* data ) {
 		// Set up normal data
 		glVertexAttribPointer( resources.attributes.normal, /*vec4*/ 4, GL_FLOAT, /*Normalized?*/GL_FALSE, sizeof( particle_vertex ), (void*)offsetof( particle_vertex, normal ) );
 		glEnableVertexAttribArray( resources.attributes.normal );
+		// Set up texcoord data
+		glVertexAttribPointer( resources.attributes.uv, /*vec4*/ 4, GL_FLOAT, /*Normalized?*/GL_FALSE, sizeof( particle_vertex ), (void*)offsetof( particle_vertex, uv ) );
+		glEnableVertexAttribArray( resources.attributes.uv );
 	}
 	// *** Element Buffer
 	{

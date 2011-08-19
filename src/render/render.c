@@ -71,9 +71,11 @@ void render_buildShaders() {
 	SHADER_UNIFORMS( GET_UNIFORM_LOCATION_PARTICLE )
 
 	// Attributes
-	resources.attributes.position = glGetAttribLocation( resources.shader_default->program, "position" );
-	resources.attributes.normal = glGetAttribLocation( resources.shader_default->program, "normal" );
+	resources.attributes.position = shader_getAttributeLocation( resources.shader_particle->program, "position" );
+	resources.attributes.normal = shader_getAttributeLocation( resources.shader_particle->program, "normal" );
+	resources.attributes.uv = shader_getAttributeLocation( resources.shader_particle->program, "uv" );
 }
+
 // Private Function declarations
 
 void render_set3D( int w, int h ) {

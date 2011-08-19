@@ -28,6 +28,7 @@ typedef struct gl_resources_s {
 	struct {
 		GLint position;
 		GLint normal;
+		GLint uv;
 	} attributes;
 
 	// Shader objects

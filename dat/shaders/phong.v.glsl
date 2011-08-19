@@ -4,6 +4,7 @@
 // Attributes
 attribute vec4 position;
 attribute vec4 normal;
+attribute vec4 uv;
 
 // Varying
 varying vec4 frag_position;

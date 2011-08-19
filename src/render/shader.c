@@ -22,6 +22,13 @@ GLint shader_getUniformLocation( GLuint program, const char* name ) {
 	return location;
 }
 
+// Find the program location for a named Attribute variable in the given program
+GLint shader_getAttributeLocation( GLuint program, const char* name ) {
+	GLint location = glGetAttribLocation( program, name );
+	printf( "SHADER: Attribute \"%s\" location: 0x%x\n", name, location );
+	return location;
+}
+
 // Create a binding for the given variable within the given program
 shaderConstantBinding shader_createBinding( GLuint shader_program, const char* variable_type, const char* variable_name ) {
 	// For each one create a binding
@@ -94,12 +101,8 @@ GLuint shader_compile( GLenum type, const char* path, const char* source ) {
 	}
 
 	glShader = glCreateShader( type );
-	printf( "Shader created.\n" );
-	printf( "Shader source: %s\n", source );
 	glShaderSource( glShader, 1, (const GLchar**)&source, &length );
-	printf( "Shader source loaded.\n" );
 	glCompileShader( glShader );
-	printf( "Shader compiled.\n" );
 
 	glGetShaderiv( glShader, GL_COMPILE_STATUS, &shader_ok );
 	if ( !shader_ok) {

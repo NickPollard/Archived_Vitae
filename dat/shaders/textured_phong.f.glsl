@@ -4,7 +4,7 @@
 // Varying
 varying vec4 frag_position;
 varying vec4 frag_normal;
-//varying vec2 texcoord;
+varying vec2 texcoord;
 
 const int LIGHT_COUNT = 2;
 
@@ -13,7 +13,7 @@ uniform mat4 worldspace;
 uniform vec4 light_position[LIGHT_COUNT];
 uniform vec4 light_diffuse[LIGHT_COUNT];
 uniform vec4 light_specular[LIGHT_COUNT];
-//uniform sampler2D tex;
+uniform sampler2D tex;
 
 // Test Light values
 const vec4 light_ambient = vec4( 0.2, 0.2, 0.2, 0.0 );
@@ -76,8 +76,10 @@ void main() {
 //	gl_FragColor =	total_specular_color * material_specular + 
 //					total_diffuse_color * material_diffuse;
 
-//	gl_FragColor = texture2D( tex, frag_position.xy );
-	gl_FragColor = vec4( 1.0, 1.0, 0.0, 0.3 );
+	gl_FragColor = texture2D( tex, texcoord );
+//	gl_FragColor = vec4( texcoord, 0.f, 0.3 );
+	gl_FragColor.w = 0.3;
+//	gl_FragColor = vec4( 1.0, 1.0, 0.0, 0.3 );
 
 	
 }

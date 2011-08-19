@@ -47,6 +47,9 @@ shader* shader_load( const char* vertex_name, const char* fragment_name );
 // Find the program location for a named Uniform variable in the given program
 GLint shader_getUniformLocation( GLuint program, const char* name );
 
+// Find the program location for a named Attribute variable in the given program
+GLint shader_getAttributeLocation( GLuint program, const char* name );
+
 // Activate the shader for use in rendering
 void shader_activate( shader* s );
 
