@@ -10,6 +10,8 @@
 #include "system/hash.h"
 
 float property_samplef( property* p, float time );
+vector property_samplev( property* p, float time );
+
 GLint particle_texture = 0;
 
 particleEmitter* particleEmitter_create() {
@@ -54,11 +56,12 @@ typedef struct particle_vertex_s {
 	vector	position;
 	vector	normal;
 	vector	uv;
+	vector	color;
 } particle_vertex;
 
 // Output the 4 verts of the quad to the target vertex array
 // both position and normals
-void particle_quad( particle_vertex* dst, vector* point, float size ) {
+void particle_quad( particle_vertex* dst, vector* point, float size, vector color ) {
 	vector offset = Vector( size, size, 0.f, 0.f );
 
 	vector p = matrixVecMul( modelview, point );
@@ -66,20 +69,24 @@ void particle_quad( particle_vertex* dst, vector* point, float size ) {
 	Add( &dst[0].position, &p, &offset );
 	dst[0].normal = Vector( 0.f, 0.f, 1.f, 0.f );
 	dst[0].uv = Vector( 1.f, 1.f, 0.f, 0.f );
+	dst[0].color = color;
 
 	Sub( &dst[1].position, &p, &offset );
 	dst[1].normal = Vector( 0.f, 0.f, 1.f, 0.f );
 	dst[1].uv = Vector( 0.f, 0.f, 0.f, 0.f );
+	dst[1].color = color;
 
 	offset.coord.y = -offset.coord.y;
 
 	Add( &dst[2].position, &p, &offset );
 	dst[2].normal = Vector( 0.f, 0.f, 1.f, 0.f );
 	dst[2].uv = Vector( 1.f, 0.f, 0.f, 0.f );
+	dst[2].color = color;
 
 	Sub( &dst[3].position, &p, &offset );
 	dst[3].normal = Vector( 0.f, 0.f, 1.f, 0.f );
 	dst[3].uv = Vector( 0.f, 1.f, 0.f, 0.f );
+	dst[3].color = color;
 }
 
 // Render a particleEmitter system
@@ -111,7 +118,8 @@ void particleEmitter_render( void* data ) {
 	for ( int i = 0; i < p->count; i++ ) {
 		int index = (p->start + i) % kmax_particles;
 		float size = property_samplef( p->size, p->particles[index].age );
-		particle_quad( &vertex_buffer[index*4], &p->particles[index].position, size );
+		vector color = property_samplev( p->color, p->particles[index].age );
+		particle_quad( &vertex_buffer[index*4], &p->particles[index].position, size, color );
 		assert( i*6 + 5 < kmax_particle_verts );
 		// TODO: Indices can be initialised once
 		element_buffer[i*6+0] = index*4+0;
@@ -121,6 +129,7 @@ void particleEmitter_render( void* data ) {
 		element_buffer[i*6+4] = index*4+1;
 		element_buffer[i*6+5] = index*4+3;
 	}
+
 
 	// For Billboard particles; cancel out the rotation of the matrix
 	// The transformation has been applied already for particle positions
@@ -136,6 +145,7 @@ void particleEmitter_render( void* data ) {
 	GLint position = *(shader_findConstant( mhash( "position" )));
 	GLint normal = *(shader_findConstant( mhash( "normal" )));
 	GLint uv = *(shader_findConstant( mhash( "uv" )));
+	GLint color = *(shader_findConstant( mhash( "color" )));
 	// *** Vertex Buffer
 	{
 		// Activate our buffers
@@ -150,6 +160,9 @@ void particleEmitter_render( void* data ) {
 		// Set up texcoord data
 		glVertexAttribPointer( uv, /*vec4*/ 4, GL_FLOAT, /*Normalized?*/GL_FALSE, sizeof( particle_vertex ), (void*)offsetof( particle_vertex, uv ) );
 		glEnableVertexAttribArray( uv );
+		// Set up vertex color data
+		glVertexAttribPointer( color, /*vec4*/ 4, GL_FLOAT, /*Normalized?*/GL_FALSE, sizeof( particle_vertex ), (void*)offsetof( particle_vertex, color ) );
+		glEnableVertexAttribArray( color );
 	}
 	// *** Element Buffer
 	{
@@ -164,6 +177,7 @@ void particleEmitter_render( void* data ) {
 	glDisableVertexAttribArray( position );
 	glDisableVertexAttribArray( normal );
 	glDisableVertexAttribArray( uv );
+	glDisableVertexAttribArray( color );
 }
 
 property* property_create( int stride ) {
@@ -181,24 +195,48 @@ void property_addf( property* p, float time, float value ) {
 	p->count++;
 }
 
-float property_samplef( property* p, float time ) {
+void property_addv( property* p, float time, vector value ) {
+	assert( p->count < kmax_property_values );
+	p->data[p->count * p->stride] = time;
+	p->data[p->count * p->stride + 1] = value.coord.x;
+	p->data[p->count * p->stride + 2] = value.coord.y;
+	p->data[p->count * p->stride + 3] = value.coord.z;
+	p->data[p->count * p->stride + 4] = value.coord.w;
+	p->count++;
+}
+
+void property_sample( property* p, float time, int* before, int* after, float* factor ) {
 	float t_after = 0.f, t_before = 0.f;
-	int after = -1;
-	while ( t_after < time && after < p->count ) {
-		after++;
+	*after = -1;
+	while ( t_after < time && *after < p->count ) {
+		(*after)++;
 		t_before = t_after;
-		t_after = p->data[after*p->stride];
+		t_after = p->data[*after*p->stride];
 	}
-	int before = clamp( after - 1, 0, p->count-1 );
-	after = clamp( after, 0, p->count-1 );
+	*before = clamp( *after - 1, 0, p->count-1 );
+	*after = clamp( *after, 0, p->count-1 );
 //	assert( t_before <= time );
 //	assert( t_after >= time );
-	float factor = map_range( time, t_before, t_after );
-	if ( after == before )
-		factor = 0.f;
-	assert( factor <= 1.f && factor >= 0.f );
+	*factor = map_range( time, t_before, t_after );
+	if ( *after == *before )
+		*factor = 0.f;
+	assert( *factor <= 1.f && *factor >= 0.f );
+}
+
+float property_samplef( property* p, float time ) {
+	float factor;
+	int before, after;
+	property_sample( p, time, &before, &after, &factor );
 	float value = lerp( p->data[before*p->stride+1], p->data[after*p->stride+1], factor );
-//	printf( "Time: %.2f, T_before: %.2f, T_after: %.2f, Value: %2f\n", time, t_before, t_after, value );
+
+	return value;
+}
+
+vector property_samplev( property* p, float time ) {
+	float factor;
+	int before, after;
+	property_sample( p, time, &before, &after, &factor );
+	vector value = vector_lerp( (vector*)&p->data[before*p->stride+1], (vector*)&p->data[after*p->stride+1], factor );
 
 	return value;
 }

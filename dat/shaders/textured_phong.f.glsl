@@ -4,6 +4,7 @@
 // Varying
 varying vec4 frag_position;
 varying vec4 frag_normal;
+varying vec4 frag_color;
 varying vec2 texcoord;
 
 const int LIGHT_COUNT = 2;
@@ -25,8 +26,6 @@ const vec4 directional_light_specular = vec4( 0.5, 0.5, 0.3, 1.0 );
 const vec4 material_diffuse = vec4( 1.0, 1.0, 1.0, 1.0 );
 const vec4 material_specular = vec4( 0.0, 0.0, 0.0, 1.0 );
 const float light_radius = 10.0;
-
-	const vec2 uv = vec2( 0.0, 0.0 );
 
 void main() {
 
@@ -76,10 +75,7 @@ void main() {
 //	gl_FragColor =	total_specular_color * material_specular + 
 //					total_diffuse_color * material_diffuse;
 
-	gl_FragColor = texture2D( tex, texcoord );
-//	gl_FragColor = vec4( texcoord, 0.f, 0.3 );
-//	gl_FragColor.w = 0.3;
-//	gl_FragColor = vec4( 1.0, 1.0, 0.0, 0.3 );
+	gl_FragColor = texture2D( tex, texcoord ) * frag_color;
 
 	
 }

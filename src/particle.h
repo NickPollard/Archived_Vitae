@@ -25,6 +25,7 @@ typedef struct particleEmitter_s {
 	int		count;
 //	float	size;
 	property* size;
+	property* color;
 	float	spawn_interval;
 	float	next_spawn;
 	vector	velocity;
@@ -39,3 +40,4 @@ void test_property();
 
 property* property_create( int stride );
 void property_addf( property* p, float time, float value );
+void property_addv( property* p, float time, vector value );
