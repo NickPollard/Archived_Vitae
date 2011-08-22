@@ -105,14 +105,17 @@ function init()
 	starting = true
 end
 
+flycam = nil
+chasecam = nil
+
 function start()
 	vprint( "start" )
 
 	-- We create a player object which is a game-specific Lua class
 	-- The player class itself creates several native C classes in the engine
 	player_ship = playership_create()
---	vchasecam_follow( engine, player_ship.transform )
-	vflycam( engine )
+	chasecam = vchasecam_follow( engine, player_ship.transform )
+	flycam = vflycam( engine )
 end
 
 wave_interval_time = 10.0
@@ -156,10 +159,11 @@ function toggle_camera()
 	if camera == "chase" then
 		vprint( "Activate Flycam" )
 		camera = "fly"
-		vscene_setCamera()
+		vscene_setCamera( flycam )
 	else
 		vprint( "Activate Chasecam" )
 		camera = "chase"
+		vscene_setCamera( chasecam )
 	end
 end
 

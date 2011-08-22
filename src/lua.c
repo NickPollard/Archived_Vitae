@@ -297,7 +297,8 @@ int LUA_chasecam_follow( lua_State* l ) {
 	c->cam.trans = transform_createAndAdd( theScene );
 	theScene->cam = &c->cam;
 	c->target = t;
-	return 0;
+	lua_pushptr( l, c );
+	return 1;
 }
 
 int LUA_flycam( lua_State* l ) {
@@ -308,6 +309,12 @@ int LUA_flycam( lua_State* l ) {
 	startInput( e, (void*)c, flycam_input );	
 	c->camera_target.trans = transform_createAndAdd( theScene );
 	theScene->cam = &c->camera_target;
+	lua_pushptr( l, c );
+	return 1;
+}
+
+int LUA_setCamera( lua_State* l ) {
+	theScene->cam = lua_toptr( l, 1 );
 	return 0;
 }
 
@@ -366,6 +373,7 @@ lua_State* vlua_create( engine* e, const char* filename ) {
 	// *** Camera
 	lua_registerFunction( l, LUA_chasecam_follow, "vchasecam_follow" );
 	lua_registerFunction( l, LUA_flycam, "vflycam" );
+	lua_registerFunction( l, LUA_setCamera, "vscene_setCamera" );
 
 	lua_makeConstantPtr( l, "engine", e );
 	lua_makeConstantPtr( l, "input", e->input );

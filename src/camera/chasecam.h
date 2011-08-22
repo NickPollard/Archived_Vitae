@@ -5,8 +5,9 @@
 #include "camera.h"
 
 typedef struct chasecam_s {
-	transform*	target;
+	// Camera must come first
 	camera		cam;
+	transform*	target;
 
 	quaternion	rotation;
 	vector		position;
