@@ -2,6 +2,7 @@
 #pragma once
 
 #include "maths.h"
+#include "camera.h"
 
 //
 // A debug FlyCam inplementation
@@ -13,7 +14,7 @@ typedef struct flycam_s {
 	matrix	transform;
 	vector	euler;
 	vector	translation;
-	camera*	camera_target;
+	camera	camera_target;
 	vector	pan_sensitivity;
 	vector	track_sensitivity;
 } flycam;
@@ -26,10 +27,12 @@ typedef struct flycam_input_s {
 // Flycam constructor
 flycam* flycam_create();
 
+/*
 // Set the camera target to output frame data to
 void flycam_setTarget( flycam* f, camera* c );
+*/
 
 // Update the flycam, setting the target data to latest
-void flycam_tick( flycam* f, float dt );
+void flycam_tick( void* data, float dt );
 
-void flycam_input( flycam* cam, input* in  );
+void flycam_input( void* data, input* in  );

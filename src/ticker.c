@@ -20,6 +20,12 @@ void delegate_render( delegate* d ) {
 	}
 }
 
+void delegate_input( delegate* d, input* in ) {
+	for ( int i = 0; i < d->count; i++ ) {
+		((inputfunc)d->tick)( d->data[i], in );
+	}
+}
+
 delegate* delegate_create(void* func, int size) {
 	delegate* d = (delegate*)mem_alloc(sizeof(delegate));
 	d->tick = func;

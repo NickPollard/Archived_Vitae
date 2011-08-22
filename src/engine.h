@@ -30,6 +30,7 @@ struct engine_s {
 
 	delegatelist* tickers;	
 	delegatelist* renders;
+	delegatelist* inputs;
 
 	debugtextframe* debugtext;
 };
@@ -80,8 +81,10 @@ void engine_handleKeyPress(engine* e, uchar key, int x, int y);
 
 // Look for a delegate of the right type to add this entity too
 // If one is not found, create one
-//void engine_addTicker( engine* e, void* entity, tickfunc tick );
 void startTick( engine* e, void* entity, tickfunc tick );
+
+void startInput( engine* e, void* entity, inputfunc input );
+
 void engine_addRender( engine* e, void* entity, renderfunc render );
 
 void handleResize(int w, int h);

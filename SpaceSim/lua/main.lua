@@ -111,7 +111,8 @@ function start()
 	-- We create a player object which is a game-specific Lua class
 	-- The player class itself creates several native C classes in the engine
 	player_ship = playership_create()
-	vchasecam_follow( engine, player_ship.transform );
+--	vchasecam_follow( engine, player_ship.transform )
+	vflycam( engine )
 end
 
 wave_interval_time = 10.0
@@ -150,6 +151,23 @@ function playership_tick()
 	vphysic_setVelocity( player_ship.physic, world_v )
 end
 
+camera = "chase"
+function toggle_camera()
+	if camera == "chase" then
+		vprint( "Activate Flycam" )
+		camera = "fly"
+		vscene_setCamera()
+	else
+		vprint( "Activate Chasecam" )
+		camera = "chase"
+	end
+end
+
+function debug_tick()
+	if vkeyPressed( input, key.c ) then
+		toggle_camera()
+	end
+end
 -- Called once per frame to update the current Lua State
 function tick()
 	if starting then
@@ -159,6 +177,8 @@ function tick()
 	end
 
 	playership_tick()
+
+	debug_tick()
 --[[
 	if wave_complete( current_wave ) then
 		current_wave = current_wave + 1

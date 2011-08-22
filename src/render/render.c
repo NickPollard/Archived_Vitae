@@ -115,14 +115,6 @@ void render_lighting( scene* s ) {
 	// Point Lights	
 	light_renderLights( s->light_count, s->lights );
 }
-/*
-void render_applyCamera(camera* cam) {
-	// Negate as we're doing the inverse of camera
-	matrix cam_inverse;
-	matrix_inverse( cam_inverse, cam->trans->world );
-	glMultMatrixf( (float*)cam_inverse );
-}
-*/
 
 // Clear information from last draw
 void render_clear() {
@@ -166,18 +158,6 @@ void render_shader( scene* s );
 // Render the current scene
 // This is where the business happens
 void render( scene* s, int w, int h ) {
-/*
-	render_set3D( w, h );
-
-	// Switch to the drawing perspective and initialise to the identity matrix
-	glMatrixMode(GL_MODELVIEW); 
-	glLoadIdentity();
-	render_applyCamera( s->cam );
-	glColor4f(1.f, 1.f, 1.f, 1.f);
-
-	render_lighting( s );
-	render_scene( s );
-	*/
 	render_shader( s );
 }
 
@@ -234,8 +214,9 @@ void render_shader( scene* s ) {
 	const float z_far = 500.f;
 	render_perspectiveMatrix( perspective, fov, aspect, z_near, z_far );
 
-	render_validateMatrix( s->cam->trans->world );
-	matrix_inverse( modelview_base, s->cam->trans->world );
+	camera* cam = s->cam;
+	render_validateMatrix( cam->trans->world );
+	matrix_inverse( modelview_base, cam->trans->world );
 	render_validateMatrix( modelview );
 	render_resetModelView();
 

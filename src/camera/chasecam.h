@@ -2,10 +2,11 @@
 #pragma once
 
 #include "maths.h"
+#include "camera.h"
 
 typedef struct chasecam_s {
 	transform*	target;
-	camera*		cam;
+	camera		cam;
 
 	quaternion	rotation;
 	vector		position;

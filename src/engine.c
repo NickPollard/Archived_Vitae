@@ -12,8 +12,6 @@
 #include "scene.h"
 #include "transform.h"
 #include "camera/flycam.h"
-#include "camera/velcam.h"
-#include "camera/chasecam.h"
 #include "render/debugdraw.h"
 #include "render/modelinstance.h"
 #include "render/render.h"
@@ -28,7 +26,6 @@
 // GLFW Libraries
 #include <GL/glfw.h>
 
-#define USE_VELCAM 0
 
 IMPLEMENT_LIST(delegate)
 
@@ -37,14 +34,12 @@ IMPLEMENT_LIST(delegate)
 // *** Static Hacks
 scene* theScene = NULL;
 engine* static_engine_hack;
-#if USE_VELCAM
-velcam* fcam;
-#endif
 int w = 640, h = 480;
 
 // Function Declarations
 void engine_tickTickers( engine* e, float dt );
 void engine_renderRenders( engine* e );
+void engine_inputInputs( engine* e );
 void engine_addTicker( engine* e, void* entity, tickfunc tick );
 
 /*
@@ -75,11 +70,6 @@ void test_engine_init( engine* e ) {
 	p->trans = transform_create();
 	engine_addRender( e, p, particleEmitter_render );
 	startTick( e, p, particleEmitter_tick );
-
-#if USE_VELCAM
-	fcam = velcam_create( e );
-	fcam->camera_target = theScene->cam;
-#endif
 }
 
 /*
@@ -89,11 +79,10 @@ void test_engine_init( engine* e ) {
  */
 
 void engine_input( engine* e ) {
-#if USE_VELCAM
-	velcam_input( fcam, e->input );
-#endif
-
 	scene_input( theScene, e->input );
+	
+	// Process all generic inputs
+	engine_inputInputs( e );
 }
 
 // tick - process a frame of game update
@@ -104,10 +93,6 @@ void engine_tick( engine* e ) {
 
 	input_tick( e->input, dt );
 	scene_tick( theScene, dt );
-
-#if USE_VELCAM
-	velcam_tick( fcam, dt );
-#endif
 
 	engine_tickTickers( e, dt );
 
@@ -164,6 +149,7 @@ engine* engine_create() {
 	e->onTick = luaInterface_addCallback(e->callbacks, "onTick");
 	e->input = input_create();
 	e->tickers = NULL;
+	e->inputs = NULL;
 	e->renders = NULL;
 	return e;
 }
@@ -273,6 +259,15 @@ void engine_renderRenders( engine* e ) {
 	}
 }
 
+void engine_inputInputs( engine* e ) {
+	delegatelist* d = e->inputs;
+	while ( d != NULL ) {
+		assert( d->head );	// Should never be NULL heads
+		delegate_input( d->head, e->input ); // render the whole of this delegate
+		d = d->tail;
+	}
+}
+
 // Search the list of delegates for one with the matching tick func
 // and space to add a new entry
 delegate* engine_findDelegate( delegatelist* d, void* func ) {
@@ -291,6 +286,10 @@ delegate* engine_findTickDelegate( engine* e, tickfunc tick ) {
 
 delegate* engine_findRenderDelegate( engine* e, renderfunc render ) {
 	return engine_findDelegate( e->renders, render );
+}
+
+delegate* engine_findInputDelegate( engine* e, inputfunc in ) {
+	return engine_findDelegate( e->inputs, in );
 }
 // Add a new delegate to the delegatelist
 // (a delegate is a list of entities to all receive the same tick function)
@@ -323,6 +322,10 @@ delegate* engine_addRenderDelegate( engine* e, renderfunc render ) {
 	return engine_addDelegate( &e->renders, render );
 }
 
+delegate* engine_addInputDelegate( engine* e, inputfunc in ) {
+	return engine_addDelegate( &e->inputs, in );
+}
+
 // Look for a delegate of the right type to add this entity too
 // If one is not found, create one
 void engine_addTicker( engine* e, void* entity, tickfunc tick ) {
@@ -333,6 +336,13 @@ void engine_addTicker( engine* e, void* entity, tickfunc tick ) {
 }
 void startTick( engine* e, void* entity, tickfunc tick ) {
 	engine_addTicker( e, entity, tick );
+}
+
+void startInput( engine* e, void* entity, inputfunc in ) {
+	delegate* d = engine_findInputDelegate( e, in );
+	if ( !d )
+		d = engine_addInputDelegate( e, in );
+	delegate_add( d, entity);
 }
 
 void engine_addRender( engine* e, void* entity, renderfunc render ) {

@@ -82,12 +82,12 @@ void scene_free( scene* s ) {
 	assert( s->transforms );
 	assert( s->lights );
 	assert( s->modelInstances );
-	assert( s->cam );
+//	assert( s->cam );
 
 	mem_free( s->transforms );
 	mem_free( s->lights );
 	mem_free( s->modelInstances );
-	mem_free( s->cam );
+//	mem_free( s->cam );
 
 	// Finally free our scene
 	mem_free( s );
@@ -103,9 +103,11 @@ scene* test_scene_init( engine* e ) {
 	s->eng = e;
 
 	// Test Misc scene setup
+/*	
 	s->cam = camera_create( s );
 	s->cam->trans = transform_createAndAdd( s );
 	scene_setCamera(s, 0.f, 0.f, 0.f, 1.f);
+	*/
 	scene_setAmbient( s, 0.2f, 0.2f, 0.2f, 1.f );
 
 	/*

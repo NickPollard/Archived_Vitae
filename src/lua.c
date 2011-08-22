@@ -6,6 +6,7 @@
 
 // temp
 #include "camera/chasecam.h"
+#include "camera/flycam.h"
 #include "render/modelinstance.h"
 #include "model.h"
 #include "scene.h"
@@ -111,7 +112,6 @@ int LUA_createModelInstance( lua_State* l ) {
 		printf( "LUA: Creating instance of model \"%s\"\n", filename );
 		modelInstance* m = modelInstance_create( model_getHandleFromFilename( filename ) );
 
-		printf( "Model pointer: %d.\n", (int)m );
 		lua_pushptr( l, m );
 		return 1;
 	} else {
@@ -294,8 +294,20 @@ int LUA_chasecam_follow( lua_State* l ) {
 	transform* t = lua_toptr( l, 2 );
 	chasecam* c = chasecam_create();
 	startTick( e, (void*)c, chasecam_tick );	
-	c->cam = theScene->cam;
+	c->cam.trans = transform_createAndAdd( theScene );
+	theScene->cam = &c->cam;
 	c->target = t;
+	return 0;
+}
+
+int LUA_flycam( lua_State* l ) {
+	LUA_DEBUG_PRINT( "LUA flycam\n" );
+	engine* e = lua_toptr( l, 1 );
+	flycam* c = flycam_create();
+	startTick( e, (void*)c, flycam_tick );	
+	startInput( e, (void*)c, flycam_input );	
+	c->camera_target.trans = transform_createAndAdd( theScene );
+	theScene->cam = &c->camera_target;
 	return 0;
 }
 
@@ -353,6 +365,7 @@ lua_State* vlua_create( engine* e, const char* filename ) {
 	lua_registerFunction( l, LUA_transform_setWorldSpaceByTransform, "vtransform_setWorldSpaceByTransform" );
 	// *** Camera
 	lua_registerFunction( l, LUA_chasecam_follow, "vchasecam_follow" );
+	lua_registerFunction( l, LUA_flycam, "vflycam" );
 
 	lua_makeConstantPtr( l, "engine", e );
 	lua_makeConstantPtr( l, "input", e->input );
@@ -386,10 +399,19 @@ void lua_setfieldf( lua_State* l, const char* key, float value ) {
 
 void lua_keycodes( lua_State* l ) {
 	lua_newtable( l ); // Create a table
+	char capital_offset = 'A' - 'a';
+	for ( char i = 'a'; i <= 'z'; i++ ) {
+		char string[2];
+		string[0] = i;
+		string[1] = '\0';
+		lua_setfieldi( l, string, i + capital_offset );
+	}
+	/*
 	lua_setfieldi( l, "w", KEY_W );
 	lua_setfieldi( l, "a", KEY_A );
 	lua_setfieldi( l, "s", KEY_S );
 	lua_setfieldi( l, "d", KEY_D );
+	*/
 	lua_setfieldi( l, "up", KEY_UP );
 	lua_setfieldi( l, "down", KEY_DOWN );
 	lua_setfieldi( l, "left", KEY_LEFT );

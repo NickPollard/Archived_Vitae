@@ -3,7 +3,6 @@
 #include "common.h"
 #include "flycam.h"
 //---------------------
-#include "camera.h"
 #include "input.h"
 #include "transform.h"
 #include "mem/allocator.h"
@@ -21,7 +20,8 @@ flycam* flycam_create() {
 
 void flycam_process( flycam* cam, flycamInput* in );
 
-void flycam_input( flycam* cam, input* in  ) {
+void flycam_input( void* data, input* in  ) {
+	flycam* cam = data;
 	flycamInput fly_in;
 	fly_in.pan = Vector( 0.f, 0.f, 0.f, 0.f );
 	fly_in.track = Vector( 0.f, 0.f, 0.f, 0.f );
@@ -74,12 +74,15 @@ void flycam_process( flycam* cam, flycamInput* in ) {
 	matrix_setTranslation( cam->transform, &cam->translation );
 }
 
+/*
 // Set the camera target to output frame data to
 void flycam_setTarget( flycam* f, camera* c ) {
 	f->camera_target = c;
 }
+*/
 
 // Update the flycam, setting the target data to latest
-void flycam_tick( flycam* f, float dt ) {
-	transform_setWorldSpace( f->camera_target->trans, f->transform );
+void flycam_tick( void* data, float dt ) {
+	flycam* f = data;
+	transform_setWorldSpace( f->camera_target.trans, f->transform );
 }

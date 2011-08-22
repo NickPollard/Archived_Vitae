@@ -6,6 +6,8 @@
 typedef void (*tickfunc)( void*, float );
 // Render function signature
 typedef void (*renderfunc)( void*);
+// Input function signature
+typedef void (*inputfunc)( void*, input* );
 
 // delegate
 // A struct holding a list of objects to be ticked (updated)
@@ -34,6 +36,9 @@ void delegate_tick(delegate* t, float dt);
 
 // render all objects in a delegate
 void delegate_render( delegate* d );
+
+// Process input for all objects in a delegate
+void delegate_input( delegate* d, input* i );
 
 // create a new delegate
 delegate* delegate_create(void* func, int size);

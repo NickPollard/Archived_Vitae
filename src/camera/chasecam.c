@@ -3,7 +3,6 @@
 #include "common.h"
 #include "chasecam.h"
 //---------------------
-#include "camera.h"
 #include "transform.h"
 
 chasecam* chasecam_create() {
@@ -30,5 +29,5 @@ void chasecam_tick( void* data, float dt ) {
 	// Position
 	matrix_setTranslation( world_space, &c->position );
 
-	transform_setWorldSpace( c->cam->trans, world_space );	
+	transform_setWorldSpace( c->cam.trans, world_space );	
 }
