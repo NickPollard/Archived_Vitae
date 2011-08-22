@@ -89,10 +89,14 @@ void matrix_setColumn(matrix m, int col, const vector* v);
 
 // Set a row in a matrix to a given vector
 void matrix_setRow(matrix m, int row, const vector* v);
+
+void matrix_setRotation( matrix dst, matrix src );
+
 const vector* matrix_getCol( matrix m, int i );
 
 // Set the translation component of a 4x4 matrix
 void matrix_setTranslation(matrix m, const vector* v);
+void matrix_clearTranslation( matrix m );
 
 // Get the translation component of a 4x4 matrix
 const vector* matrix_getTranslation(matrix m);

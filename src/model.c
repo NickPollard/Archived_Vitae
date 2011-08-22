@@ -173,6 +173,7 @@ void mesh_buildBuffers( mesh* m ) {
 
 // Draw the verts of a mesh to the openGL buffer
 void mesh_drawVerts( mesh* m ) {
+	glDepthMask( GL_TRUE );
 	// Copy our data to the GPU
 	// There are now <index_count> vertices, as we have unrolled them
 	GLsizei vertex_buffer_size = m->index_count * sizeof( vertex );

@@ -175,6 +175,20 @@ void matrix_setTranslation(matrix m, const vector* v) {
 	m[3][2] = v->val[2];
 }
 
+void matrix_clearTranslation( matrix m ) {
+	m[3][0] = 0.f;
+	m[3][1] = 0.f;
+	m[3][2] = 0.f;
+}
+
+void matrix_setRotation( matrix dst, matrix src ) {
+	for ( int i = 0; i < 3; i++ ) {
+		for ( int j = 0; j < 3; j++ ) {
+			dst[i][j] = src[i][j];
+		}
+	}
+}
+
 // Get the translation component of a 4x4 matrix
 const vector* matrix_getTranslation(matrix m) {
 	return (vector*)m[3]; }

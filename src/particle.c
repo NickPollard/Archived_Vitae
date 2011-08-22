@@ -60,33 +60,37 @@ typedef struct particle_vertex_s {
 // both position and normals
 void particle_quad( particle_vertex* dst, vector* point, float size ) {
 	vector offset = Vector( size, size, 0.f, 0.f );
-	Add( &dst[0].position, point, &offset );
+
+	vector p = matrixVecMul( modelview, point );
+
+	Add( &dst[0].position, &p, &offset );
 	dst[0].normal = Vector( 0.f, 0.f, 1.f, 0.f );
 	dst[0].uv = Vector( 1.f, 1.f, 0.f, 0.f );
 
-	Sub( &dst[1].position, point, &offset );
+	Sub( &dst[1].position, &p, &offset );
 	dst[1].normal = Vector( 0.f, 0.f, 1.f, 0.f );
 	dst[1].uv = Vector( 0.f, 0.f, 0.f, 0.f );
 
-	offset.coord.y = -size;
+	offset.coord.y = -offset.coord.y;
 
-	Add( &dst[2].position, point, &offset );
+	Add( &dst[2].position, &p, &offset );
 	dst[2].normal = Vector( 0.f, 0.f, 1.f, 0.f );
 	dst[2].uv = Vector( 1.f, 0.f, 0.f, 0.f );
 
-	Sub( &dst[3].position, point, &offset );
+	Sub( &dst[3].position, &p, &offset );
 	dst[3].normal = Vector( 0.f, 0.f, 1.f, 0.f );
 	dst[3].uv = Vector( 0.f, 1.f, 0.f, 0.f );
 }
 
 // Render a particleEmitter system
 void particleEmitter_render( void* data ) {
+	glDepthMask( GL_FALSE );
 	// switch to particle shader
 	shader_activate( resources.shader_particle );
 
 	// Set up uniforms
 	render_setUniform_matrix( *resources.uniforms.projection, perspective );
-	render_setUniform_matrix( *resources.uniforms.modelview, modelview );
+//	render_setUniform_matrix( *resources.uniforms.modelview, modelview );
 	render_setUniform_matrix( *resources.uniforms.worldspace, modelview );
 
 	// Textures
@@ -96,10 +100,10 @@ void particleEmitter_render( void* data ) {
 
 	particleEmitter* p = data;
 
-	// set modelview matrix
+	// reset modelview matrix so we can billboard
+	// particle_quad() will manually apply the modelview
 	render_resetModelView();
 	matrix_mul( modelview, modelview, p->trans->world );
-	render_setUniform_matrix( *resources.uniforms.modelview, modelview );
 
 	particle_vertex vertex_buffer[kmax_particle_verts];
 	GLushort element_buffer[kmax_particle_verts];
@@ -118,17 +122,13 @@ void particleEmitter_render( void* data ) {
 		element_buffer[i*6+5] = index*4+3;
 	}
 
+	// For Billboard particles; cancel out the rotation of the matrix
+	// The transformation has been applied already for particle positions
+	matrix_setIdentity( modelview );
+	render_setUniform_matrix( *resources.uniforms.modelview, modelview );
+
 	int index_count = 6 * p->count;
-	/*
-	for ( int i = 0; i < index_count; i++ ) {
-		printf( "Index: %d. Position: ", element_buffer[i] );
-		vector_print( &vertex_buffer[element_buffer[i]].position );
-		printf( " Normal: " );
-		vector_print( &vertex_buffer[element_buffer[i]].normal );
-		printf( "\n" );
-	}
-	*/
-//	assert( 0 );
+	
 	// Copy our data to the GPU
 	// There are now <index_count> vertices, as we have unrolled them
 	GLsizei vertex_buffer_size = index_count * sizeof( particle_vertex );
