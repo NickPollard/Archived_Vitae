@@ -43,8 +43,6 @@ function gameobject_create( model )
 	v = Vector( 0.0, 0.0, 0.0, 0.0 )
 	vphysic_setVelocity( g.physic, v )
 
-	-- Attach a particle effect to the object
-	vparticle_create( engine, g.transform );
 	return g
 end
 --[[
@@ -62,6 +60,10 @@ function player_fire( p )
 	local g = {}
 	-- Create a new Projectile
 	g = gameobject_create( projectile_model );
+
+	-- Attach a particle effect to the object
+	vparticle_create( engine, g.transform );
+
 	-- Position it at the correct muzzle position and rotation
 	vtransform_setWorldSpaceByTransform( g.transform, p.transform )
 	-- Apply initial velocity
