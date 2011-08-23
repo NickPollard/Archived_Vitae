@@ -17,7 +17,7 @@ GLint particle_texture = 0;
 particleEmitter* particleEmitter_create() {
 	particleEmitter* p = mem_alloc( sizeof( particleEmitter ));
 	memset( p, 0, sizeof( particleEmitter ));
-	particle_texture = texture_loadTGA( "assets/img/star_rgba64.tga" );
+	particle_texture = texture_loadTGA( "assets/img/cloud_rgba128.tga" );
 	return p;
 }
 

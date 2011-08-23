@@ -337,7 +337,7 @@ int LUA_particle_create( lua_State* l ) {
 	p->color = property_create( 5 );
 	property_addv( p->color, 0.f, Vector( 1.f, 0.f, 0.f, 1.f ));
 	property_addv( p->color, 0.3f, Vector( 1.f, 0.5f, 0.f, 1.f ));
-	property_addv( p->color, 0.6f, Vector( 1.f, 1.f, 1.f, 0.8f ));
+	property_addv( p->color, 0.8f, Vector( 1.f, 1.f, 1.f, 0.8f ));
 	property_addv( p->color, 1.0f, Vector( 0.5f, 0.5f, 0.5f, 0.8f ));
 	property_addv( p->color, 2.f, Vector( 0.5f, 0.5f, 0.5f, 0.f ));
 	p->velocity = Vector( 0.f, 0.1f, 0.f, 0.f );
