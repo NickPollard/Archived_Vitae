@@ -331,19 +331,23 @@ int LUA_particle_create( lua_State* l ) {
 	transform* t = lua_toptr( l, 2 );
 	particleEmitter* p = particleEmitter_create();
 	p->lifetime = 2.f;
+
+	// size
 	p->size = property_create( 2 );
 	property_addf( p->size, 0.f, 3.f );
 	property_addf( p->size, 0.3f, 1.f );
 	property_addf( p->size, 2.f, 5.f );
+
+	// color
 	p->color = property_create( 5 );
 	property_addv( p->color, 0.f, Vector( 1.f, 0.f, 0.f, 1.f ));
 	property_addv( p->color, 0.3f, Vector( 1.f, 0.5f, 0.f, 1.f ));
 	property_addv( p->color, 0.8f, Vector( 1.f, 1.f, 1.f, 0.8f ));
 	property_addv( p->color, 1.0f, Vector( 0.5f, 0.5f, 0.5f, 0.8f ));
 	property_addv( p->color, 2.f, Vector( 0.5f, 0.5f, 0.5f, 0.f ));
+
 	p->velocity = Vector( 0.f, 0.1f, 0.f, 0.f );
 	p->spawn_interval = 0.03f;
-//	p->trans = transform_create();
 	p->trans = t;
 	p->flags = p->flags | kParticleWorldSpace;
 	engine_addRender( e, p, particleEmitter_render );

@@ -42,8 +42,10 @@ void particleEmitter_tick( void* data, float dt ) {
 	// Update existing particles
 	vector delta;
 	vector_scale ( &delta, &e->velocity, dt );
-	for ( int i = 0; i < e->count; i++ ) {
-		int index = (e->start + i) % kmax_particles;
+	int count = e->count;
+	int start = e->start;
+	for ( int i = 0; i < count; i++ ) {
+		int index = (start + i) % kmax_particles;
 		// Update age
 		e->particles[index].age += dt;
 		if ( e->particles[index].age > e->lifetime ) {
@@ -132,15 +134,15 @@ void particleEmitter_render( void* data ) {
 		int index = (p->start + i) % kmax_particles;
 		float size = property_samplef( p->size, p->particles[index].age );
 		vector color = property_samplev( p->color, p->particles[index].age );
-		particle_quad( p, &vertex_buffer[index*4], &p->particles[index].position, size, color );
+		particle_quad( p, &vertex_buffer[i*4], &p->particles[index].position, size, color );
 		assert( i*6 + 5 < kmax_particle_verts );
 		// TODO: Indices can be initialised once
-		element_buffer[i*6+0] = index*4+0;
-		element_buffer[i*6+1] = index*4+1;
-		element_buffer[i*6+2] = index*4+2;
-		element_buffer[i*6+3] = index*4+0;
-		element_buffer[i*6+4] = index*4+1;
-		element_buffer[i*6+5] = index*4+3;
+		element_buffer[i*6+0] = i*4+0;
+		element_buffer[i*6+1] = i*4+1;
+		element_buffer[i*6+2] = i*4+2;
+		element_buffer[i*6+3] = i*4+0;
+		element_buffer[i*6+4] = i*4+1;
+		element_buffer[i*6+5] = i*4+3;
 	}
 
 

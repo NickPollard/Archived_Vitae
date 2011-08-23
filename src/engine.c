@@ -60,6 +60,25 @@ void test_engine_init( engine* e ) {
 	theScene = test_scene_init( e );
 //	theScene->debugtext = e->debugtext;
 	lua_setScene( e->lua, theScene );
+
+	particleEmitter* p = particleEmitter_create();
+	p->lifetime = 1.f;
+	p->size = property_create( 2 );
+	property_addf( p->size, 0.f, 1.f );
+	property_addf( p->size, 0.3f, 1.f );
+	property_addf( p->size, 2.f, 1.f );
+	p->color = property_create( 5 );
+	property_addv( p->color, 0.f, Vector( 1.f, 0.f, 0.f, 1.f ));
+	property_addv( p->color, 0.3f, Vector( 1.f, 0.5f, 0.f, 1.f ));
+	property_addv( p->color, 0.8f, Vector( 1.f, 1.f, 1.f, 0.8f ));
+	property_addv( p->color, 1.0f, Vector( 0.5f, 0.5f, 0.5f, 0.8f ));
+	property_addv( p->color, 2.f, Vector( 0.5f, 0.5f, 0.5f, 0.f ));
+	p->velocity = Vector( 0.f, 1.f, 0.f, 0.f );
+	p->spawn_interval = 0.1f;
+	p->trans = transform_create();
+	p->flags = p->flags | kParticleWorldSpace;
+	engine_addRender( e, p, particleEmitter_render );
+	startTick( e, p, particleEmitter_tick );
 }
 
 /*
