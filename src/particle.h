@@ -27,7 +27,7 @@ typedef struct particleEmitter_s {
 	particle	particles[kmax_particles];
 	int		start;
 	int		count;
-//	float	size;
+	float	lifetime;
 	property* size;
 	property* color;
 	float	spawn_interval;

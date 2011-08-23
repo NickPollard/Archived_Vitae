@@ -330,6 +330,7 @@ int LUA_particle_create( lua_State* l ) {
 	engine* e = lua_toptr( l, 1 );
 	transform* t = lua_toptr( l, 2 );
 	particleEmitter* p = particleEmitter_create();
+	p->lifetime = 2.f;
 	p->size = property_create( 2 );
 	property_addf( p->size, 0.f, 3.f );
 	property_addf( p->size, 0.3f, 1.f );

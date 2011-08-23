@@ -44,7 +44,13 @@ void particleEmitter_tick( void* data, float dt ) {
 	vector_scale ( &delta, &e->velocity, dt );
 	for ( int i = 0; i < e->count; i++ ) {
 		int index = (e->start + i) % kmax_particles;
+		// Update age
 		e->particles[index].age += dt;
+		if ( e->particles[index].age > e->lifetime ) {
+			e->count--;
+			e->start++;
+		}
+		// Apply Velocity
 		Add( &e->particles[index].position, &e->particles[index].position, &delta );
 	}
 
