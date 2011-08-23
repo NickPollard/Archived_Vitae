@@ -41,6 +41,7 @@ typedef struct gl_resources_s {
 
 extern gl_resources resources;
 extern matrix modelview;
+extern matrix camera_inverse;
 extern matrix perspective;
 
 void render_setBuffers( float* vertex_buffer, int vertex_buffer_size, int* element_buffer, int element_buffer_size );

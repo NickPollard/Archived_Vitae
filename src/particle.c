@@ -29,7 +29,11 @@ void particleEmitter_addParticle( particleEmitter* e ) {
 		e->count--;
 		e->start++;
 	}
-	p->position	= Vector( 0.f, 0.f, 0.f, 1.f );
+	// If worldspace, spawn at the particle emitter position
+	if ( !e->flags & kParticleWorldSpace )
+		p->position	= Vector( 0.f, 0.f, 0.f, 1.f );
+	else
+		p->position = *matrix_getTranslation( e->trans->world );
 	p->age = 0.f;
 }
 
@@ -61,10 +65,14 @@ typedef struct particle_vertex_s {
 
 // Output the 4 verts of the quad to the target vertex array
 // both position and normals
-void particle_quad( particle_vertex* dst, vector* point, float size, vector color ) {
+void particle_quad( particleEmitter* e, particle_vertex* dst, vector* point, float size, vector color ) {
 	vector offset = Vector( size, size, 0.f, 0.f );
 
-	vector p = matrixVecMul( modelview, point );
+	vector p;
+	if ( !e->flags & kParticleWorldSpace )
+		p = matrixVecMul( modelview, point );
+	else
+		p = matrixVecMul( camera_inverse, point );
 
 	Add( &dst[0].position, &p, &offset );
 	dst[0].normal = Vector( 0.f, 0.f, 1.f, 0.f );
@@ -97,7 +105,6 @@ void particleEmitter_render( void* data ) {
 
 	// Set up uniforms
 	render_setUniform_matrix( *resources.uniforms.projection, perspective );
-//	render_setUniform_matrix( *resources.uniforms.modelview, modelview );
 	render_setUniform_matrix( *resources.uniforms.worldspace, modelview );
 
 	// Textures
@@ -119,7 +126,7 @@ void particleEmitter_render( void* data ) {
 		int index = (p->start + i) % kmax_particles;
 		float size = property_samplef( p->size, p->particles[index].age );
 		vector color = property_samplev( p->color, p->particles[index].age );
-		particle_quad( &vertex_buffer[index*4], &p->particles[index].position, size, color );
+		particle_quad( p, &vertex_buffer[index*4], &p->particles[index].position, size, color );
 		assert( i*6 + 5 < kmax_particle_verts );
 		// TODO: Indices can be initialised once
 		element_buffer[i*6+0] = index*4+0;

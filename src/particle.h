@@ -7,6 +7,10 @@
 
 #define kmax_property_values 16
 
+enum particleEmitter_flags {
+	kParticleWorldSpace = 0x1
+};
+
 typedef struct particle_s {
 	float age;
 	vector position;
@@ -29,6 +33,7 @@ typedef struct particleEmitter_s {
 	float	spawn_interval;
 	float	next_spawn;
 	vector	velocity;
+	uint8_t flags;
 } particleEmitter;
 
 particleEmitter* particleEmitter_create();

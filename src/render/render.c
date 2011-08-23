@@ -24,7 +24,7 @@
 
 // *** Shader Pipeline
 
-matrix modelview, modelview_base;
+matrix modelview, camera_inverse;
 matrix perspective;
 
 gl_resources resources;
@@ -182,7 +182,7 @@ void render_validateMatrix( matrix m ) {
 }
 
 void render_resetModelView( ) {
-	matrix_cpy( modelview, modelview_base );
+	matrix_cpy( modelview, camera_inverse );
 }
 
 void render_setUniform_matrix( GLuint uniform, matrix m ) {
@@ -216,7 +216,7 @@ void render_shader( scene* s ) {
 
 	camera* cam = s->cam;
 	render_validateMatrix( cam->trans->world );
-	matrix_inverse( modelview_base, cam->trans->world );
+	matrix_inverse( camera_inverse, cam->trans->world );
 	render_validateMatrix( modelview );
 	render_resetModelView();
 

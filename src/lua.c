@@ -13,6 +13,7 @@
 #include "engine.h"
 #include "transform.h"
 #include "input.h"
+#include "particle.h"
 #include "physic.h"
 
 #define MAX_LUA_VECTORS 64
@@ -325,6 +326,25 @@ int LUA_transform_setWorldSpaceByTransform( lua_State* l ) {
 	return 0;
 }
 
+int LUA_particle_create( lua_State* l ) {
+	engine* e = lua_toptr( l, 1 );
+	transform* t = lua_toptr( l, 2 );
+	particleEmitter* p = particleEmitter_create();
+	p->size = property_create( 2 );
+	property_addf( p->size, 0.f, 2.f );
+	property_addf( p->size, 10.f, 0.1f );
+	p->color = property_create( 5 );
+	property_addv( p->color, 0.f, Vector( 1.f, 0.f, 0.f, 1.f ));
+	property_addv( p->color, 3.f, Vector( 1.f, 1.f, 0.f, 0.f ));
+	p->velocity = Vector( 0.f, 0.1f, 0.f, 0.f );
+	p->spawn_interval = 0.1f;
+//	p->trans = transform_create();
+	p->trans = t;
+	p->flags = p->flags | kParticleWorldSpace;
+	engine_addRender( e, p, particleEmitter_render );
+	startTick( e, p, particleEmitter_tick );
+	return 0;
+}
 
 void lua_makeConstantPtr( lua_State* l, const char* name, void* ptr ) {
 	lua_pushptr( l, ptr );
@@ -370,6 +390,7 @@ lua_State* vlua_create( engine* e, const char* filename ) {
 	lua_registerFunction( l, LUA_transform_roll, "vtransform_roll" );
 	lua_registerFunction( l, LUA_transformVector, "vtransformVector" );
 	lua_registerFunction( l, LUA_transform_setWorldSpaceByTransform, "vtransform_setWorldSpaceByTransform" );
+	lua_registerFunction( l, LUA_particle_create, "vparticle_create" );
 	// *** Camera
 	lua_registerFunction( l, LUA_chasecam_follow, "vchasecam_follow" );
 	lua_registerFunction( l, LUA_flycam, "vflycam" );

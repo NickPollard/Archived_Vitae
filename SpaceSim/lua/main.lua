@@ -42,6 +42,9 @@ function gameobject_create( model )
 --	vphysic_setVelocity( g.physic, 0.0, 0.0, 0.0 )
 	v = Vector( 0.0, 0.0, 0.0, 0.0 )
 	vphysic_setVelocity( g.physic, v )
+
+	-- Attach a particle effect to the object
+	vparticle_create( engine, g.transform );
 	return g
 end
 --[[
@@ -105,6 +108,7 @@ function init()
 	starting = true
 end
 
+camera = "chase"
 flycam = nil
 chasecam = nil
 
@@ -116,6 +120,7 @@ function start()
 	player_ship = playership_create()
 	chasecam = vchasecam_follow( engine, player_ship.transform )
 	flycam = vflycam( engine )
+	vscene_setCamera( chasecam )
 end
 
 wave_interval_time = 10.0
@@ -154,7 +159,6 @@ function playership_tick()
 	vphysic_setVelocity( player_ship.physic, world_v )
 end
 
-camera = "chase"
 function toggle_camera()
 	if camera == "chase" then
 		vprint( "Activate Flycam" )
