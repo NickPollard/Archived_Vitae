@@ -107,6 +107,15 @@ vector vector_lerp( vector* from, vector* to, float amount ) {
 	return v;
 }
 
+vector vector_mul( vector* a, vector* b ) {
+	vector v;
+	v.coord.x = a->coord.x * b->coord.x;
+	v.coord.y = a->coord.y * b->coord.y;
+	v.coord.z = a->coord.z * b->coord.z;
+	v.coord.w = a->coord.w * b->coord.w;
+	return v;
+}
+
 // Matrix Vector multiply
 vector matrixVecMul( matrix m, const vector* v) {
 	vector out;

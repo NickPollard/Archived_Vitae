@@ -24,20 +24,27 @@ typedef struct property_s {
 
 typedef struct particleEmitter_s {
 	transform*	trans;
+
 	particle	particles[kmax_particles];
 	int		start;
 	int		count;
+
+	// Spawn control
 	float	lifetime;
-	property* size;
-	property* color;
 	float	spawn_interval;
 	float	next_spawn;
+	vector	spawn_box;
+
+	// Properties
+	property* size;
+	property* color;
 	vector	velocity;
+
+	// Flags
 	uint8_t flags;
 } particleEmitter;
 
 particleEmitter* particleEmitter_create();
-void particleEmitter_addParticle( particleEmitter* p );
 void particleEmitter_render( void* data );
 void particleEmitter_tick( void* e, float dt );
 

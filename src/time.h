@@ -14,6 +14,12 @@ typedef struct {
 	float fps;
 } frame_timer;
 
+// Seed the RNG, using a time-based seed
+void rand_init();
+
+// Return a random float between floor and ceiling
+float frand( float floor, float ceiling );
+
 // Initialise the timer
 void timer_init(frame_timer* timer);
 

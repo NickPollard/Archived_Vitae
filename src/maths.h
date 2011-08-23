@@ -73,6 +73,8 @@ void vector_scale( vector* dst, vector* src, float scale );
 
 vector vector_lerp( vector* from, vector* to, float amount );
 
+vector vector_mul( vector* a, vector* b );
+
 // Matrix Vector multiply
 vector matrixVecMul(matrix m, const vector* v);
 

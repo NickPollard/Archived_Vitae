@@ -2,6 +2,21 @@
 #include "src/common.h"
 #include "src/time.h"
 
+void rand_init() {
+	time_v t;
+	gettimeofday(&t, NULL);
+	srand( t.tv_usec );
+}
+
+// Return a random float between floor and ceiling
+float frand( float floor, float ceiling ) {
+	assert( ceiling > floor );
+	float f = (float)rand() / (float)RAND_MAX;
+	assert( f <= 1.f );
+	assert( f >= 0.f );
+	return ( f * ( ceiling - floor ) + floor );
+}
+
 void timer_init(frame_timer* timer) {
 	time_v t;
 	gettimeofday(&t, NULL);

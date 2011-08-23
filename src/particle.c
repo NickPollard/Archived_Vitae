@@ -17,11 +17,12 @@ GLint particle_texture = 0;
 particleEmitter* particleEmitter_create() {
 	particleEmitter* p = mem_alloc( sizeof( particleEmitter ));
 	memset( p, 0, sizeof( particleEmitter ));
+	p->spawn_box = Vector( 0.f, 0.f, 0.f, 0.f );
 	particle_texture = texture_loadTGA( "assets/img/cloud_rgba128.tga" );
 	return p;
 }
 
-void particleEmitter_addParticle( particleEmitter* e ) {
+void particleEmitter_spawnParticle( particleEmitter* e ) {
 	int index = (e->start + e->count) % kmax_particles;
 	particle* p = &e->particles[index];
 	e->count++;
@@ -29,11 +30,20 @@ void particleEmitter_addParticle( particleEmitter* e ) {
 		e->count--;
 		e->start++;
 	}
+	vector r;
+	r.coord.x = frand( -1.f, 1.f );
+	r.coord.y = frand( -1.f, 1.f );
+	r.coord.z = frand( -1.f, 1.f );
+	r.coord.w = 1.f;
+
+	vector offset = vector_mul( &r, &e->spawn_box );
+	offset.coord.w = 1.f;
+
 	// If worldspace, spawn at the particle emitter position
 	if ( !e->flags & kParticleWorldSpace )
-		p->position	= Vector( 0.f, 0.f, 0.f, 1.f );
+		p->position	= offset;
 	else
-		p->position = *matrix_getTranslation( e->trans->world );
+		p->position = matrixVecMul( e->trans->world, &offset );
 	p->age = 0.f;
 }
 
@@ -60,7 +70,7 @@ void particleEmitter_tick( void* data, float dt ) {
 	e->next_spawn += dt;
 	if ( e->next_spawn > e->spawn_interval ) {
 		e->next_spawn = 0.f;
-		particleEmitter_addParticle( e );
+		particleEmitter_spawnParticle( e );
 	}
 }
 
@@ -131,10 +141,10 @@ void particleEmitter_render( void* data ) {
 	GLushort element_buffer[kmax_particle_verts];
 
 	for ( int i = 0; i < p->count; i++ ) {
-		int index = (p->start + i) % kmax_particles;
-		float size = property_samplef( p->size, p->particles[index].age );
-		vector color = property_samplev( p->color, p->particles[index].age );
-		particle_quad( p, &vertex_buffer[i*4], &p->particles[index].position, size, color );
+		int particle_index = (p->start + i) % kmax_particles;
+		float size = property_samplef( p->size, p->particles[particle_index].age );
+		vector color = property_samplev( p->color, p->particles[particle_index].age );
+		particle_quad( p, &vertex_buffer[i*4], &p->particles[particle_index].position, size, color );
 		assert( i*6 + 5 < kmax_particle_verts );
 		// TODO: Indices can be initialised once
 		element_buffer[i*6+0] = i*4+0;
