@@ -10,15 +10,15 @@
 model* LoadObj( const char* filename ) {
 	// Load the raw data
 	int vert_count = 0, index_count = 0, normal_count = 0;
-	vector	vertices[MAX_OBJ_VERTICES];
-	vector	normals[MAX_OBJ_NORMALS];
-	unsigned short		indices[MAX_OBJ_INDICES];
-	int		normal_indices[MAX_OBJ_INDICES];
+	vector	vertices[kObjMaxVertices];
+	vector	normals[kObjMaxNormals];
+	unsigned short		indices[kObjMaxIndices];
+	int		normal_indices[kObjMaxIndices];
 
 	// Initialise to 0;
-	memset( vertices, 0, sizeof( vector ) * MAX_OBJ_VERTICES );
-	memset( normals, 0, sizeof( vector ) * MAX_OBJ_NORMALS );
-	memset( indices, 0, sizeof( unsigned short ) * MAX_OBJ_INDICES );
+	memset( vertices, 0, sizeof( vector ) * kObjMaxVertices );
+	memset( normals, 0, sizeof( vector ) * kObjMaxNormals );
+	memset( indices, 0, sizeof( unsigned short ) * kObjMaxIndices );
 
 	int file_length;
 	char* file_buffer = vfile_contents( filename, &file_length );
@@ -27,6 +27,7 @@ model* LoadObj( const char* filename ) {
 	while ( !inputStream_endOfFile( stream )) {
 		char* token = inputStream_nextToken( stream );
 		if ( string_equal( token, "v" )) {
+			assert( vert_count < kObjMaxVertices );
 			// Vertex
 			for ( int i = 0; i < 3; i++ ) {
 				mem_free( token );
@@ -38,6 +39,7 @@ model* LoadObj( const char* filename ) {
 			vert_count++;
 		}
 		if ( string_equal( token, "vn" )) {
+			assert( normal_count < kObjMaxNormals );
 			// Vertex Normal
 			for ( int i = 0; i < 3; i++ ) {
 				mem_free( token );
@@ -51,6 +53,8 @@ model* LoadObj( const char* filename ) {
 		if ( string_equal( token, "f" )) {
 			// Face (indices)
 			for ( int i = 0; i < 3; i++ ) {
+				assert( index_count < kObjMaxIndices );
+
 				mem_free( token );
 				token = inputStream_nextToken( stream );
 				// Need to split into 3 parts (vert/tex/normal) by /

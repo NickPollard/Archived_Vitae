@@ -331,6 +331,7 @@ int LUA_particle_create( lua_State* l ) {
 	transform* t = lua_toptr( l, 2 );
 	particleEmitter* p = particleEmitter_create();
 	p->lifetime = 2.f;
+	p->spawn_box = Vector( 0.3f, 0.3f, 0.3f, 0.f );
 
 	// size
 	p->size = property_create( 2 );

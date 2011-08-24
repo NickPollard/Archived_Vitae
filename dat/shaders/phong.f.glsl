@@ -22,7 +22,7 @@ const vec4 directional_light_diffuse = vec4( 0.5, 0.5, 0.3, 1.0 );
 const vec4 directional_light_specular = vec4( 0.5, 0.5, 0.3, 1.0 );
 
 const vec4 material_diffuse = vec4( 1.0, 1.0, 1.0, 1.0 );
-const vec4 material_specular = vec4( 0.0, 0.0, 0.0, 1.0 );
+const vec4 material_specular = vec4( 0.5, 0.5, 0.5, 1.0 );
 const float light_radius = 10.0;
 
 	const vec2 uv = vec2( 0.0, 0.0 );
