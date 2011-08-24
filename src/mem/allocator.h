@@ -4,6 +4,7 @@
 #include <stddef.h>
 
 //#define MEM_DEBUG_VERBOSE
+#define MEM_GUARD_BLOCK
 
 typedef struct block_s block;
 
@@ -29,6 +30,9 @@ struct block_s {
 	block*	next;			// doubly-linked list pointer
 	block*	prev;			// doubly-linked list pointer
 	unsigned int	free;	// true (1) if free, false (0) if used
+#ifdef MEM_GUARD_BLOCK
+	unsigned int	guard;	// Guard block for Canary purposes
+#endif
 };
 
 #endif // __ALLOCATOR_H__

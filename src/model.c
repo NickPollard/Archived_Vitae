@@ -26,70 +26,15 @@ void vgl_vertexDraw(vector* v) {
 	glVertex3fv((GLfloat*)v);
 }
 
-// Create a test mesh of a cube
-mesh* mesh_createTestCube() {
-	mesh* m = mesh_createMesh(/*verts*/ 8, /*indices*/ 36, /*normals*/ 0);
-	Set(&m->verts[0], 1.f,  1.f,  1.f, 1.f);
-	Set(&m->verts[1], 1.f,  1.f, -1.f, 1.f);
-	Set(&m->verts[2], 1.f, -1.f,  1.f, 1.f);
-	Set(&m->verts[3], 1.f, -1.f, -1.f, 1.f);
-	Set(&m->verts[4],-1.f,  1.f,  1.f, 1.f);
-	Set(&m->verts[5],-1.f,  1.f, -1.f, 1.f);
-	Set(&m->verts[6],-1.f, -1.f,  1.f, 1.f);
-	Set(&m->verts[7],-1.f, -1.f, -1.f, 1.f);
-
-	m->indices[0] = 0;
-	m->indices[1] = 1;
-	m->indices[2] = 2;
-	m->indices[3] = 1;
-	m->indices[4] = 2;
-	m->indices[5] = 3;
-
-	m->indices[6] = 4;
-	m->indices[7] = 5;
-	m->indices[8] = 6;
-	m->indices[9] = 5;
-	m->indices[10] = 6;
-	m->indices[11] = 7;
-
-	m->indices[12] = 0;
-	m->indices[13] = 1;
-	m->indices[14] = 4;
-	m->indices[15] = 1;
-	m->indices[16] = 4;
-	m->indices[17] = 5;
-
-	m->indices[18] = 2;
-	m->indices[19] = 3;
-	m->indices[20] = 6;
-	m->indices[21] = 3;
-	m->indices[22] = 6;
-	m->indices[23] = 7;
-
-	m->indices[24] = 0;
-	m->indices[25] = 2;
-	m->indices[26] = 4;
-	m->indices[27] = 2;
-	m->indices[28] = 4;
-	m->indices[29] = 6;
-
-	m->indices[30] = 1;
-	m->indices[31] = 3;
-	m->indices[32] = 5;
-	m->indices[33] = 3;
-	m->indices[34] = 5;
-	m->indices[35] = 7;
-
-	return m;
-}
-
 // Create an empty mesh with vertCount distinct vertices and index_count vertex indices
-mesh* mesh_createMesh( int vertCount, int index_count, int normal_count ) {
+mesh* mesh_createMesh( int vertCount, int index_count, int normal_count, int uv_count ) {
 	void* data = mem_alloc( sizeof( mesh ) +
-						sizeof( vector ) * vertCount +
-						sizeof( int )	 * index_count +
+						sizeof( vector ) * vertCount +		// Verts
+						sizeof( int )	 * index_count +	// Indices
+						sizeof( vector )	 * uv_count +	// UVs
+						sizeof( int )	 * index_count +	// UV indices
 						sizeof( int )	 * index_count +	// Normal indices
-						sizeof( vector ) * normal_count );
+						sizeof( vector ) * normal_count );	// Normals
 	mesh* m = data;
 	data += sizeof(mesh);
 	m->verts = data;
@@ -99,6 +44,10 @@ mesh* mesh_createMesh( int vertCount, int index_count, int normal_count ) {
 	m->normals = data;
 	data += sizeof( vector ) * normal_count;
 	m->normal_indices = data;
+	data += sizeof( int ) * index_count;
+	m->uvs = data;
+	data += sizeof( vector ) * uv_count;
+	m->uv_indices = data;
 
 	m->vertCount = vertCount;
 	m->index_count = index_count;
@@ -139,9 +88,6 @@ model* model_createModel(int meshCount) {
 	return m;
 }
 
-GLfloat vertex_buffer_data_m[] = { 1.f, 0.f, 0.f, 1.f, 0.f, 1.f, 0.f, 1.f, -1.f, 0.f, 0.f, 1.f, 0.f, -1.f, -0.f, 1.f };
-GLushort element_buffer_data_m[] = { 0, 1, 3, 1, 3, 2 };
-
 // Build a vertex buffer for the mesh, copying out vertices as necessary so that
 // each vertex-normal pair is covered
 // If fully smooth-shaded, can just use a single copy of each vertex
@@ -166,10 +112,26 @@ void mesh_buildBuffers( mesh* m ) {
 			m->vertex_buffer[i].position = m->verts[m->indices[i]];
 			// Copy the required vertex normal
 			m->vertex_buffer[i].normal = m->normals[m->normal_indices[i]];
+			m->vertex_buffer[i].uv = m->uvs[m->uv_indices[i]];
 			m->element_buffer[i] = i;
 		}
 	}
 }
+
+#define VERTEX_ATTRIBS( f ) \
+	f( position ) \
+	f( normal ) \
+	f( uv )
+
+#define VERTEX_ATTRIB_DISABLE_ARRAY( attrib ) \
+	glDisableVertexAttribArray( attrib );
+
+#define VERTEX_ATTRIB_LOOKUP( attrib ) \
+	GLint attrib = *(shader_findConstant( mhash( #attrib )));
+
+#define VERTEX_ATTRIB_POINTER( attrib ) \
+	glVertexAttribPointer( attrib, /*vec4*/ 4, GL_FLOAT, /*Normalized?*/GL_FALSE, sizeof( vertex ), (void*)offsetof( vertex, attrib) ); \
+	glEnableVertexAttribArray( attrib );
 
 // Draw the verts of a mesh to the openGL buffer
 void mesh_drawVerts( mesh* m ) {
@@ -178,34 +140,26 @@ void mesh_drawVerts( mesh* m ) {
 	// There are now <index_count> vertices, as we have unrolled them
 	GLsizei vertex_buffer_size = m->index_count * sizeof( vertex );
 	GLsizei element_buffer_size = m->index_count * sizeof( GLushort );
-//	render_setBuffers( (GLfloat*)m->vertex_buffer, vertex_buffer_size, (int*)m->element_buffer, element_buffer_size );
 
-	GLint position = *(shader_findConstant( mhash( "position" )));
-	GLint normal = *(shader_findConstant( mhash( "normal" )));
+	// Textures
+	GLint* tex = shader_findConstant( mhash( "tex" ));
+	if ( tex )
+		render_setUniform_texture( *tex, g_texture_default );
+
+	VERTEX_ATTRIBS( VERTEX_ATTRIB_LOOKUP );
 	// *** Vertex Buffer
-	{
-		// Activate our buffers
-		glBindBuffer( GL_ARRAY_BUFFER, resources.vertex_buffer );
-		glBufferData( GL_ARRAY_BUFFER, vertex_buffer_size, m->vertex_buffer, GL_STREAM_DRAW );
-		// Set up position data
-		glVertexAttribPointer( position, /*vec4*/ 4, GL_FLOAT, /*Normalized?*/GL_FALSE, sizeof( vertex ), (void*)offsetof( vertex, position) );
-		glEnableVertexAttribArray( position );
-		// Set up normal data
-		glVertexAttribPointer( normal, /*vec4*/ 4, GL_FLOAT, /*Normalized?*/GL_FALSE, sizeof( vertex ), (void*)offsetof( vertex, normal ) );
-		glEnableVertexAttribArray( normal );
-	}
+	glBindBuffer( GL_ARRAY_BUFFER, resources.vertex_buffer );
+	glBufferData( GL_ARRAY_BUFFER, vertex_buffer_size, m->vertex_buffer, GL_STREAM_DRAW );
+	VERTEX_ATTRIBS( VERTEX_ATTRIB_POINTER );
 	// *** Element Buffer
-	{
-		glBindBuffer( GL_ELEMENT_ARRAY_BUFFER, resources.element_buffer );
-		glBufferData( GL_ELEMENT_ARRAY_BUFFER, element_buffer_size, m->element_buffer, GL_STREAM_DRAW );
-	}
+	glBindBuffer( GL_ELEMENT_ARRAY_BUFFER, resources.element_buffer );
+	glBufferData( GL_ELEMENT_ARRAY_BUFFER, element_buffer_size, m->element_buffer, GL_STREAM_DRAW );
 
 	// Draw!
 	glDrawElements( GL_TRIANGLES, m->index_count, GL_UNSIGNED_SHORT, (void*)0 );
 
 	// Cleanup
-	glDisableVertexAttribArray( position );
-	glDisableVertexAttribArray( normal );
+	VERTEX_ATTRIBS( VERTEX_ATTRIB_DISABLE_ARRAY )
 }
 
 // Get the i-th submesh of a given model
@@ -234,7 +188,6 @@ model* model_getByHandle( modelHandle h ) {
 // Synchronously load a model from a given file
 model* model_loadFromFileSync( const char* filename ) {
 	// TODO: Implement
-//	return model_createTestCube();
 	return LoadObj( filename );
 }
 

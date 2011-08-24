@@ -35,7 +35,7 @@ void* heap_allocate( heapAllocator* heap, int size ) {
 #endif
 	block* b = heap_findEmptyBlock( heap, size );
 	if ( !b ) {
-		heap_dumpBlocks( heap );
+//		heap_dumpBlocks( heap );
 		printError( "HeapAllocator out of memory on request for %d bytes. Total size: %d bytes, Used size: %d bytes\n", size, heap->total_size, heap->total_allocated );
 		assert( 0 );
 	}
@@ -73,8 +73,12 @@ void heap_dumpBlocks( heapAllocator* heap ) {
 // First version will naively use first found block meeting the criteria
 block* heap_findEmptyBlock( heapAllocator* heap, int min_size ) {
 	block* b = heap->first;
-	while ( ( ( b->size < min_size ) || !b->free ) && b->next )
+	while ( ( ( b->size < min_size ) || !b->free ) && b->next ) {
+#ifdef MEM_GUARD_BLOCK
+		assert( b->guard == 0x0 );
+#endif
 		b = b->next;
+	}
 	// Re-check in case we ran out without finding one
 	if ( !b->free || ( b->size < min_size ) )
 		b = NULL;
@@ -85,8 +89,14 @@ block* heap_findEmptyBlock( heapAllocator* heap, int min_size ) {
 // Returns NULL if no such block is found
 block* heap_findBlock( heapAllocator* heap, void* mem_addr ) {
 	block* b = heap->first;
-	while ( (b->data != mem_addr) && b->next ) b = b->next;
-	if ( b->data != mem_addr ) b = NULL;
+	while ( (b->data != mem_addr) && b->next ) {
+#ifdef MEM_GUARD_BLOCK
+		assert( b->guard == 0x0 );
+#endif
+	   	b = b->next;
+	}
+	if ( b->data != mem_addr )
+		b = NULL;
 	return b;
 }
 
@@ -172,6 +182,9 @@ block* block_create( void* data, int size ) {
 	b->data = data + sizeof( block );
 	b->free = true;
 	b->prev = b->next = NULL;
+#ifdef MEM_GUARD_BLOCK
+	b->guard = 0x0;
+#endif
 	return b;
 }
 

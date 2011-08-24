@@ -206,9 +206,7 @@ bool isTranslation( sterm* s ) {
 }
 
 bool isDiffuse( sterm* s ) {
-	return ( s->head &&
-		   ((sterm*)s->head)->type == typeAtom &&
-		    string_equal( ((sterm*)s->head)->head, "diffuse" ));
+	return isPropertyType( s, "diffuse" );
 }
 
 bool isVector( sterm* s ) {
@@ -272,8 +270,6 @@ sterm* parse_file( const char* filename ) {
 	mem_free( contents );
 	return s;
 }
-
-#if 1
 
 // Load a scene from a .sc file (s-expression based)
 
@@ -353,9 +349,16 @@ void debug_sterm_printList( sterm* term ) {
 	printf( "\n" );
 }
 
+sterm* cons( void* head, sterm* tail ) {
+	sterm* term = mem_alloc( sizeof( sterm ));
+	term->type = typeList;
+	term->head = head;
+	term->tail = tail;
+	return term;
+}
+
 void* eval( sterm* data ) {
 	if ( isAtom( data ) ) {
-//		printf( " Evalling: %s\n", (char*)data->head );
 		// It's either a function, a string, or a number
 		return lookup( data );
 	}
@@ -371,6 +374,13 @@ void* eval( sterm* data ) {
 		assert( 0 );
 	}
 	return NULL;
+}
+
+sterm* eval_list( sterm* s ) {
+	sterm* result = NULL;
+	if ( s )
+		result = cons( eval( s->head ), eval_list( s->tail ) );
+	return result;
 }
 
 void sterm_free( sterm* s ) {
@@ -420,76 +430,6 @@ void* s_print( sterm* s ) {
 	return NULL;
 }
 
-// *** Testing
-
-// Tests s_concat, eval, parse, inputStream
-void test_s_concat() {
-	sterm* s = parse_string( "(concat Hello World)" );
-	char* result = eval( s );
-
-	assert( strcmp( result, "HelloWorld" ) == 0 );
-	assert( strcmp( result, "HellooWorld" ) != 0 );
-
-	sterm_free( s );
-	return;
-}
-
-// Tests s_scene, s_model, eval, parse, inputStream
-void test_s_scene() {
-	printf( "Beginning test: test_s_scene()\n" );
-	sterm* s = parse_string( "(scene (model))" );
-	scene* _scene = eval( s );
-	(void)_scene;
-
-	sterm_free( s );
-	return;
-}
-
-void test_sfile( ) {
-	sterm* p = parse_string( "(a (b c) (d))" );
-	debug_sterm_printList( p );
-
-	printf( "Beginning test: test dat/test2.s\n" );
-	sterm* s = parse_file( "dat/test2.s" );
-	eval( s );
-	sterm_free( s );
-
-	sterm* t = parse_string( "(transform (translation (vector 1.0 1.0 1.0 1.0)))" );
-	sterm* e = eval( t );
-	sterm_free( t );
-	sterm_free( e );
-
-	test_s_concat();
-//	test_s_scene();
-}
-
-/*
-// called once for each argument to scene
-void scene_process( void* context, slist* data ) {
-	
-//( scene ( object ( model "cube.obj" )
-//				 ( position ( vector 0.0 0.0 0.0 ))))
-
-//		create a scene, scene->parse( subtree)
-//		create an object, object->parase(subtree);
-}
-*/
-
-
-sterm* cons( void* head, sterm* tail ) {
-	sterm* term = mem_alloc( sizeof( sterm ));
-	term->type = typeList;
-	term->head = head;
-	term->tail = tail;
-	return term;
-}
-
-sterm* eval_list( sterm* s ) {
-	sterm* result = NULL;
-	if ( s )
-		result = cons( eval( s->head ), eval_list( s->tail ) );
-	return result;
-}
 
 // TODO - could this be removed, just an slist but with the term above having the typeTransform?
 typedef struct transformData_s {
@@ -703,9 +643,7 @@ void* s_light( sterm* raw_properties ) {
 	return lData;
 }
 
-void scene_processObject( scene* s, transform* parent, sterm* object );
 void scene_processObjects( scene* s, transform* parent, sterm* objects );
-void scene_processTransform( scene* s, transform* parent, transformData* tData );
 
 void scene_processTransform( scene* s, transform* parent, transformData* tData ) {
 //	printf( "Creating Transform! Translation: %.2f, %.2f, %.2f\n", tData->translation.val[0], tData->translation.val[1], tData->translation.val[2] );
@@ -716,7 +654,6 @@ void scene_processTransform( scene* s, transform* parent, transformData* tData )
 
 	// If it has children, process those
 	scene_processObjects( s, t, tData->elements );
-	
 }
 
 void scene_processModel( scene* s, transform* parent, modelData* mData ) {
@@ -736,7 +673,6 @@ void scene_processLight( scene* s, transform* parent, sterm* lData ) {
 }
 
 void scene_processObject( scene* s, transform* parent, sterm* object ) {
-	// TODO: implement	
 	if ( isTransform( object ))
 		scene_processTransform( s, parent, object->head );
 	if ( isModel( object ))
@@ -753,14 +689,12 @@ void scene_processObjects( scene* s, transform* parent, sterm* objects ) {
 
 /*
 	call s_scene, with a list of sterms
-	creates a scene, then evals the list and calls s_process with that list
+	creates a scene, then evals the list and calls scene_processObjects with that list
 
 	evalling the list causes s_transform to be called, with a list of sterms
 	that creates the transformData
-
    */
 void* s_scene( sterm* raw_scene_objects ) {
-//	printf( "s_scene\n" );
 	scene* s = scene_create();
 	sterm* scene_objects = eval_list( raw_scene_objects ); // TODO: Could eval_list be part of just eval?
 //	debug_sterm_printList( scene_objects );
@@ -768,4 +702,33 @@ void* s_scene( sterm* raw_scene_objects ) {
 	return s;
 }
 
-#endif
+// *** Testing
+
+// Tests s_concat, eval, parse, inputStream
+void test_s_concat() {
+	sterm* s = parse_string( "(concat Hello World)" );
+	char* result = eval( s );
+
+	assert( strcmp( result, "HelloWorld" ) == 0 );
+	assert( strcmp( result, "HellooWorld" ) != 0 );
+
+	sterm_free( s );
+	return;
+}
+
+void test_sfile( ) {
+	sterm* p = parse_string( "(a (b c) (d))" );
+	debug_sterm_printList( p );
+
+	printf( "Beginning test: test dat/test2.s\n" );
+	sterm* s = parse_file( "dat/test2.s" );
+	eval( s );
+	sterm_free( s );
+
+	sterm* t = parse_string( "(transform (translation (vector 1.0 1.0 1.0 1.0)))" );
+	sterm* e = eval( t );
+	sterm_free( t );
+	sterm_free( e );
+
+	test_s_concat();
+}

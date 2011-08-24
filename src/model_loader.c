@@ -6,18 +6,20 @@
 #include "scene.h"
 #include "model.h"
 
-
 model* LoadObj( const char* filename ) {
 	// Load the raw data
-	int vert_count = 0, index_count = 0, normal_count = 0;
+	int vert_count = 0, index_count = 0, normal_count = 0, uv_count = 0;
 	vector	vertices[kObjMaxVertices];
 	vector	normals[kObjMaxNormals];
+	vector	uvs[kObjMaxVertices];
 	unsigned short		indices[kObjMaxIndices];
 	int		normal_indices[kObjMaxIndices];
+	int		uv_indices[kObjMaxIndices];
 
 	// Initialise to 0;
 	memset( vertices, 0, sizeof( vector ) * kObjMaxVertices );
 	memset( normals, 0, sizeof( vector ) * kObjMaxNormals );
+	memset( uvs, 0, sizeof( vector ) * kObjMaxNormals );
 	memset( indices, 0, sizeof( unsigned short ) * kObjMaxIndices );
 
 	int file_length;
@@ -35,7 +37,7 @@ model* LoadObj( const char* filename ) {
 				vertices[vert_count].val[i] = strtof( token, NULL );
 			}
 			vertices[vert_count].coord.w = 1.f; // Force 1.0 w value for all vertices.
-			//printf( " Vertex: %.2f %.2f %.2f \n", vertices[vert_count].val[0], vertices[vert_count].val[1], vertices[vert_count].val[2] );
+			printf( " Vertex: %.2f %.2f %.2f \n", vertices[vert_count].val[0], vertices[vert_count].val[1], vertices[vert_count].val[2] );
 			vert_count++;
 		}
 		if ( string_equal( token, "vn" )) {
@@ -47,8 +49,19 @@ model* LoadObj( const char* filename ) {
 				normals[normal_count].val[i] = strtof( token, NULL );
 			}
 			normals[normal_count].coord.w = 0.f; // Force 0.0 w value for all normals
-			//printf( " Normal: %.2f %.2f %.2f \n", normals[normal_count].val[0], normals[normal_count].val[1], normals[vert_count].val[2] );
+			printf( " Normal: %.2f %.2f %.2f \n", normals[normal_count].val[0], normals[normal_count].val[1], normals[vert_count].val[2] );
 			normal_count++;
+		}
+		if ( string_equal( token, "vt" )) {
+			assert( uv_count < kObjMaxVertices );
+			// Vertex Texture Coord (UV)
+			for ( int i = 0; i < 2; i++ ) {
+				mem_free( token );
+				token = inputStream_nextToken( stream );
+				uvs[uv_count].val[i] = strtof( token, NULL );
+			}
+			printf( " Uv:  %.2f %.2f \n", uvs[uv_count].val[0], uvs[uv_count].val[1] );
+			uv_count++;
 		}
 		if ( string_equal( token, "f" )) {
 			// Face (indices)
@@ -88,6 +101,7 @@ model* LoadObj( const char* filename ) {
 
 				indices[index_count] = atoi( vert ) - 1; // -1 as obj uses 1-based indices, not 0-based as we do
 				normal_indices[index_count] = atoi( norm ) - 1; // -1 as obj uses 1-based indices, not 0-based as we do
+				uv_indices[index_count] = atoi( uv ) - 1; // -1 as obj uses 1-based indices, not 0-based as we do
 				index_count++;
 			}
 			//printf( " Face: %d %d %d \n", indices[index_count-3], indices[index_count-2], indices[index_count-1] );
@@ -96,10 +110,11 @@ model* LoadObj( const char* filename ) {
 	}
 
 	printf( "Parsed .obj file \"%s\" with %d verts and %d faces.\n", filename, vert_count, index_count / 3 );
+	printf( "Parsed .obj file \"%s\" with %d normals and %d uvs.\n", filename, normal_count, uv_count );
 
 	// Create the Vitae Model
 	model* mdl = model_createModel( 1 ); // Only one mesh by default
-	mesh* msh = mesh_createMesh( vert_count, index_count, index_count );
+	mesh* msh = mesh_createMesh( vert_count, index_count, index_count, uv_count );
 	mdl->meshes[0] = msh;
 
 	// Copy our loaded data into the Mesh structure
@@ -107,9 +122,12 @@ model* LoadObj( const char* filename ) {
 	memcpy( msh->indices, indices, index_count * sizeof( unsigned short ));
 	memcpy( msh->normals, normals, normal_count * sizeof( vector ));
 	memcpy( msh->normal_indices, normal_indices, index_count * sizeof( int ));
+	memcpy( msh->uvs, uvs, uv_count * sizeof( vector ));
+	memcpy( msh->uv_indices, uv_indices, index_count * sizeof( int ));
 
 	mesh_buildBuffers( msh );
-//	mesh_calculateNormals( msh );
+
+	mem_free( file_buffer );
 
 	return mdl;
 }

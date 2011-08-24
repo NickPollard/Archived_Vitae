@@ -9,6 +9,7 @@
 typedef struct vertex_s {
 	vector	position;
 	vector	normal;
+	vector	uv;
 } vertex;
 
 // *** Mesh ***
@@ -28,6 +29,10 @@ struct mesh_s {
 	vector*		normals;
 	//
 	int*		normal_indices;
+	//
+	vector*		uvs;
+	int			uv_count;
+	int*		uv_indices;
 
 	vertex*		vertex_buffer;
 	unsigned short*		element_buffer;
@@ -43,22 +48,20 @@ struct model_s {
 };
 
 
-
 // *** Mesh Functions
 
-// Create a test mesh of a cube
-mesh* mesh_createTestCube();
-
 // Create an empty mesh with vertCount distinct vertices and index_count vertex indices
-mesh* mesh_createMesh(int vertCount, int index_count, int normal_count );
-
-// Precalculate flat normals for a mesh
-void mesh_calculateNormals( mesh* m );
+mesh* mesh_createMesh( int vertCount, int index_count, int normal_count, int uv_count );
 
 // Draw the verts of a mesh to the openGL buffer
 void mesh_drawVerts(mesh* m);
 
+// Precalculate flat normals for a mesh
+void mesh_calculateNormals( mesh* m );
+
 void mesh_buildBuffers( mesh* m );
+
+
 
 // *** Model Functions
 
@@ -71,8 +74,8 @@ model* model_createModel(int meshCount);
 // Draw each submesh of a model
 void model_draw(model* m);
 
-modelHandle model_getHandleFromID( int id );
-
 model* model_fromInstance( modelInstance* instance );
 
+// Handle lookups
+modelHandle model_getHandleFromID( int id );
 modelHandle model_getHandleFromFilename( const char* filename );
