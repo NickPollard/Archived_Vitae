@@ -2,8 +2,8 @@
 #pragma once
 #include "maths.h"
 
-#define kmax_particles 128
-#define kmax_particle_verts (kmax_particles * 6)
+#define kMaxParticles 128
+#define kmax_particle_verts (kMaxParticles * 6)
 
 #define kmax_property_values 16
 
@@ -25,7 +25,7 @@ typedef struct property_s {
 typedef struct particleEmitter_s {
 	transform*	trans;
 
-	particle	particles[kmax_particles];
+	particle	particles[kMaxParticles];
 	int		start;
 	int		count;
 
@@ -39,6 +39,7 @@ typedef struct particleEmitter_s {
 	property* size;
 	property* color;
 	vector	velocity;
+	GLint	texture_diffuse;
 
 	// Flags
 	uint8_t flags;
@@ -48,8 +49,10 @@ particleEmitter* particleEmitter_create();
 void particleEmitter_render( void* data );
 void particleEmitter_tick( void* e, float dt );
 
-void test_property();
-
 property* property_create( int stride );
 void property_addf( property* p, float time, float value );
 void property_addv( property* p, float time, vector value );
+
+// *** Test
+
+void test_property();

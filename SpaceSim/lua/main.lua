@@ -186,7 +186,7 @@ function tick()
 		start()
 	end
 
---	playership_tick()
+	playership_tick()
 
 	debug_tick()
 --[[

@@ -12,30 +12,29 @@
 float property_samplef( property* p, float time );
 vector property_samplev( property* p, float time );
 
-GLint particle_texture = 0;
-
 particleEmitter* particleEmitter_create() {
 	particleEmitter* p = mem_alloc( sizeof( particleEmitter ));
 	memset( p, 0, sizeof( particleEmitter ));
 	p->spawn_box = Vector( 0.f, 0.f, 0.f, 0.f );
-	particle_texture = texture_loadTGA( "assets/img/cloud_rgba128.tga" );
+	p->texture_diffuse = texture_loadTGA( "assets/img/cloud_rgba128.tga" );
 	return p;
 }
 
 void particleEmitter_spawnParticle( particleEmitter* e ) {
-	int index = (e->start + e->count) % kmax_particles;
+	int index = (e->start + e->count) % kMaxParticles;
 	particle* p = &e->particles[index];
 	e->count++;
-	if ( e->count > kmax_particles ) {
+	if ( e->count > kMaxParticles ) {
 		e->count--;
 		e->start++;
 	}
+
+	// Generate spawn position
 	vector r;
 	r.coord.x = frand( -1.f, 1.f );
 	r.coord.y = frand( -1.f, 1.f );
 	r.coord.z = frand( -1.f, 1.f );
 	r.coord.w = 1.f;
-
 	vector offset = vector_mul( &r, &e->spawn_box );
 	offset.coord.w = 1.f;
 
@@ -55,7 +54,7 @@ void particleEmitter_tick( void* data, float dt ) {
 	int count = e->count;
 	int start = e->start;
 	for ( int i = 0; i < count; i++ ) {
-		int index = (start + i) % kmax_particles;
+		int index = (start + i) % kMaxParticles;
 		// Update age
 		e->particles[index].age += dt;
 		if ( e->particles[index].age > e->lifetime ) {
@@ -125,12 +124,12 @@ void particleEmitter_render( void* data ) {
 	render_setUniform_matrix( *resources.uniforms.projection, perspective );
 	render_setUniform_matrix( *resources.uniforms.worldspace, modelview );
 
+	particleEmitter* p = data;
+
 	// Textures
 	GLint* tex = shader_findConstant( mhash( "tex" ));
 	if ( tex )
-		render_setUniform_texture( *tex, particle_texture );
-
-	particleEmitter* p = data;
+		render_setUniform_texture( *tex, p->texture_diffuse );
 
 	// reset modelview matrix so we can billboard
 	// particle_quad() will manually apply the modelview
@@ -141,7 +140,7 @@ void particleEmitter_render( void* data ) {
 	GLushort element_buffer[kmax_particle_verts];
 
 	for ( int i = 0; i < p->count; i++ ) {
-		int particle_index = (p->start + i) % kmax_particles;
+		int particle_index = (p->start + i) % kMaxParticles;
 		float size = property_samplef( p->size, p->particles[particle_index].age );
 		vector color = property_samplev( p->color, p->particles[particle_index].age );
 		particle_quad( p, &vertex_buffer[i*4], &p->particles[particle_index].position, size, color );
@@ -163,46 +162,41 @@ void particleEmitter_render( void* data ) {
 
 	int index_count = 6 * p->count;
 	
+#define PARTICLE_VERTEX_ATTRIBS( f ) \
+	f( position ) \
+	f( normal ) \
+	f( uv ) \
+	f( color )
+
+#define VERTEX_ATTRIB_DISABLE_ARRAY( attrib ) \
+	glDisableVertexAttribArray( attrib );
+
+#define VERTEX_ATTRIB_LOOKUP( attrib ) \
+	GLint attrib = *(shader_findConstant( mhash( #attrib )));
+
+#define PARTICLE_VERTEX_ATTRIB_POINTER( attrib ) \
+	glVertexAttribPointer( attrib, /*vec4*/ 4, GL_FLOAT, /*Normalized?*/GL_FALSE, sizeof( particle_vertex ), (void*)offsetof( particle_vertex, attrib) ); \
+	glEnableVertexAttribArray( attrib );
+
 	// Copy our data to the GPU
 	// There are now <index_count> vertices, as we have unrolled them
 	GLsizei vertex_buffer_size = index_count * sizeof( particle_vertex );
 	GLsizei element_buffer_size = index_count * sizeof( GLushort );
-	GLint position = *(shader_findConstant( mhash( "position" )));
-	GLint normal = *(shader_findConstant( mhash( "normal" )));
-	GLint uv = *(shader_findConstant( mhash( "uv" )));
-	GLint color = *(shader_findConstant( mhash( "color" )));
+	PARTICLE_VERTEX_ATTRIBS( VERTEX_ATTRIB_LOOKUP );
+
 	// *** Vertex Buffer
-	{
-		// Activate our buffers
-		glBindBuffer( GL_ARRAY_BUFFER, resources.vertex_buffer );
-		glBufferData( GL_ARRAY_BUFFER, vertex_buffer_size, vertex_buffer, GL_STREAM_DRAW );
-		// Set up position data
-		glVertexAttribPointer( position, /*vec4*/ 4, GL_FLOAT, /*Normalized?*/GL_FALSE, sizeof( particle_vertex ), (void*)offsetof( particle_vertex, position) );
-		glEnableVertexAttribArray( position );
-		// Set up normal data
-		glVertexAttribPointer( normal, /*vec4*/ 4, GL_FLOAT, /*Normalized?*/GL_FALSE, sizeof( particle_vertex ), (void*)offsetof( particle_vertex, normal ) );
-		glEnableVertexAttribArray( normal );
-		// Set up texcoord data
-		glVertexAttribPointer( uv, /*vec4*/ 4, GL_FLOAT, /*Normalized?*/GL_FALSE, sizeof( particle_vertex ), (void*)offsetof( particle_vertex, uv ) );
-		glEnableVertexAttribArray( uv );
-		// Set up vertex color data
-		glVertexAttribPointer( color, /*vec4*/ 4, GL_FLOAT, /*Normalized?*/GL_FALSE, sizeof( particle_vertex ), (void*)offsetof( particle_vertex, color ) );
-		glEnableVertexAttribArray( color );
-	}
+	glBindBuffer( GL_ARRAY_BUFFER, resources.vertex_buffer );
+	glBufferData( GL_ARRAY_BUFFER, vertex_buffer_size, vertex_buffer, GL_STREAM_DRAW );
+	PARTICLE_VERTEX_ATTRIBS( PARTICLE_VERTEX_ATTRIB_POINTER );
 	// *** Element Buffer
-	{
-		glBindBuffer( GL_ELEMENT_ARRAY_BUFFER, resources.element_buffer );
-		glBufferData( GL_ELEMENT_ARRAY_BUFFER, element_buffer_size, element_buffer, GL_STREAM_DRAW );
-	}
+	glBindBuffer( GL_ELEMENT_ARRAY_BUFFER, resources.element_buffer );
+	glBufferData( GL_ELEMENT_ARRAY_BUFFER, element_buffer_size, element_buffer, GL_STREAM_DRAW );
 
 	// Draw!
 	glDrawElements( GL_TRIANGLES, index_count, GL_UNSIGNED_SHORT, (void*)0 );
 
 	// Cleanup
-	glDisableVertexAttribArray( position );
-	glDisableVertexAttribArray( normal );
-	glDisableVertexAttribArray( uv );
-	glDisableVertexAttribArray( color );
+	PARTICLE_VERTEX_ATTRIBS( VERTEX_ATTRIB_DISABLE_ARRAY );
 }
 
 property* property_create( int stride ) {
@@ -240,8 +234,6 @@ void property_sample( property* p, float time, int* before, int* after, float* f
 	}
 	*before = clamp( *after - 1, 0, p->count-1 );
 	*after = clamp( *after, 0, p->count-1 );
-//	assert( t_before <= time );
-//	assert( t_after >= time );
 	*factor = map_range( time, t_before, t_after );
 	if ( *after == *before )
 		*factor = 0.f;
@@ -275,6 +267,4 @@ void test_property() {
 	property_samplef( p, 0.75f );
 	property_samplef( p, 1.5f );
 	property_samplef( p, 3.0f );
-
-//	assert( 0 );
 }

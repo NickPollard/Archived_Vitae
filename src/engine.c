@@ -14,6 +14,7 @@
 #include "camera/flycam.h"
 #include "render/debugdraw.h"
 #include "render/modelinstance.h"
+#include "render/texture.h"
 #include "render/render.h"
 #include "debug/debug.h"
 #include "debug/debugtext.h"
@@ -64,6 +65,7 @@ void test_engine_init( engine* e ) {
 //	theScene->debugtext = e->debugtext;
 	lua_setScene( e->lua, theScene );
 
+#if 0
 	particleEmitter* p = particleEmitter_create();
 	p->lifetime = 4.f;
 	p->size = property_create( 2 );
@@ -81,8 +83,10 @@ void test_engine_init( engine* e ) {
 	vector v = Vector( 2.f, 0.f, 2.f, 0.f );
 	transform_setWorldSpacePosition( p->trans, &v );
 	p->flags = p->flags | kParticleWorldSpace;
+	p->texture_diffuse = texture_loadTGA( "assets/img/star_rgba64.tga" );
 	engine_addRender( e, p, particleEmitter_render );
 	startTick( e, p, particleEmitter_tick );
+#endif
 }
 
 /*

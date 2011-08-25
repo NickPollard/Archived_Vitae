@@ -8,6 +8,7 @@
 #include "camera/chasecam.h"
 #include "camera/flycam.h"
 #include "render/modelinstance.h"
+#include "render/texture.h"
 #include "model.h"
 #include "scene.h"
 #include "engine.h"
@@ -329,6 +330,7 @@ int LUA_transform_setWorldSpaceByTransform( lua_State* l ) {
 int LUA_particle_create( lua_State* l ) {
 	engine* e = lua_toptr( l, 1 );
 	transform* t = lua_toptr( l, 2 );
+	
 	particleEmitter* p = particleEmitter_create();
 	p->lifetime = 2.f;
 	p->spawn_box = Vector( 0.3f, 0.3f, 0.3f, 0.f );
@@ -353,6 +355,32 @@ int LUA_particle_create( lua_State* l ) {
 	p->flags = p->flags | kParticleWorldSpace;
 	engine_addRender( e, p, particleEmitter_render );
 	startTick( e, p, particleEmitter_tick );
+
+	//
+	//
+	//
+
+	particleEmitter* p_ = particleEmitter_create();
+	p_->lifetime = 2.3f;
+	p_->size = property_create( 2 );
+	property_addf( p_->size, 0.f, 10.f );
+	property_addf( p_->size, 0.5f, 10.f );
+	property_addf( p_->size, 2.f, 25.f );
+	p_->color = property_create( 5 );
+	property_addv( p_->color, 0.f, Vector( 1.f, 1.f, 0.f, 0.8f ));
+	property_addv( p_->color, 0.5f, Vector( 1.f, 0.4f, 0.f, 0.8f ));
+	property_addv( p_->color, 2.3f, Vector( 1.f, 0.4f, 0.f, 0.f ));
+	p_->velocity = Vector( 0.f, 0.0f, 0.f, 0.f );
+	p_->spawn_interval = 0.3f;
+	p_->spawn_box = Vector( 0.3f, 0.f, 0.3f, 0.f );
+	p_->trans = t;
+	p_->texture_diffuse = texture_loadTGA( "assets/img/star_rgba64.tga" );
+	engine_addRender( e, p_, particleEmitter_render );
+	startTick( e, p_, particleEmitter_tick );
+
+
+
+
 	return 0;
 }
 
