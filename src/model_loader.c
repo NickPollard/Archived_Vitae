@@ -19,7 +19,7 @@ model* LoadObj( const char* filename ) {
 	// Initialise to 0;
 	memset( vertices, 0, sizeof( vector ) * kObjMaxVertices );
 	memset( normals, 0, sizeof( vector ) * kObjMaxNormals );
-	memset( uvs, 0, sizeof( vector ) * kObjMaxNormals );
+	memset( uvs, 0, sizeof( vector ) * kObjMaxVertices );
 	memset( indices, 0, sizeof( unsigned short ) * kObjMaxIndices );
 
 	int file_length;
@@ -37,7 +37,7 @@ model* LoadObj( const char* filename ) {
 				vertices[vert_count].val[i] = strtof( token, NULL );
 			}
 			vertices[vert_count].coord.w = 1.f; // Force 1.0 w value for all vertices.
-			printf( " Vertex: %.2f %.2f %.2f \n", vertices[vert_count].val[0], vertices[vert_count].val[1], vertices[vert_count].val[2] );
+//			printf( " Vertex: %.2f %.2f %.2f \n", vertices[vert_count].val[0], vertices[vert_count].val[1], vertices[vert_count].val[2] );
 			vert_count++;
 		}
 		if ( string_equal( token, "vn" )) {
@@ -49,7 +49,7 @@ model* LoadObj( const char* filename ) {
 				normals[normal_count].val[i] = strtof( token, NULL );
 			}
 			normals[normal_count].coord.w = 0.f; // Force 0.0 w value for all normals
-			printf( " Normal: %.2f %.2f %.2f \n", normals[normal_count].val[0], normals[normal_count].val[1], normals[vert_count].val[2] );
+//			printf( " Normal: %.2f %.2f %.2f \n", normals[normal_count].val[0], normals[normal_count].val[1], normals[vert_count].val[2] );
 			normal_count++;
 		}
 		if ( string_equal( token, "vt" )) {
@@ -60,7 +60,7 @@ model* LoadObj( const char* filename ) {
 				token = inputStream_nextToken( stream );
 				uvs[uv_count].val[i] = strtof( token, NULL );
 			}
-			printf( " Uv:  %.2f %.2f \n", uvs[uv_count].val[0], uvs[uv_count].val[1] );
+//			printf( " Uv:  %.2f %.2f \n", uvs[uv_count].val[0], uvs[uv_count].val[1] );
 			uv_count++;
 		}
 		if ( string_equal( token, "f" )) {
@@ -78,26 +78,34 @@ model* LoadObj( const char* filename ) {
 				int i = 0;
 				const char* string = token;
 				while ( string[i] != '/' && i < len ) {
+					assert( i >= 0 );
+					assert( i < 8 );
 					vert[i] = string[i];
 					i++;
 				}
 				vert[i] = '\0';
 				string = &string[i+1];
 				i = 0;
+				len = strlen( string );
 				while ( string[i] != '/' && i < len ) {
+					assert( i >= 0 );
+					assert( i < 8 );
 					uv[i] = string[i];
 					i++;
 				}
 				uv[i] = '\0';
 				string = &string[i+1];
 				i = 0;
+				len = strlen( string );
 				while ( string[i] != '/' && i < len ) {
+					assert( i >= 0 );
+					assert( i < 8 );
 					norm[i] = string[i];
 					i++;
 				}
 				norm[i] = '\0';
 
-//				//printf( "Vert: %s, UV: %s, Norm %s.\n", vert, uv, norm );
+				//printf( "Vert: %s, UV: %s, Norm %s.\n", vert, uv, norm );
 
 				indices[index_count] = atoi( vert ) - 1; // -1 as obj uses 1-based indices, not 0-based as we do
 				normal_indices[index_count] = atoi( norm ) - 1; // -1 as obj uses 1-based indices, not 0-based as we do
@@ -106,6 +114,7 @@ model* LoadObj( const char* filename ) {
 			}
 			//printf( " Face: %d %d %d \n", indices[index_count-3], indices[index_count-2], indices[index_count-1] );
 		}
+		mem_free( token );
 		inputStream_nextLine( stream );
 	}
 

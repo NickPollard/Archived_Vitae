@@ -53,6 +53,9 @@ mesh* mesh_createMesh( int vertCount, int index_count, int normal_count, int uv_
 	m->index_count = index_count;
 	m->normal_count = normal_count;
 
+	m->vertex_buffer = NULL;
+	m->element_buffer = NULL;
+
 	return m;
 }
 
