@@ -271,6 +271,28 @@ sterm* parse_file( const char* filename ) {
 	return s;
 }
 
+// *** Map functions
+
+typedef void (*function)( void* );
+typedef void (*function_v)( void*, void* );
+typedef void (*function_vv)( void*, void*, void* );
+
+void map_vv( sterm* list, function_vv f, void* data, void* data_ ) {
+	f( list->head, data, data_ );
+	if ( list->tail )
+		map_vv( list->tail, f, data, data_ );
+}
+void map_v( sterm* list, function_v f, void* data ) {
+	f( list->head, data );
+	if ( list->tail )
+		map_v( list->tail, f, data );
+}
+void map( sterm* list, function f ) {
+	f( list->head );
+	if ( list->tail )
+		map( list->tail, f );
+}
+
 // Load a scene from a .sc file (s-expression based)
 
 void* s_print( sterm* s );
@@ -283,6 +305,8 @@ void* s_translation( sterm* s );
 void* s_diffuse( sterm* s );
 void* s_filename( sterm* s );
 void* s_vector( sterm* s );
+
+void scene_processObject( void* object_, void* scene_, void* transform_ );
 
 #define S_FUNC( atom, func )	if ( string_equal( (const char*)data->head, atom ) ) { \
 									sterm* s = sterm_create( typeFunc, func ); \
@@ -621,13 +645,7 @@ void lightData_processProperties( sterm* l, sterm* properties ) {
 	if ( properties->tail )
 		lightData_processProperties( l, properties->tail );
 }
-/*
-void map( sterm* list, function f ) {
-	f( list->head );
-	if ( list->tail )
-		map( list->tail, f );
-}
-*/
+
 void* s_light( sterm* raw_properties ) {
 	// Build as a list
 	vector* diffuse_vector = NULL; 
@@ -643,7 +661,7 @@ void* s_light( sterm* raw_properties ) {
 	return lData;
 }
 
-void scene_processObjects( scene* s, transform* parent, sterm* objects );
+//void scene_processObjects( scene* s, transform* parent, sterm* objects );
 
 void scene_processTransform( scene* s, transform* parent, transformData* tData ) {
 //	printf( "Creating Transform! Translation: %.2f, %.2f, %.2f\n", tData->translation.val[0], tData->translation.val[1], tData->translation.val[2] );
@@ -653,7 +671,8 @@ void scene_processTransform( scene* s, transform* parent, transformData* tData )
 	scene_addTransform( s, t );
 
 	// If it has children, process those
-	scene_processObjects( s, t, tData->elements );
+//	scene_processObjects( s, t, tData->elements );
+	map_vv( tData->elements, scene_processObject, s, t );
 }
 
 void scene_processModel( scene* s, transform* parent, modelData* mData ) {
@@ -672,7 +691,10 @@ void scene_processLight( scene* s, transform* parent, sterm* lData ) {
 	scene_addLight( s, l );
 }
 
-void scene_processObject( scene* s, transform* parent, sterm* object ) {
+void scene_processObject( void* object_, void* scene_, void* transform_ ) {
+	sterm* object = object_;
+	scene* s = scene_;
+	transform* parent = transform_;
 	if ( isTransform( object ))
 		scene_processTransform( s, parent, object->head );
 	if ( isModel( object ))
@@ -681,11 +703,14 @@ void scene_processObject( scene* s, transform* parent, sterm* object ) {
 		scene_processLight( s, parent, object );
 }
 
+/*
 void scene_processObjects( scene* s, transform* parent, sterm* objects ) {
 	scene_processObject( s, parent, objects->head );
 	if ( objects->tail )
 		scene_processObjects( s, parent, objects->tail );
 }
+*/
+
 
 /*
 	call s_scene, with a list of sterms
@@ -698,7 +723,10 @@ void* s_scene( sterm* raw_scene_objects ) {
 	scene* s = scene_create();
 	sterm* scene_objects = eval_list( raw_scene_objects ); // TODO: Could eval_list be part of just eval?
 //	debug_sterm_printList( scene_objects );
-	scene_processObjects( s, NULL /*root has no parent*/, scene_objects );
+
+	map_vv( scene_objects, scene_processObject, s, NULL );
+//	scene_processObjects( s, NULL /*root has no parent*/, scene_objects );
+
 	return s;
 }
 
