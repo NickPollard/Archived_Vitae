@@ -12,8 +12,7 @@
 GLuint g_texture_default = 0;
 
 void texture_init() {
-	//g_texture_default = texture_loadTGA( "assets/img/test64rgba.tga" );
-	g_texture_default = texture_loadTGA( "assets/img/ship_hd_2.tga" );
+	g_texture_default = texture_loadTGA( "assets/img/test64rgba.tga" );
 	printf( "Loaded default texture as OpenGL texture name: %d\n", g_texture_default );
 }
 

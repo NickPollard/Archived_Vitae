@@ -56,6 +56,9 @@ mesh* mesh_createMesh( int vertCount, int index_count, int normal_count, int uv_
 	m->vertex_buffer = NULL;
 	m->element_buffer = NULL;
 
+	//m->texture_diffuse = texture_loadTGA( "assets/img/test64rgba.tga" );
+	m->texture_diffuse = texture_loadTGA( "assets/img/ship_hd_2.tga" );
+
 	return m;
 }
 
@@ -147,7 +150,7 @@ void mesh_drawVerts( mesh* m ) {
 	// Textures
 	GLint* tex = shader_findConstant( mhash( "tex" ));
 	if ( tex )
-		render_setUniform_texture( *tex, g_texture_default );
+		render_setUniform_texture( *tex, m->texture_diffuse );
 
 	VERTEX_ATTRIBS( VERTEX_ATTRIB_LOOKUP );
 	// *** Vertex Buffer

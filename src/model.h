@@ -36,6 +36,8 @@ struct mesh_s {
 
 	vertex*		vertex_buffer;
 	unsigned short*		element_buffer;
+
+	GLint		texture_diffuse;
 };
 
 // *** Model ***
