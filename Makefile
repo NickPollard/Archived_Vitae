@@ -4,11 +4,15 @@ LFLAGS = -m32 -Wl,--no-warn-search-mismatch
 LIBS = -lGLU -L/usr/lib -L/usr/local/lib -llua `pkg-config --libs libglfw`
 EXECUTABLE = vitae
 include Makelist
-DEPS = $(SRCS:src/%.c=bin/%.d)
+#DEPS = $(SRCS:src/%.c=bin/%.d)
 OBJS = $(SRCS:src/%.c=bin/%.o)
 OBJS_DBG = $(SRCS:src/%.c=bin/debug/%.o)
 
 all : $(EXECUTABLE)
+
+# pull in dependency info for *existing* .o files
+#-include $(OBJS:.o=.d)
+-include $(SRCS:src/%.c=bin/%.d)
 
 clean :
 	@echo "--- Removing Object Files ---"
@@ -24,9 +28,10 @@ cleandebug :
 	@echo "--- Removing Debug Executable ---"
 	@-rm -vf $(EXECUTABLE)_debug;
 
-$(EXECUTABLE) : $(SRCS) $(OBJS) $(DEPS)
+$(EXECUTABLE) : $(SRCS) $(OBJS)
 	@echo "- Linking $@"
 	@$(C) $(LFLAGS) -O2 -o $(EXECUTABLE) $(OBJS) $(LIBS)
+
 
 debug : $(EXECUTABLE)_debug
 
@@ -53,6 +58,9 @@ bin/%.o : src/%.c
 	@mkdir -p bin/system
 	@echo "- Compiling $@"
 	@$(C) $(CFLAGS) -O2 -MD -c -o $@ $<
+#	$(C) -MM $(CFLAGS) -O2 -MD -c $< > $*.d.tmp
+#	sed -e 's/.*:/bin\/$*.o:/' < $*.d.tmp > bin/$*.d
+#	rm $*.d.tmp
 
-bin/%.d : 
-	@
+#bin/%.d : 
+#	@
