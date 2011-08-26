@@ -547,17 +547,13 @@ void* s_diffuse( sterm* raw_elements ) {
 
 void* s_vector( sterm* raw_elements ) {
 	if ( raw_elements ) {
-//		debug_sterm_printList( raw_elements );
 		sterm* elements = eval_list( raw_elements );
-//		debug_sterm_printList( elements );
-//		vector* v = vector_processElements( elements );
 		vector* v = mem_alloc( sizeof( vector ));
 		memset( v, 0, sizeof( vector ));
 		sterm* element = elements;
 		int i = 0;
 		while ( element && i < 4 ) {
 			// dereference head twice, as we have a list of atoms of floats
-//			printf( "s_vector found value: %s\n", (const char*)((sterm*)element->head)->head );
 			v->val[i] = strtof( (const char*)((sterm*)element->head)->head, NULL );
 			i++;
 			element = element->tail;
@@ -629,21 +625,19 @@ lightData* lightData_create( ) {
 	memset( lData, 0, sizeof( lightData ));
 	return lData;
 }
-void lightData_processProperty( sterm* l, sterm* property ) {
+void lightData_processProperty( void* object_, void* light_ ) {
+	sterm* l = light_;
+	sterm* property = object_;
 	if ( isDiffuse( property )) {
-		vector* diffuse = (vector*)((sterm*)property->tail->head)->head;
+		vector* diffuse_vector = (vector*)((sterm*)property->tail->head)->head;
 
-		((sterm*)l->tail->head)->head = mem_alloc( sizeof( vector ));
-		*(vector*)(((sterm*)l->tail->head)->head) = *diffuse;
+		sterm* diffuse = l->tail->head;
+		diffuse->head = mem_alloc( sizeof( vector ));
+		*(vector*)diffuse->head = *diffuse_vector;
 		printf( "Setting light diffuse: " );
-		vector_print( ((sterm*)l->tail->head)->head );
+		vector_print( diffuse->head );
 		printf( "\n" );
 	}
-}
-void lightData_processProperties( sterm* l, sterm* properties ) {
-	lightData_processProperty( l, properties->head );
-	if ( properties->tail )
-		lightData_processProperties( l, properties->tail );
 }
 
 void* s_light( sterm* raw_properties ) {
@@ -655,13 +649,12 @@ void* s_light( sterm* raw_properties ) {
 	//sterm* lData = cons( data, cons( diffuse, cons( specular, NULL )));
 	if ( raw_properties ) {
 		sterm* properties = eval_list( raw_properties );
-		lightData_processProperties( lData, properties );
+//		lightData_processProperties( lData, properties );
+		map_v( properties, lightData_processProperty, lData );
 	}
 
 	return lData;
 }
-
-//void scene_processObjects( scene* s, transform* parent, sterm* objects );
 
 void scene_processTransform( scene* s, transform* parent, transformData* tData ) {
 //	printf( "Creating Transform! Translation: %.2f, %.2f, %.2f\n", tData->translation.val[0], tData->translation.val[1], tData->translation.val[2] );
@@ -671,7 +664,6 @@ void scene_processTransform( scene* s, transform* parent, transformData* tData )
 	scene_addTransform( s, t );
 
 	// If it has children, process those
-//	scene_processObjects( s, t, tData->elements );
 	map_vv( tData->elements, scene_processObject, s, t );
 }
 
@@ -702,15 +694,6 @@ void scene_processObject( void* object_, void* scene_, void* transform_ ) {
 	if ( isLight( object ))
 		scene_processLight( s, parent, object );
 }
-
-/*
-void scene_processObjects( scene* s, transform* parent, sterm* objects ) {
-	scene_processObject( s, parent, objects->head );
-	if ( objects->tail )
-		scene_processObjects( s, parent, objects->tail );
-}
-*/
-
 
 /*
 	call s_scene, with a list of sterms
