@@ -616,15 +616,17 @@ void* s_model( sterm* raw_properties ) {
 	return m;
 }
 
-typedef struct lightData_s {
-	vector diffuse;
-} lightData;
-
-lightData* lightData_create( ) {
-	lightData* lData = mem_alloc( sizeof( lightData ));
-	memset( lData, 0, sizeof( lightData ));
-	return lData;
+// Process a list of properties
+// Compare them to the property list of the type
+// Set appropriately
+/*
+void object_processProperty( void* property, void* object ) {
+	//for each property:
+	if ( isPropertyType( property, property_type ) ) {
+		object->type = property->value
+	}
 }
+   */
 void lightData_processProperty( void* object_, void* light_ ) {
 	sterm* l = light_;
 	sterm* property = object_;
@@ -649,7 +651,6 @@ void* s_light( sterm* raw_properties ) {
 	//sterm* lData = cons( data, cons( diffuse, cons( specular, NULL )));
 	if ( raw_properties ) {
 		sterm* properties = eval_list( raw_properties );
-//		lightData_processProperties( lData, properties );
 		map_v( properties, lightData_processProperty, lData );
 	}
 
