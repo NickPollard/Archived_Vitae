@@ -2,8 +2,7 @@
 
 #pragma once
 
-#define kObjMaxVertices 1024
-#define kObjMaxNormals  1024
-#define kObjMaxIndices 2048
+#define kObjMaxVertices 64 << 10
+#define kObjMaxIndices 128 << 10
 
 model* LoadObj( const char* filename );

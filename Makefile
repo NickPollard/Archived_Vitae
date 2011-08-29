@@ -4,20 +4,19 @@ LFLAGS = -m32 -Wl,--no-warn-search-mismatch
 LIBS = -lGLU -L/usr/lib -L/usr/local/lib -llua `pkg-config --libs libglfw`
 EXECUTABLE = vitae
 include Makelist
-#DEPS = $(SRCS:src/%.c=bin/%.d)
-OBJS = $(SRCS:src/%.c=bin/%.o)
+OBJS = $(SRCS:src/%.c=bin/release/%.o)
 OBJS_DBG = $(SRCS:src/%.c=bin/debug/%.o)
 
 all : $(EXECUTABLE)
 
 # pull in dependency info for *existing* .o files
 #-include $(OBJS:.o=.d)
--include $(SRCS:src/%.c=bin/%.d)
+-include $(SRCS:src/%.c=bin/release/%.d)
+-include $(SRCS:src/%.c=bin/debug/%.d)
 
 clean :
 	@echo "--- Removing Object Files ---"
-	@-rm -vf bin/*.o;
-	@-rm -vf bin/*/*.o;
+	@find bin/release -name '*.o' -exec rm -vf {} \;
 	@echo "--- Removing Executable ---"
 	@-rm -vf $(EXECUTABLE);
 
@@ -40,27 +39,16 @@ $(EXECUTABLE)_debug : $(SRCS) $(OBJS_DBG)
 	@$(C) -g $(LFLAGS) -o $(EXECUTABLE)_debug $(OBJS_DBG) $(LIBS)
 
 bin/debug/%.o : src/%.c
-	@mkdir -p bin/debug
-	@mkdir -p bin/debug/camera
-	@mkdir -p bin/debug/external
-	@mkdir -p bin/debug/mem
-	@mkdir -p bin/debug/render
-	@mkdir -p bin/debug/system
+#	Calculate the directory required and create it
+	@mkdir -pv `echo "$@" | sed -e 's/\/[^/]*\.o//'`
 	@echo "- Compiling $@"
 	@$(C) -g $(CFLAGS) -D DEBUG -c -o $@ $<
 
-bin/%.o : src/%.c
-	@mkdir -p bin
-	@mkdir -p bin/camera
-	@mkdir -p bin/external
-	@mkdir -p bin/mem
-	@mkdir -p bin/render
-	@mkdir -p bin/system
+bin/release/%.o : src/%.c
+#	Calculate the directory required and create it
+	@mkdir -pv `echo "$@" | sed -e 's/\/[^/]*\.o//'`
 	@echo "- Compiling $@"
 	@$(C) $(CFLAGS) -O2 -MD -c -o $@ $<
 #	$(C) -MM $(CFLAGS) -O2 -MD -c $< > $*.d.tmp
 #	sed -e 's/.*:/bin\/$*.o:/' < $*.d.tmp > bin/$*.d
 #	rm $*.d.tmp
-
-#bin/%.d : 
-#	@

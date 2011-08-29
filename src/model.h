@@ -23,16 +23,16 @@ struct mesh_s {
 	vector*		verts;
 	//
 	int			index_count;
-	unsigned short*		indices;
+	uint16_t*		indices;
 	//
 	int			normal_count;
 	vector*		normals;
 	//
-	int*		normal_indices;
+	uint16_t*		normal_indices;
 	//
 	vector*		uvs;
 	int			uv_count;
-	int*		uv_indices;
+	uint16_t*		uv_indices;
 
 	vertex*		vertex_buffer;
 	unsigned short*		element_buffer;

@@ -9,18 +9,42 @@
 model* LoadObj( const char* filename ) {
 	// Load the raw data
 	int vert_count = 0, index_count = 0, normal_count = 0, uv_count = 0;
+	// Lets create these arrays on the heap, as they need to be big
+	// TODO: Could make these static perhaps?
+	/*
 	vector	vertices[kObjMaxVertices];
-	vector	normals[kObjMaxNormals];
+	vector	normals[kObjMaxVertices];
 	vector	uvs[kObjMaxVertices];
-	unsigned short		indices[kObjMaxIndices];
+	uint16_t		indices[kObjMaxIndices];
 	int		normal_indices[kObjMaxIndices];
 	int		uv_indices[kObjMaxIndices];
+	*/
+	vector* vertices = mem_alloc( sizeof( vector ) * kObjMaxVertices );
+	vector* normals = mem_alloc( sizeof( vector ) * kObjMaxVertices );
+	vector* uvs = mem_alloc( sizeof( vector ) * kObjMaxVertices );
+	uint16_t* indices = mem_alloc( sizeof( uint16_t ) * kObjMaxIndices );
+	uint16_t* normal_indices = mem_alloc( sizeof( uint16_t ) * kObjMaxIndices );
+	uint16_t* uv_indices = mem_alloc( sizeof( uint16_t ) * kObjMaxIndices );
+
+#define array_clear( array, size ) \
+	memset( array, 0, sizeof( array[0] ) * size );
 
 	// Initialise to 0;
-	memset( vertices, 0, sizeof( vector ) * kObjMaxVertices );
-	memset( normals, 0, sizeof( vector ) * kObjMaxNormals );
-	memset( uvs, 0, sizeof( vector ) * kObjMaxVertices );
-	memset( indices, 0, sizeof( unsigned short ) * kObjMaxIndices );
+	/*
+	memset( vertices, 0, sizeof( vertices[0] ) * kObjMaxVertices );
+	memset( normals, 0, sizeof( normals[0] ) * kObjMaxVertices );
+	memset( uvs, 0, sizeof( uvs[0] ) * kObjMaxVertices );
+	memset( indices, 0, sizeof( uint16_t ) * kObjMaxIndices );
+	memset( normal_indices, 0, sizeof( uint16_t ) * kObjMaxIndices );
+	memset( uv_indices, 0, sizeof( uint16_t ) * kObjMaxIndices );
+	*/
+
+	array_clear( vertices, kObjMaxVertices );
+	array_clear( normals, kObjMaxVertices );
+	array_clear( uvs, kObjMaxVertices );
+	array_clear( indices, kObjMaxIndices );
+	array_clear( normal_indices, kObjMaxIndices );
+	array_clear( uv_indices, kObjMaxIndices );
 
 	int file_length;
 	char* file_buffer = vfile_contents( filename, &file_length );
@@ -41,7 +65,7 @@ model* LoadObj( const char* filename ) {
 			vert_count++;
 		}
 		if ( string_equal( token, "vn" )) {
-			assert( normal_count < kObjMaxNormals );
+			assert( normal_count < kObjMaxVertices );
 			// Vertex Normal
 			for ( int i = 0; i < 3; i++ ) {
 				mem_free( token );
@@ -128,11 +152,11 @@ model* LoadObj( const char* filename ) {
 
 	// Copy our loaded data into the Mesh structure
 	memcpy( msh->verts, vertices, vert_count * sizeof( vector ));
-	memcpy( msh->indices, indices, index_count * sizeof( unsigned short ));
+	memcpy( msh->indices, indices, index_count * sizeof( uint16_t ));
 	memcpy( msh->normals, normals, normal_count * sizeof( vector ));
-	memcpy( msh->normal_indices, normal_indices, index_count * sizeof( int ));
+	memcpy( msh->normal_indices, normal_indices, index_count * sizeof( uint16_t ));
 	memcpy( msh->uvs, uvs, uv_count * sizeof( vector ));
-	memcpy( msh->uv_indices, uv_indices, index_count * sizeof( int ));
+	memcpy( msh->uv_indices, uv_indices, index_count * sizeof( uint16_t ));
 
 	mesh_buildBuffers( msh );
 

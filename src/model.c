@@ -28,25 +28,27 @@ void vgl_vertexDraw(vector* v) {
 
 // Create an empty mesh with vertCount distinct vertices and index_count vertex indices
 mesh* mesh_createMesh( int vertCount, int index_count, int normal_count, int uv_count ) {
+
 	void* data = mem_alloc( sizeof( mesh ) +
 						sizeof( vector ) * vertCount +		// Verts
-						sizeof( int )	 * index_count +	// Indices
+						sizeof( uint16_t )	 * index_count +	// Indices
 						sizeof( vector )	 * uv_count +	// UVs
-						sizeof( int )	 * index_count +	// UV indices
-						sizeof( int )	 * index_count +	// Normal indices
+						sizeof( uint16_t )	 * index_count +	// UV indices
+						sizeof( uint16_t )	 * index_count +	// Normal indices
 						sizeof( vector ) * normal_count );	// Normals
 	mesh* m = data;
+
 	data += sizeof(mesh);
 	m->verts = data;
-	data += sizeof(vector) * vertCount;
+	data += sizeof( m->verts[0] ) * vertCount;			// Verts
 	m->indices = data;
-	data += sizeof( int ) * index_count;
+	data += sizeof( m->indices[0] ) * index_count;	// Indices
 	m->normals = data;
-	data += sizeof( vector ) * normal_count;
+	data += sizeof( m->normals[0] ) * normal_count;	// Normals	
 	m->normal_indices = data;
-	data += sizeof( int ) * index_count;
+	data += sizeof( m->normal_indices[0] ) * index_count;	// Normal Indices
 	m->uvs = data;
-	data += sizeof( vector ) * uv_count;
+	data += sizeof( m->uvs[0] ) * uv_count;		// UVs
 	m->uv_indices = data;
 
 	m->vertCount = vertCount;
