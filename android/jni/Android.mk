@@ -17,9 +17,9 @@
 ## This is the Android Makefile (?)
 ##
 
-include ../Makelist
+LOCAL_PATH := $(call my-dir)/../..
 
-LOCAL_PATH := $(call my-dir)
+include ../Makelist
 
 include $(CLEAR_VARS)
 
@@ -28,6 +28,13 @@ LOCAL_SRC_FILES := android/jni/android.c
 LOCAL_SRC_FILES	+= $(SRCS)
 LOCAL_LDLIBS    := -llog -landroid -lEGL -lGLESv1_CM
 LOCAL_STATIC_LIBRARIES := android_native_app_glue
+
+MY_LUA_PATH := 3rdparty/Lua/lua-5.1.4/src
+MY_GLFW_PATH := 3rdparty/glfw-2.7.2/include
+
+LOCAL_C_INCLUDES := $(LOCAL_PATH)/src
+LOCAL_C_INCLUDES += $(LOCAL_PATH)/$(MY_LUA_PATH)
+LOCAL_C_INCLUDES += $(LOCAL_PATH)/$(MY_GLFW_PATH)
 
 include $(BUILD_SHARED_LIBRARY)
 

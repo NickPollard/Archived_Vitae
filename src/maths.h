@@ -2,7 +2,10 @@
 #ifndef __MATHS_H__
 #define __MATHS_H__
 
+// Android doesn't use glfw
+#ifndef ANDROID
 #include <GL/glfw.h>
+#endif
 
 #include <math.h>
 

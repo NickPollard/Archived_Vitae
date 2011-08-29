@@ -43,7 +43,7 @@ struct saved_state {
 /**
  * Shared state for our app.
  */
-struct engine {
+struct test_engine {
     struct android_app* app;
 
     ASensorManager* sensorManager;
@@ -62,7 +62,7 @@ struct engine {
 /**
  * Initialize an EGL context for the current display.
  */
-static int engine_init_display(struct engine* engine) {
+static int engine_init_display(struct test_engine* engine) {
     // initialize OpenGL ES and EGL
 
     /*
@@ -130,7 +130,7 @@ static int engine_init_display(struct engine* engine) {
 /**
  * Just the current frame in the display.
  */
-static void engine_draw_frame(struct engine* engine) {
+static void engine_draw_frame(struct test_engine* engine) {
     if (engine->display == NULL) {
         // No display.
         return;
@@ -147,7 +147,7 @@ static void engine_draw_frame(struct engine* engine) {
 /**
  * Tear down the EGL context currently associated with the display.
  */
-static void engine_term_display(struct engine* engine) {
+static void engine_term_display(struct test_engine* engine) {
     if (engine->display != EGL_NO_DISPLAY) {
         eglMakeCurrent(engine->display, EGL_NO_SURFACE, EGL_NO_SURFACE, EGL_NO_CONTEXT);
         if (engine->context != EGL_NO_CONTEXT) {
@@ -168,7 +168,7 @@ static void engine_term_display(struct engine* engine) {
  * Process the next input event.
  */
 static int32_t engine_handle_input(struct android_app* app, AInputEvent* event) {
-    struct engine* engine = (struct engine*)app->userData;
+    struct test_engine* engine = (struct test_engine*)app->userData;
     if (AInputEvent_getType(event) == AINPUT_EVENT_TYPE_MOTION) {
         engine->animating = 1;
         engine->state.x = AMotionEvent_getX(event, 0);
@@ -182,7 +182,7 @@ static int32_t engine_handle_input(struct android_app* app, AInputEvent* event) 
  * Process the next main command.
  */
 static void engine_handle_cmd(struct android_app* app, int32_t cmd) {
-    struct engine* engine = (struct engine*)app->userData;
+    struct test_engine* engine = (struct test_engine*)app->userData;
     switch (cmd) {
         case APP_CMD_SAVE_STATE:
             // The system has asked us to save our current state.  Do so.
@@ -231,7 +231,7 @@ static void engine_handle_cmd(struct android_app* app, int32_t cmd) {
  * event loop for receiving input events and doing other things.
  */
 void android_main(struct android_app* state) {
-    struct engine engine;
+    struct test_engine engine;
 
     // Make sure glue isn't stripped.
     app_dummy();

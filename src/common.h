@@ -26,8 +26,21 @@
 #define then ?
 #define otherwise :
 
+#ifdef ANDROID
+#include <GLES/gl.h>
+/*
+typedef float GLfloat;
+typedef int GLint;
+typedef unsigned int GLuint;
+typedef char GLchar;
+typedef int GLenum;
+*/
+
+//typedef int lua_State;
+#endif
+
 // types
-typedef unsigned int uint;
+//typedef unsigned int uint;
 typedef unsigned int u32;
 typedef unsigned char uchar;
 typedef unsigned char ubyte;
@@ -36,6 +49,7 @@ typedef const char* String;
 
 inline unsigned long long rdtsc()
 {
+#ifndef ANDROID
   #define rdtsc(low, high) \
          __asm__ __volatile__("rdtsc" : "=a" (low), "=d" (high))
 
@@ -43,6 +57,10 @@ inline unsigned long long rdtsc()
   rdtsc(low, high);
   return ((unsigned long long)high << 32) | low;
 	#undef rdtsc
+#else
+  // TODO: Need a timer that works on Android?
+  return ((unsigned long long)0x0);
+#endif
 }
 
 // Printing
