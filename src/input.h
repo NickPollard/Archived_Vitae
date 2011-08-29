@@ -5,6 +5,8 @@
 #define GLFW
 
 #ifdef GLFW
+// GLFW Libraries
+#include <GL/glfw.h>
 
 // Arrow Keys
 #define KEY_UP		GLFW_KEY_UP

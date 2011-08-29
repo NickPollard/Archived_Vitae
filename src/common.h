@@ -27,7 +27,10 @@
 #define otherwise :
 
 #ifdef ANDROID
-#include <GLES/gl.h>
+
+//#include <GLES/gl.h>
+#define OPENGL_ES
+
 /*
 typedef float GLfloat;
 typedef int GLint;

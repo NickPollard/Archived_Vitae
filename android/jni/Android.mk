@@ -26,7 +26,7 @@ include $(CLEAR_VARS)
 LOCAL_MODULE    := vitae
 LOCAL_SRC_FILES := android/jni/android.c
 LOCAL_SRC_FILES	+= $(SRCS)
-LOCAL_LDLIBS    := -llog -landroid -lEGL -lGLESv1_CM
+LOCAL_LDLIBS    := -llog -landroid -lEGL -lGLESv2
 LOCAL_STATIC_LIBRARIES := android_native_app_glue
 
 MY_LUA_PATH := 3rdparty/Lua/lua-5.1.4/src

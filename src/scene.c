@@ -124,10 +124,6 @@ scene* test_scene_init( engine* e ) {
 //	return s2;
 }
 
-void glTranslate_vector(vector* v) {
-	glTranslatef(v->coord.x, v->coord.y, v->coord.z);
-}
-
 void scene_setAmbient(scene* s, float r, float g, float b, float a) {
 	s->ambient[0] = r;
 	s->ambient[1] = g;

@@ -21,8 +21,8 @@
 #include <jni.h>
 #include <errno.h>
 
+#include <GLES2/gl2.h>
 #include <EGL/egl.h>
-#include <GLES/gl.h>
 
 #include <android/sensor.h>
 #include <android/log.h>
@@ -119,9 +119,9 @@ static int engine_init_display(struct test_engine* engine) {
     engine->state.angle = 0;
 
     // Initialize GL state.
-    glHint(GL_PERSPECTIVE_CORRECTION_HINT, GL_FASTEST);
+//    glHint(GL_PERSPECTIVE_CORRECTION_HINT, GL_FASTEST);
     glEnable(GL_CULL_FACE);
-    glShadeModel(GL_SMOOTH);
+//    glShadeModel(GL_SMOOTH);
     glDisable(GL_DEPTH_TEST);
 
     return 0;

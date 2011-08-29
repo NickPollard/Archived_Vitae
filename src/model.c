@@ -22,9 +22,11 @@ model* models[maxModels];
 const char* modelFiles[maxModels];
 int modelIDs[maxModels];
 
+/*
 void vgl_vertexDraw(vector* v) {
 	glVertex3fv((GLfloat*)v);
 }
+*/
 
 // Create an empty mesh with vertCount distinct vertices and index_count vertex indices
 mesh* mesh_createMesh( int vertCount, int index_count, int normal_count, int uv_count ) {
@@ -157,11 +159,11 @@ void mesh_drawVerts( mesh* m ) {
 	VERTEX_ATTRIBS( VERTEX_ATTRIB_LOOKUP );
 	// *** Vertex Buffer
 	glBindBuffer( GL_ARRAY_BUFFER, resources.vertex_buffer );
-	glBufferData( GL_ARRAY_BUFFER, vertex_buffer_size, m->vertex_buffer, GL_STREAM_DRAW );
+	glBufferData( GL_ARRAY_BUFFER, vertex_buffer_size, m->vertex_buffer, GL_DYNAMIC_DRAW );// OpenGL ES only supports DYNAMIC_DRAW or STATIC_DRAW
 	VERTEX_ATTRIBS( VERTEX_ATTRIB_POINTER );
 	// *** Element Buffer
 	glBindBuffer( GL_ELEMENT_ARRAY_BUFFER, resources.element_buffer );
-	glBufferData( GL_ELEMENT_ARRAY_BUFFER, element_buffer_size, m->element_buffer, GL_STREAM_DRAW );
+	glBufferData( GL_ELEMENT_ARRAY_BUFFER, element_buffer_size, m->element_buffer, GL_DYNAMIC_DRAW ); // OpenGL ES only supports DYNAMIC_DRAW or STATIC_DRAW
 
 	// Draw!
 	glDrawElements( GL_TRIANGLES, m->index_count, GL_UNSIGNED_SHORT, (void*)0 );

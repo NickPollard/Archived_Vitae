@@ -35,6 +35,8 @@ GLuint texture_loadTGA( const char* filename ) {
     glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_WRAP_S,     GL_CLAMP_TO_EDGE );
     glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_WRAP_T,     GL_CLAMP_TO_EDGE );
 
+	// TODO: ANDROID
+#ifndef OPENGL_ES
 	glTexImage2D( GL_TEXTURE_2D,
 		   			0,			// No Mipmaps for now
 					GL_RGBA8,	// 3-channel, 8-bits per channel (32-bit stride)
@@ -43,6 +45,7 @@ GLuint texture_loadTGA( const char* filename ) {
 					GL_BGRA,		// TGA uses BGR order internally
 					GL_UNSIGNED_BYTE,	// 8-bits per channel
 					img );
+#endif
 
 	free(img);	// OpenGL copies the data, so we can free this here
 

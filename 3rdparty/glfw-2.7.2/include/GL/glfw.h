@@ -163,7 +163,8 @@ extern "C" {
 // [Nick Pollard]
  // Use OpenGL ES on Android
 //#include <EGL/egl.h>
-#include <GLES/gl.h>
+#include <GLES2/gl2.h>
+#include <GLES2/gl2ext.h>
  // OpenGL ES does not have GLchar
 typedef char GLchar;
 #else

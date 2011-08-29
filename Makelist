@@ -1,16 +1,16 @@
-SRCS =	\
-		src/maths.c \
-		src/camera.c \
+SRCS =	src/camera.c \
 		src/engine.c \
 		src/font.c \
 		src/input.c \
 		src/light.c \
 		src/lua.c \
 		src/main.c \
+		src/maths.c \
 		src/model.c \
 		src/model_loader.c \
 		src/particle.c \
-		src/physic.c \		src/scene.c \
+		src/physic.c \
+		src/scene.c \
 		src/ticker.c \
 		src/time.c \
 		src/transform.c \
@@ -18,7 +18,6 @@ SRCS =	\
 		src/camera/flycam.c \
 		src/camera/velcam.c \
 		src/mem/allocator.c \
-		src/render/debugdraw.c \
 		src/render/modelinstance.c \
 		src/render/render.c \
 		src/render/shader.c \
@@ -28,6 +27,8 @@ SRCS =	\
 		src/system/hash.c \
 		src/system/string.c \
 		src/external/util.c \
-		src/external/murmur.c \
-		src/debug/debug.c \
-		src/debug/debugtext.c
+		src/external/murmur.c
+
+#		src/render/debugdraw.c \
+#		src/debug/debug.c \
+#		src/debug/debugtext.c

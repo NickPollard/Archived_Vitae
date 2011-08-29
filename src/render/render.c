@@ -36,7 +36,7 @@ GLuint gl_bufferCreate( GLenum target, const void* data, GLsizei size ) {
 	// Usage hint can be: GL_[VARYING]_[USE]
 	// Varying: STATIC / DYNAMIC / STREAM
 	// Use: DRAW / READ / COPY
-	glBufferData( target, size, data, /*Usage hint*/ GL_STREAM_DRAW );
+	glBufferData( target, size, data, /*Usage hint*/ GL_DYNAMIC_DRAW ); // OpenGL ES only supports dynamic/static draw
 	return buffer;
 }
 
@@ -86,6 +86,7 @@ void render_set3D( int w, int h ) {
 }
 
 void render_set2D() {
+#ifndef OPENGL_ES
 	// *** Set an orthographic projection
 	glMatrixMode( GL_PROJECTION );
 	glLoadIdentity();
@@ -97,6 +98,7 @@ void render_set2D() {
 		   	1 );	// far
 
 	glDisable( GL_DEPTH_TEST );
+#endif
 }
 
 // Iterate through each model in the scene
@@ -110,7 +112,7 @@ void render_scene(scene* s) {
 
 void render_lighting( scene* s ) {
 	// Ambient Light
-	glLightModelfv(GL_LIGHT_MODEL_AMBIENT, s->ambient);
+//	glLightModelfv(GL_LIGHT_MODEL_AMBIENT, s->ambient);
 
 	// Point Lights	
 	light_renderLights( s->light_count, s->lights );

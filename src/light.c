@@ -54,13 +54,14 @@ void light_setPosition(light* l, vector* pos) {
 }
 
 void light_render( int index, light* l ) {
+/*
 	glEnable( index );
-
 	glLightfv(index, GL_DIFFUSE, (GLfloat*)(&l->diffuse_color));
 	glLightfv(index, GL_SPECULAR, (GLfloat*)(&l->specular_color));
 
 	// Position
-	glLightfv( index, GL_POSITION, (GLfloat*)matrix_getTranslation( l->trans->world ));
+//	glLightfv( index, GL_POSITION, (GLfloat*)matrix_getTranslation( l->trans->world ));
+
 	if ( index == 0 ) {
 		glUniform4fv( *resources.uniforms.light_position, 1, (GLfloat*)matrix_getTranslation( l->trans->world ) );
 		glUniform4fv( *resources.uniforms.light_diffuse, 1, (GLfloat*)&l->diffuse_color );
@@ -71,8 +72,8 @@ void light_render( int index, light* l ) {
 	glLightf(index, GL_CONSTANT_ATTENUATION, (GLfloat)l->attenuationConstant);
 	glLightf(index, GL_LINEAR_ATTENUATION, (GLfloat)l->attenuationLinear);
 	glLightf(index, GL_QUADRATIC_ATTENUATION, (GLfloat)l->attenuationQuadratic);
-	
 	debugdraw_cross( matrix_getTranslation( l->trans->world ), 1.f);
+	*/
 }
 
 // Render a batch of lights to the shader
