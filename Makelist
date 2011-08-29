@@ -1,16 +1,16 @@
-SRCS =	src/camera.c \
+SRCS =	\
+		src/maths.c \
+		src/camera.c \
 		src/engine.c \
 		src/font.c \
 		src/input.c \
 		src/light.c \
 		src/lua.c \
 		src/main.c \
-		src/maths.c \
 		src/model.c \
 		src/model_loader.c \
 		src/particle.c \
-		src/physic.c \
-		src/scene.c \
+		src/physic.c \		src/scene.c \
 		src/ticker.c \
 		src/time.c \
 		src/transform.c \

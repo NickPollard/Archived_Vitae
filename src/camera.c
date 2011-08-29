@@ -7,7 +7,6 @@
 #include "transform.h"
 #include "mem/allocator.h"
 
-
 camera* camera_create() {
 	camera* c = mem_alloc( sizeof( camera ));
 	c->trans = NULL;

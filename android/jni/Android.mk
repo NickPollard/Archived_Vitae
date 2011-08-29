@@ -36,6 +36,8 @@ LOCAL_C_INCLUDES := $(LOCAL_PATH)/src
 LOCAL_C_INCLUDES += $(LOCAL_PATH)/$(MY_LUA_PATH)
 LOCAL_C_INCLUDES += $(LOCAL_PATH)/$(MY_GLFW_PATH)
 
+LOCAL_CFLAGS := -std=gnu99
+
 include $(BUILD_SHARED_LIBRARY)
 
 $(call import-module,android/native_app_glue)

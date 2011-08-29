@@ -47,6 +47,7 @@ typedef unsigned char ubyte;
 typedef unsigned char u8;
 typedef const char* String;
 
+/*
 inline unsigned long long rdtsc()
 {
 #ifndef ANDROID
@@ -62,6 +63,7 @@ inline unsigned long long rdtsc()
   return ((unsigned long long)0x0);
 #endif
 }
+*/
 
 // Printing
 #define printError( format, args... ) 	{ \

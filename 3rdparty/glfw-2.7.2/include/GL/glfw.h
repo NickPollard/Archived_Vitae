@@ -159,6 +159,14 @@ extern "C" {
  * special defines which normally requires the user to include <windows.h>
  * (which is not a nice solution for portable programs).
  */
+#ifdef ANDROID
+// [Nick Pollard]
+ // Use OpenGL ES on Android
+//#include <EGL/egl.h>
+#include <GLES/gl.h>
+ // OpenGL ES does not have GLchar
+typedef char GLchar;
+#else
 #if defined(__APPLE_CC__)
  #include <OpenGL/gl.h>
  #ifndef GLFW_NO_GLU
@@ -169,6 +177,7 @@ extern "C" {
  #ifndef GLFW_NO_GLU
   #include <GL/glu.h>
  #endif
+#endif
 #endif
 
 
