@@ -17,17 +17,33 @@
 ## This is the Android Makefile (?)
 ##
 
-LOCAL_PATH := $(call my-dir)/../..
 
-include ../Makelist
+## LUA
+LOCAL_PATH		:= $(call my-dir)/../..
 
 include $(CLEAR_VARS)
 
+LOCAL_MODULE    := lua
+LOCAL_ARM_MODE	:= arm
+
+include ../Makelist_Lua
+SRCS = $(LUA_SRCS:%.c=3rdparty/Lua/lua-5.1.4/src/%.c)
+LOCAL_SRC_FILES := $(SRCS)
+
+#include $(BUILD_SHARED_LIBRARY)
+include $(BUILD_STATIC_LIBRARY)
+
+## Vitae
+
+## Reset make state
+include $(CLEAR_VARS)
+
 LOCAL_MODULE    := vitae
+include ../Makelist
 LOCAL_SRC_FILES := android/jni/android.c
 LOCAL_SRC_FILES	+= $(SRCS)
 LOCAL_LDLIBS    := -llog -landroid -lEGL -lGLESv2
-LOCAL_STATIC_LIBRARIES := android_native_app_glue
+LOCAL_STATIC_LIBRARIES := android_native_app_glue lua
 
 MY_LUA_PATH := 3rdparty/Lua/lua-5.1.4/src
 MY_GLFW_PATH := 3rdparty/glfw-2.7.2/include

@@ -6,5 +6,7 @@ vitae
 vitae_debug
 bin
 *.o
-
+*.so
+*.a
+android/obj
 
