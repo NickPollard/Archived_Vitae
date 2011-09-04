@@ -159,7 +159,9 @@ void transform_printDebug( transform* t, debugtextframe* f ) {
 			t->world[3][1], 
 			t->world[3][2] );
 #endif
+#ifndef ANDROID	
 	PrintDebugText( f, string );
+#endif
 }
 
 void transform_yaw( transform* t, float yaw ) {

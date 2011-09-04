@@ -187,7 +187,7 @@ void engine_init(engine* e, int argc, char** argv) {
 	render_init(e, argc, argv);
 
 	// *** Start up Core Systems
-	font_init();
+	//font_init();
 
 	// *** Initialise Lua
 	engine_initLua(e, argc, argv);
@@ -202,7 +202,7 @@ void init(int argc, char** argv) {
 
 	// *** Initialise Memory
 	mem_init( argc, argv );
-	debug_init( );
+//	debug_init( );
 
 	// *** Static Module initialization
 	scene_static_init();

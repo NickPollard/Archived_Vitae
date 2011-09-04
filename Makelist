@@ -1,6 +1,5 @@
 SRCS =	src/camera.c \
 		src/engine.c \
-		src/font.c \
 		src/input.c \
 		src/light.c \
 		src/lua.c \
@@ -29,6 +28,7 @@ SRCS =	src/camera.c \
 		src/external/util.c \
 		src/external/murmur.c
 
+#		src/font.c \
 #		src/render/debugdraw.c \
 #		src/debug/debug.c \
 #		src/debug/debugtext.c
