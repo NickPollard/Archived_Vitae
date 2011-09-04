@@ -5,6 +5,8 @@
  (c) 2010
  */
 
+#ifndef ANDROID
+
 #include "common.h"
 #include "engine.h"
 #include "maths.h"
@@ -15,6 +17,7 @@
 #include "system/string.h"
 
 #define TEST true
+
 
 // ###################################
 
@@ -56,3 +59,4 @@ int main(int argc, char** argv) {
 	// Exit Gracefully
 	return 0;
 }
+#endif // ANDROID

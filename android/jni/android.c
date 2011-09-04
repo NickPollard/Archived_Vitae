@@ -28,12 +28,21 @@
 #include <android/log.h>
 #include <android_native_app_glue.h>
 
-#define LOGI(...) ((void)__android_log_print(ANDROID_LOG_INFO, "native-activity", __VA_ARGS__))
-#define LOGW(...) ((void)__android_log_print(ANDROID_LOG_WARN, "native-activity", __VA_ARGS__))
+// *** Vitae Includes
+#include "common.h"
+#include "engine.h"
+#include "maths.h"
+#include "particle.h"
+#include "mem/allocator.h"
+#include "system/file.h"
+#include "system/hash.h"
+#include "system/string.h"
 
+#if 0
 /**
  * Our saved state data.
  */
+
 struct saved_state {
     float angle;
     int32_t x;
@@ -163,10 +172,11 @@ static void engine_term_display(struct test_engine* engine) {
     engine->context = EGL_NO_CONTEXT;
     engine->surface = EGL_NO_SURFACE;
 }
-
+#endif
 /**
  * Process the next input event.
  */
+#if 0
 static int32_t engine_handle_input(struct android_app* app, AInputEvent* event) {
     struct test_engine* engine = (struct test_engine*)app->userData;
     if (AInputEvent_getType(event) == AINPUT_EVENT_TYPE_MOTION) {
@@ -224,6 +234,46 @@ static void engine_handle_cmd(struct android_app* app, int32_t cmd) {
             break;
     }
 }
+#endif
+
+#define TEST true
+
+// ###################################
+
+void test() {
+	// Memory Tests
+	test_allocator();
+
+	test_hash();
+
+	// System Tests
+	test_sfile();
+
+	test_matrix();
+
+	test_property();
+
+	test_string();
+}
+
+void android_init() {
+	printf("Loading Vitae.\n");
+
+	// Android doesn't have commandline args
+	int argc = 0;
+	char** argv = NULL;
+
+	init(argc, argv);
+
+	// *** Initialise Engine
+	engine* e = engine_create();
+	engine_init( e, argc, argv );
+	static_engine_hack = e;
+
+#if TEST
+	test();
+#endif
+}
 
 /**
  * This is the main entry point of a native application that is using
@@ -231,11 +281,11 @@ static void engine_handle_cmd(struct android_app* app, int32_t cmd) {
  * event loop for receiving input events and doing other things.
  */
 void android_main(struct android_app* state) {
-    struct test_engine engine;
+//    struct test_engine engine;
 
     // Make sure glue isn't stripped.
     app_dummy();
-
+/*
     memset(&engine, 0, sizeof(engine));
     state->userData = &engine;
     state->onAppCmd = engine_handle_cmd;
@@ -253,8 +303,10 @@ void android_main(struct android_app* state) {
         // We are starting with a previous saved state; restore from it.
         engine.state = *(struct saved_state*)state->savedState;
     }
-
+*/
     // loop waiting for stuff to do.
+
+	android_init();
 
     while (1) {
         // Read all pending events.
@@ -265,7 +317,8 @@ void android_main(struct android_app* state) {
         // If not animating, we will block forever waiting for events.
         // If animating, we loop until all events are read, then continue
         // to draw the next frame of animation.
-        while ((ident=ALooper_pollAll(engine.animating ? 0 : -1, NULL, &events,
+        //while ((ident=ALooper_pollAll(engine.animating ? 0 : -1, NULL, &events,
+        while ((ident=ALooper_pollAll(0, NULL, &events,
                 (void**)&source)) >= 0) {
 
             // Process this event.
@@ -275,6 +328,7 @@ void android_main(struct android_app* state) {
 
             // If a sensor has data, process it now.
             if (ident == LOOPER_ID_USER) {
+				/*
                 if (engine.accelerometerSensor != NULL) {
                     ASensorEvent event;
                     while (ASensorEventQueue_getEvents(engine.sensorEventQueue,
@@ -284,15 +338,16 @@ void android_main(struct android_app* state) {
                                 event.acceleration.z);
                     }
                 }
+				*/
             }
 
             // Check if we are exiting.
             if (state->destroyRequested != 0) {
-                engine_term_display(&engine);
+//                engine_term_display(&engine);
                 return;
             }
         }
-
+/*
         if (engine.animating) {
             // Done with events; draw next animation frame.
             engine.state.angle += .01f;
@@ -304,5 +359,6 @@ void android_main(struct android_app* state) {
             // is no need to do timing here.
             engine_draw_frame(&engine);
         }
+		*/
     }
 }

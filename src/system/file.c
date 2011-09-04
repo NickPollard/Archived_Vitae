@@ -35,7 +35,7 @@ void* vfile_contents( const char* path, int* length ) {
     void *buffer;
 
     if (!f) {
-        fprintf(stderr, "vfile: Unable to open %s for reading\n", path);
+        printf("vfile: Unable to open %s for reading\n", path);
 		assert( 0 );
         return NULL;
     }
@@ -56,7 +56,7 @@ void vfile_writeContents( const char* path, void* buffer, int length ) {
 	FILE *f = fopen( path, "w+" );
 
     if ( !f ) {
-        fprintf(stderr, "vfile: Unable to open %s for writing\n", path);
+        printf("vfile: Unable to open %s for writing\n", path);
 		assert( 0 );
         return;
     }

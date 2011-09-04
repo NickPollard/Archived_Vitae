@@ -31,15 +31,13 @@
 //#include <GLES/gl.h>
 #define OPENGL_ES
 
-/*
-typedef float GLfloat;
-typedef int GLint;
-typedef unsigned int GLuint;
-typedef char GLchar;
-typedef int GLenum;
-*/
+// *** Logging
+#include <android/log.h>
+#define LOGI(...) ((void)__android_log_print(ANDROID_LOG_INFO, "vitae", __VA_ARGS__))
+#define LOGW(...) ((void)__android_log_print(ANDROID_LOG_WARN, "vitae", __VA_ARGS__))
 
-//typedef int lua_State;
+#define printf( ... )  LOGI( __VA_ARGS__ )
+
 #endif
 
 // types
@@ -49,24 +47,6 @@ typedef unsigned char uchar;
 typedef unsigned char ubyte;
 typedef unsigned char u8;
 typedef const char* String;
-
-/*
-inline unsigned long long rdtsc()
-{
-#ifndef ANDROID
-  #define rdtsc(low, high) \
-         __asm__ __volatile__("rdtsc" : "=a" (low), "=d" (high))
-
-  unsigned long low, high;
-  rdtsc(low, high);
-  return ((unsigned long long)high << 32) | low;
-	#undef rdtsc
-#else
-  // TODO: Need a timer that works on Android?
-  return ((unsigned long long)0x0);
-#endif
-}
-*/
 
 // Printing
 #define printError( format, args... ) 	{ \
