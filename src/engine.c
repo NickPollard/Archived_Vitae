@@ -244,7 +244,7 @@ void engine_render( engine* e ) {
 	render_clear();
 	render( theScene, w, h );
 	engine_renderRenders( e );
-	glfwSwapBuffers(); // Send the 3d scene to the screen (flips display buffers)
+	render_swapBuffers();
 }
 
 // run - executes the main loop of the engine
@@ -256,7 +256,10 @@ void engine_run(engine* e) {
 		engine_input( e );
 		engine_tick( e );
 		engine_render( e );
-		running = !input_keyPressed( e->input, KEY_ESC ) && glfwGetWindowParam( GLFW_OPENED );
+		running = !input_keyPressed( e->input, KEY_ESC );
+#ifndef ANDROID
+		running = running && glfwGetWindowParam( GLFW_OPENED );
+#endif
 	}
 }
 

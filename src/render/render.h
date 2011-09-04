@@ -58,6 +58,8 @@ void render_set3D( int w, int h );
 
 void render_clear();
 
+void render_swapBuffers();
+
 // Iterate through each model in the scene
 // Translate by their transform
 // Then draw all the submeshes

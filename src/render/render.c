@@ -101,6 +101,12 @@ void render_set2D() {
 #endif
 }
 
+void render_swapBuffers() {
+#ifndef ANDROID
+	glfwSwapBuffers(); // Send the 3d scene to the screen (flips display buffers)
+#endif
+}
+
 // Iterate through each model in the scene
 // Translate by their transform
 // Then draw all the submeshes
@@ -124,14 +130,20 @@ void render_clear() {
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 }
 
-// Initialise the 3D rendering
-void render_init() {
+void render_initWindow() {
+#ifndef ANDROID
 	if (!glfwInit())
 		printf("ERROR - failed to init glfw.\n");
 
 	glfwOpenWindow(640, 480, 8, 8, 8, 8, 8, 0, GLFW_WINDOW);
 	glfwSetWindowTitle("Vitae");
 	glfwSetWindowSizeCallback(handleResize);
+#endif
+}
+
+// Initialise the 3D rendering
+void render_init() {
+	render_initWindow();
 
 	printf("RENDERING: Initialising OpenGL rendering settings.\n");
 	glEnable(GL_DEPTH_TEST);
@@ -152,7 +164,9 @@ void render_init() {
 
 // Terminate the 3D rendering
 void render_terminate() {
+#ifndef ANDROID
 	glfwTerminate();
+#endif
 }
 
 void render_shader( scene* s );
