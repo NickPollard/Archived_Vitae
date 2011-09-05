@@ -9,4 +9,5 @@ bin
 *.so
 *.a
 android/obj
+android/assets
 

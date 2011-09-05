@@ -30,7 +30,22 @@ include ../Makelist_Lua
 SRCS = $(LUA_SRCS:%.c=3rdparty/Lua/lua-5.1.4/src/%.c)
 LOCAL_SRC_FILES := $(SRCS)
 
-#include $(BUILD_SHARED_LIBRARY)
+include $(BUILD_STATIC_LIBRARY)
+
+## Libzip
+include $(CLEAR_VARS)
+
+LOCAL_MODULE    := zip
+LOCAL_ARM_MODE	:= arm
+
+include ../Makelist_Zip
+SRCS = $(ZIP_SRCS:%.c=3rdparty/libzip-0.10/lib/%.c)
+LOCAL_SRC_FILES := $(SRCS)
+
+LOCAL_C_INCLUDES := $(LOCAL_PATH)/3rdparty/libzip-0.10/lib
+# We need ZLIB to compile libzip
+LOCAL_LDLIBS := -L$(SYSROOT)/usr/lib -lz 
+
 include $(BUILD_STATIC_LIBRARY)
 
 ## Vitae
@@ -43,7 +58,7 @@ include ../Makelist
 LOCAL_SRC_FILES := android/jni/android.c
 LOCAL_SRC_FILES	+= $(SRCS)
 LOCAL_LDLIBS    := -llog -landroid -lEGL -lGLESv2
-LOCAL_STATIC_LIBRARIES := android_native_app_glue lua
+LOCAL_STATIC_LIBRARIES := android_native_app_glue lua zip
 
 MY_LUA_PATH := 3rdparty/Lua/lua-5.1.4/src
 MY_GLFW_PATH := 3rdparty/glfw-2.7.2/include

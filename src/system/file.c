@@ -18,27 +18,36 @@
 
 // file open wrapper that asserts on failure
 FILE* vfile_open( const char* path, const char* mode ) {
-   // *** load the ttf file
    FILE* file = fopen( path, mode );
    if ( !file ) {
 	   printf( "Error loading file: \"%s\"\n", path );
 	   assert( file );
+	   return NULL;
    }
    return file;
+}
+
+void vfile_loadAPK( const char* apkPath ) {
+	printf("Loading APK %s", apkPath);
+	APKArchive = zip_open(apkPath, 0, NULL);
+	if (APKArchive == NULL) {
+		printf( "Error loading APK" );
+		assert( 0 );
+		return;
+	}
+}
+
+FILE* vfile_openApk( const char* path, const char* mode ) {
+	assert( 0 ); // NYI
+	return NULL;
 }
 
 // Load the entire contents of a file into a heap-allocated buffer of the same length
 // returns a pointer to that buffer
 // It its the caller's responsibility to free the buffer
 void* vfile_contents( const char* path, int* length ) {
-    FILE *f = fopen( path, "r" );
+    FILE *f = vfile_open( path, "r" );
     void *buffer;
-
-    if (!f) {
-        printf("vfile: Unable to open %s for reading\n", path);
-		assert( 0 );
-        return NULL;
-    }
 
     fseek(f, 0, SEEK_END);
     *length = ftell(f);
