@@ -5,6 +5,9 @@
 #include "system/string.h"
 #include "render/modelinstance.h"
 #include <assert.h>
+#ifdef ANDROID
+#include "zip.h"
+#endif
 // TEMP
 #include "light.h"
 #include "maths.h"
@@ -16,24 +19,63 @@
 // *** File
 //
 
-// file open wrapper that asserts on failure
-FILE* vfile_open( const char* path, const char* mode ) {
-   FILE* file = fopen( path, mode );
-   if ( !file ) {
-	   printf( "Error loading file: \"%s\"\n", path );
-	   assert( file );
-	   return NULL;
-   }
-   return file;
-}
 
-void vfile_loadAPK( const char* apkPath ) {
-	printf("Loading APK %s", apkPath);
-	APKArchive = zip_open(apkPath, 0, NULL);
-	if (APKArchive == NULL) {
+#ifdef ANDROID
+struct zip* apk_archive = NULL;
+
+#define kMaxApkPathLength 128
+char apkPath[kMaxApkPathLength];
+
+#include <jni.h>
+/*
+void java_getApkPath( JNIEnv* env, jobject obj ) {
+    jclass class = (*env)->FindClass(env, "com/inceptix/android/t3d/MainActivity");
+    jmethodID method_getApkPath = (*env)->GetMethodID(env, class, "getApkPath", "(Ljava/lang/String;)Ljava/lang/String;");
+    jobject result = (*env)->CallObjectMethod(env, obj, method_getApkPath);
+
+    const char* str = (*env)->GetStringUTFChars(env,(jstring) result, NULL); // should be released but what a heck, it's a tutorial :)
+    printf("%s\n", str);
+}
+*/
+void vfile_loadApk( const char* path );
+
+void Java_com_vitruvianinteractive_vitae_VNativeActivity_setApkPath( JNIEnv* env, jobject thiz, jstring path ) {
+	printf( "Running setApkPath\n" );
+	const char* aPath = (*env)->GetStringUTFChars( env, path, NULL /* isCopy */ );
+	printf( "Path is: \"%s\"\n", aPath );
+	int length = strlen( aPath );
+	assert( length < (kMaxApkPathLength-1) );
+	memcpy( apkPath, aPath, sizeof( char ) * length );
+	apkPath[length] = '\0';
+	(*env)->ReleaseStringUTFChars( env, path, aPath );
+
+	vfile_loadApk( apkPath );
+}
+/*
+Java_com_example_hellojni_HelloJni_stringFromJNI( JNIEnv* env,
+                                                  jobject thiz )
+{
+    return (*env)->NewStringUTF(env, "Hello from JNI !");
+}
+*/
+
+void vfile_loadApk( const char* path ) {
+	printf( "Loading APK %s", path );
+	apk_archive = zip_open( path, 0, NULL );
+	if ( apk_archive == NULL ) {
 		printf( "Error loading APK" );
 		assert( 0 );
 		return;
+	}
+	//Just for debug, print APK contents
+	int numFiles = zip_get_num_files(apk_archive);
+	for (int i=0; i<numFiles; i++) {
+		const char* name = zip_get_name(apk_archive, i, 0);
+		if (name == NULL) {
+			printf("Error reading zip file name at index %i : %s", zip_strerror(apk_archive));
+			return;
+		}
+		printf("File %i : %s\n", i, name);
 	}
 }
 
@@ -41,11 +83,28 @@ FILE* vfile_openApk( const char* path, const char* mode ) {
 	assert( 0 ); // NYI
 	return NULL;
 }
+#endif
+
+// file open wrapper that asserts on failure
+FILE* vfile_open( const char* path, const char* mode ) {
+#ifdef ANDROID
+	return vfile_openApk( path, mode );
+#endif
+	FILE* file = fopen( path, mode );
+	if ( !file ) {
+		printf( "Error loading file: \"%s\"\n", path );
+		assert( file );
+		return NULL;
+	}
+	return file;
+}
+
 
 // Load the entire contents of a file into a heap-allocated buffer of the same length
 // returns a pointer to that buffer
 // It its the caller's responsibility to free the buffer
 void* vfile_contents( const char* path, int* length ) {
+
     FILE *f = vfile_open( path, "r" );
     void *buffer;
 

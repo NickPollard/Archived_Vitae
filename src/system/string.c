@@ -10,7 +10,8 @@
 const char* string_createCopy( const char* src ) {
 	int length = strlen( src );
 	char* dst = mem_alloc( sizeof( char ) * (length + 1));
-	memcpy( dst, src, length+1 );
+	memcpy( dst, src, length );
+	dst[length] = '\0';
 	return dst;
 }
 

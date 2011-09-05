@@ -57,15 +57,17 @@ LOCAL_MODULE    := vitae
 include ../Makelist
 LOCAL_SRC_FILES := android/jni/android.c
 LOCAL_SRC_FILES	+= $(SRCS)
-LOCAL_LDLIBS    := -llog -landroid -lEGL -lGLESv2
+LOCAL_LDLIBS    := -llog -landroid -lEGL -lGLESv2 -L$(SYSROOT)/usr/lib -lz 
 LOCAL_STATIC_LIBRARIES := android_native_app_glue lua zip
 
 MY_LUA_PATH := 3rdparty/Lua/lua-5.1.4/src
 MY_GLFW_PATH := 3rdparty/glfw-2.7.2/include
+MY_LIBZIP_PATH := 3rdparty/libzip-0.10/lib
 
 LOCAL_C_INCLUDES := $(LOCAL_PATH)/src
 LOCAL_C_INCLUDES += $(LOCAL_PATH)/$(MY_LUA_PATH)
 LOCAL_C_INCLUDES += $(LOCAL_PATH)/$(MY_GLFW_PATH)
+LOCAL_C_INCLUDES += $(LOCAL_PATH)/$(MY_LIBZIP_PATH)
 
 LOCAL_CFLAGS := -std=gnu99
 
