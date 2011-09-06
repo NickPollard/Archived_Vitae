@@ -154,7 +154,7 @@ void handleResize(int w_, int h_) {
 
 // Initialise the Lua subsystem so that it is ready for use
 void engine_initLua(engine* e, int argc, char** argv) {
-	e->lua = vlua_create( e, "SpaceSim/lua/main.lua" );
+	e->lua = vlua_create( e, ASSET_PREFIX"SpaceSim/lua/main.lua" );
 }
 
 // Create a new engine
@@ -178,10 +178,6 @@ void engine_init(engine* e, int argc, char** argv) {
 
 	// *** Init System
 	rand_init();
-	
-	// *** Init Memory
-	transform_initPool();
-	modelInstance_initPool();
 
 	// *** Initialise OpenGL
 	render_init(e, argc, argv);
@@ -198,11 +194,14 @@ void engine_init(engine* e, int argc, char** argv) {
 }
 
 // Initialises the application
+// Static Initialization should happen here
 void init(int argc, char** argv) {
 
 	// *** Initialise Memory
 	mem_init( argc, argv );
-//	debug_init( );
+	// Pools
+	transform_initPool();
+	modelInstance_initPool();
 
 	// *** Static Module initialization
 	scene_static_init();

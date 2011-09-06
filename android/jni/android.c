@@ -265,14 +265,15 @@ void android_init() {
 
 	init(argc, argv);
 
+#if TEST
+	test();
+#endif
+
 	// *** Initialise Engine
 	engine* e = engine_create();
 	engine_init( e, argc, argv );
 	static_engine_hack = e;
 
-#if TEST
-	test();
-#endif
 }
 
 /**

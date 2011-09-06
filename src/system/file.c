@@ -66,7 +66,6 @@ void vfile_loadApk( const char* path ) {
 }
 
 struct zip_file* vfile_openApk( const char* path, const char* mode ) {
-	assert( 0 ); // NYI
 	struct zip_file* file = zip_fopen( apk_archive, path, 0x0 /* Flags */ );
 	if ( !file ) {
 		printf( "Error loading file: \"%s\"\n", path );
@@ -81,21 +80,22 @@ struct zip_file* vfile_openApk( const char* path, const char* mode ) {
 // It its the caller's responsibility to free the buffer
 void* vfile_contentsApk( const char* path, int* length ) {
 
+	printf( "FILE: vfile_contentsApk: Loading file \"%s\"\n", path );
+
     struct zip_file *f = vfile_openApk( path, "r" );
     void *buffer;
-/*
-    zip_fseek( f, 0, SEEK_END);
-    *length = zip_ftell( f);
-    zip_fseek( f, 0, SEEK_SET);
-*/
+	
 	struct zip_stat stat;
+//	printf( "FILE: vfile_contentsApk: stat-ing zip file.\n" );
 	zip_stat( apk_archive, path, 0x0 /* flags */, &stat );
 	*length = (int)stat.size;
-	printf( "Loading file of length %d.\n", *length );
+//	printf( "FILE: Loading file of length %d.\n", *length );
     buffer = mem_alloc( *length+1 );
     *length = zip_fread( f, buffer, *length );
     zip_fclose( f);
     ((char*)buffer)[*length] = '\0'; // TODO should I be doing this? Distinction between binary and ASCII?
+
+	printf( "FILE: vfile_contentsApk: File loaded.\n" );
 
     return buffer;
 }
@@ -347,11 +347,18 @@ sterm* parse_string( const char* string ) {
 	return s;
 }
 
+#define vAssert( a )	if ( !(a) ) { \
+							printf( "Assert Failed: " #a "(%s:%d)\n", __FILE__, __LINE__ ); \
+							assert( (a) ); \
+						}
+
 sterm* parse_file( const char* filename ) {
 	int length = 0;
+	printf( "FILE: Loading File \"%s\" for parsing.\n", filename );
 	char* contents = vfile_contents( filename, &length );
-	assert( contents );
-	assert( length != 0 );
+	vAssert( (contents) );
+	vAssert( (length != 0) );
+	printf( "FILE: File \"%s\" loaded, beginning Parsing.\n", filename );
 	sterm* s = parse_string( contents );
 	mem_free( contents );
 	return s;
@@ -494,6 +501,7 @@ sterm* eval_list( sterm* s ) {
 }
 
 void sterm_free( sterm* s ) {
+	printf( "FILE: sterm_free.\n" );
 	if ( isAtom( s ) ) {
 		mem_free( s->head );
 		mem_free( s );
@@ -745,6 +753,7 @@ void* s_light( sterm* raw_properties ) {
 
 void scene_processTransform( scene* s, transform* parent, transformData* tData ) {
 //	printf( "Creating Transform! Translation: %.2f, %.2f, %.2f\n", tData->translation.val[0], tData->translation.val[1], tData->translation.val[2] );
+	printf( "FILE: scene_processTransform!\n" );
 	transform* t = transform_create();
 	matrix_setTranslation( t->local, &tData->translation );
 	t->parent = parent;
@@ -755,7 +764,7 @@ void scene_processTransform( scene* s, transform* parent, transformData* tData )
 }
 
 void scene_processModel( scene* s, transform* parent, modelData* mData ) {
-//	printf( "Model!\n" );
+	printf( "FILE: scene_processModel!\n" );
 	modelHandle handle = model_getHandleFromFilename( mData->filename );
 	modelInstance* m = modelInstance_create( handle );
 	m->trans = parent;
@@ -763,6 +772,7 @@ void scene_processModel( scene* s, transform* parent, modelData* mData ) {
 }
 
 void scene_processLight( scene* s, transform* parent, sterm* lData ) {
+	printf( "FILE: scene_processLight!\n" );
 	light* l = light_create();
 	vector* v = ((sterm*)lData->tail->head)->head;
 	light_setDiffuse( l, v->val[0], v->val[1], v->val[2], v->val[3] );
@@ -794,7 +804,9 @@ void* s_scene( sterm* raw_scene_objects ) {
 	sterm* scene_objects = eval_list( raw_scene_objects ); // TODO: Could eval_list be part of just eval?
 //	debug_sterm_printList( scene_objects );
 
+	printf( "FILE: calling scene_processObject.\n" );
 	map_vv( scene_objects, scene_processObject, s, NULL );
+	printf( "FILE: called scene_processObject.\n" );
 //	scene_processObjects( s, NULL /*root has no parent*/, scene_objects );
 
 	return s;
@@ -818,11 +830,12 @@ void test_sfile( ) {
 	sterm* p = parse_string( "(a (b c) (d))" );
 	debug_sterm_printList( p );
 
-	printf( "Beginning test: test dat/test2.s\n" );
-	sterm* s = parse_file( "dat/test2.s" );
+	printf( "FILE: Beginning test: test dat/test2.s\n" );
+	sterm* s = parse_file( ASSET_PREFIX"dat/test2.s" );
 	eval( s );
 	sterm_free( s );
 
+	printf( "FILE: Beginning test: transform + translation.\n" );
 	sterm* t = parse_string( "(transform (translation (vector 1.0 1.0 1.0 1.0)))" );
 	sterm* e = eval( t );
 	sterm_free( t );

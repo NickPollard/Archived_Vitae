@@ -400,7 +400,12 @@ void lua_registerFunction( lua_State* l, lua_CFunction func, const char* name ) 
 lua_State* vlua_create( engine* e, const char* filename ) {
 	lua_State* l = lua_open();
 	luaL_openlibs( l );	// Load the Lua libs into our lua l
-	if ( luaL_loadfile( l, filename ) || lua_pcall( l, 0, 0, 0)) {
+
+	// We now use luaL_loadbuffer rather than luaL_loadfile as on Android we need
+	// to go through Libzip to get the data
+	int length;
+	const char* buffer = vfile_contents( filename, &length );
+	if ( luaL_loadbuffer( l, buffer, length, filename ) || lua_pcall( l, 0, 0, 0)) {
 		printf("Error: Failed loading lua from file %s!\n", filename );
 		assert( 0 );
 	}
