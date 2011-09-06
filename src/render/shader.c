@@ -60,7 +60,7 @@ void shaderDictionary_addBinding( shaderDictionary* d, shaderConstantBinding b )
 
 // Find a list of uniform variable names in a shader source file
 void shader_buildDictionary( shaderDictionary* dict, GLuint shader_program, const char* src ) {
-	printf( "SHADER: Building Shader Dictionary.z\n" );
+	printf( "SHADER: Building Shader Dictionary.\n" );
 	// Find a list of uniform variable names
 	inputStream* stream = inputStream_create( src );
 	char* token;

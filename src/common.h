@@ -40,6 +40,12 @@
 
 #endif
 
+#define vAssert( a )	if ( !(a) ) { \
+							printf( "Assert Failed: " #a "(%s:%d)\n", __FILE__, __LINE__ ); \
+							assert( (a) ); \
+						}
+
+
 // types
 //typedef unsigned int uint;
 typedef unsigned int u32;

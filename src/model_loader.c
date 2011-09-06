@@ -19,6 +19,8 @@ model* LoadObj( const char* filename ) {
 	int		normal_indices[kObjMaxIndices];
 	int		uv_indices[kObjMaxIndices];
 	*/
+
+	printf( "MODEL_LOADER: Allocating data buffers.\n" );
 	vector* vertices = mem_alloc( sizeof( vector ) * kObjMaxVertices );
 	vector* normals = mem_alloc( sizeof( vector ) * kObjMaxVertices );
 	vector* uvs = mem_alloc( sizeof( vector ) * kObjMaxVertices );

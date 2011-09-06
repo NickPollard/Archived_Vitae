@@ -103,8 +103,8 @@ model* model_createModel(int meshCount) {
 // If fully smooth-shaded, can just use a single copy of each vertex
 // If not all smooth-shaded, will have to duplicate vertices
 void mesh_buildBuffers( mesh* m ) {
-	assert( !m->vertex_buffer );
-	assert( !m->element_buffer );
+	vAssert( !m->vertex_buffer );
+	vAssert( !m->element_buffer );
 	m->vertex_buffer = mem_alloc( sizeof( vertex ) * m->index_count );
 	m->element_buffer = mem_alloc( sizeof( GLushort ) * m->index_count );
 
@@ -112,19 +112,24 @@ void mesh_buildBuffers( mesh* m ) {
 	if ( all_smooth_shaded ) {
 
 	} else {
-		printf( "Build Buffers.\n" );
+		printf( "MODEL: Build Buffers. Index count: %d\n", m->index_count );
 		// allocate space
 
 		// For each element index
 		// Unroll the vertex/index bindings
 		for ( int i = 0; i < m->index_count; i++ ) {
 			// Copy the required vertex position
-			m->vertex_buffer[i].position = m->verts[m->indices[i]];
+//			printf( "MODEL: i: %d, index: %d.\n", i, m->indices[i] );
+//			m->vertex_buffer[i].position = m->verts[m->indices[i]];
+			memcpy( &m->vertex_buffer[i].position, &m->verts[m->indices[i]], sizeof( vector ));
 			// Copy the required vertex normal
-			m->vertex_buffer[i].normal = m->normals[m->normal_indices[i]];
-			m->vertex_buffer[i].uv = m->uvs[m->uv_indices[i]];
+			//m->vertex_buffer[i].normal = m->normals[m->normal_indices[i]];
+			memcpy( &m->vertex_buffer[i].normal, &m->normals[m->normal_indices[i]], sizeof( vector ));
+			//m->vertex_buffer[i].uv = m->uvs[m->uv_indices[i]];
+			memcpy( &m->vertex_buffer[i].uv, &m->uvs[m->uv_indices[i]], sizeof( vector ));
 			m->element_buffer[i] = i;
 		}
+		printf( "MODEL: Buffers built succesfully.\n" );
 	}
 }
 
