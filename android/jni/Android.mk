@@ -30,6 +30,9 @@ include ../Makelist_Lua
 SRCS = $(LUA_SRCS:%.c=3rdparty/Lua/lua-5.1.4/src/%.c)
 LOCAL_SRC_FILES := $(SRCS)
 
+LOCAL_CFLAGS := -g #debug
+LOCAL_LDFLAGS := -Wl,-Map,xxx.map #create map file
+
 include $(BUILD_STATIC_LIBRARY)
 
 ## Libzip
@@ -45,6 +48,9 @@ LOCAL_SRC_FILES := $(SRCS)
 LOCAL_C_INCLUDES := $(LOCAL_PATH)/3rdparty/libzip-0.10/lib
 # We need ZLIB to compile libzip
 LOCAL_LDLIBS := -L$(SYSROOT)/usr/lib -lz 
+
+LOCAL_CFLAGS := -g #debug
+LOCAL_LDFLAGS := -Wl,-Map,xxx.map #create map file
 
 include $(BUILD_STATIC_LIBRARY)
 
@@ -69,7 +75,9 @@ LOCAL_C_INCLUDES += $(LOCAL_PATH)/$(MY_LUA_PATH)
 LOCAL_C_INCLUDES += $(LOCAL_PATH)/$(MY_GLFW_PATH)
 LOCAL_C_INCLUDES += $(LOCAL_PATH)/$(MY_LIBZIP_PATH)
 
-LOCAL_CFLAGS := -std=gnu99
+LOCAL_CFLAGS := -g #debug
+LOCAL_LDFLAGS := -Wl,-Map,xxx.map #create map file
+LOCAL_CFLAGS += -std=gnu99
 
 include $(BUILD_SHARED_LIBRARY)
 
