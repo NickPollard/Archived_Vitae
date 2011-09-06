@@ -100,6 +100,7 @@ void* vfile_contentsApk( const char* path, int* length ) {
     return buffer;
 }
 
+
 #endif
 
 // file open wrapper that asserts on failure

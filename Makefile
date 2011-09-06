@@ -14,6 +14,8 @@ all : $(EXECUTABLE)
 -include $(SRCS:src/%.c=bin/release/%.d)
 -include $(SRCS:src/%.c=bin/debug/%.d)
 
+.PHONY : clean cleandebug android
+
 clean :
 	@echo "--- Removing Object Files ---"
 	@find bin/release -name '*.o' -exec rm -vf {} \;
@@ -26,6 +28,14 @@ cleandebug :
 	@-rm -vf bin/debug/*/*.o;
 	@echo "--- Removing Debug Executable ---"
 	@-rm -vf $(EXECUTABLE)_debug;
+
+android : 
+	@echo "--- Building Native Code for Android NDK ---"
+	@ndk-build -C android
+	@echo "--- Compiling Android Java and packaging APK ---"
+	@ant debug -q -f android/build.xml
+	@echo "--- Installing APK to device ---"
+	@android/install.sh
 
 $(EXECUTABLE) : $(SRCS) $(OBJS)
 	@echo "- Linking $@"
