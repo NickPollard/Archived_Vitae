@@ -7,6 +7,7 @@
 #include <assert.h>
 #ifdef ANDROID
 #include "zip.h"
+#include <jni.h>
 #endif
 // TEMP
 #include "light.h"
@@ -26,17 +27,6 @@ struct zip* apk_archive = NULL;
 #define kMaxApkPathLength 128
 char apkPath[kMaxApkPathLength];
 
-#include <jni.h>
-/*
-void java_getApkPath( JNIEnv* env, jobject obj ) {
-    jclass class = (*env)->FindClass(env, "com/inceptix/android/t3d/MainActivity");
-    jmethodID method_getApkPath = (*env)->GetMethodID(env, class, "getApkPath", "(Ljava/lang/String;)Ljava/lang/String;");
-    jobject result = (*env)->CallObjectMethod(env, obj, method_getApkPath);
-
-    const char* str = (*env)->GetStringUTFChars(env,(jstring) result, NULL); // should be released but what a heck, it's a tutorial :)
-    printf("%s\n", str);
-}
-*/
 void vfile_loadApk( const char* path );
 
 void Java_com_vitruvianinteractive_vitae_VNativeActivity_setApkPath( JNIEnv* env, jobject thiz, jstring path ) {
@@ -51,13 +41,6 @@ void Java_com_vitruvianinteractive_vitae_VNativeActivity_setApkPath( JNIEnv* env
 
 	vfile_loadApk( apkPath );
 }
-/*
-Java_com_example_hellojni_HelloJni_stringFromJNI( JNIEnv* env,
-                                                  jobject thiz )
-{
-    return (*env)->NewStringUTF(env, "Hello from JNI !");
-}
-*/
 
 void vfile_loadApk( const char* path ) {
 	printf( "Loading APK %s", path );
@@ -67,6 +50,8 @@ void vfile_loadApk( const char* path ) {
 		assert( 0 );
 		return;
 	}
+
+#if 1
 	//Just for debug, print APK contents
 	int numFiles = zip_get_num_files(apk_archive);
 	for (int i=0; i<numFiles; i++) {
@@ -77,19 +62,48 @@ void vfile_loadApk( const char* path ) {
 		}
 		printf("File %i : %s\n", i, name);
 	}
+#endif
 }
 
-FILE* vfile_openApk( const char* path, const char* mode ) {
+struct zip_file* vfile_openApk( const char* path, const char* mode ) {
 	assert( 0 ); // NYI
-	return NULL;
+	struct zip_file* file = zip_fopen( apk_archive, path, 0x0 /* Flags */ );
+	if ( !file ) {
+		printf( "Error loading file: \"%s\"\n", path );
+		assert( file );
+		return NULL;
+	}
+	return file;
 }
+
+// Load the entire contents of a file into a heap-allocated buffer of the same length
+// returns a pointer to that buffer
+// It its the caller's responsibility to free the buffer
+void* vfile_contentsApk( const char* path, int* length ) {
+
+    struct zip_file *f = vfile_openApk( path, "r" );
+    void *buffer;
+/*
+    zip_fseek( f, 0, SEEK_END);
+    *length = zip_ftell( f);
+    zip_fseek( f, 0, SEEK_SET);
+*/
+	struct zip_stat stat;
+	zip_stat( apk_archive, path, 0x0 /* flags */, &stat );
+	*length = (int)stat.size;
+	printf( "Loading file of length %d.\n", *length );
+    buffer = mem_alloc( *length+1 );
+    *length = zip_fread( f, buffer, *length );
+    zip_fclose( f);
+    ((char*)buffer)[*length] = '\0'; // TODO should I be doing this? Distinction between binary and ASCII?
+
+    return buffer;
+}
+
 #endif
 
 // file open wrapper that asserts on failure
 FILE* vfile_open( const char* path, const char* mode ) {
-#ifdef ANDROID
-	return vfile_openApk( path, mode );
-#endif
 	FILE* file = fopen( path, mode );
 	if ( !file ) {
 		printf( "Error loading file: \"%s\"\n", path );
@@ -104,6 +118,9 @@ FILE* vfile_open( const char* path, const char* mode ) {
 // returns a pointer to that buffer
 // It its the caller's responsibility to free the buffer
 void* vfile_contents( const char* path, int* length ) {
+#ifdef ANDROID
+	return vfile_contentsApk( path, length );
+#endif
 
     FILE *f = vfile_open( path, "r" );
     void *buffer;
