@@ -6,8 +6,17 @@
 #include "ticker.h"
 #include "time.h"
 
+#ifdef ANDROID
+// Android Libraries
+#include <android/log.h>
+#include <android_native_app_glue.h>
+#endif
+
 // Lua Libraries
 #include <lua.h>
+
+// EGL
+#include <EGL/egl.h>
 
 #define DEBUG_LUA false
 
@@ -17,6 +26,15 @@ extern float depth;
 
 DEF_LIST(delegate)
 #define kDefaultDelegateSize 16
+
+typedef struct egl_renderer_s {
+    EGLDisplay display;
+    EGLSurface surface;
+    EGLContext context;
+    int32_t width;
+    int32_t height;
+	bool active;
+} egl_renderer;
 
 struct engine_s {
 	// *** General
@@ -33,6 +51,12 @@ struct engine_s {
 	delegatelist* inputs;
 
 	debugtextframe* debugtext;
+
+	bool running;
+#ifdef ANDROID
+	egl_renderer* egl;
+	struct android_app* app;
+#endif
 };
 
 extern engine* static_engine_hack;

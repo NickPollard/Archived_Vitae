@@ -55,7 +55,7 @@ function player_yaw( p, y )
 	vitae_physic_yaw( p.physic, y )
 end
 
-projectile_model = "dat/model/smoothsphere2.obj"
+projectile_model = "assets/dat/model/smoothsphere2.obj"
 function player_fire( p )
 	local g = {}
 	-- Create a new Projectile
@@ -89,7 +89,7 @@ end
 -- Create a player. The player is a specialised form of Gameobject
 function playership_create()
 	vprint( "playership_create" )
-	local p = gameobject_create( "dat/model/ship_hd_2.obj" )
+	local p = gameobject_create( "assets/dat/model/ship_hd_2.obj" )
 
 	--[[
 	vitae_register_keybind( "accelerate", "w", player_accelerate( p, acceleration ) )

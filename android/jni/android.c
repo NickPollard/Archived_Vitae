@@ -256,16 +256,6 @@ void test() {
 	test_string();
 }
 
-typedef struct egl_renderer_s {
-    EGLDisplay display;
-    EGLSurface surface;
-    EGLContext context;
-    int32_t width;
-    int32_t height;
-	bool active;
-} egl_renderer;
-
-
 egl_renderer* egl_init( struct android_app* app ) {
     // initialize OpenGL ES and EGL
 
@@ -332,7 +322,7 @@ egl_renderer* egl_init( struct android_app* app ) {
     egl->surface = surface;
     egl->width = w;
     egl->height = h;
-	egl->active = false;
+	egl->active = true;
 
     // Initialize GL state.
 //    glHint(GL_PERSPECTIVE_CORRECTION_HINT, GL_FASTEST);
@@ -380,9 +370,8 @@ static void handle_cmd( struct android_app* app, int32_t cmd ) {
             // The window is being shown, get it ready.
 			printf( "ANDROID: init window." );
             if ( app->window != NULL ) {
-                app->userData = egl_init( app );
-                draw_frame( app->userData );
-				((egl_renderer*)app->userData)->active = true;
+                ((engine*)app->userData)->egl = egl_init( app );
+                draw_frame( ((engine*)app->userData)->egl );
             }
             break;
 			/*
@@ -415,7 +404,7 @@ static void handle_cmd( struct android_app* app, int32_t cmd ) {
     }
 }
 
-void android_init() {
+void android_init( struct android_app* app ) {
 	printf("Loading Vitae.\n");
 
 	// Android doesn't have commandline args
@@ -432,6 +421,8 @@ void android_init() {
 	engine* e = engine_create();
 	engine_init( e, argc, argv );
 	static_engine_hack = e;
+	app->userData = e;
+	e->app = app;
 
 }
 
@@ -440,41 +431,17 @@ void android_init() {
  * android_native_app_glue.  It runs in its own thread, with its own
  * event loop for receiving input events and doing other things.
  */
-void android_main( struct android_app* state ) {
-//    struct android_engine droid_engine;
-
+void android_main( struct android_app* app ) {
     // Make sure glue isn't stripped.
     app_dummy();
-    state->onAppCmd = handle_cmd;
-/*
-    memset( &droid_engine, 0, sizeof( android_ engine ));
-    state->userData = &droid_engine;
-    state->onAppCmd = engine_handle_cmd;
-	*/
-/*
-    state->onInputEvent = engine_handle_input;
-    engine.app = state;
 
-    // Prepare to monitor accelerometer
-    engine.sensorManager = ASensorManager_getInstance();
-    engine.accelerometerSensor = ASensorManager_getDefaultSensor(engine.sensorManager,
-            ASENSOR_TYPE_ACCELEROMETER);
-    engine.sensorEventQueue = ASensorManager_createEventQueue(engine.sensorManager,
-            state->looper, LOOPER_ID_USER, NULL, NULL);
+    app->onAppCmd = handle_cmd;
 
-    if (state->savedState != NULL) {
-        // We are starting with a previous saved state; restore from it.
-        engine.state = *(struct saved_state*)state->savedState;
-    }
-*/
+	android_init( app );
+
+	engine_run( static_engine_hack );
+#if 0
     // loop waiting for stuff to do.
-
-	android_init();
-/*
-	printf( "Initialise EGL.\n" );
-	egl_renderer* egl = egl_init( state );
-	printf( "EGL Initialised.\n" );
-*/
     while (1) {
         // Read all pending events.
         int ident;
@@ -490,7 +457,7 @@ void android_main( struct android_app* state ) {
 
             // Process this event.
             if (source != NULL) {
-                source->process(state, source);
+                source->process(app, source);
             }
 
             // If a sensor has data, process it now.
@@ -509,27 +476,17 @@ void android_main( struct android_app* state ) {
             }
 
             // Check if we are exiting.
-            if (state->destroyRequested != 0) {
+            if (app->destroyRequested != 0) {
 //                engine_term_display(&engine);
                 return;
 			}
         }
-
-		if ( state->userData && ((egl_renderer*)state->userData)->active )
-			draw_frame( state->userData );
-
 /*
-        if (engine.animating) {
-            // Done with events; draw next animation frame.
-            engine.state.angle += .01f;
-            if (engine.state.angle > 1) {
-                engine.state.angle = 0;
-            }
-
-            // Drawing is throttled to the screen update rate, so there
-            // is no need to do timing here.
-            engine_draw_frame(&engine);
-        }
+		if ( app->userData && ((egl_renderer*)app->userData)->active ) {
+			draw_frame( app->userData );
+			engine_run( static_engine_hack );
+		}
 		*/
     }
+#endif
 }

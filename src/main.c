@@ -53,7 +53,6 @@ int main(int argc, char** argv) {
 	test();
 #endif
 
-//	run();
 	engine_run( e );
 
 	// Exit Gracefully

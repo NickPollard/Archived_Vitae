@@ -101,10 +101,15 @@ void render_set2D() {
 #endif
 }
 
+#ifdef ANDROID
+void render_swapBuffers( egl_renderer* egl ) {
+	printf( "RENDER: Swapping Buffers." );
+    eglSwapBuffers( egl->display, egl->surface );
+	printf( "RENDER: Swapped Buffers." );
+#else
 void render_swapBuffers() {
-#ifndef ANDROID
 	glfwSwapBuffers(); // Send the 3d scene to the screen (flips display buffers)
-#endif
+#endif // ANDROID
 }
 
 // Iterate through each model in the scene

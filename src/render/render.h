@@ -58,7 +58,11 @@ void render_set3D( int w, int h );
 
 void render_clear();
 
+#ifdef ANDROID
+void render_swapBuffers( egl_renderer* egl );
+#else
 void render_swapBuffers();
+#endif
 
 // Iterate through each model in the scene
 // Translate by their transform
