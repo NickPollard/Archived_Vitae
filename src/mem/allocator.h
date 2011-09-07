@@ -5,6 +5,7 @@
 
 //#define MEM_DEBUG_VERBOSE
 #define MEM_GUARD_BLOCK
+#define MEM_FORCE_ALIGNED
 
 typedef struct block_s block;
 
@@ -51,6 +52,7 @@ void mem_init(int argc, char** argv);
 // Allocates *size* bytes from the given heapAllocator *heap*
 // Will crash if out of memory
 void* heap_allocate( heapAllocator* heap, int size );
+void* heap_allocate_aligned( heapAllocator* heap, unsigned int size, unsigned int alignment );
 
 // Find a block of at least *min_size* bytes
 // First version will naively use first found block meeting the criteria

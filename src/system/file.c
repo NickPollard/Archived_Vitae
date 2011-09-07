@@ -748,7 +748,7 @@ void* s_light( sterm* raw_properties ) {
 
 void scene_processTransform( scene* s, transform* parent, transformData* tData ) {
 //	printf( "Creating Transform! Translation: %.2f, %.2f, %.2f\n", tData->translation.val[0], tData->translation.val[1], tData->translation.val[2] );
-//	printf( "FILE: scene_processTransform!\n" );
+	printf( "FILE: scene_processTransform!\n" );
 	transform* t = transform_create();
 	matrix_setTranslation( t->local, &tData->translation );
 	t->parent = parent;
@@ -759,7 +759,7 @@ void scene_processTransform( scene* s, transform* parent, transformData* tData )
 }
 
 void scene_processModel( scene* s, transform* parent, modelData* mData ) {
-//	printf( "FILE: scene_processModel!\n" );
+	printf( "FILE: scene_processModel!\n" );
 	modelHandle handle = model_getHandleFromFilename( mData->filename );
 	modelInstance* m = modelInstance_create( handle );
 	m->trans = parent;
@@ -767,7 +767,7 @@ void scene_processModel( scene* s, transform* parent, modelData* mData ) {
 }
 
 void scene_processLight( scene* s, transform* parent, sterm* lData ) {
-//	printf( "FILE: scene_processLight!\n" );
+	printf( "FILE: scene_processLight!\n" );
 	light* l = light_create();
 	vector* v = ((sterm*)lData->tail->head)->head;
 	light_setDiffuse( l, v->val[0], v->val[1], v->val[2], v->val[3] );
@@ -830,5 +830,6 @@ void test_sfile( ) {
 	sterm_free( t );
 	sterm_free( e );
 */
+	printf( "FILE: Beginning test: test concat\n" );
 	test_s_concat();
 }

@@ -30,6 +30,9 @@ void mem_init(int argc, char** argv) {
 // Allocates *size* bytes from the given heapAllocator *heap*
 // Will crash if out of memory
 void* heap_allocate( heapAllocator* heap, int size ) {
+#ifdef MEM_FORCE_ALIGNED
+	heap_allocate_aligned( heap, size, 4 );
+#else
 #ifdef MEM_DEBUG_VERBOSE
 	printf( "HeapAllocator request for %d bytes.\n", size );
 #endif
@@ -59,8 +62,54 @@ void* heap_allocate( heapAllocator* heap, int size ) {
 	printf("Allocator returned address: %x.\n", (unsigned int)b->data );
 #endif
 	return b->data;
+#endif
 }
 
+// Allocates *size* bytes from the given heapAllocator *heap*
+// Will crash if out of memory
+void* heap_allocate_aligned( heapAllocator* heap, unsigned int size, unsigned int alignment ) {
+#ifdef MEM_DEBUG_VERBOSE
+	printf( "HeapAllocator request for %d bytes, %d byte aligned.\n", size, alignment );
+#endif
+	unsigned int size_original = size;
+	size += alignment;	// Make sure we have enough space to align
+	block* b = heap_findEmptyBlock( heap, size );
+	if ( !b ) {
+//		heap_dumpBlocks( heap );
+		printError( "HeapAllocator out of memory on request for %d bytes. Total size: %d bytes, Used size: %d bytes\n", size, heap->total_size, heap->total_allocated );
+		assert( 0 );
+	}
+	if ( b->size > ( size + sizeof( block ) ) ) {
+//		printf( "Allocator: Splitting Block of size %d into sizes %d ad %d\n", b->size, size, b->size-size );
+		block* remaining = block_create( b->data + size, b->size - size );
+		block_insertAfter( b, remaining );
+		b->size = size;
+		heap->total_allocated += sizeof( block );
+		heap->total_free -= sizeof( block );
+		// Try to merge blocks
+		if ( remaining->next && remaining->next->free )
+			block_merge( heap, remaining, remaining->next );
+	}
+	b->free = false;
+
+	// Move the data pointer on enough to force alignment
+	unsigned int offset = alignment - ((unsigned int)b->data % alignment);
+	b->data = ((uint8_t*)b->data) + offset;
+	b->size -= offset;
+
+	heap->total_allocated += size;
+	heap->total_free -= size;
+
+#ifdef MEM_DEBUG_VERBOSE
+	printf("Allocator returned address: %x.\n", (unsigned int)b->data );
+#endif
+
+	// Ensure we have met our requirements
+	vAssert( (unsigned int)b->data % alignment == 0 );	// Correctly Aligned
+	vAssert( b->size >= size_original );	// Large enough
+
+	return b->data;
+}
 void heap_dumpBlocks( heapAllocator* heap ) {
 	block* b = heap->first;
 	while ( b ) {

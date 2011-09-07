@@ -7,8 +7,6 @@
 // temp
 #include "camera/chasecam.h"
 #include "camera/flycam.h"
-#include "render/modelinstance.h"
-#include "render/texture.h"
 #include "model.h"
 #include "scene.h"
 #include "engine.h"
@@ -16,6 +14,9 @@
 #include "input.h"
 #include "particle.h"
 #include "physic.h"
+#include "render/modelinstance.h"
+#include "render/texture.h"
+#include "system/file.h"
 
 #define MAX_LUA_VECTORS 64
 vector lua_vectors[MAX_LUA_VECTORS];

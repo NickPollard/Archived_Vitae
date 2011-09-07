@@ -144,8 +144,8 @@ model* LoadObj( const char* filename ) {
 		inputStream_nextLine( stream );
 	}
 
-	printf( "Parsed .obj file \"%s\" with %d verts and %d faces.\n", filename, vert_count, index_count / 3 );
-	printf( "Parsed .obj file \"%s\" with %d normals and %d uvs.\n", filename, normal_count, uv_count );
+	printf( "MODEL_LOADER: Parsed .obj file \"%s\" with %d verts and %d faces.\n", filename, vert_count, index_count / 3 );
+	printf( "MODEL_LOADER: Parsed .obj file \"%s\" with %d normals and %d uvs.\n", filename, normal_count, uv_count );
 
 	// Create the Vitae Model
 	model* mdl = model_createModel( 1 ); // Only one mesh by default

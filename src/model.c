@@ -28,9 +28,48 @@ void vgl_vertexDraw(vector* v) {
 }
 */
 
+unsigned int aligned_size( unsigned int size, unsigned int alignment ) {
+	return ( (size / alignment) + (( size % alignment > 0 ) ? 1 : 0) ) * alignment;
+}
+
+void*	advance_align( void* ptr, unsigned int alignment ) {
+	return (void*)aligned_size( (unsigned int)ptr, alignment );
+}
+
 // Create an empty mesh with vertCount distinct vertices and index_count vertex indices
 mesh* mesh_createMesh( int vertCount, int index_count, int normal_count, int uv_count ) {
 
+	// We know that the whole data block will be 4-byte aligned
+	// We need to ensure each sub-array is also 4-byte aligned
+
+	unsigned int data_size = 
+						aligned_size( sizeof( mesh ), 						4 ) +
+						aligned_size( sizeof( vector )		* vertCount,	4 ) +	// Verts
+						aligned_size( sizeof( uint16_t )	* index_count,	4 ) +	// Indices
+						aligned_size( sizeof( vector )		* uv_count,		4 ) +	// UVs
+						aligned_size( sizeof( uint16_t )	* index_count,	4 ) +	// UV indices
+						aligned_size( sizeof( uint16_t )	* index_count,	4 ) +	// Normal indices
+						aligned_size( sizeof( vector )		* normal_count,	4 ) ;	// Normals
+	
+	void* data = mem_alloc( data_size );
+	mesh* m = data;
+
+	// TODO: Align (4-byte);
+//	data += sizeof(mesh);
+	data = advance_align( data + sizeof( mesh ), 4 );
+	m->verts = data;
+	data = advance_align( data + sizeof( m->verts[0] ) * vertCount, 4 );			// Verts
+	m->indices = data;
+	data = advance_align( data + sizeof( m->indices[0] ) * index_count, 4 );	// Indices
+	m->normals = data;
+	data = advance_align( data + sizeof( m->normals[0] ) * normal_count, 4 );	// Normals	
+	m->normal_indices = data;
+	data = advance_align( data + sizeof( m->normal_indices[0] ) * index_count, 4 );	// Normal Indices
+	m->uvs = data;
+	data = advance_align( data + sizeof( m->uvs[0] ) * uv_count, 4 );		// UVs
+	m->uv_indices = data;
+
+	/*
 	void* data = mem_alloc( sizeof( mesh ) +
 						sizeof( vector ) * vertCount +		// Verts
 						sizeof( uint16_t )	 * index_count +	// Indices
@@ -40,6 +79,7 @@ mesh* mesh_createMesh( int vertCount, int index_count, int normal_count, int uv_
 						sizeof( vector ) * normal_count );	// Normals
 	mesh* m = data;
 
+	// TODO: Align (4-byte);
 	data += sizeof(mesh);
 	m->verts = data;
 	data += sizeof( m->verts[0] ) * vertCount;			// Verts
@@ -52,6 +92,7 @@ mesh* mesh_createMesh( int vertCount, int index_count, int normal_count, int uv_
 	m->uvs = data;
 	data += sizeof( m->uvs[0] ) * uv_count;		// UVs
 	m->uv_indices = data;
+*/
 
 	m->vertCount = vertCount;
 	m->index_count = index_count;
@@ -113,23 +154,23 @@ void mesh_buildBuffers( mesh* m ) {
 
 	} else {
 		printf( "MODEL: Build Buffers. Index count: %d\n", m->index_count );
-		// allocate space
-
+		/*
+		printf( "MODEL: Alignment vertex: %d", ((unsigned int)m->vertex_buffer) % sizeof( vertex ) );
+		printf( "MODEL: Alignment vector: %d", ((unsigned int)m->vertex_buffer) % sizeof( vector ) );
+		printf( "MODEL: Alignment verts: %d", ((unsigned int)m->verts) % sizeof( vector ) );
+		printf( "MODEL: Alignment normals: %d", ((unsigned int)m->normals) % sizeof( vector ) );
+		printf( "MODEL: Alignment uvs: %d", ((unsigned int)m->uvs) % sizeof( vector ) );
+		*/
 		// For each element index
 		// Unroll the vertex/index bindings
 		for ( int i = 0; i < m->index_count; i++ ) {
-			// Copy the required vertex position
-//			printf( "MODEL: i: %d, index: %d.\n", i, m->indices[i] );
-//			m->vertex_buffer[i].position = m->verts[m->indices[i]];
-			memcpy( &m->vertex_buffer[i].position, &m->verts[m->indices[i]], sizeof( vector ));
-			// Copy the required vertex normal
-			//m->vertex_buffer[i].normal = m->normals[m->normal_indices[i]];
-			memcpy( &m->vertex_buffer[i].normal, &m->normals[m->normal_indices[i]], sizeof( vector ));
-			//m->vertex_buffer[i].uv = m->uvs[m->uv_indices[i]];
-			memcpy( &m->vertex_buffer[i].uv, &m->uvs[m->uv_indices[i]], sizeof( vector ));
+			// Copy the required vertex position, normal, and uv
+			m->vertex_buffer[i].position = m->verts[m->indices[i]];
+			m->vertex_buffer[i].normal = m->normals[m->normal_indices[i]];
+			m->vertex_buffer[i].uv = m->uvs[m->uv_indices[i]];
 			m->element_buffer[i] = i;
 		}
-		printf( "MODEL: Buffers built succesfully.\n" );
+		printf( "MODEL: Buffers built successfully.\n" );
 	}
 }
 
