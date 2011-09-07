@@ -10,8 +10,6 @@
 								( model (filename assets/dat/model/cityscape.obj)))
 					( transform ( translation (vector -70.0 -2.0 -40.0 1.0))
 								( model (filename assets/dat/model/cityscape.obj)))
-					( transform ( translation (vector 0.0 -10.0 0.0 1.0))
-								( model (filename assets/dat/model/terrain_nurbs.obj)))
 					( transform ( translation (vector -2.0 4.0 6.0 1.0))
 								( model (filename assets/dat/model/textured_cube.obj)))
 					( transform ( translation (vector 4.0 -4.0 6.0 1.0))
