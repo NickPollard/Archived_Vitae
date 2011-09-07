@@ -497,11 +497,11 @@ sterm* eval_list( sterm* s ) {
 
 void sterm_free( sterm* s ) {
 //	printf( "FILE: sterm_free.\n" );
-	if ( isAtom( s ) ) {
+	if ( !isList( s ) ) {
 		mem_free( s->head );
 		mem_free( s );
 	}
-	if ( isList( s ) ) {
+	else {
 		if ( s->tail )
 			sterm_free( s->tail );
 		if ( s->head )
@@ -816,8 +816,8 @@ void test_s_concat() {
 }
 
 void test_sfile( ) {
-	sterm* p = parse_string( "(a (b c) (d))" );
-	debug_sterm_printList( p );
+//	sterm* p = parse_string( "(a (b c) (d))" );
+//	debug_sterm_printList( p );
 
 	printf( "FILE: Beginning test: test dat/test2.s\n" );
 	sterm* s = parse_file( ASSET_PREFIX"dat/test2.s" );
