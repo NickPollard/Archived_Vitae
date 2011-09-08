@@ -147,7 +147,7 @@ void render_init() {
 	shader_init();
 
 	render_buildShaders();
-	vAssert( 0 );
+	
 	// Allocate space for buffers
 	const GLsizei vertex_buffer_size = sizeof( vector ) * MAX_VERTEX_ARRAY_COUNT;
 	const GLsizei element_buffer_size = sizeof( GLushort ) * MAX_VERTEX_ARRAY_COUNT;

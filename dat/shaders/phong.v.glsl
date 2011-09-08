@@ -1,6 +1,5 @@
-#version 110
+//#version 110
 // Phong Vertex Shader
-
 // Attributes
 attribute vec4 position;
 attribute vec4 normal;

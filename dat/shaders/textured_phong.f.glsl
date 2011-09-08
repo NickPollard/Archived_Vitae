@@ -1,5 +1,6 @@
-#version 110
+//#version 110
 // Phong Fragment Shader
+precision mediump float;
 
 // Varying
 varying vec4 frag_position;

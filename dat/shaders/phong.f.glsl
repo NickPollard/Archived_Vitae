@@ -1,11 +1,12 @@
-#version 110
+//#version 110
 // Phong Fragment Shader
+
+precision mediump float;
 
 // Varying
 varying vec4 frag_position;
 varying vec4 frag_normal;
 varying vec2 texcoord;
-
 const int LIGHT_COUNT = 2;
 
 // Uniform
@@ -27,7 +28,6 @@ const vec4 material_specular = vec4( 0.5, 0.5, 0.5, 1.0 );
 const float light_radius = 20.0;
 
 void main() {
-
 	// light-invariant calculations
 	vec4 view_direction = normalize( frag_position );
 
@@ -75,6 +75,7 @@ void main() {
 	gl_FragColor =	total_specular_color * material_specular + 
 					total_diffuse_color * material_diffuse;
 	gl_FragColor.w = 1.0;
-//	gl_FragColor = vec4( texcoord.xy, 0.2, 1.0 );
+
+	gl_FragColor = vec4( texcoord.xy, 0.2, 1.0 );
 
 }
