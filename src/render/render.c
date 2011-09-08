@@ -45,18 +45,6 @@ void render_setBuffers( float* vertex_buffer, int vertex_buffer_size, int* eleme
 	resources.element_buffer = gl_bufferCreate( GL_ELEMENT_ARRAY_BUFFER, element_buffer, element_buffer_size );
 }
 
-void gl_dumpInfoLog( GLuint object, func_getIV getIV, func_getInfoLog getInfoLog ) {
-	GLint length;
-	char* log;
-	getIV( object, GL_INFO_LOG_LENGTH, &length );
-	log = mem_alloc( sizeof( char ) * length );
-	getInfoLog( object, length, NULL, log );
-	printf( "--- Begin Info Log ---\n" );
-	printf( "%s", log );
-	printf( "--- End Info Log ---\n" );
-	mem_free( log );
-}
-
 void render_buildShaders() {
 	resources.shader_default = shader_load( ASSET_PREFIX"dat/shaders/phong.v.glsl", ASSET_PREFIX"dat/shaders/phong.f.glsl" );
 	resources.shader_particle = shader_load( ASSET_PREFIX"dat/shaders/textured_phong.v.glsl", ASSET_PREFIX"dat/shaders/textured_phong.f.glsl" );
@@ -69,11 +57,12 @@ void render_buildShaders() {
 #define GET_UNIFORM_LOCATION_PARTICLE( var ) \
 	resources.uniforms.var = shader_findConstant( mhash( #var ));
 	SHADER_UNIFORMS( GET_UNIFORM_LOCATION_PARTICLE )
-
+/*
 	// Attributes
 	resources.attributes.position = shader_getAttributeLocation( resources.shader_particle->program, "position" );
 	resources.attributes.normal = shader_getAttributeLocation( resources.shader_particle->program, "normal" );
 	resources.attributes.uv = shader_getAttributeLocation( resources.shader_particle->program, "uv" );
+	*/
 }
 
 // Private Function declarations
@@ -103,9 +92,7 @@ void render_set2D() {
 
 #ifdef ANDROID
 void render_swapBuffers( egl_renderer* egl ) {
-	printf( "RENDER: Swapping Buffers." );
     eglSwapBuffers( egl->display, egl->surface );
-	printf( "RENDER: Swapped Buffers." );
 #else
 void render_swapBuffers() {
 	glfwSwapBuffers(); // Send the 3d scene to the screen (flips display buffers)
@@ -131,7 +118,7 @@ void render_lighting( scene* s ) {
 
 // Clear information from last draw
 void render_clear() {
-	glClearColor(0.f, 0.f, 0.0, 0.f);
+	glClearColor(0.1f, 0.f, 0.0, 0.f);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 }
 
@@ -160,6 +147,7 @@ void render_init() {
 	shader_init();
 
 	render_buildShaders();
+	vAssert( 0 );
 	// Allocate space for buffers
 	const GLsizei vertex_buffer_size = sizeof( vector ) * MAX_VERTEX_ARRAY_COUNT;
 	const GLsizei element_buffer_size = sizeof( GLushort ) * MAX_VERTEX_ARRAY_COUNT;

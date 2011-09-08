@@ -14,6 +14,7 @@
 #include "camera/flycam.h"
 #include "render/debugdraw.h"
 #include "render/modelinstance.h"
+#include "render/render.h"
 #include "render/texture.h"
 #include "debug/debug.h"
 #include "debug/debugtext.h"
@@ -232,25 +233,30 @@ void engine_terminate(engine* e) {
 }
 
 void engine_render( engine* e ) {
-	printf(" ENGINE: set3d" );
-	render_set3D( w, h );
-	printf(" ENGINE: clear" );
-	render_clear();
-	printf(" ENGINE: scene" );
-	render( theScene, w, h );
-	printf(" ENGINE: renders" );
-	engine_renderRenders( e );
-	printf(" ENGINE: swap buffers" );
 #ifdef ANDROID
-	if ( e->egl ) // Only do it once we have a valid EGL context
+	if ( e->egl ) {
+//		printf(" ENGINE: set3d" );
+		render_set3D( e->egl->width, e->egl->height );
+//		printf(" ENGINE: clear" );
+		render_clear();
+//		printf(" ENGINE: scene" );
+		render( theScene, w, h );
+//		printf(" ENGINE: renders" );
+		engine_renderRenders( e );
+//		printf(" ENGINE: swap buffers" );
 		render_swapBuffers( e->egl );
+	}
 #else
+	render_set3D( w, h );
+	render_clear();
+	render( theScene, w, h );
+	engine_renderRenders( e );
 	render_swapBuffers();
 #endif // ANDROID
 }
 
 void engine_androidPollEvents( engine* e ) {       
-	printf( "Polling for android events." );
+//	printf( "Polling for android events." );
 	// Read all pending events.
 	int ident;
 	int events;
@@ -289,17 +295,15 @@ void engine_androidPollEvents( engine* e ) {
 // run - executes the main loop of the engine
 void engine_run(engine* e) {
 	//	TextureLibrary* textures = texture_library_create();
-	handleResize(640, 480);	// Call once to init
+#ifndef ANDROID
+	handleResize( 640, 480 );	// Call once to init
+#endif
 	while ( e->running ) {
-		printf( "engine running." );
 #ifdef ANDROID
 		engine_androidPollEvents( e );
 #endif // ANDROID
-		printf( "ENGINE: input" );
 		engine_input( e );
-		printf( "ENGINE: tick" );
 		engine_tick( e );
-		printf( "ENGINE: render" );
 		engine_render( e );
 		e->running = e->running && !input_keyPressed( e->input, KEY_ESC );
 #ifndef ANDROID

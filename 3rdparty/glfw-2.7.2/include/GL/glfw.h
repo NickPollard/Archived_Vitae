@@ -168,6 +168,7 @@ extern "C" {
  // OpenGL ES does not have GLchar
 typedef char GLchar;
 #else
+
 #if defined(__APPLE_CC__)
  #include <OpenGL/gl.h>
  #ifndef GLFW_NO_GLU
@@ -179,7 +180,8 @@ typedef char GLchar;
   #include <GL/glu.h>
  #endif
 #endif
-#endif
+
+#endif // ANDROID
 
 
 /*************************************************************************

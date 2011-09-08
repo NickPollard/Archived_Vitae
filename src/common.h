@@ -28,7 +28,6 @@
 
 #ifdef ANDROID
 
-//#include <GLES/gl.h>
 #define OPENGL_ES
 
 // *** Logging

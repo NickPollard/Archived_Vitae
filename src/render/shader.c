@@ -21,6 +21,7 @@ GLint shader_getUniformLocation( GLuint program, const char* name ) {
 	}
 	assert( location != -1 );
 */
+	printf( "SHADER: Uniform \"%s\" location: 0x%x\n", name, location );
 	return location;
 }
 
@@ -35,9 +36,9 @@ GLint shader_getAttributeLocation( GLuint program, const char* name ) {
 shaderConstantBinding shader_createBinding( GLuint shader_program, const char* variable_type, const char* variable_name ) {
 	// For each one create a binding
 	shaderConstantBinding binding;
-	binding.program_location = shader_getUniformLocation( shader_program, variable_name );
+	binding.program_location = shader_getAttributeLocation( shader_program, variable_name );
 	if ( binding.program_location == -1 )
-		binding.program_location = shader_getAttributeLocation( shader_program, variable_name );
+		binding.program_location = shader_getUniformLocation( shader_program, variable_name );
 	binding.value = map_findOrAdd( shader_constants, mhash( variable_name ));
 
 	// TODO: Make this into an easy lookup table
@@ -60,6 +61,10 @@ void shaderDictionary_addBinding( shaderDictionary* d, shaderConstantBinding b )
 
 // Find a list of uniform variable names in a shader source file
 void shader_buildDictionary( shaderDictionary* dict, GLuint shader_program, const char* src ) {
+	GLint total = -12;
+	glGetProgramiv( shader_program, GL_ACTIVE_UNIFORMS, &total );
+	printf( "SHADER: Active uniforms: %d.\n", total );
+
 	printf( "SHADER: Building Shader Dictionary.\n" );
 	// Find a list of uniform variable names
 	inputStream* stream = inputStream_create( src );
@@ -92,6 +97,26 @@ void shader_buildDictionary( shaderDictionary* dict, GLuint shader_program, cons
 	}
 }
 
+void gl_dumpInfoLog( GLuint object, func_getIV getIV, func_getInfoLog getInfoLog ) {
+	printf( "dump info log." );
+	GLint length = -1;
+	char* log;
+	getIV( object, GL_INFO_LOG_LENGTH, &length );
+	printf( "SHADER: got log length: %d", length );
+
+	if ( length != -1 ) {
+		int max_length = 16 < 10;
+		length = min( length, max_length );
+		log = mem_alloc( sizeof( char ) * length );
+		printf( "SHADER: allocated log." );
+		getInfoLog( object, length, NULL, log );
+		printf( "--- Begin Info Log ---\n" );
+		printf( "%s", log );
+		printf( "--- End Info Log ---\n" );
+		mem_free( log );
+	}
+}
+
 // Compile a GLSL shader object from the given source code
 // Based on code from Joe's Blog: http://duriansoftware.com/joe/An-intro-to-modern-OpenGL.-Chapter-2.2:-Shaders.html
 GLuint shader_compile( GLenum type, const char* path, const char* source ) {
@@ -105,15 +130,19 @@ GLuint shader_compile( GLenum type, const char* path, const char* source ) {
 	}
 
 	glShader = glCreateShader( type );
+	printf( "b" );
 	glShaderSource( glShader, 1, (const GLchar**)&source, &length );
+	printf( "bb" );
 	glCompileShader( glShader );
+	printf( "bbb" );
 
 	glGetShaderiv( glShader, GL_COMPILE_STATUS, &shader_ok );
-	if ( !shader_ok) {
-		printf( "Error: Failed to compile Shader from File %s.\n", path );
+	printf( "bbbb" );
+//	if ( !shader_ok) {
+//		printf( "Error: Failed to compile Shader from File %s.\n", path );
 		gl_dumpInfoLog( glShader, glGetShaderiv,  glGetShaderInfoLog);
-		assert( 0 );
-	}
+//		assert( 0 );
+//	}
 
 	return glShader;
 }
@@ -126,22 +155,26 @@ GLuint shader_link( GLuint vertex_shader, GLuint fragment_shader ) {
 	glAttachShader( program, vertex_shader );
 	glAttachShader( program, fragment_shader );
 	glLinkProgram( program );
+	glValidateProgram( program );
 
 	glGetProgramiv( program, GL_LINK_STATUS, &program_ok );
-	if ( !program_ok ) {
-		printf( "Failed to link shader program.\n" );
+//	if ( !program_ok ) {
+	//	printf( "Failed to link shader program.\n" );
 		gl_dumpInfoLog( program, glGetProgramiv,  glGetProgramInfoLog);
-		glDeleteProgram( program );
-		assert( 0 );
-	}
+	//	glDeleteProgram( program );
+//		assert( 0 );
+//	}
 
 	return program;
 }
 
 // Build a GLSL shader program from given vertex and fragment shader source pathnames
 GLuint	shader_build( const char* vertex_path, const char* fragment_path, const char* vertex_file, const char* fragment_file ) {
+	printf( "SHADER: compiling\n" );
 	GLuint vertex_shader = shader_compile( GL_VERTEX_SHADER, vertex_path, vertex_file );
+	printf( "SHADER: compiling\n" );
 	GLuint fragment_shader = shader_compile( GL_FRAGMENT_SHADER, fragment_path, fragment_file );
+	printf( "SHADER: Linking\n" );
 	GLuint program = shader_link( vertex_shader, fragment_shader );
 	return program;
 }

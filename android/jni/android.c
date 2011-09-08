@@ -264,12 +264,12 @@ egl_renderer* egl_init( struct android_app* app ) {
      * Below, we select an EGLConfig with at least 8 bits per color
      * component compatible with on-screen windows
      */
-	printf( "a" );
     const EGLint attribs[] = {
             EGL_SURFACE_TYPE, EGL_WINDOW_BIT,
             EGL_BLUE_SIZE, 8,
             EGL_GREEN_SIZE, 8,
             EGL_RED_SIZE, 8,
+			EGL_RENDERABLE_TYPE, EGL_OPENGL_ES2_BIT,
             EGL_NONE
     };
     EGLint w, h, dummy, format;
@@ -279,7 +279,6 @@ egl_renderer* egl_init( struct android_app* app ) {
     EGLContext context;
 
     EGLDisplay display = eglGetDisplay( EGL_DEFAULT_DISPLAY );
-	printf( "aa" );
 
     eglInitialize( display, 0, 0 );
 
@@ -293,30 +292,36 @@ egl_renderer* egl_init( struct android_app* app ) {
      * As soon as we picked a EGLConfig, we can safely reconfigure the
      * ANativeWindow buffers to match, using EGL_NATIVE_VISUAL_ID. */
     eglGetConfigAttrib( display, config, EGL_NATIVE_VISUAL_ID, &format );
-	printf( "aaa" );
+    
+	EGLint type = 0x0;
+	eglGetConfigAttrib( display, config, EGL_RENDERABLE_TYPE, &type );
+	printf( "EGL_RENDERABLE_TYPE: 0x%x", type );
+	printf( "EGL_OPENGL_ES_BIT: 0x%x", EGL_OPENGL_ES_BIT );
+	printf( "EGL_OPENGL_ES2_BIT: 0x%x", EGL_OPENGL_ES2_BIT );
 
-	vAssert( app->window );
 
     ANativeWindow_setBuffersGeometry( app->window, 0, 0, format );
 
-	printf( "b" );
     surface = eglCreateWindowSurface( display, config, app->window, NULL );
-	printf( "bb" );
-    context = eglCreateContext(display, config, NULL, NULL);
-	printf( "bbb" );
+   
+	// Ask for a GLES2 context	
+	const EGLint context_attribs[] = {
+		EGL_CONTEXT_CLIENT_VERSION, 2, 
+		EGL_NONE
+	};
+
+    context = eglCreateContext(display, config, NULL, context_attribs );
 
     if ( eglMakeCurrent(display, surface, surface, context) == EGL_FALSE ) {
         LOGW( "Unable to eglMakeCurrent" );
         return NULL;
     }
 
-	printf( "aaaa" );
     eglQuerySurface(display, surface, EGL_WIDTH, &w);
     eglQuerySurface(display, surface, EGL_HEIGHT, &h);
 
 	egl_renderer* egl = mem_alloc( sizeof( egl_renderer ));
 
-	printf( "aaaaa" );
     egl->display = display;
     egl->context = context;
     egl->surface = surface;
@@ -370,8 +375,8 @@ static void handle_cmd( struct android_app* app, int32_t cmd ) {
             // The window is being shown, get it ready.
 			printf( "ANDROID: init window." );
             if ( app->window != NULL ) {
-                ((engine*)app->userData)->egl = egl_init( app );
-                draw_frame( ((engine*)app->userData)->egl );
+                app->userData = egl_init( app );
+                draw_frame( app->userData );
             }
             break;
 			/*
@@ -411,18 +416,21 @@ void android_init( struct android_app* app ) {
 	int argc = 0;
 	char** argv = NULL;
 
-	init(argc, argv);
+    EGLDisplay display = eglGetDisplay( EGL_DEFAULT_DISPLAY );
+    eglInitialize( display, 0, 0 );
 
 #if TEST
 	test();
 #endif
 
 	// *** Initialise Engine
+	// already created
 	engine* e = engine_create();
 	engine_init( e, argc, argv );
 	static_engine_hack = e;
-	app->userData = e;
+	e->egl = app->userData;
 	e->app = app;
+	app->userData = e;
 
 }
 
@@ -435,58 +443,35 @@ void android_main( struct android_app* app ) {
     // Make sure glue isn't stripped.
     app_dummy();
 
+	// Static init - includes Memory init
+	init( 0, NULL );
+
+
     app->onAppCmd = handle_cmd;
+	app->userData = NULL;
+
+	printf( "ANDROID: Waiting to init EGL.\n" );
+
+	// We want to wait until we have an EGL context before we kick off
+	// This is so that OpenGL can init correctly
+	while ( !((engine*)app->userData) ) {
+		//		sleep( 1 );
+		int ident;
+		int events;
+		struct android_poll_source* source;
+
+
+		while (( ident = ALooper_pollAll(0, NULL, &events, (void**)&source )) >= 0) {
+			// Process this event.
+			if (source != NULL) {
+				source->process( app, source );
+			}
+		}
+	}
+	printf( "ANDROID: EGL initialised, away we go!" );
 
 	android_init( app );
 
 	engine_run( static_engine_hack );
-#if 0
-    // loop waiting for stuff to do.
-    while (1) {
-        // Read all pending events.
-        int ident;
-        int events;
-        struct android_poll_source* source;
-
-        // If not animating, we will block forever waiting for events.
-        // If animating, we loop until all events are read, then continue
-        // to draw the next frame of animation.
-        //while ((ident=ALooper_pollAll(engine.animating ? 0 : -1, NULL, &events,
-        while ((ident=ALooper_pollAll(0, NULL, &events,
-                (void**)&source)) >= 0) {
-
-            // Process this event.
-            if (source != NULL) {
-                source->process(app, source);
-            }
-
-            // If a sensor has data, process it now.
-            if (ident == LOOPER_ID_USER) {
-				/*
-                if (engine.accelerometerSensor != NULL) {
-                    ASensorEvent event;
-                    while (ASensorEventQueue_getEvents(engine.sensorEventQueue,
-                            &event, 1) > 0) {
-                        LOGI("accelerometer: x=%f y=%f z=%f",
-                                event.acceleration.x, event.acceleration.y,
-                                event.acceleration.z);
-                    }
-                }
-				*/
-            }
-
-            // Check if we are exiting.
-            if (app->destroyRequested != 0) {
-//                engine_term_display(&engine);
-                return;
-			}
-        }
-/*
-		if ( app->userData && ((egl_renderer*)app->userData)->active ) {
-			draw_frame( app->userData );
-			engine_run( static_engine_hack );
-		}
-		*/
-    }
-#endif
+	
 }
