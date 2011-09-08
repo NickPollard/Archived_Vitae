@@ -181,7 +181,11 @@ void engine_init(engine* e, int argc, char** argv) {
 	rand_init();
 
 	// *** Initialise OpenGL
-//	render_init();
+	// On Android this is done in response to window events
+	// see Android.c
+#ifndef ANDROID
+	render_init();
+#endif // ANDROID
 
 	// *** Start up Core Systems
 	//font_init();
