@@ -3,7 +3,9 @@
 #include "common.h"
 #include "render/texture.h"
 //---------------------
-#include "external/util.h"
+//#include "external/util.h"
+#include "system/file.h"
+#include "mem/allocator.h"
 
 // GLFW Libraries
 #include <GL/glfw.h>
@@ -15,6 +17,46 @@ void texture_init() {
 	g_texture_default = texture_loadTGA( "assets/img/test64rgba.tga" );
 	printf( "Loaded default texture as OpenGL texture name: %d\n", g_texture_default );
 }
+
+
+uint8_t* read_tga( const char* file, int* w, int* h ) {
+	int length = 0;
+	u8* image_data = vfile_contents( file, &length );
+	if ( image_data == 0 ) {
+		printf( "Error reading TGA.\n" );
+		vAssert( 0 );
+	}
+
+	tga_header* header = (tga_header*)image_data;
+	u8* body = image_data + sizeof(tga_header);
+
+	static const int kTrueColor_Uncompressed = 0x2;
+	if ( header->image_type != kTrueColor_Uncompressed ) {
+		printf( "Error. TGA is not uncompressed and in TrueColor.\n" );
+		assert( 0 );
+	}
+
+	*w = header->width;
+	*h = header->height;
+	u8* id_field = body;
+	(void)id_field;
+	u8* color_map = body + header->id_length;
+	tga_colormap_spec* mapspec = (tga_colormap_spec*)header->color_map_spec;
+	u8* pixels = color_map + mapspec->entry_count;
+
+	printf( "TGA dimensions: %d * %d.\n", *w, *h );
+	printf( "TGA bitdepth: %d.\n", header->pixel_depth );
+
+	int size = (*w) * (*h) * ( header->pixel_depth / 8 );
+	uint8_t* tex = mem_alloc( size );
+	memcpy( tex, pixels, size );
+
+	printf( "TGA data segment size: %d\n", size );
+	mem_free( image_data );
+	return tex;
+}
+
+
 
 GLuint texture_loadTGA( const char* filename ) {
 	GLuint tex;
@@ -36,18 +78,18 @@ GLuint texture_loadTGA( const char* filename ) {
     glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_WRAP_T,     GL_CLAMP_TO_EDGE );
 
 	// TODO: ANDROID
-#ifndef OPENGL_ES
+//#ifndef OPENGL_ES
 	glTexImage2D( GL_TEXTURE_2D,
 		   			0,			// No Mipmaps for now
-					GL_RGBA8,	// 3-channel, 8-bits per channel (32-bit stride)
+					GL_RGBA,	// 3-channel, 8-bits per channel (32-bit stride)
 					(GLsizei)w, (GLsizei)h,
 					0,			// Border, unused
-					GL_BGRA,		// TGA uses BGR order internally
+					GL_RGBA,		// TGA uses BGR order internally
 					GL_UNSIGNED_BYTE,	// 8-bits per channel
 					img );
-#endif
+//#endif
 
-	free(img);	// OpenGL copies the data, so we can free this here
+	mem_free( img );	// OpenGL copies the data, so we can free this here
 
 	return tex;
 }

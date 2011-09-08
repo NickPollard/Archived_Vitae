@@ -115,7 +115,7 @@ void* vfile_contentsApk( const char* path, int* length ) {
 	*length = (int)stat.size;
     buffer = mem_alloc( *length+1 );
     *length = zip_fread( f, buffer, *length );
-    zip_fclose( f);
+    zip_fclose( f );
     ((char*)buffer)[*length] = '\0'; // TODO should I be doing this? Distinction between binary and ASCII?
 
     return buffer;
