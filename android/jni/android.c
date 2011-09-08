@@ -285,6 +285,7 @@ egl_renderer* egl_init( struct android_app* app ) {
     /* Here, the application chooses the configuration it desires. In this
      * sample, we have a very simplified selection process, where we pick
      * the first EGLConfig that matches our criteria */
+	printf( "EGL Choosing Config." );
     eglChooseConfig( display, attribs, &config, 1, &numConfigs );
 
     /* EGL_NATIVE_VISUAL_ID is an attribute of the EGLConfig that is
@@ -293,15 +294,10 @@ egl_renderer* egl_init( struct android_app* app ) {
      * ANativeWindow buffers to match, using EGL_NATIVE_VISUAL_ID. */
     eglGetConfigAttrib( display, config, EGL_NATIVE_VISUAL_ID, &format );
     
-	EGLint type = 0x0;
-	eglGetConfigAttrib( display, config, EGL_RENDERABLE_TYPE, &type );
-	printf( "EGL_RENDERABLE_TYPE: 0x%x", type );
-	printf( "EGL_OPENGL_ES_BIT: 0x%x", EGL_OPENGL_ES_BIT );
-	printf( "EGL_OPENGL_ES2_BIT: 0x%x", EGL_OPENGL_ES2_BIT );
-
-
+	printf( "EGL Setting Window Buffers." );
     ANativeWindow_setBuffersGeometry( app->window, 0, 0, format );
 
+	printf( "EGL Creating Surface." );
     surface = eglCreateWindowSurface( display, config, app->window, NULL );
    
 	// Ask for a GLES2 context	
@@ -310,6 +306,7 @@ egl_renderer* egl_init( struct android_app* app ) {
 		EGL_NONE
 	};
 
+	printf( "EGL Creating Context." );
     context = eglCreateContext(display, config, NULL, context_attribs );
 
     if ( eglMakeCurrent(display, surface, surface, context) == EGL_FALSE ) {
@@ -327,13 +324,6 @@ egl_renderer* egl_init( struct android_app* app ) {
     egl->surface = surface;
     egl->width = w;
     egl->height = h;
-	egl->active = true;
-
-    // Initialize GL state.
-//    glHint(GL_PERSPECTIVE_CORRECTION_HINT, GL_FASTEST);
-//    glEnable(GL_CULL_FACE);
-//    glShadeModel(GL_SMOOTH);
-    glDisable(GL_DEPTH_TEST);
 
     return egl;
 }
@@ -353,9 +343,28 @@ static void draw_frame( egl_renderer* egl ) {
     glClearColor( 0.5f, 1.f, 0.5f, 1.f);
     glClear(GL_COLOR_BUFFER_BIT);
 
-    eglSwapBuffers(egl->display, egl->surface);
+    eglSwapBuffers( egl->display, egl->surface );
 }
 
+
+/**
+ * Tear down the EGL context currently associated with the display.
+ */
+static void egl_term( egl_renderer* egl ) {
+    if ( egl->display != EGL_NO_DISPLAY ) {
+        eglMakeCurrent( egl->display, EGL_NO_SURFACE, EGL_NO_SURFACE, EGL_NO_CONTEXT );
+        if ( egl->context != EGL_NO_CONTEXT ) {
+            eglDestroyContext( egl->display, egl->context );
+        }
+        if (egl->surface != EGL_NO_SURFACE) {
+            eglDestroySurface( egl->display, egl->surface );
+        }
+        eglTerminate( egl->display );
+    }
+    egl->display = EGL_NO_DISPLAY;
+    egl->context = EGL_NO_CONTEXT;
+    egl->surface = EGL_NO_SURFACE;
+}
 
 /**
  * Process the next main command.
@@ -375,61 +384,65 @@ static void handle_cmd( struct android_app* app, int32_t cmd ) {
             // The window is being shown, get it ready.
 			printf( "ANDROID: init window." );
             if ( app->window != NULL ) {
-                app->userData = egl_init( app );
-                draw_frame( app->userData );
+				printf( "ANDROID: init EGL." );
+				vAssert( app->userData );
+				engine* e = app->userData;
+                e->egl = egl_init( app );
+				e->active = true;
+				render_init();
+                draw_frame( ((engine*)app->userData)->egl );
             }
             break;
-			/*
         case APP_CMD_TERM_WINDOW:
-            // The window is being hidden or closed, clean it up.
-            engine_term_display(engine);
-            break;
-        case APP_CMD_GAINED_FOCUS:
-            // When our app gains focus, we start monitoring the accelerometer.
-            if (engine->accelerometerSensor != NULL) {
-                ASensorEventQueue_enableSensor(engine->sensorEventQueue,
-                        engine->accelerometerSensor);
-                // We'd like to get 60 events per second (in us).
-                ASensorEventQueue_setEventRate(engine->sensorEventQueue,
-                        engine->accelerometerSensor, (1000L/60)*1000);
-            }
-            break;
-        case APP_CMD_LOST_FOCUS:
-            // When our app loses focus, we stop monitoring the accelerometer.
-            // This is to avoid consuming battery while not being used.
-            if (engine->accelerometerSensor != NULL) {
-                ASensorEventQueue_disableSensor(engine->sensorEventQueue,
-                        engine->accelerometerSensor);
-            }
-            // Also stop animating.
-            engine->animating = 0;
-            engine_draw_frame(engine);
-            break;
-			*/
-    }
+			{
+				printf( "ANDROID: term window." );
+				// The window is being hidden or closed, clean it up.
+				engine* e = app->userData;
+				egl_term( e->egl );
+				e->active = false;
+				break;
+			}
+		case APP_CMD_GAINED_FOCUS:
+			{
+				printf( "ANDROID: gain focus." );
+				/*
+				// When our app gains focus, we start monitoring the accelerometer.
+				if (engine->accelerometerSensor != NULL) {
+				ASensorEventQueue_enableSensor(engine->sensorEventQueue,
+				engine->accelerometerSensor);
+				// We'd like to get 60 events per second (in us).
+				ASensorEventQueue_setEventRate(engine->sensorEventQueue,
+				engine->accelerometerSensor, (1000L/60)*1000);
+				}
+				*/
+				break;
+			}
+		case APP_CMD_LOST_FOCUS:
+			{
+				printf( "ANDROID: lost focus." );
+				/*
+				// When our app loses focus, we stop monitoring the accelerometer.
+				// This is to avoid consuming battery while not being used.
+				if (engine->accelerometerSensor != NULL) {
+				ASensorEventQueue_disableSensor(engine->sensorEventQueue,
+				engine->accelerometerSensor);
+				}
+				*/
+				break;
+			}
+	}
 }
 
 void android_init( struct android_app* app ) {
 	printf("Loading Vitae.\n");
 
-	// Android doesn't have commandline args
-	int argc = 0;
-	char** argv = NULL;
-
-    EGLDisplay display = eglGetDisplay( EGL_DEFAULT_DISPLAY );
-    eglInitialize( display, 0, 0 );
-
-#if TEST
-	test();
-#endif
-
 	// *** Initialise Engine
 	// already created
 	engine* e = engine_create();
-	engine_init( e, argc, argv );
 	static_engine_hack = e;
-	e->egl = app->userData;
+	e->egl = NULL;
 	e->app = app;
+	e->active = false;
 	app->userData = e;
 
 }
@@ -443,18 +456,19 @@ void android_main( struct android_app* app ) {
     // Make sure glue isn't stripped.
     app_dummy();
 
+    app->onAppCmd = handle_cmd;
+	app->userData = NULL;
+
 	// Static init - includes Memory init
 	init( 0, NULL );
 
-
-    app->onAppCmd = handle_cmd;
-	app->userData = NULL;
+	android_init( app );
 
 	printf( "ANDROID: Waiting to init EGL.\n" );
 
 	// We want to wait until we have an EGL context before we kick off
 	// This is so that OpenGL can init correctly
-	while ( !((engine*)app->userData) ) {
+	while ( !((engine*)app->userData)->egl ) {
 		//		sleep( 1 );
 		int ident;
 		int events;
@@ -470,7 +484,16 @@ void android_main( struct android_app* app ) {
 	}
 	printf( "ANDROID: EGL initialised, away we go!" );
 
-	android_init( app );
+	// Android doesn't have commandline args
+	int argc = 0;
+	char** argv = NULL;
+	// Can't init engine until EGL is initialised
+	vAssert( ((engine*)app->userData)->egl );
+	engine_init( app->userData, argc, argv );
+
+#if TEST
+	test();
+#endif
 
 	engine_run( static_engine_hack );
 	

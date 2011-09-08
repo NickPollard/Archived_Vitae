@@ -33,7 +33,6 @@ typedef struct egl_renderer_s {
     EGLContext context;
     int32_t width;
     int32_t height;
-	bool active;
 } egl_renderer;
 #endif
 
@@ -54,6 +53,7 @@ struct engine_s {
 	debugtextframe* debugtext;
 
 	bool running;
+	bool active;
 #ifdef ANDROID
 	egl_renderer* egl;
 	struct android_app* app;

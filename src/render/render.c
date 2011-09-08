@@ -110,7 +110,6 @@ void render_scene(scene* s) {
 
 void render_lighting( scene* s ) {
 	// Ambient Light
-//	glLightModelfv(GL_LIGHT_MODEL_AMBIENT, s->ambient);
 
 	// Point Lights	
 	light_renderLights( s->light_count, s->lights );

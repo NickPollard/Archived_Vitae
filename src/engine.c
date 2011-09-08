@@ -181,7 +181,7 @@ void engine_init(engine* e, int argc, char** argv) {
 	rand_init();
 
 	// *** Initialise OpenGL
-	render_init(e, argc, argv);
+//	render_init();
 
 	// *** Start up Core Systems
 	//font_init();
@@ -235,15 +235,10 @@ void engine_terminate(engine* e) {
 void engine_render( engine* e ) {
 #ifdef ANDROID
 	if ( e->egl ) {
-//		printf(" ENGINE: set3d" );
 		render_set3D( e->egl->width, e->egl->height );
-//		printf(" ENGINE: clear" );
 		render_clear();
-//		printf(" ENGINE: scene" );
 		render( theScene, w, h );
-//		printf(" ENGINE: renders" );
 		engine_renderRenders( e );
-//		printf(" ENGINE: swap buffers" );
 		render_swapBuffers( e->egl );
 	}
 #else
@@ -300,15 +295,19 @@ void engine_run(engine* e) {
 #ifndef ANDROID
 	handleResize( 640, 480 );	// Call once to init
 #endif
+	printf( "running: %d, active %d.\n", e->running, e->active );
 	while ( e->running ) {
 #ifdef ANDROID
 		engine_androidPollEvents( e );
+		if ( e->active ) {
 #endif // ANDROID
 		engine_input( e );
 		engine_tick( e );
 		engine_render( e );
 		e->running = e->running && !input_keyPressed( e->input, KEY_ESC );
-#ifndef ANDROID
+#ifdef ANDROID
+		}
+#else
 		e->running = e->running && glfwGetWindowParam( GLFW_OPENED );
 #endif // ANDROID
 	}
