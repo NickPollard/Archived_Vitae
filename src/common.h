@@ -55,12 +55,6 @@ typedef const char* String;
 
 // *** Asset & Resource Loading
 
-#ifdef ANDROID
-#define ASSET_PREFIX "assets/"
-#else
-#define ASSET_PREFIX
-#endif
-
 // Printing
 #define printError( format, args... ) 	{ \
 											printf( "%sError%s: ", TERM_RED, TERM_WHITE ); \

@@ -46,8 +46,8 @@ void render_setBuffers( float* vertex_buffer, int vertex_buffer_size, int* eleme
 }
 
 void render_buildShaders() {
-	resources.shader_default = shader_load( ASSET_PREFIX"dat/shaders/phong.v.glsl", ASSET_PREFIX"dat/shaders/phong.f.glsl" );
-	resources.shader_particle = shader_load( ASSET_PREFIX"dat/shaders/textured_phong.v.glsl", ASSET_PREFIX"dat/shaders/textured_phong.f.glsl" );
+	resources.shader_default = shader_load( "dat/shaders/phong.v.glsl", "dat/shaders/phong.f.glsl" );
+	resources.shader_particle = shader_load( "dat/shaders/textured_phong.v.glsl", "dat/shaders/textured_phong.f.glsl" );
 
 #define GET_UNIFORM_LOCATION( var ) \
 	resources.uniforms.var = shader_findConstant( mhash( #var )); \

@@ -153,7 +153,7 @@ void handleResize(int w_, int h_) {
 
 // Initialise the Lua subsystem so that it is ready for use
 void engine_initLua(engine* e, int argc, char** argv) {
-	e->lua = vlua_create( e, ASSET_PREFIX"SpaceSim/lua/main.lua" );
+	e->lua = vlua_create( e, "SpaceSim/lua/main.lua" );
 }
 
 // Create a new engine

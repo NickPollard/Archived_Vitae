@@ -20,6 +20,25 @@
 // *** File
 //
 
+#define kVfileMaxPathLength 128
+
+void vfile_assetPath( char* asset_path, const char* path ) {
+	memset( asset_path, 0, kVfileMaxPathLength );
+#ifdef ANDROID
+	const char* prefix = "assets/";
+	int prefix_length = strlen( prefix );
+	vAssert(( strlen( path ) + prefix_length ) < kVfileMaxPathLength );
+	strcpy( asset_path, prefix );
+	strcpy( asset_path + prefix_length, path );
+#else
+	vAssert( strlen( path ) < kVfileMaxPathLength );
+	strcpy( asset_path, path );
+#endif // ANDROID
+}
+
+//
+// *** Android specific functions
+//
 
 #ifdef ANDROID
 struct zip* apk_archive = NULL;
@@ -51,7 +70,7 @@ void vfile_loadApk( const char* path ) {
 		return;
 	}
 
-#if 1
+#if 0
 	//Just for debug, print APK contents
 	int numFiles = zip_get_num_files(apk_archive);
 	for (int i=0; i<numFiles; i++) {
@@ -66,9 +85,14 @@ void vfile_loadApk( const char* path ) {
 }
 
 struct zip_file* vfile_openApk( const char* path, const char* mode ) {
-	struct zip_file* file = zip_fopen( apk_archive, path, 0x0 /* Flags */ );
+	char asset_path[kVfileMaxPathLength];
+	vfile_assetPath( asset_path, path );
+
+	printf( "VFILE: Opening file from apk: \"%s\"\n", asset_path );
+
+	struct zip_file* file = zip_fopen( apk_archive, asset_path, 0x0 /* Flags */ );
 	if ( !file ) {
-		printf( "Error loading file: \"%s\"\n", path );
+		printf( "Error loading file: \"%s\"\n", asset_path );
 		assert( file );
 		return NULL;
 	}
@@ -79,23 +103,20 @@ struct zip_file* vfile_openApk( const char* path, const char* mode ) {
 // returns a pointer to that buffer
 // It its the caller's responsibility to free the buffer
 void* vfile_contentsApk( const char* path, int* length ) {
-
-//	printf( "FILE: vfile_contentsApk: Loading file \"%s\"\n", path );
-
     struct zip_file *f = vfile_openApk( path, "r" );
     void *buffer;
-	
+
+	// We need to get the asset path so we can zip_stat the length
+	char asset_path[kVfileMaxPathLength];
+	vfile_assetPath( asset_path, path );
+
 	struct zip_stat stat;
-//	printf( "FILE: vfile_contentsApk: stat-ing zip file.\n" );
-	zip_stat( apk_archive, path, 0x0 /* flags */, &stat );
+	zip_stat( apk_archive, asset_path, 0x0 /* flags */, &stat );
 	*length = (int)stat.size;
-//	printf( "FILE: Loading file of length %d.\n", *length );
     buffer = mem_alloc( *length+1 );
     *length = zip_fread( f, buffer, *length );
     zip_fclose( f);
     ((char*)buffer)[*length] = '\0'; // TODO should I be doing this? Distinction between binary and ASCII?
-
-//	printf( "FILE: vfile_contentsApk: File loaded.\n" );
 
     return buffer;
 }
@@ -105,9 +126,12 @@ void* vfile_contentsApk( const char* path, int* length ) {
 
 // file open wrapper that asserts on failure
 FILE* vfile_open( const char* path, const char* mode ) {
-	FILE* file = fopen( path, mode );
+	char asset_path[kVfileMaxPathLength];
+	vfile_assetPath( asset_path, path );
+
+	FILE* file = fopen( asset_path, mode );
 	if ( !file ) {
-		printf( "Error loading file: \"%s\"\n", path );
+		printf( "Error loading file: \"%s\"\n", asset_path );
 		assert( file );
 		return NULL;
 	}
@@ -820,7 +844,7 @@ void test_sfile( ) {
 //	debug_sterm_printList( p );
 
 	printf( "FILE: Beginning test: test dat/test2.s\n" );
-	sterm* s = parse_file( ASSET_PREFIX"dat/test2.s" );
+	sterm* s = parse_file( "dat/test2.s" );
 	eval( s );
 	sterm_free( s );
 /*

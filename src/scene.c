@@ -97,7 +97,7 @@ void scene_free( scene* s ) {
 scene* test_scene_init( engine* e ) { 
 //	LoadObj( "dat/model/cube.obj" );
 
-	sterm* stree = parse_file( ASSET_PREFIX"dat/scene/testscene.s" );
+	sterm* stree = parse_file( "dat/scene/testscene.s" );
 	scene* s = eval( stree );
 	sterm_free( stree );
 	s->eng = e;
