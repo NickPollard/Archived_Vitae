@@ -160,7 +160,7 @@ void transform_printDebug( transform* t, debugtextframe* f ) {
 			t->world[3][2] );
 #endif
 #ifndef ANDROID	
-	PrintDebugText( f, string );
+//	PrintDebugText( f, string );
 #endif
 }
 

@@ -1,6 +1,8 @@
 //#version 110
 // Phong Fragment Shader
+#ifdef GL_ES
 precision mediump float;
+#endif
 
 // Varying
 varying vec4 frag_position;
@@ -77,6 +79,6 @@ void main() {
 //					total_diffuse_color * material_diffuse;
 
 	gl_FragColor = texture2D( tex, texcoord ) * frag_color;
-
+//	gl_FragColor = vec4( 1.0, 0.0, 0.0, 1.0 );
 	
 }

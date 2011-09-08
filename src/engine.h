@@ -10,13 +10,12 @@
 // Android Libraries
 #include <android/log.h>
 #include <android_native_app_glue.h>
+// EGL
+#include <EGL/egl.h>
 #endif
 
 // Lua Libraries
 #include <lua.h>
-
-// EGL
-#include <EGL/egl.h>
 
 #define DEBUG_LUA false
 
@@ -27,6 +26,7 @@ extern float depth;
 DEF_LIST(delegate)
 #define kDefaultDelegateSize 16
 
+#ifdef ANDROID
 typedef struct egl_renderer_s {
     EGLDisplay display;
     EGLSurface surface;
@@ -35,6 +35,7 @@ typedef struct egl_renderer_s {
     int32_t height;
 	bool active;
 } egl_renderer;
+#endif
 
 struct engine_s {
 	// *** General

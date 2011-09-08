@@ -4,6 +4,7 @@
 //---------------------
 #include <assert.h>
 #include <stdio.h>
+#include <stdint.h>
 
 #define static_heap_size (64 << 20) // In MegaBytes
 heapAllocator* static_heap = NULL;
@@ -31,7 +32,7 @@ void mem_init(int argc, char** argv) {
 // Will crash if out of memory
 void* heap_allocate( heapAllocator* heap, int size ) {
 #ifdef MEM_FORCE_ALIGNED
-	heap_allocate_aligned( heap, size, 4 );
+	return heap_allocate_aligned( heap, size, 4 );
 #else
 #ifdef MEM_DEBUG_VERBOSE
 	printf( "HeapAllocator request for %d bytes.\n", size );
@@ -114,7 +115,8 @@ void* heap_allocate_aligned( heapAllocator* heap, unsigned int size, unsigned in
 	heap->total_free -= size;
 
 	// Ensure we have met our requirements
-	vAssert( (unsigned int)b->data % alignment == 0 );	// Correctly Aligned
+	unsigned int align_offset = ((unsigned int)b->data) % alignment;
+	vAssert( align_offset == 0 );	// Correctly Aligned
 	vAssert( b->size >= size_original );	// Large enough
 
 #ifdef MEM_DEBUG_VERBOSE

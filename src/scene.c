@@ -159,7 +159,7 @@ void scene_debugTransforms( scene* s ) {
 	char string[128];
 	sprintf( string, "transform_count: %d", s->transform_count );
 #ifndef ANDROID
-	PrintDebugText( s->debugtext, string );
+//	PrintDebugText( s->debugtext, string );
 #endif
 	for (int i = 0; i < s->transform_count; i++) {
 		transform_printDebug( s->transforms[i], s->debugtext );
@@ -170,7 +170,7 @@ void scene_debugLights( scene* s ) {
 	char string[128];
 	sprintf( string, "light_count: %d", s->light_count );
 #ifndef ANDROID
-	PrintDebugText( s->debugtext, string );
+//	PrintDebugText( s->debugtext, string );
 #endif
 }
 // Process input for the scene

@@ -255,6 +255,7 @@ void engine_render( engine* e ) {
 #endif // ANDROID
 }
 
+#ifdef ANDROID
 void engine_androidPollEvents( engine* e ) {       
 //	printf( "Polling for android events." );
 	// Read all pending events.
@@ -291,6 +292,7 @@ void engine_androidPollEvents( engine* e ) {
 		}
 	}
 }
+#endif // ANDROID
 
 // run - executes the main loop of the engine
 void engine_run(engine* e) {
