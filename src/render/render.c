@@ -142,6 +142,10 @@ void render_init() {
 	glEnable(GL_BLEND);
 	glBlendFunc( GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA );	// Standard Alpha Blending
 
+	// Backface Culling
+	glFrontFace( GL_CW );
+	glEnable( GL_CULL_FACE );
+
 	texture_init();
 
 	shader_init();
