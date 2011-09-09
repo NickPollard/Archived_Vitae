@@ -110,7 +110,7 @@ function init()
 	starting = true
 end
 
-camera = "chase"
+camera = "fly"
 flycam = nil
 chasecam = nil
 
@@ -122,7 +122,7 @@ function start()
 	player_ship = playership_create()
 	chasecam = vchasecam_follow( engine, player_ship.transform )
 	flycam = vflycam( engine )
-	vscene_setCamera( chasecam )
+	vscene_setCamera( flycam )
 end
 
 wave_interval_time = 10.0

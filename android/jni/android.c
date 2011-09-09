@@ -31,9 +31,11 @@
 // *** Vitae Includes
 #include "common.h"
 #include "engine.h"
+#include "input.h"
 #include "maths.h"
 #include "particle.h"
 #include "mem/allocator.h"
+#include "render/render.h"
 #include "system/file.h"
 #include "system/hash.h"
 #include "system/string.h"
@@ -153,87 +155,7 @@ static void engine_draw_frame(struct android_engine* engine) {
     eglSwapBuffers(engine->display, engine->surface);
 }
 
-/**
- * Tear down the EGL context currently associated with the display.
- */
-static void engine_term_display(struct android_engine* engine) {
-    if (engine->display != EGL_NO_DISPLAY) {
-        eglMakeCurrent(engine->display, EGL_NO_SURFACE, EGL_NO_SURFACE, EGL_NO_CONTEXT);
-        if (engine->context != EGL_NO_CONTEXT) {
-            eglDestroyContext(engine->display, engine->context);
-        }
-        if (engine->surface != EGL_NO_SURFACE) {
-            eglDestroySurface(engine->display, engine->surface);
-        }
-        eglTerminate(engine->display);
-    }
-    engine->animating = 0;
-    engine->display = EGL_NO_DISPLAY;
-    engine->context = EGL_NO_CONTEXT;
-    engine->surface = EGL_NO_SURFACE;
-}
-#endif
-/**
- * Process the next input event.
- */
-#if 0
-static int32_t engine_handle_input(struct android_app* app, AInputEvent* event) {
-    struct android_engine* engine = (struct android_engine*)app->userData;
-    if (AInputEvent_getType(event) == AINPUT_EVENT_TYPE_MOTION) {
-        engine->animating = 1;
-        engine->state.x = AMotionEvent_getX(event, 0);
-        engine->state.y = AMotionEvent_getY(event, 0);
-        return 1;
-    }
-    return 0;
-}
 
-/**
- * Process the next main command.
- */
-static void engine_handle_cmd(struct android_app* app, int32_t cmd) {
-    struct android_engine* engine = (struct android_engine*)app->userData;
-    switch (cmd) {
-        case APP_CMD_SAVE_STATE:
-            // The system has asked us to save our current state.  Do so.
-            engine->app->savedState = malloc(sizeof(struct saved_state));
-            *((struct saved_state*)engine->app->savedState) = engine->state;
-            engine->app->savedStateSize = sizeof(struct saved_state);
-            break;
-        case APP_CMD_INIT_WINDOW:
-            // The window is being shown, get it ready.
-            if (engine->app->window != NULL) {
-                engine_init_display(engine);
-                engine_draw_frame(engine);
-            }
-            break;
-        case APP_CMD_TERM_WINDOW:
-            // The window is being hidden or closed, clean it up.
-            engine_term_display(engine);
-            break;
-        case APP_CMD_GAINED_FOCUS:
-            // When our app gains focus, we start monitoring the accelerometer.
-            if (engine->accelerometerSensor != NULL) {
-                ASensorEventQueue_enableSensor(engine->sensorEventQueue,
-                        engine->accelerometerSensor);
-                // We'd like to get 60 events per second (in us).
-                ASensorEventQueue_setEventRate(engine->sensorEventQueue,
-                        engine->accelerometerSensor, (1000L/60)*1000);
-            }
-            break;
-        case APP_CMD_LOST_FOCUS:
-            // When our app loses focus, we stop monitoring the accelerometer.
-            // This is to avoid consuming battery while not being used.
-            if (engine->accelerometerSensor != NULL) {
-                ASensorEventQueue_disableSensor(engine->sensorEventQueue,
-                        engine->accelerometerSensor);
-            }
-            // Also stop animating.
-            engine->animating = 0;
-            engine_draw_frame(engine);
-            break;
-    }
-}
 #endif
 
 #define TEST true
@@ -269,6 +191,7 @@ egl_renderer* egl_init( struct android_app* app ) {
             EGL_BLUE_SIZE, 8,
             EGL_GREEN_SIZE, 8,
             EGL_RED_SIZE, 8,
+			EGL_DEPTH_SIZE, 8,
 			EGL_RENDERABLE_TYPE, EGL_OPENGL_ES2_BIT,
             EGL_NONE
     };
@@ -433,6 +356,23 @@ static void handle_cmd( struct android_app* app, int32_t cmd ) {
 	}
 }
 
+/**
+ * Process the next input event.
+ */
+static int32_t handle_input(struct android_app* app, AInputEvent* event) {
+    engine* e = app->userData;
+	vAssert( e );
+	vAssert( e->input );
+    if ( AInputEvent_getType(event) == AINPUT_EVENT_TYPE_MOTION ) {
+		int x = AMotionEvent_getX( event, 0 );
+		int y = AMotionEvent_getY( event, 0 );
+		//printf( "Touch input. %d %d\n", x, y );
+		input_registerTouch( e->input, x, y );
+        return 1;
+    }
+    return 0;
+}
+
 void android_init( struct android_app* app ) {
 	printf("Loading Vitae.\n");
 
@@ -457,6 +397,7 @@ void android_main( struct android_app* app ) {
     app_dummy();
 
     app->onAppCmd = handle_cmd;
+	app->onInputEvent = handle_input;
 	app->userData = NULL;
 
 	// Static init - includes Memory init

@@ -126,6 +126,10 @@ typedef int keybind;
 // *** keybind defines
 #define INPUT_MAX_KEYBINDS 128
 
+#ifdef ANDROID
+#define TOUCH
+#endif
+
 // Keys stored as a packed bitmask
 // ie. each byte stores 8 flags for 8 keys respectively
 typedef struct input_data_s {
@@ -133,12 +137,22 @@ typedef struct input_data_s {
 	char mouse;
 	int mouseX;
 	int mouseY;
+#ifdef TOUCH
+	bool	touched;
+	int32_t touchX;
+	int32_t touchY;
+#endif
 } input_data;
 
 struct input_s {
 	int active;	// Index into the data array, alternates between 0 and 1
 	input_data data[INPUT_DATA_FRAMES]; // This frame, last frame - switch on every frame
 	int keybinds[INPUT_MAX_KEYBINDS];
+#ifdef TOUCH
+	int32_t touchX;
+	int32_t touchY;
+	bool	touched;
+#endif
 };
 
 // constructor
@@ -181,4 +195,11 @@ bool input_mousePressed( input* in, int button );
 bool input_mouseReleased( input* in, int button );
 void input_getMouseMove( input* in, int* x, int* y );
 void input_getMouseDrag( input* in, int button, int* x, int* y );
+
+// *** Touch
+#ifdef TOUCH
+void input_registerTouch( input* in, int x, int y );
+void input_getTouchDrag( input* in, int* x, int* y );
+#endif
+
 #endif // __INPUT_H__

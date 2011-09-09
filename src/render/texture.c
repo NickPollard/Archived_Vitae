@@ -36,20 +36,35 @@ uint8_t* read_tga( const char* file, int* w, int* h ) {
 		assert( 0 );
 	}
 
-	*w = header->width;
-	*h = header->height;
+	int width = header->width;
+	int height = header->height;
 	u8* id_field = body;
 	(void)id_field;
 	u8* color_map = body + header->id_length;
 	tga_colormap_spec* mapspec = (tga_colormap_spec*)header->color_map_spec;
 	u8* pixels = color_map + mapspec->entry_count;
 
-	printf( "TGA dimensions: %d * %d.\n", *w, *h );
+	printf( "TGA dimensions: %d * %d.\n", width, height );
 	printf( "TGA bitdepth: %d.\n", header->pixel_depth );
 
-	int size = (*w) * (*h) * ( header->pixel_depth / 8 );
+	int pixel_bytes = header->pixel_depth / 8;
+	int size = width * height * pixel_bytes;
 	uint8_t* tex = mem_alloc( size );
 	memcpy( tex, pixels, size );
+
+	bool swizzle = true;
+
+	if ( swizzle ) {
+		// Switch from BGRA to RGBA
+		for ( int i = 0; i < width * height; i++ ) {
+			uint8_t tmp = tex[i * pixel_bytes + 0];
+			tex[i * pixel_bytes + 0] = tex[i * pixel_bytes + 2];
+			tex[i * pixel_bytes + 2] = tmp;
+		}
+	}
+
+	*w = width;
+	*h = height;
 
 	printf( "TGA data segment size: %d\n", size );
 	mem_free( image_data );

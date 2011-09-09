@@ -52,7 +52,11 @@ void flycam_input( void* data, input* in  ) {
 
 	int x = 0, y = 0;
 	// Mouse drag coord is from TopLeft, ie. +x = right, +y = down
+#ifndef ANDROID
 	input_getMouseDrag( in, BUTTON_LEFT, &x, &y );
+#else
+	input_getTouchDrag( in, &x, &y );
+#endif
 	// We cross assign x and y, as an x pan is a pan around the x axis, 
 	// aka a pitch with is from vertical movement
 	fly_in.pan.coord.y = (float)x * mouseScale;

@@ -118,27 +118,57 @@ void input_getMouseDrag( input* in, int button, int* x, int* y ) {
 	}
 }
 
+#ifdef TOUCH
+void input_registerTouch( input* in, int x, int y ) {
+	in->touchX = x;
+	in->touchY = y;
+	in->touched = true;
+}
+
+void input_getTouchDrag( input* in, int* x, int* y ) {
+	*x = 0;
+	*y = 0;
+	if ( in->data[in->active].touched && in->data[in->active ^ 0x1].touched ) {
+		*x = in->data[in->active].touchX - in->data[in->active ^ 0x1].touchX;
+		*y = in->data[in->active].touchY - in->data[in->active ^ 0x1].touchY;
+	}
+}
+#endif
+
 // tick the input, recording this frames input data from devices
 void input_tick( input* in, float dt ) {
 	in->active = in->active ^ 0x1;		// flip the key buffers (we effectively double buffer the key state)
 
-	// Store current state of keys
 #ifndef ANDROID	
+	// Store current state of keys
 	for ( int i = 0; i < ( KEY_COUNT / 8 ); i++ ) {
 		in->data[in->active].keys[i] = 0x0;
 		for ( int j = 0; j < 8 ; j++ ) {
 			in->data[in->active].keys[i] |= ( 0x1 & glfwGetKey( i * 8 + j ) ) << j;
 		}
 	}
-#endif
 
 	// Store current state of mouse
 	in->data[in->active].mouse = 0x0;
-#ifndef ANDROID	
 	for ( int i = 0; i < 2; i++ )
 		in->data[in->active].mouse |= ( 0x1 & glfwGetMouseButton( i )) << i;
 
 	glfwGetMousePos( &in->data[in->active].mouseX, &in->data[in->active].mouseY );
+#endif
+
+#ifdef TOUCH
+	// TODO - probably need to sync this properly with Android input thread?
+	// Store current state of touch
+	in->data[in->active].touched = in->touched;
+	in->data[in->active].touchX = in->touchX;
+	in->data[in->active].touchY = in->touchY;
+	in->touched = false;
+	in->touchX = 0;
+	in->touchY = 0;
+
+	int x, y;
+	input_getTouchDrag( in, &x, &y );
+	printf( "Touch Drag: %d, %d", x, y );
 #endif
 }
 
