@@ -19,15 +19,23 @@ terrain* terrain_create() {
 
 // The procedural function
 float terrain_sample( float u, float v ) {
-	return sin( u ) * sin( v );
-//	return u + v;
-/*
+//	return sin( u ) * sin( v );
+
+	/*
 	return (
 			0.5 * sin( u ) * sin( v ) +
 			sin( u / 3.f ) * sin( v / 3.f ) +
 			5 * sin( u / 10.f ) * sin( v / 10.f ) * sin( u / 10.f ) * sin( v / 10.f )
 		   );
 		   */
+
+	u += sin( v / 5.f );
+
+	return (
+				cos( fclamp( u / 4.f, -PI/2.f, PI/2.f )) * 
+				-(3.f * cos( u / 2.f ))
+		   );
+
 }
 
 void terrain_updateIntervals( terrain* t ) {

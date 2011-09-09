@@ -11,6 +11,11 @@ bool f_eq( float a, float b ) {
 	return fabsf( a - b ) < epsilon;
 }
 
+float fclamp( float a, float bottom, float top ) {
+	return fminf( fmaxf( a, bottom), top);
+}
+
+
 int max( int a, int b ) {
 	return a > b ? a : b;
 }
