@@ -19,7 +19,12 @@ terrain* terrain_create() {
 
 // The procedural function
 float terrain_sample( float u, float v ) {
-	return 0.f;
+//	return sin( u ) * sin( v );
+
+	return (
+			0.5 * sin( u ) * sin( v ) +
+			sin( u / 3.f ) * sin( v / 3.f )
+		   );
 }
 
 void terrain_updateIntervals( terrain* t ) {
@@ -68,12 +73,19 @@ void terrain_calculateBuffers( terrain* t ) {
    */
 
 	int vert_index = 0;
-	for ( float u = -t->u_radius; u <= t->u_radius; u+= t->u_interval ) {
-		for ( float v = -t->v_radius; v <= t->v_radius; v+= t->v_interval ) {
+	for ( float u = -t->u_radius; u < t->u_radius + ( 0.5 * t->u_interval ); u+= t->u_interval ) {
+		for ( float v = -t->v_radius; v < t->v_radius + ( 0.5 * t->v_interval ); v+= t->v_interval ) {
 			float h = terrain_sample( u, v );
 			verts[vert_index++] = Vector( u, h, v, 1.f );
+			vAssert( u != 0.f || v != 0.f || h != 0.f );
+			
+			printf( "vert %d: Vert:", vert_index-1 );
+			vector_print( &verts[vert_index-1] );
+			printf( "\n" );
 		}
 	}
+
+	assert( vert_index == vert_count );
 
 	int element_count = 0;
 	// Calculate elements
@@ -107,14 +119,12 @@ void terrain_calculateBuffers( terrain* t ) {
 			t->element_buffer[element_count++] = bl;
 		}
 	}
-
-	/*
+/*
 	// Test print
 	for ( int i = 0; i < t->index_count; i++ ) {
 		printf( "Index %d: %u.\n", i, t->element_buffer[i] );
 	}
-	*/
-
+*/
 	// For each element index
 	// Unroll the vertex/index bindings
 	for ( int i = 0; i < t->index_count; i++ ) {
@@ -124,19 +134,20 @@ void terrain_calculateBuffers( terrain* t ) {
 		t->vertex_buffer[i].uv = verts[t->element_buffer[i]];
 		t->element_buffer[i] = i;
 	}
-	
+/*	
 	// Test print
 	for ( int i = 0; i < t->index_count; i++ ) {
-		printf( "Index %d: Vert.", i );
+		printf( "Index %d: Vert:", i );
 		vector_print( &t->vertex_buffer[i].position );
 		printf( "\n" );
 	}
-
+*/
 	mem_free( verts );
 }
 
 // Send the buffers to the GPU
-void terrain_render( terrain* t ) {
+void terrain_render( void* data ) {
+	terrain* t = data;
 	glDepthMask( GL_TRUE );
 	// Copy our data to the GPU
 	// There are now <index_count> vertices, as we have unrolled them
@@ -174,8 +185,8 @@ void terrain_delete( terrain* t ) {
 
 void test_terrain() {
 	terrain* t = terrain_create();
-	terrain_setSize( t, 5.f, 5.f );
-	terrain_setResolution( t, 3, 3 );
+	terrain_setSize( t, 15.f, 15.f );
+	terrain_setResolution( t, 30, 30 );
 	terrain_calculateBuffers( t );
 	terrain_delete( t );
 //	vAssert( 0 );

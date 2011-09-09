@@ -10,6 +10,7 @@
 #include "model.h"
 #include "particle.h"
 #include "scene.h"
+#include "terrain.h"
 #include "transform.h"
 #include "camera/flycam.h"
 #include "render/debugdraw.h"
@@ -64,28 +65,11 @@ void test_engine_init( engine* e ) {
 //	theScene->debugtext = e->debugtext;
 	lua_setScene( e->lua, theScene );
 
-#if 0
-	particleEmitter* p = particleEmitter_create();
-	p->lifetime = 4.f;
-	p->size = property_create( 2 );
-	property_addf( p->size, 0.f, 0.2f );
-	property_addf( p->size, 2.f, 1.f );
-	p->color = property_create( 5 );
-	property_addv( p->color, 0.f, Vector( 1.f, 0.f, 0.f, 0.f ));
-	property_addv( p->color, 0.3f, Vector( 1.f, 0.5f, 0.f, 1.f ));
-	property_addv( p->color, 1.0f, Vector( 0.5f, 0.5f, 0.5f, 0.8f ));
-	property_addv( p->color, 4.f, Vector( 0.5f, 0.5f, 0.5f, 0.f ));
-	p->velocity = Vector( 0.f, 0.5f, 0.f, 0.f );
-	p->spawn_interval = 0.1f;
-	p->spawn_box = Vector( 0.3f, 0.f, 0.3f, 0.f );
-	p->trans = transform_create();
-	vector v = Vector( 2.f, 0.f, 2.f, 0.f );
-	transform_setWorldSpacePosition( p->trans, &v );
-	p->flags = p->flags | kParticleWorldSpace;
-	p->texture_diffuse = texture_loadTGA( "assets/img/star_rgba64.tga" );
-	engine_addRender( e, p, particleEmitter_render );
-	startTick( e, p, particleEmitter_tick );
-#endif
+	terrain* t = terrain_create();
+	terrain_setSize( t, 15.f, 15.f );
+	terrain_setResolution( t, 30, 30 );
+	terrain_calculateBuffers( t );
+	engine_addRender( e, (void*)t, terrain_render );
 }
 
 /*
