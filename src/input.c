@@ -3,6 +3,7 @@
 #include "common.h"
 #include "input.h"
 //---------------------
+#include "maths.h"
 #include "mem/allocator.h"
 
 // GLFW Libraries
@@ -133,6 +134,30 @@ void input_getTouchDrag( input* in, int* x, int* y ) {
 		*y = in->data[in->active].touchY - in->data[in->active ^ 0x1].touchY;
 	}
 }
+
+bool input_touchPressedInternal( input* in ) {
+	return ( in->data[in->active].touched && !(in->data[in->active ^ 0x1].touched) );
+}
+
+bool input_touchPressed( input* in, int x_min, int y_min, int x_max, int y_max ) {
+	int x = in->data[in->active].touchX;
+	int y = in->data[in->active].touchY;
+	return input_touchPressedInternal( in ) &&
+		 	contains( x, x_min, x_max ) &&
+		 	contains( y, y_min, y_max );
+}
+
+bool input_touchHeldInternal( input* in ) {
+	return in->data[in->active].touched;
+}
+
+bool input_touchHeld( input* in, int x_min, int y_min, int x_max, int y_max ) {
+	int x = in->data[in->active].touchX;
+	int y = in->data[in->active].touchY;
+	return input_touchHeldInternal( in ) &&
+		 	contains( x, x_min, x_max ) &&
+		 	contains( y, y_min, y_max );
+}
 #endif
 
 // tick the input, recording this frames input data from devices
@@ -157,6 +182,7 @@ void input_tick( input* in, float dt ) {
 #endif
 
 #ifdef TOUCH
+	printf( "INPUT: tick" );
 	// TODO - probably need to sync this properly with Android input thread?
 	// Store current state of touch
 	in->data[in->active].touched = in->touched;
@@ -165,10 +191,11 @@ void input_tick( input* in, float dt ) {
 	in->touched = false;
 	in->touchX = 0;
 	in->touchY = 0;
-
-	int x, y;
-	input_getTouchDrag( in, &x, &y );
-	printf( "Touch Drag: %d, %d", x, y );
+/*
+	if ( input_touchPressedInternal( in ) ) {
+		printf( "Touched! %d %d\n", in->data[in->active].touchX, in->data[in->active].touchY );
+	}
+	*/
 #endif
 }
 

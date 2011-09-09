@@ -10,6 +10,7 @@ SRCS =	src/camera.c \
 		src/particle.c \
 		src/physic.c \
 		src/scene.c \
+		src/terrain.c \
 		src/ticker.c \
 		src/time.c \
 		src/transform.c \

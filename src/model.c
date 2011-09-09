@@ -174,21 +174,6 @@ void mesh_buildBuffers( mesh* m ) {
 	}
 }
 
-#define VERTEX_ATTRIBS( f ) \
-	f( position ) \
-	f( normal ) \
-	f( uv )
-
-#define VERTEX_ATTRIB_DISABLE_ARRAY( attrib ) \
-	glDisableVertexAttribArray( attrib );
-
-#define VERTEX_ATTRIB_LOOKUP( attrib ) \
-	GLint attrib = *(shader_findConstant( mhash( #attrib )));
-
-#define VERTEX_ATTRIB_POINTER( attrib ) \
-	glVertexAttribPointer( attrib, /*vec4*/ 4, GL_FLOAT, /*Normalized?*/GL_FALSE, sizeof( vertex ), (void*)offsetof( vertex, attrib) ); \
-	glEnableVertexAttribArray( attrib );
-
 // Draw the verts of a mesh to the openGL buffer
 void mesh_drawVerts( mesh* m ) {
 	glDepthMask( GL_TRUE );

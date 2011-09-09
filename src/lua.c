@@ -240,6 +240,55 @@ int LUA_keyHeld( lua_State* l ) {
 	return 0;
 }
 
+#ifdef ANDROID
+int LUA_touchPressed( lua_State* l ) {
+	if ( lua_isnumber( l, 2 ) && 
+	 	lua_isnumber( l, 3 ) &&
+	 	lua_isnumber( l, 4 ) &&
+	 	lua_isnumber( l, 5 ) )
+	{
+		input* in = lua_toptr( l, 1 );
+		int x_min = lua_tonumber( l, 2 );
+		int y_min = lua_tonumber( l, 3 );
+		int x_max = lua_tonumber( l, 4 );
+		int y_max = lua_tonumber( l, 5 );
+		bool pressed = input_touchPressed( in, x_min, y_min, x_max, y_max );
+		lua_pushboolean( l, pressed );
+		return 1;
+	}
+	printf( "Error: Lua: Invalid touch bounds specified" );
+	return 0;
+}
+
+int LUA_touchHeld( lua_State* l ) {
+	if ( lua_isnumber( l, 2 ) && 
+	 	lua_isnumber( l, 3 ) &&
+	 	lua_isnumber( l, 4 ) &&
+	 	lua_isnumber( l, 5 ) )
+	{
+		input* in = lua_toptr( l, 1 );
+		int x_min = lua_tonumber( l, 2 );
+		int y_min = lua_tonumber( l, 3 );
+		int x_max = lua_tonumber( l, 4 );
+		int y_max = lua_tonumber( l, 5 );
+		bool pressed = input_touchHeld( in, x_min, y_min, x_max, y_max );
+		lua_pushboolean( l, pressed );
+		return 1;
+	}
+	printf( "Error: Lua: Invalid touch bounds specified" );
+	return 0;
+}
+#else
+int LUA_touchHeld( lua_State* l ) {
+	lua_pushboolean( l, false );
+	return 1;
+}
+int LUA_touchPressed( lua_State* l ) {
+	lua_pushboolean( l, false );
+	return 1;
+}
+#endif // ANDROID
+
 int LUA_transform_yaw( lua_State* l ) {
 	transform* t = lua_toptr( l, 1 );
 	float yaw = lua_tonumber( l, 2 );
@@ -419,6 +468,8 @@ lua_State* vlua_create( engine* e, const char* filename ) {
 	// *** Input
 	lua_registerFunction( l, LUA_keyPressed, "vkeyPressed" );
 	lua_registerFunction( l, LUA_keyHeld, "vkeyHeld" );
+	lua_registerFunction( l, LUA_touchPressed, "vtouchPressed" );
+	lua_registerFunction( l, LUA_touchHeld, "vtouchHeld" );
 	// *** Scene
 	lua_registerFunction( l, LUA_createModelInstance, "vcreateModelInstance" );
 	lua_registerFunction( l, LUA_createphysic, "vcreatePhysic" );

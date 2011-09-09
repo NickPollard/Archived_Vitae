@@ -42,6 +42,8 @@ int max( int a, int b );
 int min( int a, int b );
 
 int clamp( int a, int bottom, int top );
+bool contains( int a, int min, int max );
+
 float lerp( float a, float b, float factor );
 // map a point to the range from begin-end, returning a value from 0.f to 1.f
 float map_range( float point, float begin, float end );

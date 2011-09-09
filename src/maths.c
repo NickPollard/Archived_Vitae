@@ -22,6 +22,10 @@ int clamp( int a, int bottom, int top ) {
 	return min( max( a, bottom), top);
 }
 
+bool contains( int a, int min, int max ) {
+	return ( a >= min && a < max );
+}
+
 float lerp( float a, float b, float factor ) {
 	return a * (1.f - factor) + b * factor;
 }

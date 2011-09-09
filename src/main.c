@@ -11,6 +11,7 @@
 #include "engine.h"
 #include "maths.h"
 #include "particle.h"
+#include "terrain.h"
 #include "mem/allocator.h"
 #include "system/file.h"
 #include "system/hash.h"
@@ -35,6 +36,8 @@ void test() {
 	test_property();
 
 	test_string();
+
+	test_terrain();
 }
 
 // ###################################

@@ -146,8 +146,8 @@ void particleEmitter_render( void* data ) {
 		particle_quad( p, &vertex_buffer[i*4], &p->particles[particle_index].position, size, color );
 		assert( i*6 + 5 < kmax_particle_verts );
 		// TODO: Indices can be initialised once
-		element_buffer[i*6+0] = i*4+0;
-		element_buffer[i*6+1] = i*4+1;
+		element_buffer[i*6+0] = i*4+1;
+		element_buffer[i*6+1] = i*4+0;
 		element_buffer[i*6+2] = i*4+2;
 		element_buffer[i*6+3] = i*4+0;
 		element_buffer[i*6+4] = i*4+1;

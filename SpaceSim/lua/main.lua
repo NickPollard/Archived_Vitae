@@ -110,7 +110,7 @@ function init()
 	starting = true
 end
 
-camera = "fly"
+camera = "chase"
 flycam = nil
 chasecam = nil
 
@@ -122,7 +122,7 @@ function start()
 	player_ship = playership_create()
 	chasecam = vchasecam_follow( engine, player_ship.transform )
 	flycam = vflycam( engine )
-	vscene_setCamera( flycam )
+	vscene_setCamera( chasecam )
 end
 
 wave_interval_time = 10.0
@@ -131,27 +131,27 @@ function playership_tick()
 	acceleration = 1.0
 	roll = 0.04
 	pitch = 0.02
-	if vkeyHeld( input, key.w ) then
+	if vkeyHeld( input, key.w )  or vtouchHeld( input, 000.0, 240.0, 100.0, 320.0 ) then
 		player_ship.speed = player_ship.speed + acceleration
 	end
-	if vkeyHeld( input, key.s ) then
+	if vkeyHeld( input, key.s )  or vtouchHeld( input, 000.0, 400.0, 100.0, 480.0 ) then
 		player_ship.speed = player_ship.speed - acceleration
 	end
-	if vkeyHeld( input, key.left ) then
+	if vkeyHeld( input, key.left ) or vtouchHeld( input, 500.0, 240.0, 600.0, 480.0 ) then
 		vtransform_roll( player_ship.transform, -roll );
 	end
-	if vkeyHeld( input, key.right ) then
+	if vkeyHeld( input, key.right ) or vtouchHeld( input, 700.0, 240.0, 800.0, 480.0 ) then
 		vtransform_roll( player_ship.transform, roll );
 	end
-	if vkeyHeld( input, key.up ) then
+	if vkeyHeld( input, key.up ) or vtouchHeld( input, 500.0, 240.0, 800.0, 320.0 ) then
 		vtransform_pitch( player_ship.transform, -pitch );
 	end
-	if vkeyHeld( input, key.down ) then
+	if vkeyHeld( input, key.down ) or vtouchHeld( input, 500.0, 400.0, 800.0, 480.0 ) then
 		vtransform_pitch( player_ship.transform, pitch );
 	end
 
 	-- Gunfire
-	if vkeyPressed( input, key.space ) then
+	if vkeyPressed( input, key.space ) or vtouchPressed( input, 0.0, 0.0, 200.0, 200.0 ) then
 		player_fire( player_ship )
 	end
 
@@ -181,7 +181,6 @@ end
 -- Called once per frame to update the current Lua State
 function tick()
 	if starting then
-		vprint( "tick" )
 		starting = false
 		start()
 	end

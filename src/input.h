@@ -200,6 +200,8 @@ void input_getMouseDrag( input* in, int button, int* x, int* y );
 #ifdef TOUCH
 void input_registerTouch( input* in, int x, int y );
 void input_getTouchDrag( input* in, int* x, int* y );
+bool input_touchPressed( input* in, int x_min, int y_min, int x_max, int y_max );
+bool input_touchHeld( input* in, int x_min, int y_min, int x_max, int y_max );
 #endif
 
 #endif // __INPUT_H__

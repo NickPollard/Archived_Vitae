@@ -366,7 +366,7 @@ static int32_t handle_input(struct android_app* app, AInputEvent* event) {
     if ( AInputEvent_getType(event) == AINPUT_EVENT_TYPE_MOTION ) {
 		int x = AMotionEvent_getX( event, 0 );
 		int y = AMotionEvent_getY( event, 0 );
-		//printf( "Touch input. %d %d\n", x, y );
+		printf( "Touch input. %d %d\n", x, y );
 		input_registerTouch( e->input, x, y );
         return 1;
     }
