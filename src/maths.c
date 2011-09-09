@@ -64,6 +64,8 @@ float Dot( const vector* A, const vector* B ) {
 
 // Vector cross product
 void Cross(vector* dst, const vector* srcA, const vector* srcB) {
+	vAssert( dst != srcA );
+	vAssert( dst != srcB );
 	dst->coord.x = (srcA->coord.y * srcB->coord.z) - (srcA->coord.z * srcB->coord.y);
 	dst->coord.y = (srcA->coord.z * srcB->coord.x) - (srcA->coord.x * srcB->coord.z);
 	dst->coord.z = (srcA->coord.x * srcB->coord.y) - (srcA->coord.y * srcB->coord.x);

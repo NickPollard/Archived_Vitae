@@ -67,7 +67,7 @@ void test_engine_init( engine* e ) {
 
 	terrain* t = terrain_create();
 	terrain_setSize( t, 15.f, 15.f );
-	terrain_setResolution( t, 30, 30 );
+	terrain_setResolution( t, 60, 60 );
 	terrain_calculateBuffers( t );
 	engine_addRender( e, (void*)t, terrain_render );
 }

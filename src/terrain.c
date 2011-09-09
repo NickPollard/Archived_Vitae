@@ -19,12 +19,15 @@ terrain* terrain_create() {
 
 // The procedural function
 float terrain_sample( float u, float v ) {
-//	return sin( u ) * sin( v );
-
+	return sin( u ) * sin( v );
+//	return u + v;
+/*
 	return (
 			0.5 * sin( u ) * sin( v ) +
-			sin( u / 3.f ) * sin( v / 3.f )
+			sin( u / 3.f ) * sin( v / 3.f ) +
+			5 * sin( u / 10.f ) * sin( v / 10.f ) * sin( u / 10.f ) * sin( v / 10.f )
 		   );
+		   */
 }
 
 void terrain_updateIntervals( terrain* t ) {
@@ -66,6 +69,7 @@ void terrain_calculateBuffers( terrain* t ) {
 	}
 
 	vector* verts = mem_alloc( vert_count * sizeof( vector ));
+	vector* normals = mem_alloc( vert_count * sizeof( vector ));
 
 /*
 	We want to draw the mesh from ( -u_radius, -v_radius ) to ( u_radius, v_radius )
@@ -77,15 +81,96 @@ void terrain_calculateBuffers( terrain* t ) {
 		for ( float v = -t->v_radius; v < t->v_radius + ( 0.5 * t->v_interval ); v+= t->v_interval ) {
 			float h = terrain_sample( u, v );
 			verts[vert_index++] = Vector( u, h, v, 1.f );
-			vAssert( u != 0.f || v != 0.f || h != 0.f );
-			
-			printf( "vert %d: Vert:", vert_index-1 );
-			vector_print( &verts[vert_index-1] );
-			printf( "\n" );
+//			vAssert( u != 0.f || v != 0.f || h != 0.f );
 		}
 	}
-
 	assert( vert_index == vert_count );
+
+	for ( int i = 0; i < vert_count; i++ ) {
+		if ( i-1 < 0 || 
+			i + 1 >= vert_count ||
+			i - t->u_samples < 0 ||							// Top Edge
+			i + t->u_samples >= vert_count ||				// Bottom Edge
+		  	i % t->u_samples == 0 ||						// Left edge
+		  	i % t->u_samples == ( t->u_samples - 1 ) ) {	// Right Edge
+			normals[i] = Vector( 0.f, 1.f, 0.f, 0.f );
+			continue;
+		}
+		vector center = verts[i];
+		vector left = verts[i - t->u_samples];
+		vector right = verts[i + t->u_samples];
+		vector top = verts[i-1];
+		vector bottom = verts[i+1];
+
+		/*
+		printf( "----\n" );
+		printf( "Center: " );
+		vector_print( &center );
+		printf( "\n" );
+		printf( "top: " );
+		vector_print( &top );
+		printf( "\n" );
+		printf( "bottom: " );
+		vector_print( &bottom );
+		printf( "\n" );
+		printf( "left: " );
+		vector_print( &left );
+		printf( "\n" );
+		printf( "right: " );
+		vector_print( &right );
+		printf( "\n" );
+*/
+
+		vector a, b, c, d, e, f, x, y;
+		x = Vector( -1.f, 0.f, 0.f, 0.f ); // Negative to ensure cross products come out correctly
+		y = Vector( 0.f, 0.f, 1.f, 0.f );
+
+		// Calculate two vertical vectors
+		Sub( &a, &center, &top );
+		Sub( &b, &bottom, &center );
+		// Take cross product to calculate normals
+		Cross( &c, &x, &a );
+		Cross( &d, &x, &b );
+
+		// Calculate two horizontal vectors
+		Sub( &a, &center, &left );
+		Sub( &b, &right, &center );
+		// Take cross product to calculate normals
+		Cross( &e, &y, &a );
+		Cross( &f, &y, &b );
+
+/*
+		printf( "c: " );
+		vector_print( &c );
+		printf( "\n" );
+		printf( "d: " );
+		vector_print( &d );
+		printf( "\n" );
+		printf( "e: " );
+		vector_print( &e );
+		printf( "\n" );
+		printf( "f: " );
+		vector_print( &f );
+		printf( "\n" );
+		*/
+
+		// Average normals
+		vector total = Vector( 0.f, 0.f, 0.f, 0.f );
+		Add( &total, &total, &c );
+		Add( &total, &total, &d );
+		Add( &total, &total, &e );
+		Add( &total, &total, &f );
+		total.coord.w = 0.f;
+		Normalize( &total, &total );
+
+		/*
+		printf( "Normal %d: ", i );
+		vector_print( &total );
+		printf( "\n" );
+		*/
+
+		normals[i] = total;
+	}
 
 	int element_count = 0;
 	// Calculate elements
@@ -130,7 +215,7 @@ void terrain_calculateBuffers( terrain* t ) {
 	for ( int i = 0; i < t->index_count; i++ ) {
 		// Copy the required vertex position, normal, and uv
 		t->vertex_buffer[i].position = verts[t->element_buffer[i]];
-		t->vertex_buffer[i].normal = Vector( 0.f, 1.f, 0.f, 0.f );
+		t->vertex_buffer[i].normal = normals[t->element_buffer[i]];
 		t->vertex_buffer[i].uv = verts[t->element_buffer[i]];
 		t->element_buffer[i] = i;
 	}
@@ -143,6 +228,7 @@ void terrain_calculateBuffers( terrain* t ) {
 	}
 */
 	mem_free( verts );
+	mem_free( normals );
 }
 
 // Send the buffers to the GPU
@@ -185,8 +271,8 @@ void terrain_delete( terrain* t ) {
 
 void test_terrain() {
 	terrain* t = terrain_create();
-	terrain_setSize( t, 15.f, 15.f );
-	terrain_setResolution( t, 30, 30 );
+	terrain_setSize( t, 5.f, 5.f );
+	terrain_setResolution( t, 8, 8 );
 	terrain_calculateBuffers( t );
 	terrain_delete( t );
 //	vAssert( 0 );
