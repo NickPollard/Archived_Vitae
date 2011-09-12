@@ -10,6 +10,7 @@ typedef struct terrain_s {
 	int		v_samples;
 	float	u_interval;
 	float	v_interval;
+	vector	sample_point;
 
 	// For Rendering
 	int index_count;

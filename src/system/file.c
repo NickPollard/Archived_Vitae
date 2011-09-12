@@ -377,7 +377,6 @@ sterm* parse_file( const char* filename ) {
 	char* contents = vfile_contents( filename, &length );
 	vAssert( (contents) );
 	vAssert( (length != 0) );
-	printf( "FILE: File \"%s\" loaded, beginning Parsing.\n", filename );
 	sterm* s = parse_string( contents );
 	mem_free( contents );
 	return s;
@@ -644,17 +643,12 @@ void* s_translation( sterm* raw_elements ) {
 void* s_diffuse( sterm* raw_elements ) {
 	assert( raw_elements );
 	sterm* elements = eval_list( raw_elements );
-	sterm* element = elements;
 	// For now only allow vectors
 	// Should be a list of one single vector
 	// So take the head and check that
-	assert( isVector( (sterm*)element->head ));
+	assert( isVector( (sterm*)elements->head ));
 	// For now, copy the vector head from the vector sterm
-//	sterm* s_diff = cons( sterm_create( typeAtom, "diffuse" ), 
-//						cons( sterm_create( typeVector, ((sterm*)element->head)->head ), 
-//							NULL ));
-	sterm* s_diff = sterm_createProperty( "diffuse", typeVector, ((sterm*)element->head)->head );
-//	sterm_free( element );
+	sterm* s_diff = sterm_createProperty( "diffuse", typeVector, ((sterm*)elements->head)->head );
 	return s_diff;
 }
 
@@ -732,14 +726,7 @@ void* s_model( sterm* raw_properties ) {
 // Process a list of properties
 // Compare them to the property list of the type
 // Set appropriately
-/*
-void object_processProperty( void* property, void* object ) {
-	//for each property:
-	if ( isPropertyType( property, property_type ) ) {
-		object->type = property->value
-	}
-}
-   */
+
 void lightData_processProperty( void* object_, void* light_ ) {
 	sterm* l = light_;
 	sterm* property = object_;
@@ -749,9 +736,6 @@ void lightData_processProperty( void* object_, void* light_ ) {
 		sterm* diffuse = l->tail->head;
 		diffuse->head = mem_alloc( sizeof( vector ));
 		*(vector*)diffuse->head = *diffuse_vector;
-		printf( "Setting light diffuse: " );
-		vector_print( diffuse->head );
-		printf( "\n" );
 	}
 }
 
@@ -771,8 +755,6 @@ void* s_light( sterm* raw_properties ) {
 }
 
 void scene_processTransform( scene* s, transform* parent, transformData* tData ) {
-//	printf( "Creating Transform! Translation: %.2f, %.2f, %.2f\n", tData->translation.val[0], tData->translation.val[1], tData->translation.val[2] );
-	printf( "FILE: scene_processTransform!\n" );
 	transform* t = transform_create();
 	matrix_setTranslation( t->local, &tData->translation );
 	t->parent = parent;
@@ -783,7 +765,6 @@ void scene_processTransform( scene* s, transform* parent, transformData* tData )
 }
 
 void scene_processModel( scene* s, transform* parent, modelData* mData ) {
-	printf( "FILE: scene_processModel!\n" );
 	modelHandle handle = model_getHandleFromFilename( mData->filename );
 	modelInstance* m = modelInstance_create( handle );
 	m->trans = parent;
@@ -791,7 +772,6 @@ void scene_processModel( scene* s, transform* parent, modelData* mData ) {
 }
 
 void scene_processLight( scene* s, transform* parent, sterm* lData ) {
-	printf( "FILE: scene_processLight!\n" );
 	light* l = light_create();
 	vector* v = ((sterm*)lData->tail->head)->head;
 	light_setDiffuse( l, v->val[0], v->val[1], v->val[2], v->val[3] );

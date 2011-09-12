@@ -50,7 +50,7 @@ shaderConstantBinding shader_createBinding( GLuint shader_program, const char* v
 	if ( string_equal( "sampler2D", variable_type ))
 		binding.type = uniform_tex2D;
 
-	printf( "SHADER: Created Shader binding 0x%x for \"%s\" at location 0x%x, type: %s\n", (unsigned int)binding.value, variable_name, binding.program_location, variable_type );
+//	printf( "SHADER: Created Shader binding 0x%x for \"%s\" at location 0x%x, type: %s\n", (unsigned int)binding.value, variable_name, binding.program_location, variable_type );
 	return binding;
 }
 
@@ -61,7 +61,7 @@ void shaderDictionary_addBinding( shaderDictionary* d, shaderConstantBinding b )
 
 // Find a list of uniform variable names in a shader source file
 void shader_buildDictionary( shaderDictionary* dict, GLuint shader_program, const char* src ) {
-	printf( "SHADER: Building Shader Dictionary.\n" );
+//	printf( "SHADER: Building Shader Dictionary.\n" );
 	// Find a list of uniform variable names
 	inputStream* stream = inputStream_create( src );
 	char* token;

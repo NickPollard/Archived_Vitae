@@ -37,6 +37,7 @@ IMPLEMENT_LIST(delegate)
 
 // *** Static Hacks
 scene* theScene = NULL;
+terrain* theTerrain = NULL;
 engine* static_engine_hack;
 int w = 640, h = 480;
 
@@ -66,8 +67,10 @@ void test_engine_init( engine* e ) {
 	lua_setScene( e->lua, theScene );
 
 	terrain* t = terrain_create();
-	terrain_setSize( t, 15.f, 60.f );
-	terrain_setResolution( t, 60, 60 );
+	theTerrain = t;
+	t->trans = transform_createAndAdd( theScene );
+	terrain_setSize( t, 30.f, 120.f );
+	terrain_setResolution( t, 45, 45 );
 	terrain_calculateBuffers( t );
 	engine_addRender( e, (void*)t, terrain_render );
 }
@@ -102,6 +105,8 @@ void engine_tick( engine* e ) {
 #endif
 		LUA_CALL( e->lua, e->onTick->func );
 	}
+
+	theTerrain->sample_point = *camera_getTranslation( theScene->cam );
 
 }
 

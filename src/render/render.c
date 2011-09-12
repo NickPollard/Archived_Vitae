@@ -48,6 +48,7 @@ void render_setBuffers( float* vertex_buffer, int vertex_buffer_size, int* eleme
 void render_buildShaders() {
 	resources.shader_default = shader_load( "dat/shaders/phong.v.glsl", "dat/shaders/phong.f.glsl" );
 	resources.shader_particle = shader_load( "dat/shaders/textured_phong.v.glsl", "dat/shaders/textured_phong.f.glsl" );
+	resources.shader_terrain = shader_load( "dat/shaders/terrain.v.glsl", "dat/shaders/terrain.f.glsl" );
 
 #define GET_UNIFORM_LOCATION( var ) \
 	resources.uniforms.var = shader_findConstant( mhash( #var )); \
@@ -57,12 +58,6 @@ void render_buildShaders() {
 #define GET_UNIFORM_LOCATION_PARTICLE( var ) \
 	resources.uniforms.var = shader_findConstant( mhash( #var ));
 	SHADER_UNIFORMS( GET_UNIFORM_LOCATION_PARTICLE )
-/*
-	// Attributes
-	resources.attributes.position = shader_getAttributeLocation( resources.shader_particle->program, "position" );
-	resources.attributes.normal = shader_getAttributeLocation( resources.shader_particle->program, "normal" );
-	resources.attributes.uv = shader_getAttributeLocation( resources.shader_particle->program, "uv" );
-	*/
 }
 
 // Private Function declarations

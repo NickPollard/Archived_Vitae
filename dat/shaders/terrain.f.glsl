@@ -19,10 +19,10 @@ uniform vec4 light_specular[LIGHT_COUNT];
 uniform sampler2D tex;
 
 // Test Light values
-const vec4 light_ambient = vec4( 0.2, 0.2, 0.2, 0.0 );
+const vec4 light_ambient = vec4( 0.0, 0.0, 0.0, 0.0 );
 // Directional Light
 const vec4 directional_light_direction = vec4( 1.0, -1.0, 1.0, 0.0 );
-const vec4 directional_light_diffuse = vec4( 0.2, 0.2, 0.1, 1.0 );
+const vec4 directional_light_diffuse = vec4( 0.3, 0.3, 0.2, 1.0 );
 const vec4 directional_light_specular = vec4( 0.2, 0.2, 0.1, 1.0 );
 
 //const vec4 material_diffuse = vec4( 1.0, 1.0, 1.0, 1.0 );
@@ -74,7 +74,7 @@ void main() {
 
 	}
 
-	vec4 material_diffuse = texture2D( tex, texcoord );
+	vec4 material_diffuse = vec4( 0.5, 0.5, 0.5, 1.0 );
 	gl_FragColor =	total_specular_color * material_specular + 
 					total_diffuse_color * material_diffuse;
 	gl_FragColor.w = 1.0;

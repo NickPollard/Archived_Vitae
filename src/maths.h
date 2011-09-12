@@ -39,6 +39,7 @@ typedef union matrix_u {
 bool f_eq( float a, float b );
 
 float fclamp( float a, float bottom, float top );
+float fround( float value, float round );
 
 int max( int a, int b );
 int min( int a, int b );

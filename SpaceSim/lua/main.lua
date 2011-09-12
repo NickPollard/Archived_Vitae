@@ -129,7 +129,7 @@ wave_interval_time = 10.0
 
 function playership_tick()
 	acceleration = 1.0
-	roll = 0.04
+	yaw = 0.04
 	pitch = 0.02
 	if vkeyHeld( input, key.w )  or vtouchHeld( input, 000.0, 240.0, 100.0, 320.0 ) then
 		player_ship.speed = player_ship.speed + acceleration
@@ -138,10 +138,10 @@ function playership_tick()
 		player_ship.speed = player_ship.speed - acceleration
 	end
 	if vkeyHeld( input, key.left ) or vtouchHeld( input, 500.0, 240.0, 600.0, 480.0 ) then
-		vtransform_roll( player_ship.transform, -roll );
+		vtransform_yaw( player_ship.transform, -yaw );
 	end
 	if vkeyHeld( input, key.right ) or vtouchHeld( input, 700.0, 240.0, 800.0, 480.0 ) then
-		vtransform_roll( player_ship.transform, roll );
+		vtransform_yaw( player_ship.transform, yaw );
 	end
 	if vkeyHeld( input, key.up ) or vtouchHeld( input, 500.0, 240.0, 800.0, 320.0 ) then
 		vtransform_pitch( player_ship.transform, -pitch );
@@ -185,7 +185,7 @@ function tick()
 		start()
 	end
 
-	--playership_tick()
+	playership_tick()
 
 	debug_tick()
 --[[

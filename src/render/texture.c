@@ -44,8 +44,8 @@ uint8_t* read_tga( const char* file, int* w, int* h ) {
 	tga_colormap_spec* mapspec = (tga_colormap_spec*)header->color_map_spec;
 	u8* pixels = color_map + mapspec->entry_count;
 
-	printf( "TGA dimensions: %d * %d.\n", width, height );
-	printf( "TGA bitdepth: %d.\n", header->pixel_depth );
+//	printf( "TGA dimensions: %d * %d.\n", width, height );
+//	printf( "TGA bitdepth: %d.\n", header->pixel_depth );
 
 	int pixel_bytes = header->pixel_depth / 8;
 	int size = width * height * pixel_bytes;
@@ -66,7 +66,7 @@ uint8_t* read_tga( const char* file, int* w, int* h ) {
 	*w = width;
 	*h = height;
 
-	printf( "TGA data segment size: %d\n", size );
+//	printf( "TGA data segment size: %d\n", size );
 	mem_free( image_data );
 	return tex;
 }

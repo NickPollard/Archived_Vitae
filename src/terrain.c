@@ -14,6 +14,7 @@ terrain* terrain_create() {
 	memset( t, 0, sizeof( terrain ));
 	t->u_samples = 1;
 	t->v_samples = 1;
+	t->sample_point = Vector( 0.f, 0.f, 0.f, 1.f );
 	return t;
 }
 
@@ -21,21 +22,32 @@ terrain* terrain_create() {
 float terrain_sample( float u, float v ) {
 //	return sin( u ) * sin( v );
 
-	/*
+/*
 	return (
 			0.5 * sin( u ) * sin( v ) +
 			sin( u / 3.f ) * sin( v / 3.f ) +
 			5 * sin( u / 10.f ) * sin( v / 10.f ) * sin( u / 10.f ) * sin( v / 10.f )
 		   );
-		   */
+*/
+	float detail =
+	(
+			0.5 * sin( u ) * sin( v ) +
+			sin( u / 3.f ) * sin( v / 3.f ) +
+			5 * sin( u / 10.f ) * sin( v / 10.f ) * sin( u / 10.f ) * sin( v / 10.f )
+	);
 
-	u += sin( v / 5.f );
+	float scale = 5.f;
+	u /= scale;
+	u += sin( v / (scale * 5.f) );
+	float height = 5.f;
+
+	float mask = cos( fclamp( u / 4.f, -PI/2.f, PI/2.f ));
+	float canyon = fclamp( powf( u, 4.f ), 0.f, 1.f );
 
 	return (
-				cos( fclamp( u / 4.f, -PI/2.f, PI/2.f )) * 
-				-(3.f * cos( u / 2.f ))
-		   );
-
+			mask * canyon
+		   ) * height
+		+ detail;
 }
 
 void terrain_updateIntervals( terrain* t ) {
@@ -85,10 +97,12 @@ void terrain_calculateBuffers( terrain* t ) {
    */
 
 	int vert_index = 0;
-	for ( float u = -t->u_radius; u < t->u_radius + ( 0.5 * t->u_interval ); u+= t->u_interval ) {
-		for ( float v = -t->v_radius; v < t->v_radius + ( 0.5 * t->v_interval ); v+= t->v_interval ) {
-			float h = terrain_sample( u, v );
-			verts[vert_index++] = Vector( u, h, v, 1.f );
+	for ( float u = t->sample_point.coord.x - t->u_radius; u < t->u_radius + ( 0.5 * t->u_interval ) + t->sample_point.coord.x; u+= t->u_interval ) {
+		for ( float v = t->sample_point.coord.z - t->v_radius; v < t->v_radius + ( 0.5 * t->v_interval ) + t->sample_point.coord.z; v+= t->v_interval ) {
+			float u_round = fround( u, t->u_interval );
+			float v_round = fround( v, t->v_interval );
+			float h = terrain_sample( u_round, v_round );
+			verts[vert_index++] = Vector( u_round, h, v_round, 1.f );
 //			vAssert( u != 0.f || v != 0.f || h != 0.f );
 		}
 	}
@@ -242,16 +256,31 @@ void terrain_calculateBuffers( terrain* t ) {
 // Send the buffers to the GPU
 void terrain_render( void* data ) {
 	terrain* t = data;
+
+	// Switch to model shader
+	shader_activate( resources.shader_terrain );
+
+	render_resetModelView();
+	matrix_mul( modelview, modelview, t->trans->world );
+	// Set up uniforms
+	render_setUniform_matrix( *resources.uniforms.projection, perspective );
+	render_setUniform_matrix( *resources.uniforms.modelview, modelview );
+	render_setUniform_matrix( *resources.uniforms.worldspace, modelview );
+
 	glDepthMask( GL_TRUE );
+
+	terrain_calculateBuffers( t );
+
 	// Copy our data to the GPU
 	// There are now <index_count> vertices, as we have unrolled them
 	GLsizei vertex_buffer_size = t->index_count * sizeof( vertex );
 	GLsizei element_buffer_size = t->index_count * sizeof( GLushort );
-
+/*
 	// Textures
 	GLint* tex = shader_findConstant( mhash( "tex" ));
 	if ( tex )
 		render_setUniform_texture( *tex, g_texture_default );
+*/
 
 	VERTEX_ATTRIBS( VERTEX_ATTRIB_LOOKUP );
 	// *** Vertex Buffer

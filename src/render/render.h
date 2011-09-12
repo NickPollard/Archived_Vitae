@@ -52,6 +52,7 @@ typedef struct gl_resources_s {
 
 	shader* shader_default;
 	shader* shader_particle;
+	shader* shader_terrain;
 } gl_resources;
 
 extern gl_resources resources;

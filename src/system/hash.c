@@ -86,9 +86,11 @@ void test_hash() {
 
 	test_map();
 
+	/*
 	test_murmurHash( "test" );
 	test_murmurHash( "blarg" );
 	test_murmurHash( "scrund" );
 	test_murmurHash( "people" );
 	test_murmurHash( "simples" );
+	*/
 }

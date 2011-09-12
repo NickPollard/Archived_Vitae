@@ -15,6 +15,11 @@ float fclamp( float a, float bottom, float top ) {
 	return fminf( fmaxf( a, bottom), top);
 }
 
+// return *value* rounded to the nearest *round*
+float fround( float value, float round ) {
+	return floorf( (value / round) + 0.5f ) * round;
+}
+
 
 int max( int a, int b ) {
 	return a > b ? a : b;
@@ -577,10 +582,10 @@ void test_matrix() {
 
 	matrix_setIdentity( a );
 	float det = matrix_determinant( a );
-	printf("TEST: Maths.c: identity det = %.2f\n", det );
+	//printf("TEST: Maths.c: identity det = %.2f\n", det );
 	assert( f_eq( det, 1.f ));
 	det = matrix_determinant( c );
-	printf("TEST: Maths.c: det = %.2f\n", det );
+	//printf("TEST: Maths.c: det = %.2f\n", det );
 	assert( f_eq( det, 1.f ));
 
 	test_matrix_transpose();
