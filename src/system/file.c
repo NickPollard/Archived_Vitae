@@ -154,8 +154,9 @@ void* vfile_contents( const char* path, int* length ) {
     *length = ftell(f);
     fseek(f, 0, SEEK_SET);
 
-    buffer = mem_alloc(*length+1);
-    *length = fread(buffer, 1, *length, f);
+    buffer = mem_alloc( (*length) + 1 );
+	printf( "FILE: reading contents of file of size: %d.\n", *length );
+    *length = fread( buffer, 1, *length, f );
     fclose(f);
     ((char*)buffer)[*length] = '\0'; // TODO should I be doing this? Distinction between binary and ASCII?
 

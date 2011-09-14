@@ -3,11 +3,14 @@
 #include "common.h"
 #include "skybox.h"
 //-----------------------
+#include "model.h"
+#include "model_loader.h"
 #include "render/render.h"
 #include "render/shader.h"
 #include "render/texture.h"
 #include "system/hash.h"
 
+model*			skybox_model = NULL;
 GLint			skybox_texture = -1;
 GLushort		skybox_index_count = 36;
 skybox_vertex*	skybox_static_vertex_buffer = NULL;
@@ -46,7 +49,10 @@ void skybox_init( ) {
 	skybox_static_vertex_buffer[6].position = Vector(  distance, -distance, -distance, 1.0 );
 	skybox_static_vertex_buffer[7].position = Vector( -distance, -distance, -distance, 1.0 );
 
-	skybox_texture = texture_loadTGA( "assets/img/test64rgba.tga" );
+	skybox_texture = texture_loadTGA( "assets/3rdparty/img/grimmnight_medium.tga" );
+
+	skybox_model = LoadObj( "dat/model/inverse_cube.obj" );
+	skybox_model->meshes[0]->texture_diffuse = skybox_texture;
 }
 
 #define SKYBOX_VERTEX_ATTRIB_POINTER( attrib ) \
@@ -69,6 +75,7 @@ void skybox_render( void* data ) {
 	render_setUniform_matrix( *resources.uniforms.modelview, modelview );
 	render_setUniform_matrix( *resources.uniforms.worldspace, modelview );
 
+#if 0
 	// Copy our data to the GPU
 	// There are now <index_count> vertices, as we have unrolled them
 	GLsizei vertex_buffer_size = skybox_index_count * sizeof( skybox_vertex );
@@ -93,6 +100,7 @@ void skybox_render( void* data ) {
 
 	// Cleanup
 	SKYBOX_VERTEX_ATTRIBS( VERTEX_ATTRIB_DISABLE_ARRAY )
+#endif
 
-
+	mesh_drawVerts( skybox_model->meshes[0] );
 }

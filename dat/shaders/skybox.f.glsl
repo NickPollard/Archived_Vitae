@@ -24,7 +24,6 @@ const vec4 directional_light_direction = vec4( 1.0, -1.0, 1.0, 0.0 );
 const vec4 directional_light_diffuse = vec4( 0.2, 0.2, 0.1, 1.0 );
 const vec4 directional_light_specular = vec4( 0.2, 0.2, 0.1, 1.0 );
 
-//const vec4 material_diffuse = vec4( 1.0, 1.0, 1.0, 1.0 );
 const vec4 material_specular = vec4( 0.5, 0.5, 0.5, 1.0 );
 const float light_radius = 20.0;
 
@@ -49,5 +48,6 @@ void main() {
 							clamp( min( height*2.0 - 1.0, 1.0 - height ), 0.0, 1.0 ),
 							1.0 );
 //	gl_FragColor = frag_position;
+	gl_FragColor = material_diffuse;
 
 }

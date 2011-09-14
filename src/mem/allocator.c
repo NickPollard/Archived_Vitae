@@ -76,22 +76,18 @@ void* heap_allocate_aligned( heapAllocator* heap, unsigned int size, unsigned in
 	size += alignment;	// Make sure we have enough space to align
 	block* b = heap_findEmptyBlock( heap, size );
 
-	/*
-	printf( "b: 0x%x", b );	
-	printf( "b->data: 0x%x", b->data );	
-	printf( "b->size: 0x%x", b->size );	
-	printf( "b->next: 0x%x", b->next );	
-	*/
-	vAssert( !b->next || b->next == b->data + b->size );
-
 	if ( !b ) {
-//		heap_dumpBlocks( heap );
+		heap_dumpBlocks( heap );
 		printError( "HeapAllocator out of memory on request for %d bytes. Total size: %d bytes, Used size: %d bytes\n", size, heap->total_size, heap->total_allocated );
 		assert( 0 );
 	}
+	
+	vAssert( !b->next || b->next == b->data + b->size );
+
 	if ( b->size > ( size + sizeof( block ) ) ) {
-//		printf( "Allocator: Splitting Block of size %d into sizes %d ad %d\n", b->size, size, b->size-size );
-		block* remaining = block_create( b->data + size, b->size - size );
+//		heap_dumpBlocks( heap );
+		void* new_ptr = ((uint8_t*)b->data) + size;
+		block* remaining = block_create( new_ptr, b->size - size );
 		block_insertAfter( b, remaining );
 		b->size = size;
 		heap->total_allocated += sizeof( block );
@@ -190,6 +186,7 @@ void heap_deallocate( heapAllocator* heap, void* data ) {
 // but will have size equal to both plus sizeof( block )
 void block_merge( heapAllocator* heap, block* first, block* second ) {
 //	printf( "Allocator: Merging Blocks\n" );
+
 	vAssert( first );
 	vAssert( second );
 	vAssert( first->free );								// Both must be empty
@@ -200,15 +197,21 @@ void block_merge( heapAllocator* heap, block* first, block* second ) {
 	vAssert( !first->next || first->next == first->data + first->size );
 	vAssert( !second->next || second->next == second->data + second->size );
 
+	vAssert( second > first );
+	vAssert( second->next > second || second->next == NULL );
+
 	heap->total_free += sizeof( block );
 	heap->total_allocated -= sizeof( block );
 
+//	int total_size = first->size + second->size;
 	// We can't just add sizes, as there may be alignment padding.
 //	first->size += second->size + sizeof( block );
 
 //	printf( "first: 0x%x, Second: 0x%x, Second->next 0x%x, Second->data 0x%x, Second->size 0x%x",		first, second, second->next, second->data, second->size );
 
-	unsigned int true_size = (uint8_t*)second->next - (uint8_t*)second;
+//	unsigned int true_size = (uint8_t*)second->next - (uint8_t*)second;
+	unsigned int true_size = second->size + ( (unsigned int)second->data - (unsigned int)second );
+//	printf( "first->size: %d true_size: %d\n", first->size, true_size );
 	first->size = first->size + true_size;
 	first->next = second->next;
 	if ( second->next )
@@ -216,6 +219,8 @@ void block_merge( heapAllocator* heap, block* first, block* second ) {
 	first->free = true;
 
 	vAssert( !first->next || first->next == first->data + first->size );
+
+//	vAssert( first->size < total_size + 128 );	
 }
 
 // Create a heapAllocator of *size* bytes
@@ -235,6 +240,14 @@ heapAllocator* heap_create( int heap_size ) {
 	block* first = block_create( data, heap_size );
 	assert( first ); 
 	allocator->first = first;
+
+	// Test write the data to check we have a valid block of mem
+#if 0
+	for ( unsigned int i = 0; i < allocator->total_size; i+=1024 ) {
+		printf( "ptr: 0x%x\n", ((unsigned int)first->data + i) );
+		*(uint8_t*)((unsigned int)first->data + i) = 0xde;
+	}
+#endif
 
 	return allocator;
 }
