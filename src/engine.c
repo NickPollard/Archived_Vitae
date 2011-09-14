@@ -10,6 +10,7 @@
 #include "model.h"
 #include "particle.h"
 #include "scene.h"
+#include "skybox.h"
 #include "terrain.h"
 #include "transform.h"
 #include "camera/flycam.h"
@@ -69,8 +70,12 @@ void test_engine_init( engine* e ) {
 	terrain* t = terrain_create();
 	theTerrain = t;
 	t->trans = transform_createAndAdd( theScene );
-	terrain_setSize( t, 30.f, 120.f );
+	terrain_setSize( t, 50.f, 150.f );
+#ifdef ANDROID
 	terrain_setResolution( t, 45, 45 );
+#else
+	terrain_setResolution( t, 90, 90 );
+#endif // ANDROID
 	terrain_calculateBuffers( t );
 	engine_addRender( e, (void*)t, terrain_render );
 }
@@ -106,7 +111,8 @@ void engine_tick( engine* e ) {
 		LUA_CALL( e->lua, e->onTick->func );
 	}
 
-	theTerrain->sample_point = *camera_getTranslation( theScene->cam );
+	vector v = Vector( 0.0, 0.0, 30.0, 1.0 );
+	theTerrain->sample_point = matrixVecMul( theScene->cam->trans->world, &v );
 
 }
 
@@ -231,6 +237,7 @@ void engine_render( engine* e ) {
 		render_set3D( e->egl->width, e->egl->height );
 		render_clear();
 		render( theScene, w, h );
+		skybox_render( NULL );
 		engine_renderRenders( e );
 		render_swapBuffers( e->egl );
 	}
@@ -238,6 +245,7 @@ void engine_render( engine* e ) {
 	render_set3D( w, h );
 	render_clear();
 	render( theScene, w, h );
+	skybox_render( NULL );
 	engine_renderRenders( e );
 	render_swapBuffers();
 #endif // ANDROID

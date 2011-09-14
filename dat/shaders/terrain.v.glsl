@@ -9,6 +9,7 @@ attribute vec4 uv;
 varying vec4 frag_position;
 varying vec4 frag_normal;
 varying vec2 texcoord;
+varying float height;
 
 // Uniform
 uniform	mat4 projection;
@@ -19,4 +20,5 @@ void main() {
 	frag_position = modelview * position;
 	frag_normal = modelview * normal;
 	texcoord = uv.xy;
+	height = position.y;
 }

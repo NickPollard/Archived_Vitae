@@ -9,6 +9,8 @@ precision mediump float;
 varying vec4 frag_position;
 varying vec4 frag_normal;
 varying vec2 texcoord;
+varying float height;
+
 const int LIGHT_COUNT = 2;
 
 // Uniform
@@ -21,8 +23,8 @@ uniform sampler2D tex;
 // Test Light values
 const vec4 light_ambient = vec4( 0.0, 0.0, 0.0, 0.0 );
 // Directional Light
-const vec4 directional_light_direction = vec4( 1.0, -1.0, 1.0, 0.0 );
-const vec4 directional_light_diffuse = vec4( 0.3, 0.3, 0.2, 1.0 );
+const vec4 directional_light_direction = vec4( 1.0, -0.5, 1.0, 0.0 );
+const vec4 directional_light_diffuse = vec4( 1.0, 1.0, 0.4, 1.0 );
 const vec4 directional_light_specular = vec4( 0.2, 0.2, 0.1, 1.0 );
 
 //const vec4 material_diffuse = vec4( 1.0, 1.0, 1.0, 1.0 );
@@ -52,7 +54,7 @@ void main() {
 		vec4 specular_color = directional_light_specular * specular;
 		total_specular_color += specular_color;
 	}
-	
+/*	
 	for ( int i = 0; i < LIGHT_COUNT; i++ ) {
 		// Per-light calculations
 		vec4 cs_light_position = worldspace * light_position[i];
@@ -71,14 +73,18 @@ void main() {
 		float specular = pow( spec, shininess );
 		vec4 specular_color = light_specular[i] * specular;
 		total_specular_color += specular_color;
-
 	}
+	*/
 
-	vec4 material_diffuse = vec4( 0.5, 0.5, 0.5, 1.0 );
+//	float r = clamp( height / 5.0, 0.3, 0.8 );
+	float r = 1.0;
+	float g = clamp( height / 20.0, 0.2, 0.3 );
+	float b = clamp( height / 20.0, 0.1, 0.2 );
+	vec4 material_diffuse = vec4( r, g, b, 1.0 );
 	gl_FragColor =	total_specular_color * material_specular + 
 					total_diffuse_color * material_diffuse;
 	gl_FragColor.w = 1.0;
 
-//	gl_FragColor = vec4( texcoord.xy, 0.2, 1.0 );
+//	gl_FragColor = vec4( 0.2, 1.0, 0.2, 1.0 );
 
 }

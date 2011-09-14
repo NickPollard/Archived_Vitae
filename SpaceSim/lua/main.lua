@@ -129,7 +129,7 @@ wave_interval_time = 10.0
 
 function playership_tick()
 	acceleration = 1.0
-	yaw = 0.04
+	yaw = 0.02
 	pitch = 0.02
 	if vkeyHeld( input, key.w )  or vtouchHeld( input, 000.0, 240.0, 100.0, 320.0 ) then
 		player_ship.speed = player_ship.speed + acceleration

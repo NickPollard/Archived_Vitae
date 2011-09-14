@@ -124,25 +124,6 @@ void terrain_calculateBuffers( terrain* t ) {
 		vector top = verts[i-1];
 		vector bottom = verts[i+1];
 
-		/*
-		printf( "----\n" );
-		printf( "Center: " );
-		vector_print( &center );
-		printf( "\n" );
-		printf( "top: " );
-		vector_print( &top );
-		printf( "\n" );
-		printf( "bottom: " );
-		vector_print( &bottom );
-		printf( "\n" );
-		printf( "left: " );
-		vector_print( &left );
-		printf( "\n" );
-		printf( "right: " );
-		vector_print( &right );
-		printf( "\n" );
-*/
-
 		vector a, b, c, d, e, f, x, y;
 		x = Vector( -1.f, 0.f, 0.f, 0.f ); // Negative to ensure cross products come out correctly
 		y = Vector( 0.f, 0.f, 1.f, 0.f );
@@ -161,21 +142,6 @@ void terrain_calculateBuffers( terrain* t ) {
 		Cross( &e, &y, &a );
 		Cross( &f, &y, &b );
 
-/*
-		printf( "c: " );
-		vector_print( &c );
-		printf( "\n" );
-		printf( "d: " );
-		vector_print( &d );
-		printf( "\n" );
-		printf( "e: " );
-		vector_print( &e );
-		printf( "\n" );
-		printf( "f: " );
-		vector_print( &f );
-		printf( "\n" );
-		*/
-
 		// Average normals
 		vector total = Vector( 0.f, 0.f, 0.f, 0.f );
 		Add( &total, &total, &c );
@@ -184,13 +150,6 @@ void terrain_calculateBuffers( terrain* t ) {
 		Add( &total, &total, &f );
 		total.coord.w = 0.f;
 		Normalize( &total, &total );
-
-		/*
-		printf( "Normal %d: ", i );
-		vector_print( &total );
-		printf( "\n" );
-		*/
-
 		normals[i] = total;
 	}
 
@@ -257,7 +216,7 @@ void terrain_calculateBuffers( terrain* t ) {
 void terrain_render( void* data ) {
 	terrain* t = data;
 
-	// Switch to model shader
+	// Switch to terrain shader
 	shader_activate( resources.shader_terrain );
 
 	render_resetModelView();

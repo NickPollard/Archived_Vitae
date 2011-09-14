@@ -8,6 +8,7 @@
 #include "light.h"
 #include "model.h"
 #include "scene.h"
+#include "skybox.h"
 #include "render/debugdraw.h"
 #include "render/modelinstance.h"
 #include "render/shader.h"
@@ -49,6 +50,7 @@ void render_buildShaders() {
 	resources.shader_default = shader_load( "dat/shaders/phong.v.glsl", "dat/shaders/phong.f.glsl" );
 	resources.shader_particle = shader_load( "dat/shaders/textured_phong.v.glsl", "dat/shaders/textured_phong.f.glsl" );
 	resources.shader_terrain = shader_load( "dat/shaders/terrain.v.glsl", "dat/shaders/terrain.f.glsl" );
+	resources.shader_skybox = shader_load( "dat/shaders/skybox.v.glsl", "dat/shaders/skybox.f.glsl" );
 
 #define GET_UNIFORM_LOCATION( var ) \
 	resources.uniforms.var = shader_findConstant( mhash( #var )); \
@@ -145,6 +147,8 @@ void render_init() {
 	shader_init();
 
 	render_buildShaders();
+
+	skybox_init();
 	
 	// Allocate space for buffers
 	const GLsizei vertex_buffer_size = sizeof( vector ) * MAX_VERTEX_ARRAY_COUNT;
