@@ -55,7 +55,7 @@ void main() {
 		total_specular_color += specular_color;
 	}
 /*	
-	for ( int i = 0; i < LIGHT_COUNT; i++ ) {
+	for ( int i = 0; i < LIGHT_COUNT; i++ ) 
 		// Per-light calculations
 		vec4 cs_light_position = worldspace * light_position[i];
 		vec4 light_direction = normalize( frag_position - cs_light_position );
@@ -76,10 +76,10 @@ void main() {
 	}
 	*/
 
-//	float r = clamp( height / 5.0, 0.3, 0.8 );
-	float r = 1.0;
+	float r = clamp( height / 10.0 + 0.2, 0.4, 0.8 );
+//	float r = 0.8;
 	float g = clamp( height / 20.0, 0.2, 0.3 );
-	float b = clamp( height / 20.0, 0.1, 0.2 );
+	float b = clamp( height / 20.0, 0.2, 0.3 );
 	vec4 material_diffuse = vec4( r, g, b, 1.0 ) * texture2D( tex, texcoord );
 	gl_FragColor =	total_specular_color * material_specular + 
 					total_diffuse_color * material_diffuse;
