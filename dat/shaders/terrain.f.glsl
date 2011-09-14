@@ -80,7 +80,7 @@ void main() {
 	float r = 1.0;
 	float g = clamp( height / 20.0, 0.2, 0.3 );
 	float b = clamp( height / 20.0, 0.1, 0.2 );
-	vec4 material_diffuse = vec4( r, g, b, 1.0 );
+	vec4 material_diffuse = vec4( r, g, b, 1.0 ) * texture2D( tex, texcoord );
 	gl_FragColor =	total_specular_color * material_specular + 
 					total_diffuse_color * material_diffuse;
 	gl_FragColor.w = 1.0;

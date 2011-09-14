@@ -8,6 +8,8 @@
 #include "render/texture.h"
 #include "system/hash.h"
 
+GLint terrain_texture = -1;
+
 // Create a procedural terrain
 terrain* terrain_create() {
 	terrain* t = mem_alloc( sizeof( terrain ));
@@ -15,6 +17,10 @@ terrain* terrain_create() {
 	t->u_samples = 1;
 	t->v_samples = 1;
 	t->sample_point = Vector( 0.f, 0.f, 0.f, 1.f );
+
+	if ( terrain_texture == -1 )
+		terrain_texture = texture_loadTGA( "assets/3rdparty/img/rock02_tile.tga" );
+
 	return t;
 }
 
@@ -191,13 +197,16 @@ void terrain_calculateBuffers( terrain* t ) {
 		printf( "Index %d: %u.\n", i, t->element_buffer[i] );
 	}
 */
+
+	float texture_scale = 0.125f;
+
 	// For each element index
 	// Unroll the vertex/index bindings
 	for ( int i = 0; i < t->index_count; i++ ) {
 		// Copy the required vertex position, normal, and uv
 		t->vertex_buffer[i].position = verts[t->element_buffer[i]];
 		t->vertex_buffer[i].normal = normals[t->element_buffer[i]];
-		t->vertex_buffer[i].uv = verts[t->element_buffer[i]];
+		t->vertex_buffer[i].uv = Vector( verts[t->element_buffer[i]].coord.x * texture_scale, verts[t->element_buffer[i]].coord.z * texture_scale, 0.f, 0.f );
 		t->element_buffer[i] = i;
 	}
 /*	
@@ -234,12 +243,12 @@ void terrain_render( void* data ) {
 	// There are now <index_count> vertices, as we have unrolled them
 	GLsizei vertex_buffer_size = t->index_count * sizeof( vertex );
 	GLsizei element_buffer_size = t->index_count * sizeof( GLushort );
-/*
+
 	// Textures
 	GLint* tex = shader_findConstant( mhash( "tex" ));
 	if ( tex )
-		render_setUniform_texture( *tex, g_texture_default );
-*/
+		render_setUniform_texture( *tex, terrain_texture );
+
 
 	VERTEX_ATTRIBS( VERTEX_ATTRIB_LOOKUP );
 	// *** Vertex Buffer
