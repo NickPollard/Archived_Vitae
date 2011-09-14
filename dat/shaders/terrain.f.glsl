@@ -81,8 +81,15 @@ void main() {
 	float g = clamp( height / 20.0, 0.2, 0.3 );
 	float b = clamp( height / 20.0, 0.2, 0.3 );
 	vec4 material_diffuse = vec4( r, g, b, 1.0 ) * texture2D( tex, texcoord );
-	gl_FragColor =	total_specular_color * material_specular + 
+	vec4 fragColor =	total_specular_color * material_specular + 
 					total_diffuse_color * material_diffuse;
+
+	float fog_far = 150.0;
+	float fog_near = 50.0;
+	float fog = (frag_position.z - fog_near) / ( fog_far - fog_near );
+	// Temporary Terrain Fog
+	gl_FragColor = mix ( fragColor, vec4( 0.0, 0.0, 0.0, 1.0 ), fog );
+
 	gl_FragColor.w = 1.0;
 
 //	gl_FragColor = vec4( 0.2, 1.0, 0.2, 1.0 );

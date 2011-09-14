@@ -11,6 +11,7 @@
 
 #define kMaxShaderConstants 128
 map* shader_constants = NULL;
+#define kShaderMaxLogLength (16 << 10)
 
 // Find the program location for a named Uniform variable in the given program
 GLint shader_getUniformLocation( GLuint program, const char* name ) {
@@ -94,21 +95,21 @@ void shader_buildDictionary( shaderDictionary* dict, GLuint shader_program, cons
 }
 
 void gl_dumpInfoLog( GLuint object, func_getIV getIV, func_getInfoLog getInfoLog ) {
-	printf( "dump info log." );
 	GLint length = -1;
 	char* log;
 	getIV( object, GL_INFO_LOG_LENGTH, &length );
-	printf( "SHADER: got log length: %d", length );
+	printf( "SHADER: got log length: %d\n", length );
 
 	if ( length != -1 ) {
-		int max_length = 16 < 10;
-		length = min( length, max_length );
+		length = min( length, kShaderMaxLogLength );
 		log = mem_alloc( sizeof( char ) * length );
-		printf( "SHADER: allocated log." );
-		getInfoLog( object, length, NULL, log );
+		log[0] = '\0';
+		printf( "SHADER: allocated log.\n" );
+		GLint length_read;
+		getInfoLog( object, length, &length_read, log );
 		printf( "--- Begin Info Log ---\n" );
-		printf( "%s", log );
-		printf( "--- End Info Log ---\n" );
+		printf( "%s\n", log );
+		printf( "--- End Info Log: %d characters read ---\n", length_read );
 		mem_free( log );
 	}
 }

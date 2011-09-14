@@ -22,10 +22,11 @@ float fround( float value, float round ) {
 
 
 int max( int a, int b ) {
-	return a > b ? a : b;
+	return ( a > b ) ? a : b;
 }
 int min( int a, int b ) {
-	return a < b ? a : b;
+	printf( "a: %d, b: %d.\n", a, b );
+	return ( a < b ) ? a : b;
 }
 
 int clamp( int a, int bottom, int top ) {
