@@ -93,9 +93,22 @@ void engine_input( engine* e ) {
 	engine_inputInputs( e );
 }
 
+float frame_times[10];
+
 // tick - process a frame of game update
 void engine_tick( engine* e ) {
 	float dt = timer_getDelta( e->timer );
+
+	float time = 0.f;
+	for ( int i = 0; i < 9; i++ ) {
+		frame_times[i] = frame_times[i+1];
+		time += frame_times[i];
+	}
+	frame_times[9] = dt;
+	time += dt;
+	time = time / 10.f;
+
+	printf( "TICK: frametime %.2fms (%.2f fps)\n", time, 1.f/time );
 
 	lua_preTick( dt );
 

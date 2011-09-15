@@ -32,6 +32,7 @@ const vec4 material_specular = vec4( 0.5, 0.5, 0.5, 1.0 );
 const float light_radius = 20.0;
 
 void main() {
+#if 1
 	// light-invariant calculations
 	vec4 view_direction = normalize( frag_position );
 
@@ -54,7 +55,7 @@ void main() {
 		vec4 specular_color = directional_light_specular * specular;
 		total_specular_color += specular_color;
 	}
-/*	
+#if 0	
 	for ( int i = 0; i < LIGHT_COUNT; i++ ) 
 		// Per-light calculations
 		vec4 cs_light_position = worldspace * light_position[i];
@@ -74,7 +75,7 @@ void main() {
 		vec4 specular_color = light_specular[i] * specular;
 		total_specular_color += specular_color;
 	}
-	*/
+#endif
 
 	float r = clamp( height / 10.0 + 0.2, 0.4, 0.8 );
 //	float r = 0.8;
@@ -92,6 +93,7 @@ void main() {
 
 	gl_FragColor.w = 1.0;
 
+#endif
 //	gl_FragColor = vec4( 0.2, 1.0, 0.2, 1.0 );
 
 }
