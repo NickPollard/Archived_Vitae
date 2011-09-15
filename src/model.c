@@ -94,7 +94,7 @@ mesh* mesh_createMesh( int vertCount, int index_count, int normal_count, int uv_
 	m->uv_indices = data;
 */
 
-	m->vertCount = vertCount;
+	m->vert_count = vertCount;
 	m->index_count = index_count;
 	m->normal_count = normal_count;
 

@@ -19,7 +19,7 @@ typedef struct vertex_s {
 struct mesh_s {
 	transform*	trans;
 	//
-	int			vertCount;
+	int			vert_count;
 	vector*		verts;
 	//
 	int			index_count;

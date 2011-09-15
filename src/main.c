@@ -13,6 +13,7 @@
 #include "particle.h"
 #include "terrain.h"
 #include "mem/allocator.h"
+#include "render/modelinstance.h"
 #include "system/file.h"
 #include "system/hash.h"
 #include "system/string.h"
@@ -38,6 +39,8 @@ void test() {
 	test_string();
 
 	test_terrain();
+
+	test_aabb_calculate();
 }
 
 // ###################################

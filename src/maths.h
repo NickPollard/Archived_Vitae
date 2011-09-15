@@ -75,10 +75,11 @@ void Normalize( vector* dst, const vector* src );
 bool isNormalized( const vector* v );
 
 void vector_scale( vector* dst, vector* src, float scale );
-
 vector vector_lerp( vector* from, vector* to, float amount );
 
 vector vector_mul( vector* a, vector* b );
+vector vector_max( vector* a, vector* b );
+vector vector_min( vector* a, vector* b );
 
 // Matrix Vector multiply
 vector matrixVecMul(matrix m, const vector* v);

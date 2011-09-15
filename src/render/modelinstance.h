@@ -24,3 +24,5 @@ modelInstance* modelInstance_createEmpty( );
 modelInstance* modelInstance_create( modelHandle m );
 
 void modelInstance_draw( modelInstance* instance );
+
+void test_aabb_calculate();

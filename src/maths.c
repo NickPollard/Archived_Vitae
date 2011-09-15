@@ -132,6 +132,25 @@ vector vector_mul( vector* a, vector* b ) {
 	return v;
 }
 
+
+vector vector_max( vector* a, vector* b ) {
+	vector m;
+	m.coord.x = fmaxf( a->coord.x, b->coord.x );
+	m.coord.y = fmaxf( a->coord.y, b->coord.y );
+	m.coord.z = fmaxf( a->coord.z, b->coord.z );
+	m.coord.w = fmaxf( a->coord.w, b->coord.w );
+	return m;
+}
+
+vector vector_min( vector* a, vector* b ) {
+	vector m;
+	m.coord.x = fminf( a->coord.x, b->coord.x );
+	m.coord.y = fminf( a->coord.y, b->coord.y );
+	m.coord.z = fminf( a->coord.z, b->coord.z );
+	m.coord.w = fminf( a->coord.w, b->coord.w );
+	return m;
+}
+
 // Matrix Vector multiply
 vector matrixVecMul( matrix m, const vector* v) {
 	vector out;
