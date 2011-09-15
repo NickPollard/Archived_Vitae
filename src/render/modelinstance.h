@@ -2,6 +2,7 @@
 
 #pragma once
 #include "mem/pool.h"
+#include "maths.h"
 
 /*
 	ModelInstance
@@ -11,9 +12,15 @@
 	in different positions/situations
    */
 
+typedef struct aabb_s {
+	vector min;
+	vector max;
+} aabb;
+
 struct modelInstance_s {
 	modelHandle	model;
 	transform* trans;
+	aabb	bb;
 };
 
 DECLARE_POOL( modelInstance )
@@ -23,6 +30,6 @@ void modelInstance_initPool();
 modelInstance* modelInstance_createEmpty( );
 modelInstance* modelInstance_create( modelHandle m );
 
-void modelInstance_draw( modelInstance* instance );
+void modelInstance_draw( modelInstance* instance, camera* cam );
 
 void test_aabb_calculate();

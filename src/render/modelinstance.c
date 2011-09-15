@@ -4,6 +4,7 @@
 #include "modelinstance.h"
 //-----------------------
 #include "model.h"
+#include "camera.h"
 #include "render/render.h"
 #include "transform.h"
 
@@ -27,19 +28,21 @@ modelInstance* modelInstance_create( modelHandle m ) {
 	return i;
 }
 
-typedef struct aabb_s {
-	vector min;
-	vector max;
-} aabb;
-
-aabb aabb_calculate( int vert_count, vector* verts ) {
+aabb aabb_calculate( int vert_count, vector* verts, matrix m ) {
 	vAssert( vert_count > 1 );
 	aabb bb;
-	bb.min = verts[0];
-	bb.max = verts[0];
+	vector vert = verts[0];
+	if ( m )
+		vert = matrixVecMul( m, &verts[0] );
+	bb.min = vert;
+	bb.max = vert;
 	for ( int i = 1; i < vert_count; i++ ) {
-		bb.min = vector_min( &bb.min, &verts[i] );
-		bb.max = vector_max( &bb.max, &verts[i] );
+		vert = verts[i];
+		if ( m )
+			vert = matrixVecMul( m, &verts[i] );
+
+		bb.min = vector_min( &bb.min, &vert );
+		bb.max = vector_max( &bb.max, &vert );
 	}
 	return bb;
 }
@@ -50,12 +53,14 @@ void test_aabb_calculate( ) {
 		{{ -1.f, 1.f, 0.f, 1.f }},
 		{{ 0.f, -1.f, 1.f, 1.f }}
 	};
-	aabb bb = aabb_calculate( 3, verts );
+	aabb bb = aabb_calculate( 3, verts, NULL );
+#if 0
 	printf( "AABB: ( " );
 	vector_print( &bb.min );
 	printf( " ) to ( " );
 	vector_print( &bb.max );
 	printf( ")\n" );
+#endif
 	vector v_min = Vector( -1.f, -1.f, -1.f, 1.f );
 	vector v_max = Vector( 1.f, 1.f, 1.f, 1.f );
 	vAssert( vector_equal( &bb.min, &v_min ));
@@ -63,23 +68,59 @@ void test_aabb_calculate( ) {
 }
 
 void modelInstance_calculateBoundingBox( modelInstance* instance ) {
-	aabb bb;
-	bb.min = Vector( 0.0, 0.0, 0.0, 1.0 );
-	bb.max = Vector( 0.0, 0.0, 0.0, 1.0 );
+	instance->bb.min = Vector( 0.0, 0.0, 0.0, 1.0 );
+	instance->bb.max = Vector( 0.0, 0.0, 0.0, 1.0 );
 	mesh* m = model_fromInstance( instance )->meshes[0];
-	bb = aabb_calculate( m->vert_count, m->verts );
+	instance->bb = aabb_calculate( m->vert_count, m->verts, instance->trans->world );
+#if 0
 	printf( "AABB: ( " );
 	vector_print( &bb.min );
 	printf( " ) to ( " );
 	vector_print( &bb.max );
 	printf( ")\n" );
+#endif
 }
 
+void aabb_expand( aabb* bb, vector* points ) {
+	points[0] = bb->min;
+	points[1] = bb->max;
+	points[2] = Vector( bb->max.coord.x, bb->min.coord.y, bb->min.coord.z, 1.f );
+	points[3] = Vector( bb->min.coord.x, bb->max.coord.y, bb->min.coord.z, 1.f );
+	points[4] = Vector( bb->min.coord.x, bb->min.coord.y, bb->max.coord.z, 1.f );
+	points[5] = Vector( bb->max.coord.x, bb->max.coord.y, bb->min.coord.z, 1.f );
+	points[6] = Vector( bb->min.coord.x, bb->max.coord.y, bb->max.coord.z, 1.f );
+	points[7] = Vector( bb->max.coord.x, bb->min.coord.y, bb->max.coord.z, 1.f );
+}
 
-void modelInstance_draw( modelInstance* instance ) {
+bool plane_cull( aabb* bb, vector* plane ) {
+	vector points[8];
+	aabb_expand( bb, points );
+	for ( int i = 0; i < 6; i++ ) {
+		if ( Dot( &points[i], plane ) > plane->coord.w )
+			return false;
+	}
+	return true;
+}
+
+// Cull the AABB *bb* against the frustum defined as 6 planes in *frustum*
+bool frustum_cull( aabb* bb, vector* frustum ) {
+	if ( plane_cull( bb, &frustum[0] )) {
+		printf( "Culled by front plane.\n" );
+		return true;
+	}
+	/*
+	if ( plane_cull( bb, &frustum[1] ))
+		return true;
+		*/
+	return false;
+}
+
+void modelInstance_draw( modelInstance* instance, camera* cam ) {
 	// Bounding box cull
-//	if ( frustum_cull( bounding_box, frustum ) )
-//		return;
+	vector frustum[6];
+	camera_calculateFrustum( cam, frustum );
+	if ( frustum_cull( &instance->bb, frustum ) )
+		return;
 
 	modelInstance_calculateBoundingBox( instance );
 

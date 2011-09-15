@@ -101,7 +101,7 @@ void render_swapBuffers() {
 // Then draw all the submeshes
 void render_scene(scene* s) {
 	for (int i = 0; i < s->model_count; i++) {
-		modelInstance_draw( scene_model( s, i ));
+		modelInstance_draw( scene_model( s, i ), s->cam );
 	}
 }
 
@@ -226,6 +226,11 @@ void render_shader( scene* s ) {
 	render_perspectiveMatrix( perspective, fov, aspect, z_near, z_far );
 
 	camera* cam = s->cam;
+	cam->near = z_near;
+	cam->far = z_far;
+	vector frustum[6];
+	camera_calculateFrustum( cam, frustum );
+
 	render_validateMatrix( cam->trans->world );
 	matrix_inverse( camera_inverse, cam->trans->world );
 	render_validateMatrix( modelview );
