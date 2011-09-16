@@ -69,7 +69,7 @@ void Sub(vector* dst, const vector* srcA, const vector* srcB) {
 
 // Vector dot product
 float Dot( const vector* A, const vector* B ) {
-	return (A->coord.x * B->coord.x + A->coord.y + B->coord.y + A->coord.z + B->coord.z);
+	return (A->coord.x * B->coord.x + A->coord.y * B->coord.y + A->coord.z * B->coord.z);
 }
 
 // Vector cross product
@@ -250,6 +250,12 @@ void matrix_setIdentity(matrix m) {
 
 void vector_print( const vector* v ) {
 	printf( "%.4f, %.4f, %.4f, %.4f", v->val[0], v->val[1], v->val[2], v->val[3] );
+}
+
+void vector_printf( const char* label, const vector* v ) {
+	printf( "%s", label );
+	vector_print( v );
+	printf( "\n" );
 }
 
 bool vector_equal( const vector* a, const vector* b ) {
@@ -631,5 +637,9 @@ void test_matrix() {
 	v2 = matrixVecMul( c, &v2 );
 	assert( vector_equal( &v, &v2 ));
 
+	vector vdot = Vector( 1.f, 0.f, 0.f, 0.f );
+	vAssert( f_eq( Dot( &vdot, &vdot ), 1.f ) );
+	vector vdot_2 = Vector( 0.f, 1.f, 1.f, 0.f );
+	vAssert( f_eq( Dot( &vdot, &vdot_2 ), 0.f ) );
 
 }

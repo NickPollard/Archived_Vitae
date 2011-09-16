@@ -105,7 +105,6 @@ bool plane_cull( aabb* bb, vector* plane ) {
 // Cull the AABB *bb* against the frustum defined as 6 planes in *frustum*
 bool frustum_cull( aabb* bb, vector* frustum ) {
 	if ( plane_cull( bb, &frustum[0] )) {
-		printf( "Culled by front plane.\n" );
 		return true;
 	}
 	/*
@@ -117,12 +116,12 @@ bool frustum_cull( aabb* bb, vector* frustum ) {
 
 void modelInstance_draw( modelInstance* instance, camera* cam ) {
 	// Bounding box cull
+	modelInstance_calculateBoundingBox( instance );
+
 	vector frustum[6];
 	camera_calculateFrustum( cam, frustum );
 	if ( frustum_cull( &instance->bb, frustum ) )
 		return;
-
-	modelInstance_calculateBoundingBox( instance );
 
 	render_resetModelView();
 	matrix_mul( modelview, modelview, instance->trans->world );

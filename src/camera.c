@@ -38,17 +38,19 @@ void camera_calculateFrustum( camera* c, vector* frustum ) {
 	vector view = matrixVecMul( c->trans->world, &v );
 	vector p = *matrix_getTranslation( c->trans->world );
 
+	/*
+	vector_printf( "cam pos: ", &p );
+	vector_printf( "cam dir: ", &view );
+*/
+
 	vector front = view;
 	front.coord.w = Dot( &p, &view ) + c->near;
 	vector back = view;
 	back.coord.w = Dot( &p, &view ) + c->far;
-/*
-	printf( "Near plane: " );
-	vector_print( &front );
-	printf( ".\nFar Plane: " );
-	vector_print( &back );
-	printf( "\n" );
-*/	
+
+//	vector_printf( "Near plane: ", &front );
+//	vector_printf( "Far plane: ", &back );
+
 	frustum[0] = front;
 	frustum[1] = back;
 }
