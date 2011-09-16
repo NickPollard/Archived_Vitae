@@ -131,22 +131,22 @@ function playership_tick()
 	acceleration = 1.0
 	yaw = 0.02
 	pitch = 0.02
-	if vkeyHeld( input, key.w )  or vtouchHeld( input, 000.0, 240.0, 100.0, 320.0 ) then
+	if vkeyHeld( input, key.w )  or vtouchHeld( input, 000.0, -240.0, 100.0, -160.0 ) then
 		player_ship.speed = player_ship.speed + acceleration
 	end
-	if vkeyHeld( input, key.s )  or vtouchHeld( input, 000.0, 400.0, 100.0, 480.0 ) then
+	if vkeyHeld( input, key.s )  or vtouchHeld( input, 000.0, -80.0, 100.0, -1.0 ) then
 		player_ship.speed = player_ship.speed - acceleration
 	end
-	if vkeyHeld( input, key.left ) or vtouchHeld( input, 500.0, 240.0, 600.0, 480.0 ) then
+	if vkeyHeld( input, key.left ) or vtouchHeld( input, -300.0, -240.0, -200.0, -1.0 ) then
 		vtransform_yaw( player_ship.transform, -yaw );
 	end
-	if vkeyHeld( input, key.right ) or vtouchHeld( input, 700.0, 240.0, 800.0, 480.0 ) then
+	if vkeyHeld( input, key.right ) or vtouchHeld( input, -100.0, -240.0, -1.0, -1.0 ) then
 		vtransform_yaw( player_ship.transform, yaw );
 	end
-	if vkeyHeld( input, key.up ) or vtouchHeld( input, 500.0, 240.0, 800.0, 320.0 ) then
+	if vkeyHeld( input, key.up ) or vtouchHeld( input, -300.0, -240.0, -1.0, -160.0 ) then
 		vtransform_pitch( player_ship.transform, -pitch );
 	end
-	if vkeyHeld( input, key.down ) or vtouchHeld( input, 500.0, 400.0, 800.0, 480.0 ) then
+	if vkeyHeld( input, key.down ) or vtouchHeld( input, -300.0, -80.0, -1.0, -1.0 ) then
 		vtransform_pitch( player_ship.transform, pitch );
 	end
 

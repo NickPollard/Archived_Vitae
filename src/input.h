@@ -152,6 +152,9 @@ struct input_s {
 	int32_t touchX;
 	int32_t touchY;
 	bool	touched;
+
+	int w;
+	int h;
 #endif
 };
 
@@ -202,6 +205,8 @@ void input_registerTouch( input* in, int x, int y );
 void input_getTouchDrag( input* in, int* x, int* y );
 bool input_touchPressed( input* in, int x_min, int y_min, int x_max, int y_max );
 bool input_touchHeld( input* in, int x_min, int y_min, int x_max, int y_max );
+
+void input_setWindowSize( input* in, int w, int h );
 #endif
 
 #endif // __INPUT_H__

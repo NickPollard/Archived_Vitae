@@ -25,10 +25,10 @@ const vec4 light_ambient = vec4( 0.0, 0.0, 0.0, 0.0 );
 // Directional Light
 const vec4 directional_light_direction = vec4( 1.0, -0.5, 1.0, 0.0 );
 const vec4 directional_light_diffuse = vec4( 1.0, 1.0, 0.4, 1.0 );
-const vec4 directional_light_specular = vec4( 0.2, 0.2, 0.1, 1.0 );
+const vec4 directional_light_specular = vec4( 0.5, 0.5, 0.5, 1.0 );
 
 //const vec4 material_diffuse = vec4( 1.0, 1.0, 1.0, 1.0 );
-const vec4 material_specular = vec4( 0.5, 0.5, 0.5, 1.0 );
+//const vec4 material_specular = vec4( 0.5, 0.5, 0.5, 1.0 );
 const float light_radius = 20.0;
 
 void main() {
@@ -82,6 +82,7 @@ void main() {
 	float g = clamp( height / 20.0, 0.2, 0.3 );
 	float b = clamp( height / 20.0, 0.2, 0.3 );
 	vec4 material_diffuse = vec4( r, g, b, 1.0 ) * texture2D( tex, texcoord );
+	vec4 material_specular = vec4( r, g, b, 1.0 ) * texture2D( tex, texcoord );
 	vec4 fragColor =	total_specular_color * material_specular + 
 					total_diffuse_color * material_diffuse;
 

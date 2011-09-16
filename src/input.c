@@ -152,11 +152,21 @@ bool input_touchHeldInternal( input* in ) {
 }
 
 bool input_touchHeld( input* in, int x_min, int y_min, int x_max, int y_max ) {
+	if ( x_min < 0 ) x_min += in->w;
+	if ( y_min < 0 ) y_min += in->h;
+	if ( x_max < 0 ) x_max += in->w;
+	if ( y_max < 0 ) y_max += in->h;
+
 	int x = in->data[in->active].touchX;
 	int y = in->data[in->active].touchY;
 	return input_touchHeldInternal( in ) &&
 		 	contains( x, x_min, x_max ) &&
 		 	contains( y, y_min, y_max );
+}
+
+void input_setWindowSize( input* in, int w, int h ) {
+	in->w = w;
+	in->h = h;
 }
 #endif
 
