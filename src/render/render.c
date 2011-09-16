@@ -51,6 +51,7 @@ void render_buildShaders() {
 	resources.shader_particle = shader_load( "dat/shaders/textured_phong.v.glsl", "dat/shaders/textured_phong.f.glsl" );
 	resources.shader_terrain = shader_load( "dat/shaders/terrain.v.glsl", "dat/shaders/terrain.f.glsl" );
 	resources.shader_skybox = shader_load( "dat/shaders/skybox.v.glsl", "dat/shaders/skybox.f.glsl" );
+	resources.shader_ui = shader_load( "dat/shaders/ui.v.glsl", "dat/shaders/ui.f.glsl" );
 
 #define GET_UNIFORM_LOCATION( var ) \
 	resources.uniforms.var = shader_findConstant( mhash( #var )); \

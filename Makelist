@@ -26,6 +26,7 @@ SRCS =	src/camera.c \
 		src/system/file.c \
 		src/system/hash.c \
 		src/system/string.c \
+		src/ui/panel.c \
 		src/external/murmur.c
 
 #		src/external/util.c \
