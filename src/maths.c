@@ -44,6 +44,15 @@ float map_range( float point, float begin, float end ) {
 	return ( point - begin ) / ( end - begin );
 }
 
+bool isPowerOf2( unsigned int n ) {
+	/*
+	printf( "n: %x.\n", n );
+	printf( "n-1: %x.\n", n-1 );
+	printf( "n & (n-1): %x.\n", n & ~(n-1) );
+	*/
+	return (n & (n - 1)) == 0;
+}
+
 // *** Vectors
 
 vector Vector(float x, float y, float z, float w) {
@@ -641,5 +650,11 @@ void test_matrix() {
 	vAssert( f_eq( Dot( &vdot, &vdot ), 1.f ) );
 	vector vdot_2 = Vector( 0.f, 1.f, 1.f, 0.f );
 	vAssert( f_eq( Dot( &vdot, &vdot_2 ), 0.f ) );
+
+	vAssert( isPowerOf2( 4 ) );
+	vAssert( isPowerOf2( 1024 ) );
+	vAssert( isPowerOf2( 4096 ) );
+	vAssert( !isPowerOf2( 5 ) );
+	vAssert( !isPowerOf2( 1536 ) );
 
 }

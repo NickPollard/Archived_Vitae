@@ -3,7 +3,7 @@
 #include "common.h"
 #include "render/texture.h"
 //---------------------
-//#include "external/util.h"
+#include "maths.h"
 #include "system/file.h"
 #include "mem/allocator.h"
 
@@ -73,12 +73,13 @@ uint8_t* read_tga( const char* file, int* w, int* h ) {
 	return tex;
 }
 
-
-
 GLuint texture_loadTGA( const char* filename ) {
 	GLuint tex;
 	int w, h;
 	void* img = read_tga( filename, &w, &h );
+
+	vAssert( isPowerOf2( w ) );
+	vAssert( isPowerOf2( h ) );
 
 	if ( !img )
 		return 0;	// Failed to load the texture
@@ -91,11 +92,9 @@ GLuint texture_loadTGA( const char* filename ) {
 	// Bilinear interpolation, clamped
 	glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR );
     glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR );
-    glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_WRAP_S,     GL_REPEAT);
-    glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_WRAP_T,     GL_REPEAT);
+    glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_WRAP_S,     GL_REPEAT );
+    glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_WRAP_T,     GL_REPEAT );
 
-	// TODO: ANDROID
-//#ifndef OPENGL_ES
 	glTexImage2D( GL_TEXTURE_2D,
 		   			0,			// No Mipmaps for now
 					GL_RGBA,	// 3-channel, 8-bits per channel (32-bit stride)
@@ -104,7 +103,6 @@ GLuint texture_loadTGA( const char* filename ) {
 					GL_RGBA,		// TGA uses BGR order internally
 					GL_UNSIGNED_BYTE,	// 8-bits per channel
 					img );
-//#endif
 
 	mem_free( img );	// OpenGL copies the data, so we can free this here
 

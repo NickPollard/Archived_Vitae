@@ -51,6 +51,8 @@ float lerp( float a, float b, float factor );
 // map a point to the range from begin-end, returning a value from 0.f to 1.f
 float map_range( float point, float begin, float end );
 
+bool isPowerOf2( unsigned int n );
+
 typedef float matrix[4][4];
 
 // *** Vectors
