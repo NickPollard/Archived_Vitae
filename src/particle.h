@@ -22,6 +22,18 @@ typedef struct property_s {
 	float* data;
 } property;
 
+typedef struct particleEmitterDef_s {
+	float	lifetime;
+	float	spawn_interval;
+	vector	spawn_box;
+	// Properties
+	property* size;
+	property* color;
+	vector	velocity;
+	GLint	texture_diffuse;
+	uint8_t	flags;
+} particleEmitterDef;
+
 typedef struct particleEmitter_s {
 	transform*	trans;
 
@@ -29,12 +41,15 @@ typedef struct particleEmitter_s {
 	int		start;
 	int		count;
 
-	// Spawn control
-	float	lifetime;
-	float	spawn_interval;
 	float	next_spawn;
-	vector	spawn_box;
 
+	particleEmitterDef*	definition;
+	// Spawn control
+//	float	lifetime;
+//	float	spawn_interval;
+//	vector	spawn_box;
+
+	/*
 	// Properties
 	property* size;
 	property* color;
@@ -43,6 +58,7 @@ typedef struct particleEmitter_s {
 
 	// Flags
 	uint8_t flags;
+	*/
 } particleEmitter;
 
 particleEmitter* particleEmitter_create();

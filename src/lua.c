@@ -382,27 +382,27 @@ int LUA_particle_create( lua_State* l ) {
 	transform* t = lua_toptr( l, 2 );
 	
 	particleEmitter* p = particleEmitter_create();
-	p->lifetime = 2.f;
-	p->spawn_box = Vector( 0.3f, 0.3f, 0.3f, 0.f );
+	p->definition->lifetime = 2.f;
+	p->definition->spawn_box = Vector( 0.3f, 0.3f, 0.3f, 0.f );
 
 	// size
-	p->size = property_create( 2 );
-	property_addf( p->size, 0.f, 3.f );
-	property_addf( p->size, 0.3f, 1.f );
-	property_addf( p->size, 2.f, 5.f );
+	p->definition->size = property_create( 2 );
+	property_addf( p->definition->size, 0.f, 3.f );
+	property_addf( p->definition->size, 0.3f, 1.f );
+	property_addf( p->definition->size, 2.f, 5.f );
 
 	// color
-	p->color = property_create( 5 );
-	property_addv( p->color, 0.f, Vector( 1.f, 0.f, 0.f, 1.f ));
-	property_addv( p->color, 0.3f, Vector( 1.f, 0.5f, 0.f, 1.f ));
-	property_addv( p->color, 0.8f, Vector( 1.f, 1.f, 1.f, 0.8f ));
-	property_addv( p->color, 1.0f, Vector( 0.5f, 0.5f, 0.5f, 0.8f ));
-	property_addv( p->color, 2.f, Vector( 0.5f, 0.5f, 0.5f, 0.f ));
+	p->definition->color = property_create( 5 );
+	property_addv( p->definition->color, 0.f, Vector( 1.f, 0.f, 0.f, 1.f ));
+	property_addv( p->definition->color, 0.3f, Vector( 1.f, 0.5f, 0.f, 1.f ));
+	property_addv( p->definition->color, 0.8f, Vector( 1.f, 1.f, 1.f, 0.8f ));
+	property_addv( p->definition->color, 1.0f, Vector( 0.5f, 0.5f, 0.5f, 0.8f ));
+	property_addv( p->definition->color, 2.f, Vector( 0.5f, 0.5f, 0.5f, 0.f ));
 
-	p->velocity = Vector( 0.f, 0.1f, 0.f, 0.f );
-	p->spawn_interval = 0.03f;
+	p->definition->velocity = Vector( 0.f, 0.1f, 0.f, 0.f );
+	p->definition->spawn_interval = 0.03f;
 	p->trans = t;
-	p->flags = p->flags | kParticleWorldSpace;
+	p->definition->flags = p->definition->flags | kParticleWorldSpace;
 	engine_addRender( e, p, particleEmitter_render );
 	startTick( e, p, particleEmitter_tick );
 
@@ -411,20 +411,20 @@ int LUA_particle_create( lua_State* l ) {
 	//
 
 	particleEmitter* p_ = particleEmitter_create();
-	p_->lifetime = 2.3f;
-	p_->size = property_create( 2 );
-	property_addf( p_->size, 0.f, 10.f );
-	property_addf( p_->size, 0.5f, 10.f );
-	property_addf( p_->size, 2.f, 25.f );
-	p_->color = property_create( 5 );
-	property_addv( p_->color, 0.f, Vector( 1.f, 1.f, 0.f, 0.8f ));
-	property_addv( p_->color, 0.5f, Vector( 1.f, 0.4f, 0.f, 0.8f ));
-	property_addv( p_->color, 2.3f, Vector( 1.f, 0.4f, 0.f, 0.f ));
-	p_->velocity = Vector( 0.f, 0.0f, 0.f, 0.f );
-	p_->spawn_interval = 0.3f;
-	p_->spawn_box = Vector( 0.3f, 0.f, 0.3f, 0.f );
+	p_->definition->lifetime = 2.3f;
+	p_->definition->size = property_create( 2 );
+	property_addf( p_->definition->size, 0.f, 10.f );
+	property_addf( p_->definition->size, 0.5f, 10.f );
+	property_addf( p_->definition->size, 2.f, 25.f );
+	p_->definition->color = property_create( 5 );
+	property_addv( p_->definition->color, 0.f, Vector( 1.f, 1.f, 0.f, 0.8f ));
+	property_addv( p_->definition->color, 0.5f, Vector( 1.f, 0.4f, 0.f, 0.8f ));
+	property_addv( p_->definition->color, 2.3f, Vector( 1.f, 0.4f, 0.f, 0.f ));
+	p_->definition->velocity = Vector( 0.f, 0.0f, 0.f, 0.f );
+	p_->definition->spawn_interval = 0.3f;
+	p_->definition->spawn_box = Vector( 0.3f, 0.f, 0.3f, 0.f );
 	p_->trans = t;
-	p_->texture_diffuse = texture_loadTGA( "assets/img/star_rgba64.tga" );
+	p_->definition->texture_diffuse = texture_loadTGA( "assets/img/star_rgba64.tga" );
 	engine_addRender( e, p_, particleEmitter_render );
 	startTick( e, p_, particleEmitter_tick );
 

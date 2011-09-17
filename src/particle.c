@@ -12,11 +12,18 @@
 float property_samplef( property* p, float time );
 vector property_samplev( property* p, float time );
 
+particleEmitterDef* particleEmitterDef_create() {
+	particleEmitterDef* def = mem_alloc( sizeof( particleEmitterDef ));
+	memset( def, 0, sizeof( particleEmitterDef ));
+	return def;
+}
+
 particleEmitter* particleEmitter_create() {
 	particleEmitter* p = mem_alloc( sizeof( particleEmitter ));
 	memset( p, 0, sizeof( particleEmitter ));
-	p->spawn_box = Vector( 0.f, 0.f, 0.f, 0.f );
-	p->texture_diffuse = texture_loadTGA( "assets/img/cloud_rgba128.tga" );
+	p->definition = particleEmitterDef_create();
+	p->definition->spawn_box = Vector( 0.f, 0.f, 0.f, 0.f );
+	p->definition->texture_diffuse = texture_loadTGA( "assets/img/cloud_rgba128.tga" );
 	return p;
 }
 
@@ -35,11 +42,11 @@ void particleEmitter_spawnParticle( particleEmitter* e ) {
 	r.coord.y = frand( -1.f, 1.f );
 	r.coord.z = frand( -1.f, 1.f );
 	r.coord.w = 1.f;
-	vector offset = vector_mul( &r, &e->spawn_box );
+	vector offset = vector_mul( &r, &e->definition->spawn_box );
 	offset.coord.w = 1.f;
 
 	// If worldspace, spawn at the particle emitter position
-	if ( !e->flags & kParticleWorldSpace )
+	if ( !e->definition->flags & kParticleWorldSpace )
 		p->position	= offset;
 	else
 		p->position = matrixVecMul( e->trans->world, &offset );
@@ -50,14 +57,14 @@ void particleEmitter_tick( void* data, float dt ) {
 	particleEmitter* e = data;
 	// Update existing particles
 	vector delta;
-	vector_scale ( &delta, &e->velocity, dt );
+	vector_scale ( &delta, &e->definition->velocity, dt );
 	int count = e->count;
 	int start = e->start;
 	for ( int i = 0; i < count; i++ ) {
 		int index = (start + i) % kMaxParticles;
 		// Update age
 		e->particles[index].age += dt;
-		if ( e->particles[index].age > e->lifetime ) {
+		if ( e->particles[index].age > e->definition->lifetime ) {
 			e->count--;
 			e->start++;
 		}
@@ -67,7 +74,7 @@ void particleEmitter_tick( void* data, float dt ) {
 
 	// Spawn new particle
 	e->next_spawn += dt;
-	if ( e->next_spawn > e->spawn_interval ) {
+	if ( e->next_spawn > e->definition->spawn_interval ) {
 		e->next_spawn = 0.f;
 		particleEmitter_spawnParticle( e );
 	}
@@ -86,7 +93,7 @@ void particle_quad( particleEmitter* e, particle_vertex* dst, vector* point, flo
 	vector offset = Vector( size, size, 0.f, 0.f );
 
 	vector p;
-	if ( !e->flags & kParticleWorldSpace )
+	if ( !e->definition->flags & kParticleWorldSpace )
 		p = matrixVecMul( modelview, point );
 	else
 		p = matrixVecMul( camera_inverse, point );
@@ -129,7 +136,7 @@ void particleEmitter_render( void* data ) {
 	// Textures
 	GLint* tex = shader_findConstant( mhash( "tex" ));
 	if ( tex )
-		render_setUniform_texture( *tex, p->texture_diffuse );
+		render_setUniform_texture( *tex, p->definition->texture_diffuse );
 
 	// reset modelview matrix so we can billboard
 	// particle_quad() will manually apply the modelview
@@ -141,8 +148,8 @@ void particleEmitter_render( void* data ) {
 
 	for ( int i = 0; i < p->count; i++ ) {
 		int particle_index = (p->start + i) % kMaxParticles;
-		float size = property_samplef( p->size, p->particles[particle_index].age );
-		vector color = property_samplev( p->color, p->particles[particle_index].age );
+		float size = property_samplef( p->definition->size, p->particles[particle_index].age );
+		vector color = property_samplev( p->definition->color, p->particles[particle_index].age );
 		particle_quad( p, &vertex_buffer[i*4], &p->particles[particle_index].position, size, color );
 		assert( i*6 + 5 < kmax_particle_verts );
 		// TODO: Indices can be initialised once
