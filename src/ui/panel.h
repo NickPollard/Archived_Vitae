@@ -1,5 +1,6 @@
 // panel.h
 #pragma once
+#include "render/render.h"
 
 enum position_mode {
 	kFlow,
@@ -25,4 +26,13 @@ struct panel_s {
 	float height;
 	unsigned int local_anchor;
 	unsigned int remote_anchor;
+
+	// Temp
+	GLint	texture;
 };
+
+// Create a Panel
+panel* panel_create();
+
+// The draw function gets passed the current 'cursor' x and y
+void panel_draw( panel* p, float x, float y );

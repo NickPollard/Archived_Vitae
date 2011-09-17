@@ -21,6 +21,7 @@
 #include "debug/debug.h"
 #include "debug/debugtext.h"
 #include "system/file.h"
+#include "ui/panel.h"
 
 // Lua Libraries
 #include <lauxlib.h>
@@ -54,6 +55,8 @@ void engine_addTicker( engine* e, void* entity, tickfunc tick );
  *
  */
 
+panel* static_test_panel;
+
 void test_engine_init( engine* e ) {
 #if 0
 	debugtextframe* f = debugtextframe_create( 10.f, 10.f, 20.f );
@@ -78,6 +81,15 @@ void test_engine_init( engine* e ) {
 #endif // ANDROID
 	terrain_calculateBuffers( t );
 	engine_addRender( e, (void*)t, terrain_render );
+
+	panel* p = panel_create();
+	p->x = 560.f;
+	p->y = 0.f;
+	p->width = 240.f;
+	p->height = 240.f;
+	p->texture = texture_loadTGA( "assets/img/circle.tga" );
+	static_test_panel = p;
+
 }
 
 /*
@@ -252,6 +264,8 @@ void engine_render( engine* e ) {
 		render( theScene, w, h );
 		skybox_render( NULL );
 		engine_renderRenders( e );
+		//temp
+		panel_draw( static_test_panel, 0.f, 0.f );
 		render_swapBuffers( e->egl );
 	}
 #else
@@ -260,6 +274,8 @@ void engine_render( engine* e ) {
 	render( theScene, w, h );
 	skybox_render( NULL );
 	engine_renderRenders( e );
+	// temp
+	panel_draw( static_test_panel, 0.f, 0.f );
 	render_swapBuffers();
 #endif // ANDROID
 }
