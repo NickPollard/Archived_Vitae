@@ -140,7 +140,8 @@ bool isPropertyType( sterm* s, const char* propertyName ) {
 }
 
 bool isLight( sterm* s ) {
-	return isPropertyType( s, "lightData" );
+//	return isPropertyType( s, "lightData" );
+	return ( s->type == typeLight );
 }
 
 bool isTransform( sterm* s ) {
@@ -251,6 +252,7 @@ void* s_transform( sterm* s );
 void* s_scene( sterm* s );
 void* s_translation( sterm* s );
 void* s_diffuse( sterm* s );
+void* s_specular( sterm* s );
 void* s_filename( sterm* s );
 void* s_vector( sterm* s );
 
@@ -272,6 +274,7 @@ void* lookup( sterm* data ) {
 	S_FUNC( "scene", s_scene )
 	S_FUNC( "translation", s_translation )
 	S_FUNC( "diffuse", s_diffuse )
+	S_FUNC( "specular", s_specular )
 	S_FUNC( "vector", s_vector )
 	S_FUNC( "filename", s_filename )
 
@@ -496,18 +499,11 @@ void* s_readVector( const char* property_name, sterm* raw_elements ) {
 }
 
 void* s_diffuse( sterm* raw_elements ) {
-	/*
-	assert( raw_elements );
-	sterm* elements = eval_list( raw_elements );
-	// For now only allow vectors
-	// Should be a list of one single vector
-	// So take the head and check that
-	assert( isVector( (sterm*)elements->head ));
-	// For now, copy the vector head from the vector sterm
-	sterm* s_diff = sterm_createProperty( "diffuse", typeVector, ((sterm*)elements->head)->head );
-	return s_diff;
-	*/
 	return s_readVector( "diffuse", raw_elements );
+}
+
+void* s_specular( sterm* raw_elements ) {
+	return s_readVector( "specular", raw_elements );
 }
 
 void* s_vector( sterm* raw_elements ) {
@@ -592,12 +588,16 @@ void register_propertyOffset( const char* type, const char* property, int offset
 	}
 
 	int t = mhash( type );
-	map* m = map_find( object_offsets, t );
-	if ( !m ) {
+	map* m = NULL;
+	map** m_ptr = map_find( object_offsets, t );
+	if ( m_ptr )
+		m = *m_ptr;
+	else {
 		printf( "Creating offset hashmap for type \"%s\".\n", type );
 		m = map_create( kMaxProperties, sizeof( int ));
 		map_add( object_offsets, t, &m );
 	}
+	vAssert( m ); // We should have a valid map by now
 
 	int p = mhash( property);
 	printf( "Adding offset ( \"%s\", \"%s\", %d )\n", type, property, offset );
@@ -609,21 +609,19 @@ int propertyOffset( const char* type, const char* property ) {
 	int p = mhash( property );
 	map* m = *(map**)map_find( object_offsets, t );
 	vAssert( m );
-//	printf( "Found object map: 0x%x.\n", (unsigned int)m );
-//	printf( "looking for key: 0x%x.\n", p );
 	int offset = *(int*)map_find( m, p );
 	vAssert( offset >= 0 );
-	printf( "Offset returned: ( \"%s\", \"%s\", %d )\n", type, property, offset );
+//	printf( "Offset returned: ( \"%s\", \"%s\", %d )\n", type, property, offset );
 	return offset;
 }
 
 void parse_init() {
 	register_propertyOffset( "light", "diffuse", offsetof( light, diffuse_color ));
+	register_propertyOffset( "light", "specular", offsetof( light, specular_color ));
 }
 
 // Generic property process function
 void processProperty( void* p, void* object ) {
-	printf( "Process Property\n" );
 	// We need the object type name and the property name
 	sterm* property = p;
 	const char* property_name = ((sterm*)property->head)->head;
@@ -631,18 +629,9 @@ void processProperty( void* p, void* object ) {
 
 	int property_type = ((sterm*)property->tail->head)->type;
 
-
-
 	void* data = (uint8_t*)object + propertyOffset( type_name, property_name );
-	// test
-	/*
-	light* l = object;
-	printf( "l->diffuse_color: 0x%x\n", (unsigned int)&l->diffuse_color );
-	printf( "data: 0x%x\n", (unsigned int)data );
-	*/
-	//
 	if ( property_type == typeVector ) {
-		vector_printf( "Found vector:", ((sterm*)property->tail->head)->head );
+//		vector_printf( "Found vector:", ((sterm*)property->tail->head)->head );
 		*(vector*)data = *(vector*)((sterm*)property->tail->head)->head;
 	}
 }
@@ -664,7 +653,6 @@ void lightData_processProperty( void* object_, void* light_ ) {
 }
 
 void* s_light( sterm* raw_properties ) {
-	printf( "slight.\n" );
 	// Test our generic processProperty
 	light* l = light_create();
 	if ( raw_properties ) {
@@ -673,7 +661,11 @@ void* s_light( sterm* raw_properties ) {
 	}
 
 	vector_printf( "Parsed light with diffuse:", &l->diffuse_color );
+	vector_printf( "Parsed light with specular:", &l->specular_color );
 
+	sterm* light_term = sterm_create( typeLight, l );
+	return light_term;
+/*
 	// Build as a list
 	vector* diffuse_vector = NULL; 
 	sterm* data = sterm_create( typeAtom, "lightData" );
@@ -687,6 +679,7 @@ void* s_light( sterm* raw_properties ) {
 	}
 
 	return lData;
+	*/
 }
 
 void scene_processTransform( scene* s, transform* parent, transformData* tData ) {
@@ -707,9 +700,14 @@ void scene_processModel( scene* s, transform* parent, modelData* mData ) {
 }
 
 void scene_processLight( scene* s, transform* parent, sterm* lData ) {
+	/*
 	light* l = light_create();
 	vector* v = ((sterm*)lData->tail->head)->head;
 	light_setDiffuse( l, v->val[0], v->val[1], v->val[2], v->val[3] );
+	*/
+
+	light* l = lData->head;
+	
 	l->trans = parent;
 	scene_addLight( s, l );
 }
@@ -758,10 +756,13 @@ void test_sfile( ) {
 //	sterm* p = parse_string( "(a (b c) (d))" );
 //	debug_sterm_printList( p );
 
+	/*
 	printf( "FILE: Beginning test: test dat/test2.s\n" );
 	sterm* s = parse_file( "dat/test2.s" );
 	eval( s );
 	sterm_free( s );
+	*/
+
 /*
 	printf( "FILE: Beginning test: transform + translation.\n" );
 	sterm* t = parse_string( "(transform (translation (vector 1.0 1.0 1.0 1.0)))" );
