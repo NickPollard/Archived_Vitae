@@ -12,7 +12,8 @@
 #include "physic.h"
 #include "render/debugdraw.h"
 #include "render/modelinstance.h"
-#include "system/file.h"
+//#include "system/file.h"
+#include "script/parse.h"
 #include "font.h"
 #include "debug/debugtext.h"
 

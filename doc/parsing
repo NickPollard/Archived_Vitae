@@ -1,0 +1,47 @@
+The default form of s-expr is a property, of the form
+
+>  ( property-name property-value )
+
+ie.
+
+>  (diffuse (vector (1.0, 1.0, 1.0, 1.0))
+
+the tail of the property list should evaluate to the value for the property (might be more than one value, might be just one).
+A property should just return the s-expr with itself as the head and the property-value as the tail
+ie. properties are just pass-through functions
+
+So an element like:
+
+>  (light (diffuse (vector 1.0, 1.0, 1.0, 1.0)))
+
+means that the 'light' object function should get passed the s-expr tree from above (the diffuse term), with the vector value evaluated and stored as a typed value
+This means the vector, rather than a list of atom ('vector') and 4 int values,  is instead a single atomic type, with type 'vector' and a value as a C vector.
+
+For the object to load the properties then, we just look for type and assign on that?
+
+The problem then is converting the atomic strings into struct offsets.
+
+eg.
+
+exportOffsets( light );
+exportOffsets( model );
+exportOffsets( scene );
+
+void calculateOffsets( object ) {
+
+}
+
+unsigned int getOffset( const char* object, const char* property ) {
+	// can hash these, have a hashmap, or some other lookup table thing
+	return offsets[object][property];
+}
+
+light_process( list of properties ) {
+	light* l = light_create();
+	object = l;
+	for each ( property in list_of_properties ) {
+		// switch on propertyType here
+		propertyType* property_ptr = (propertyType*)( (uint8_t*)object + getOffset( "light", propertyName );
+		*property_ptr = property.value;
+	}
+}
