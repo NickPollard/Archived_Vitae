@@ -12,6 +12,16 @@
 #include "system/hash.h"
 #include "system/string.h"
 
+/*
+   A heap specifically for string allocations
+   This is to keep string allocations organised,
+   prevent them from fragmenting the main pool,
+   and let me track them (string allocations should *only* be required
+   for parsing or scripting
+   */
+#define kStringHeapSize 4 * 1024
+heapAllocator* global_string_heap = NULL;
+
 //
 // *** Parsing
 //
@@ -113,20 +123,16 @@ void inputStream_nextLine( inputStream* in ) {
 // *** S-Expressions
 //
 
-/*
-slist* slist_create() {
-	slist* s = mem_alloc( sizeof( slist ));
-	memset( s, 0, sizeof( slist ));
-	return s;
-}
-*/
-
 bool isAtom( sterm* s ) {
 	return ( s->type == typeAtom );
 }
 
 bool isList( sterm* s ) {
 	return ( s->type == typeList );
+}
+
+bool isString( sterm* s ) {
+	return ( s->type == typeString );
 }
 
 bool isModel( sterm* s ) {
@@ -140,14 +146,12 @@ bool isPropertyType( sterm* s, const char* propertyName ) {
 }
 
 bool isLight( sterm* s ) {
-//	return isPropertyType( s, "lightData" );
 	return ( s->type == typeLight );
 }
 
 bool isTransform( sterm* s ) {
 	return ( s->type == typeTransform );
 }
-
 
 bool isTranslation( sterm* s ) {
 	return isPropertyType( s, "translation" );
@@ -161,6 +165,12 @@ bool isVector( sterm* s ) {
 	return ( s->type == typeVector );
 }
 
+bool token_isString( const char* token ) {
+	size_t len = strlen( token );
+	vAssert( len < 256 );	// Sanity check
+	return (( token[0] == '"' ) && ( token[len-1] == '"' ));
+}
+
 sterm* sterm_create( int tag, void* ptr ) {
 	sterm* term = mem_alloc( sizeof( sterm ) );
 	term->type = tag;
@@ -168,6 +178,16 @@ sterm* sterm_create( int tag, void* ptr ) {
 	term->tail = NULL;
 	return term;
 }
+
+// Create a string from a string-form token
+// Allocated in the string memory pool
+const char* sstring_create( const char* token ) {
+	size_t len = strlen( token );
+	char* buffer = heap_allocate( global_string_heap, sizeof( char ) * (len-1) );
+	memcpy( buffer, &token[1], len-2 );
+	buffer[len-2] = '\0';
+	return buffer;
+};
 
 // Read a token at a time from the inputstream, advancing the read head,
 // and build it into an slist of atoms
@@ -199,8 +219,22 @@ sterm* parse( inputStream* stream ) {
 		}
 	}
 	// When it's an atom, we keep the token, don't free it
-	return sterm_create( typeAtom, (void*)token );
+
+	// Actually not necessarily an atom, let's read it in as whichever base data type it is
+	// either: Atom, String, Number
+	if ( token_isString( token )) {
+		printf( "Found String: %s\n", token );
+		const char* string = sstring_create( token );
+		return sterm_create( typeString, (char*)string );
+	}
+		
+//	if ( atom )
+		return sterm_create( typeAtom, (void*)token );
+//	if ( number )
+//		return sterm_create( typeNumber );
 }
+
+
 
 sterm* parse_string( const char* string ) {
 	inputStream* stream = inputStream_create( string );
@@ -333,16 +367,19 @@ sterm* cons( void* head, sterm* tail ) {
 }
 
 void* eval( sterm* data ) {
-	if ( isAtom( data ) ) {
+	if ( isAtom( data )) {
 		// It's either a function, a string, or a number
 		return lookup( data );
 	}
-	else if ( isList( data ) ) {
+	else if ( isList( data )) {
 		// If evaluating a list, the head must eval to an atom
 		// That atom must be a function?
 		sterm* func = eval( data->head );
-		assert( isFunction( func ) );
+		assert( isFunction( func ));
 		return ((script_func)func->head)( data->tail );
+	}
+	else if ( isString( data )) {
+		return data;
 	}
 	else {
 		printf( "Unrecognised Sterm type: %d.\n", data->type );
@@ -361,7 +398,10 @@ sterm* eval_list( sterm* s ) {
 void sterm_free( sterm* s ) {
 //	printf( "FILE: sterm_free.\n" );
 	if ( !isList( s ) ) {
-		mem_free( s->head );
+		if ( isString( s ))
+			heap_deallocate( global_string_heap, s->head );
+		else
+			mem_free( s->head );
 		mem_free( s );
 	}
 	else {
@@ -381,7 +421,7 @@ void* s_concat( sterm* s ) {
 		// For now just assume atom
 		sterm* stext = eval( s->head );
 		const char* text = stext->head;
-		int extra = strlen( text );
+		size_t extra = strlen( text );
 		char* tmp = mem_alloc( sizeof( char ) * ( size + extra + 1 ) );
 		strncpy( tmp, string, size );
 		strncpy( tmp + size, text, extra );
@@ -447,12 +487,9 @@ void transformData_processElements( transformData* t, sterm* elements ) {
 // and all other sub transforms
 // So returns the whole sub tree from this point
 void* s_transform( sterm* raw_elements ) {
-//	printf( "s_transform\n" );
 	transformData* tData = transformData_create();
-//	debug_sterm_printList( raw_elements );
 	if ( raw_elements ) {
 		sterm* elements = eval_list( raw_elements );
-//		debug_sterm_printList( elements );
 		transformData_processElements( tData, elements );
 	}
 	sterm* t = sterm_create( typeTransform, tData );
@@ -472,21 +509,6 @@ sterm* sterm_createProperty( const char* property_name, int property_type, void*
 							NULL ));
 }
 
-// Creates a translation
-void* s_translation( sterm* raw_elements ) {
-	assert( raw_elements );
-	sterm* elements = eval_list( raw_elements );
-	sterm* element = elements;
-	// For now only allow vectors
-	// Should be a list of one single vector
-	// So take the head and check that
-	assert( isVector( (sterm*)element->head ));
-	// For now, copy the vector head from the vector sterm
-	sterm* s_trans = sterm_createProperty( "translation", typeVector, ((sterm*)element->head)->head );
-//	sterm_free( element );
-	return s_trans;
-}
-
 void* s_readVector( const char* property_name, sterm* raw_elements ) {
 	assert( raw_elements );
 	sterm* elements = eval_list( raw_elements );
@@ -496,6 +518,11 @@ void* s_readVector( const char* property_name, sterm* raw_elements ) {
 	// For now, copy the vector head from the vector sterm
 	sterm* property = sterm_createProperty( property_name, typeVector, ((sterm*)elements->head)->head );
 	return property;
+}
+
+// Creates a translation
+void* s_translation( sterm* raw_elements ) {
+	return s_readVector( "translation", raw_elements );
 }
 
 void* s_diffuse( sterm* raw_elements ) {
@@ -519,11 +546,10 @@ void* s_vector( sterm* raw_elements ) {
 			i++;
 			element = element->tail;
 		}
-//		printf( "Loaded vector: %.2f, %.2f, %.2f, %.2f.\n", v->val[0], v->val[1], v->val[2], v->val[3] );
 		sterm* sv = sterm_create( typeVector, v );
 		return sv;
 	}
-	assert( 0 );
+	vAssert( 0 );
 	return NULL;
 }
 
@@ -537,31 +563,25 @@ modelData* modelData_create() {
 	return m;
 }
 
-// Creates a translation
+// Process a Filename
+// ( filename <string> )
 void* s_filename( sterm* raw_elements ) {
 	assert( raw_elements );
-	sterm* elements = eval_list( raw_elements );
-	sterm* element = elements;
+	sterm* element = eval_list( raw_elements );
 	// Should be a single string
 	// So take the head and check that
-	assert( isAtom( (sterm*)element->head ));
-	// For now, reference the string from the atom
-	// TODO - need to clear up string/atom memory ownership
+	assert( isString( element->head ));
+	// The string is stored in the string heap
 	sterm* sf = sterm_create( typeFilename, ((sterm*)element->head)->head );
-//	sterm_free( element );
 	return sf;
 }
 // Applies the properties to the modeldata
-void modelData_processProperty( modelData* m, sterm* property ) {
-	// TODO: implement
+void modelData_processProperty( void* p, void* object ) {
+	modelData* m = object;
+	sterm* property = p;
 	if ( property->type == typeFilename ) {
 		m->filename = property->head;
 	}
-}
-void modelData_processProperties( modelData* m, sterm* properties ) {
-	modelData_processProperty( m, properties->head );
-	if ( properties->tail )
-		modelData_processProperty( m, properties->tail );
 }
 
 // Creates a model instance
@@ -571,7 +591,7 @@ void* s_model( sterm* raw_properties ) {
 	modelData* mData = modelData_create();
 	if ( raw_properties ) {
 		sterm* properties = eval_list( raw_properties );
-		modelData_processProperties( mData, properties );
+		map_v( properties, modelData_processProperty, mData );
 	}
 	sterm* m = sterm_create( typeModel, mData );
 	return m;
@@ -607,8 +627,12 @@ void register_propertyOffset( const char* type, const char* property, int offset
 int propertyOffset( const char* type, const char* property ) {
 	int t = mhash( type );
 	int p = mhash( property );
-	map* m = *(map**)map_find( object_offsets, t );
+
+	map** m_ptr = map_find( object_offsets, t );
+	vAssert( m_ptr );
+	map* m = *m_ptr;
 	vAssert( m );
+
 	int offset = *(int*)map_find( m, p );
 	vAssert( offset >= 0 );
 //	printf( "Offset returned: ( \"%s\", \"%s\", %d )\n", type, property, offset );
@@ -616,11 +640,16 @@ int propertyOffset( const char* type, const char* property ) {
 }
 
 void parse_init() {
+	global_string_heap = heap_create( kStringHeapSize );
+
 	register_propertyOffset( "light", "diffuse", offsetof( light, diffuse_color ));
 	register_propertyOffset( "light", "specular", offsetof( light, specular_color ));
 }
 
 // Generic property process function
+// Process a list of properties
+// Compare them to the property list of the type
+// Set appropriately
 void processProperty( void* p, void* object ) {
 	// We need the object type name and the property name
 	sterm* property = p;
@@ -631,24 +660,7 @@ void processProperty( void* p, void* object ) {
 
 	void* data = (uint8_t*)object + propertyOffset( type_name, property_name );
 	if ( property_type == typeVector ) {
-//		vector_printf( "Found vector:", ((sterm*)property->tail->head)->head );
 		*(vector*)data = *(vector*)((sterm*)property->tail->head)->head;
-	}
-}
-
-// Process a list of properties
-// Compare them to the property list of the type
-// Set appropriately
-
-void lightData_processProperty( void* object_, void* light_ ) {
-	sterm* l = light_;
-	sterm* property = object_;
-	if ( isDiffuse( property )) {
-		vector* diffuse_vector = (vector*)((sterm*)property->tail->head)->head;
-
-		sterm* diffuse = l->tail->head;
-		diffuse->head = mem_alloc( sizeof( vector ));
-		*(vector*)diffuse->head = *diffuse_vector;
 	}
 }
 
@@ -660,26 +672,11 @@ void* s_light( sterm* raw_properties ) {
 		map_v( properties, processProperty, l );
 	}
 
-	vector_printf( "Parsed light with diffuse:", &l->diffuse_color );
-	vector_printf( "Parsed light with specular:", &l->specular_color );
+//	vector_printf( "Parsed light with diffuse:", &l->diffuse_color );
+//	vector_printf( "Parsed light with specular:", &l->specular_color );
 
 	sterm* light_term = sterm_create( typeLight, l );
 	return light_term;
-/*
-	// Build as a list
-	vector* diffuse_vector = NULL; 
-	sterm* data = sterm_create( typeAtom, "lightData" );
-	sterm* diffuse = sterm_create( typeVector, diffuse_vector );
-	sterm* lData = cons( data, cons( diffuse, NULL ));
-
-	// Evaluate all sub-terms, then process them
-	if ( raw_properties ) {
-		sterm* properties = eval_list( raw_properties );
-		map_v( properties, lightData_processProperty, lData );
-	}
-
-	return lData;
-	*/
 }
 
 void scene_processTransform( scene* s, transform* parent, transformData* tData ) {
@@ -700,14 +697,7 @@ void scene_processModel( scene* s, transform* parent, modelData* mData ) {
 }
 
 void scene_processLight( scene* s, transform* parent, sterm* lData ) {
-	/*
-	light* l = light_create();
-	vector* v = ((sterm*)lData->tail->head)->head;
-	light_setDiffuse( l, v->val[0], v->val[1], v->val[2], v->val[3] );
-	*/
-
 	light* l = lData->head;
-	
 	l->trans = parent;
 	scene_addLight( s, l );
 }
@@ -753,9 +743,6 @@ void test_s_concat() {
 }
 
 void test_sfile( ) {
-//	sterm* p = parse_string( "(a (b c) (d))" );
-//	debug_sterm_printList( p );
-
 	/*
 	printf( "FILE: Beginning test: test dat/test2.s\n" );
 	sterm* s = parse_file( "dat/test2.s" );
@@ -763,13 +750,6 @@ void test_sfile( ) {
 	sterm_free( s );
 	*/
 
-/*
-	printf( "FILE: Beginning test: transform + translation.\n" );
-	sterm* t = parse_string( "(transform (translation (vector 1.0 1.0 1.0 1.0)))" );
-	sterm* e = eval( t );
-	sterm_free( t );
-	sterm_free( e );
-*/
 	printf( "FILE: Beginning test: test concat\n" );
 	test_s_concat();
 }

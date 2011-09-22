@@ -6,7 +6,7 @@
 #include <stdio.h>
 #include <stdint.h>
 
-#define static_heap_size (64 << 20) // In MegaBytes
+#define static_heap_size (64 * 1024 * 1024) // In MegaBytes
 heapAllocator* static_heap = NULL;
 
 void heap_dumpBlocks( heapAllocator* heap );
@@ -25,7 +25,7 @@ void mem_free( void* ptr ) {
 
 // Initialise the memory subsystem
 void mem_init(int argc, char** argv) {
-	static_heap = heap_create(static_heap_size);
+	static_heap = heap_create( static_heap_size );
 }
 
 // Allocates *size* bytes from the given heapAllocator *heap*

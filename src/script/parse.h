@@ -8,6 +8,8 @@ enum tag_type {
 	typeNull,
 	typeList,
 	typeAtom,
+	typeString,
+	typeNumber,
 	typeFunc,
 	typeModel,
 	typeLight,
