@@ -223,7 +223,7 @@ sterm* parse( inputStream* stream ) {
 	// Actually not necessarily an atom, let's read it in as whichever base data type it is
 	// either: Atom, String, Number
 	if ( token_isString( token )) {
-		printf( "Found String: %s\n", token );
+//		printf( "Found String: %s\n", token );
 		const char* string = sstring_create( token );
 		return sterm_create( typeString, (char*)string );
 	}
@@ -571,34 +571,12 @@ void* s_readString( const char* property_name, sterm* raw_elements ) {
 	// Should be a single string, so check the head
 	vAssert( isString( elements->head ));
 	// The string is stored in the string heap
-	sterm* property = sterm_createProperty( property_name, typeVector, ((sterm*)elements->head)->head );
+	sterm* property = sterm_createProperty( property_name, typeString, ((sterm*)elements->head)->head );
 	return property;
 }
 
 void* s_filename( sterm* raw_elements) {
 	return s_readString( "filename", raw_elements );
-}
-
-// Applies the properties to the modeldata
-void modelData_processProperty( void* p, void* object ) {
-	modelData* m = object;
-	sterm* property = p;
-	if ( isPropertyType( p, "filename" )) {
-		m->filename = ((sterm*)property->tail->head)->head;
-	}
-}
-
-// Creates a model instance
-// Returns that model instance
-void* s_model( sterm* raw_properties ) {
-//	printf( "s_model\n" );
-	modelData* mData = modelData_create();
-	if ( raw_properties ) {
-		sterm* properties = eval_list( raw_properties );
-		map_v( properties, modelData_processProperty, mData );
-	}
-	sterm* m = sterm_create( typeModel, mData );
-	return m;
 }
 
 #define kMaxObjectTypes	16
@@ -637,28 +615,32 @@ int propertyOffset( const char* type, const char* property ) {
 	map* m = *m_ptr;
 	vAssert( m );
 
-	int offset = *(int*)map_find( m, p );
-	vAssert( offset >= 0 );
+	int* offset_ptr = map_find( m, p );
+	vAssert( offset_ptr );
+	vAssert( *offset_ptr >= 0 );
 //	printf( "Offset returned: ( \"%s\", \"%s\", %d )\n", type, property, offset );
-	return offset;
+	return (*offset_ptr);
 }
 
 void parse_init() {
 	global_string_heap = heap_create( kStringHeapSize );
 
+	// Light
 	register_propertyOffset( "light", "diffuse", offsetof( light, diffuse_color ));
 	register_propertyOffset( "light", "specular", offsetof( light, specular_color ));
+
+	// ModelData	
+	register_propertyOffset( "modelData", "filename", offsetof( modelData, filename ));
 }
 
 // Generic property process function
 // Process a list of properties
 // Compare them to the property list of the type
 // Set appropriately
-void processProperty( void* p, void* object ) {
+void processProperty( void* p, void* object, /* (const char*) */ void* type_name ) {
 	// We need the object type name and the property name
 	sterm* property = p;
 	const char* property_name = ((sterm*)property->head)->head;
-	const char* type_name = "light";
 
 	int property_type = ((sterm*)property->tail->head)->type;
 
@@ -666,6 +648,22 @@ void processProperty( void* p, void* object ) {
 	if ( property_type == typeVector ) {
 		*(vector*)data = *(vector*)((sterm*)property->tail->head)->head;
 	}
+	else if ( property_type == typeString ) {
+		const char* string = ((sterm*)property->tail->head)->head;
+		*(const char**)data = (void*)string;
+	}
+}
+
+// Creates a model instance
+// Returns that model instance
+void* s_model( sterm* raw_properties ) {
+	modelData* mData = modelData_create();
+	if ( raw_properties ) {
+		sterm* properties = eval_list( raw_properties );
+		map_vv( properties, processProperty, mData, "modelData" );
+	}
+	sterm* m = sterm_create( typeModel, mData );
+	return m;
 }
 
 void* s_light( sterm* raw_properties ) {
@@ -673,7 +671,7 @@ void* s_light( sterm* raw_properties ) {
 	light* l = light_create();
 	if ( raw_properties ) {
 		sterm* properties = eval_list( raw_properties );
-		map_v( properties, processProperty, l );
+		map_vv( properties, processProperty, l, "light" );
 	}
 
 //	vector_printf( "Parsed light with diffuse:", &l->diffuse_color );

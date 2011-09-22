@@ -133,8 +133,9 @@ void heap_dumpBlocks( heapAllocator* heap ) {
 // Find a block of at least *min_size* bytes
 // First version will naively use first found block meeting the criteria
 block* heap_findEmptyBlock( heapAllocator* heap, int min_size ) {
+//	heap_dumpBlocks( heap );
 	block* b = heap->first;
-	while ( ( ( b->size < min_size ) || !b->free ) && b->next ) {
+	while ((( b->size < min_size ) || !b->free ) && b->next ) {
 #ifdef MEM_GUARD_BLOCK
 		assert( b->guard == 0x0 );
 #endif
