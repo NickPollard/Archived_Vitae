@@ -145,20 +145,17 @@ bool isPropertyType( sterm* s, const char* propertyName ) {
 		    string_equal( ((sterm*)s->head)->head, propertyName ));
 }
 
+bool isObject( sterm* s, const char* type ) {
+	return ( s->type == typeObject ) && ( string_equal( s->head, type ));
+}
+
 bool isLight( sterm* s ) {
-	return ( s->type == typeLight );
+	return isPropertyType( s, "light" );
+//	return ( s->type == typeLight );
 }
 
 bool isTransform( sterm* s ) {
 	return ( s->type == typeTransform );
-}
-
-bool isTranslation( sterm* s ) {
-	return isPropertyType( s, "translation" );
-}
-
-bool isDiffuse( sterm* s ) {
-	return isPropertyType( s, "diffuse" );
 }
 
 bool isVector( sterm* s ) {
@@ -325,25 +322,20 @@ const char* getAtom( sterm* term ) {
 }
 
 void debug_sterm_print( sterm* term ) {
-	if ( isList( term ) )
-	{
-		if ( isList( term->head )) {
+	if ( isList( term ) ) {
+		if ( isList( term->head ))
 			printf( "(" );
-		}
 		debug_sterm_print( term->head );
-		if ( isList( term->head )) {
+		if ( isList( term->head ))
 			printf( ")" );
-		}
 	}
+
 	if ( isAtom( term ) )
 		printf( "%s ", (const char*)term->head );
-
 	if ( isModel( term ))
 		printf( "typeModel " );
-
 	if ( isTransform( term ))
 		printf( "typeTransform " );
-
 	if ( term->tail )
 		debug_sterm_print( term->tail );
 }
@@ -368,7 +360,7 @@ sterm* cons( void* head, sterm* tail ) {
 
 void* eval( sterm* data ) {
 	if ( isAtom( data )) {
-		// It's either a function, a string, or a number
+		// It's either a function, or a number
 		return lookup( data );
 	}
 	else if ( isList( data )) {
@@ -461,16 +453,13 @@ transformData* transformData_create() {
 }
 
 void transformData_processElement( transformData* t, sterm* element ) {
-	if ( isModel( element ) || isTransform( element ) || isLight( element)) {
-//		printf( "Adding child to Transform.\n" );
+	if ( isModel( element ) || isTransform( element ) || isLight( element )) {
 		t->elements = cons( element, t->elements );
 	}
 	// If it's a translation, copy the vector to the transformData
-	if ( isTranslation( element )) {
+	if ( isPropertyType( element, "translation" )) {
 		vector* translation = (vector*)((sterm*)element->tail->head)->head;
 		t->translation = *translation;
-//		t->translation = *(vector*)element->head;
-//		printf( "Transform loaded translation: %.2f, %.2f, %.2f, %.2f\n", t->translation.val[0], t->translation.val[1], t->translation.val[2], t->translation.val[3] );
 	}
 }
 
@@ -642,21 +631,38 @@ void processProperty( void* p, void* object, /* (const char*) */ void* type_name
 	sterm* property = p;
 	const char* property_name = ((sterm*)property->head)->head;
 
-	int property_type = ((sterm*)property->tail->head)->type;
+	sterm* value_term = property->tail->head;
+	int property_type = value_term->type;
 
 	void* data = (uint8_t*)object + propertyOffset( type_name, property_name );
 	if ( property_type == typeVector ) {
-		*(vector*)data = *(vector*)((sterm*)property->tail->head)->head;
+		*(vector*)data = *(vector*)value_term->head;
 	}
 	else if ( property_type == typeString ) {
-		const char* string = ((sterm*)property->tail->head)->head;
+		const char* string = value_term->head;
 		*(const char**)data = (void*)string;
 	}
+}
+
+void* s_object( void* object, const char* object_type, sterm* raw_properties ) {
+	printf( "Creating object type: %s\n", object_type );
+	if ( raw_properties ) {
+		sterm* properties = eval_list( raw_properties );
+		map_vv( properties, processProperty, object, (char*)object_type );
+	}
+	sterm* o = sterm_createProperty( object_type, typeObject, object );
+	return o;
 }
 
 // Creates a model instance
 // Returns that model instance
 void* s_model( sterm* raw_properties ) {
+/*
+	modelData* mData = modelData_create();
+	sterm* m = s_object( mData, "modelData", raw_properties );
+	return m;
+	*/
+
 	modelData* mData = modelData_create();
 	if ( raw_properties ) {
 		sterm* properties = eval_list( raw_properties );
@@ -667,18 +673,9 @@ void* s_model( sterm* raw_properties ) {
 }
 
 void* s_light( sterm* raw_properties ) {
-	// Test our generic processProperty
 	light* l = light_create();
-	if ( raw_properties ) {
-		sterm* properties = eval_list( raw_properties );
-		map_vv( properties, processProperty, l, "light" );
-	}
-
-//	vector_printf( "Parsed light with diffuse:", &l->diffuse_color );
-//	vector_printf( "Parsed light with specular:", &l->specular_color );
-
-	sterm* light_term = sterm_create( typeLight, l );
-	return light_term;
+	sterm* l_term = s_object( l, "light", raw_properties );
+	return l_term;
 }
 
 void scene_processTransform( scene* s, transform* parent, transformData* tData ) {
@@ -712,8 +709,10 @@ void scene_processObject( void* object_, void* scene_, void* transform_ ) {
 		scene_processTransform( s, parent, object->head );
 	if ( isModel( object ))
 		scene_processModel( s, parent, object->head );
-	if ( isLight( object ))
-		scene_processLight( s, parent, object );
+	if ( isPropertyType( object, "light" )) {
+		printf( "Scene processing light.\n" );
+		scene_processLight( s, parent, object->tail->head );
+	}
 }
 
 /*

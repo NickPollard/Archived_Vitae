@@ -11,6 +11,7 @@ enum tag_type {
 	typeString,
 	typeNumber,
 	typeFunc,
+	typeObject,
 	typeModel,
 	typeLight,
 	typeTransform,
