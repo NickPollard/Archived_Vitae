@@ -565,22 +565,26 @@ modelData* modelData_create() {
 
 // Process a Filename
 // ( filename <string> )
-void* s_filename( sterm* raw_elements ) {
-	assert( raw_elements );
-	sterm* element = eval_list( raw_elements );
-	// Should be a single string
-	// So take the head and check that
-	assert( isString( element->head ));
+void* s_readString( const char* property_name, sterm* raw_elements ) {
+	vAssert( raw_elements );
+	sterm* elements = eval_list( raw_elements );
+	// Should be a single string, so check the head
+	vAssert( isString( elements->head ));
 	// The string is stored in the string heap
-	sterm* sf = sterm_create( typeFilename, ((sterm*)element->head)->head );
-	return sf;
+	sterm* property = sterm_createProperty( property_name, typeVector, ((sterm*)elements->head)->head );
+	return property;
 }
+
+void* s_filename( sterm* raw_elements) {
+	return s_readString( "filename", raw_elements );
+}
+
 // Applies the properties to the modeldata
 void modelData_processProperty( void* p, void* object ) {
 	modelData* m = object;
 	sterm* property = p;
-	if ( property->type == typeFilename ) {
-		m->filename = property->head;
+	if ( isPropertyType( p, "filename" )) {
+		m->filename = ((sterm*)property->tail->head)->head;
 	}
 }
 
