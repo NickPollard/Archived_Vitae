@@ -34,9 +34,10 @@ void sterm_free( sterm* s );
 
 // *** Parsing
 
-sterm* parse( inputStream* stream );
-sterm* parse_string( const char* string );
-sterm* parse_file( const char* filename );
+void	parse_init();
+sterm*	parse( inputStream* stream );
+sterm*	parse_string( const char* string );
+sterm*	parse_file( const char* filename );
 
 // *** Evaluation
 

@@ -581,25 +581,70 @@ void* s_model( sterm* raw_properties ) {
 	return m;
 }
 
+#define kMaxObjectTypes	16
+#define kMaxProperties	16
 map* object_offsets = NULL;
+
+void register_propertyOffset( const char* type, const char* property, int offset ) {
+	if ( !object_offsets ) {
+		printf( "Creating Object_offsets hashmap.\n" );
+		object_offsets = map_create( kMaxObjectTypes, sizeof( map* ));
+	}
+
+	int t = mhash( type );
+	map* m = map_find( object_offsets, t );
+	if ( !m ) {
+		printf( "Creating offset hashmap for type \"%s\".\n", type );
+		m = map_create( kMaxProperties, sizeof( int ));
+		map_add( object_offsets, t, &m );
+	}
+
+	int p = mhash( property);
+	printf( "Adding offset ( \"%s\", \"%s\", %d )\n", type, property, offset );
+	map_add( m, p, &offset );
+}
 
 int propertyOffset( const char* type, const char* property ) {
 	int t = mhash( type );
 	int p = mhash( property );
-	map* m = map_find( object_offsets, t );
+	map* m = *(map**)map_find( object_offsets, t );
+	vAssert( m );
+//	printf( "Found object map: 0x%x.\n", (unsigned int)m );
+//	printf( "looking for key: 0x%x.\n", p );
 	int offset = *(int*)map_find( m, p );
+	vAssert( offset >= 0 );
+	printf( "Offset returned: ( \"%s\", \"%s\", %d )\n", type, property, offset );
 	return offset;
+}
+
+void parse_init() {
+	register_propertyOffset( "light", "diffuse", offsetof( light, diffuse_color ));
 }
 
 // Generic property process function
 void processProperty( void* p, void* object ) {
+	printf( "Process Property\n" );
 	// We need the object type name and the property name
 	sterm* property = p;
 	const char* property_name = ((sterm*)property->head)->head;
 	const char* type_name = "light";
 
+	int property_type = ((sterm*)property->tail->head)->type;
+
+
+
 	void* data = (uint8_t*)object + propertyOffset( type_name, property_name );
-	data = property->tail->head;
+	// test
+	/*
+	light* l = object;
+	printf( "l->diffuse_color: 0x%x\n", (unsigned int)&l->diffuse_color );
+	printf( "data: 0x%x\n", (unsigned int)data );
+	*/
+	//
+	if ( property_type == typeVector ) {
+		vector_printf( "Found vector:", ((sterm*)property->tail->head)->head );
+		*(vector*)data = *(vector*)((sterm*)property->tail->head)->head;
+	}
 }
 
 // Process a list of properties
@@ -619,6 +664,16 @@ void lightData_processProperty( void* object_, void* light_ ) {
 }
 
 void* s_light( sterm* raw_properties ) {
+	printf( "slight.\n" );
+	// Test our generic processProperty
+	light* l = light_create();
+	if ( raw_properties ) {
+		sterm* properties = eval_list( raw_properties );
+		map_v( properties, processProperty, l );
+	}
+
+	vector_printf( "Parsed light with diffuse:", &l->diffuse_color );
+
 	// Build as a list
 	vector* diffuse_vector = NULL; 
 	sterm* data = sterm_create( typeAtom, "lightData" );

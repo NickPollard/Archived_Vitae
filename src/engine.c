@@ -20,7 +20,7 @@
 #include "render/texture.h"
 #include "debug/debug.h"
 #include "debug/debugtext.h"
-#include "system/file.h"
+#include "script/parse.h"
 #include "ui/panel.h"
 
 // Lua Libraries
@@ -120,7 +120,7 @@ void engine_tick( engine* e ) {
 	time += dt;
 	time = time / 10.f;
 
-	printf( "TICK: frametime %.2fms (%.2f fps)\n", time, 1.f/time );
+//	printf( "TICK: frametime %.2fms (%.2f fps)\n", time, 1.f/time );
 
 	lua_preTick( dt );
 
@@ -230,6 +230,7 @@ void init(int argc, char** argv) {
 
 	// *** Static Module initialization
 	scene_static_init();
+	parse_init();
 
 	// *** Initialise Engine
 	/*

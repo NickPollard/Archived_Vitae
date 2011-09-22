@@ -153,7 +153,7 @@ void mesh_buildBuffers( mesh* m ) {
 	if ( all_smooth_shaded ) {
 
 	} else {
-		printf( "MODEL: Build Buffers. Index count: %d\n", m->index_count );
+//		printf( "MODEL: Build Buffers. Index count: %d\n", m->index_count );
 		/*
 		printf( "MODEL: Alignment vertex: %d", ((unsigned int)m->vertex_buffer) % sizeof( vertex ) );
 		printf( "MODEL: Alignment vector: %d", ((unsigned int)m->vertex_buffer) % sizeof( vector ) );
@@ -170,7 +170,7 @@ void mesh_buildBuffers( mesh* m ) {
 			m->vertex_buffer[i].uv = m->uvs[m->uv_indices[i]];
 			m->element_buffer[i] = i;
 		}
-		printf( "MODEL: Buffers built successfully.\n" );
+//		printf( "MODEL: Buffers built successfully.\n" );
 	}
 }
 
