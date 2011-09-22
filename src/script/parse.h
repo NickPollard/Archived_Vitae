@@ -13,7 +13,6 @@ enum tag_type {
 	typeFunc,
 	typeObject,
 	typeModel,
-	typeLight,
 	typeTransform,
 	typeVector
 };

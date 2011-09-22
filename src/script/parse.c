@@ -139,19 +139,17 @@ bool isModel( sterm* s ) {
 	return ( s->type == typeModel );
 }
 
-bool isPropertyType( sterm* s, const char* propertyName ) {
+bool isPropertyType( sterm* s, const char* property_name ) {
+	/*
 	return ( s->head &&
 		   ((sterm*)s->head)->type == typeAtom &&
-		    string_equal( ((sterm*)s->head)->head, propertyName ));
+		    string_equal( ((sterm*)s->head)->head, property_name ));
+			*/
+	return ( isAtom( s ) && s->tail && string_equal( s->head, property_name ));
 }
 
 bool isObject( sterm* s, const char* type ) {
 	return ( s->type == typeObject ) && ( string_equal( s->head, type ));
-}
-
-bool isLight( sterm* s ) {
-	return isPropertyType( s, "light" );
-//	return ( s->type == typeLight );
 }
 
 bool isTransform( sterm* s ) {
@@ -185,6 +183,11 @@ const char* sstring_create( const char* token ) {
 	buffer[len-2] = '\0';
 	return buffer;
 };
+
+void* property_value( sterm* property ) {
+//	return ((sterm*)property->tail->head)->head;
+	return property->tail->head;
+}
 
 // Read a token at a time from the inputstream, advancing the read head,
 // and build it into an slist of atoms
@@ -453,12 +456,12 @@ transformData* transformData_create() {
 }
 
 void transformData_processElement( transformData* t, sterm* element ) {
-	if ( isModel( element ) || isTransform( element ) || isLight( element )) {
+	if ( isModel( element ) || isTransform( element ) || isPropertyType( element, "light" )) {
 		t->elements = cons( element, t->elements );
 	}
 	// If it's a translation, copy the vector to the transformData
 	if ( isPropertyType( element, "translation" )) {
-		vector* translation = (vector*)((sterm*)element->tail->head)->head;
+		vector* translation = (vector*)property_value( element );
 		t->translation = *translation;
 	}
 }
@@ -493,9 +496,15 @@ void* s_transform( sterm* raw_elements ) {
 //	p->tail->head = property value
 //	p->tail->tail = NULL
 sterm* sterm_createProperty( const char* property_name, int property_type, void* property_data ) {
+	sterm* property = sterm_create( typeAtom, (char*)property_name );
+	sterm* value = sterm_create( property_type, property_data );
+	property->tail =value;
+	return property;
+	/*
 	return cons(	sterm_create( typeAtom, (void*)property_name ), 
 					cons(	sterm_create( property_type, property_data ), 
 							NULL ));
+							*/
 }
 
 void* s_readVector( const char* property_name, sterm* raw_elements ) {
@@ -629,18 +638,34 @@ void parse_init() {
 void processProperty( void* p, void* object, /* (const char*) */ void* type_name ) {
 	// We need the object type name and the property name
 	sterm* property = p;
-	const char* property_name = ((sterm*)property->head)->head;
 
-	sterm* value_term = property->tail->head;
-	int property_type = value_term->type;
+	const char*	property_name	= property->head;
+	sterm*		value_term		= property->tail;
+	int			property_type	= value_term->type;
+	/*
+	const char*	property_name	= ((sterm*)property->head)->head;
+	sterm*		value_term		= property->tail->head;
+	int			property_type	= value_term->type;
+	*/
 
 	void* data = (uint8_t*)object + propertyOffset( type_name, property_name );
+	/*
 	if ( property_type == typeVector ) {
 		*(vector*)data = *(vector*)value_term->head;
 	}
 	else if ( property_type == typeString ) {
 		const char* string = value_term->head;
 		*(const char**)data = (void*)string;
+	}
+	*/
+
+	switch ( property_type ) {
+		case typeVector:
+			*(vector*)data = *(vector*)value_term->head;
+			break;
+		case typeString:
+			*(const char**)data = value_term->head;
+			break;
 	}
 }
 
@@ -711,7 +736,7 @@ void scene_processObject( void* object_, void* scene_, void* transform_ ) {
 		scene_processModel( s, parent, object->head );
 	if ( isPropertyType( object, "light" )) {
 		printf( "Scene processing light.\n" );
-		scene_processLight( s, parent, object->tail->head );
+		scene_processLight( s, parent, object->tail );
 	}
 }
 
