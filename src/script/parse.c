@@ -135,10 +135,6 @@ bool isString( sterm* s ) {
 	return ( s->type == typeString );
 }
 
-bool isModel( sterm* s ) {
-	return ( s->type == typeModel );
-}
-
 bool isPropertyType( sterm* s, const char* property_name ) {
 	/*
 	return ( s->head &&
@@ -208,8 +204,8 @@ sterm* parse( inputStream* stream ) {
 		}
 
 		while ( true ) {
-			sterm* sub_expr = parse( stream );					// parse a subexpr
-			if ( sub_expr ) {									// If a valid return
+			sterm* sub_expr = parse( stream );				// parse a subexpr
+			if ( sub_expr ) {								// If a valid return
 				s->tail = sterm_create( typeList, NULL );	// Add it to the tail
 				s = s->tail;
 				s->head = sub_expr;
@@ -335,10 +331,6 @@ void debug_sterm_print( sterm* term ) {
 
 	if ( isAtom( term ) )
 		printf( "%s ", (const char*)term->head );
-	if ( isModel( term ))
-		printf( "typeModel " );
-	if ( isTransform( term ))
-		printf( "typeTransform " );
 	if ( term->tail )
 		debug_sterm_print( term->tail );
 }
@@ -456,7 +448,7 @@ transformData* transformData_create() {
 }
 
 void transformData_processElement( transformData* t, sterm* element ) {
-	if ( isModel( element ) || isTransform( element ) || isPropertyType( element, "light" )) {
+	if ( isPropertyType( element, "modelData" ) || isTransform( element ) || isPropertyType( element, "light" )) {
 		t->elements = cons( element, t->elements );
 	}
 	// If it's a translation, copy the vector to the transformData
@@ -682,12 +674,11 @@ void* s_object( void* object, const char* object_type, sterm* raw_properties ) {
 // Creates a model instance
 // Returns that model instance
 void* s_model( sterm* raw_properties ) {
-/*
 	modelData* mData = modelData_create();
 	sterm* m = s_object( mData, "modelData", raw_properties );
 	return m;
-	*/
 
+/*
 	modelData* mData = modelData_create();
 	if ( raw_properties ) {
 		sterm* properties = eval_list( raw_properties );
@@ -695,6 +686,7 @@ void* s_model( sterm* raw_properties ) {
 	}
 	sterm* m = sterm_create( typeModel, mData );
 	return m;
+	*/
 }
 
 void* s_light( sterm* raw_properties ) {
@@ -710,7 +702,8 @@ void scene_processTransform( scene* s, transform* parent, transformData* tData )
 	scene_addTransform( s, t );
 
 	// If it has children, process those
-	map_vv( tData->elements, scene_processObject, s, t );
+	if ( tData->elements )
+		map_vv( tData->elements, scene_processObject, s, t );
 }
 
 void scene_processModel( scene* s, transform* parent, modelData* mData ) {
@@ -732,8 +725,8 @@ void scene_processObject( void* object_, void* scene_, void* transform_ ) {
 	transform* parent = transform_;
 	if ( isTransform( object ))
 		scene_processTransform( s, parent, object->head );
-	if ( isModel( object ))
-		scene_processModel( s, parent, object->head );
+	if ( isPropertyType( object, "modelData" ))
+		scene_processModel( s, parent, object->tail->head );
 	if ( isPropertyType( object, "light" )) {
 		printf( "Scene processing light.\n" );
 		scene_processLight( s, parent, object->tail );
