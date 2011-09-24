@@ -269,6 +269,8 @@ void* s_print( sterm* s );
 void* s_concat( sterm* s );
 void* s_modelInstance( sterm* s );
 void* s_light( sterm* s );
+void* s_light_create( sterm* s );
+void* s_object( sterm* s );
 void* s_transform( sterm* s );
 void* s_scene( sterm* s );
 void* s_translation( sterm* s );
@@ -293,6 +295,8 @@ void* lookup( sterm* data ) {
 	S_FUNC( "model-instance", s_modelInstance )
 	S_FUNC( "model", s_model )
 	S_FUNC( "light", s_light )
+	S_FUNC( "light_create", s_light_create )
+	S_FUNC( "object", s_object )
 	S_FUNC( "transform", s_transform )
 	S_FUNC( "scene", s_scene )
 	S_FUNC( "translation", s_translation )
@@ -353,9 +357,7 @@ void* eval( sterm* data ) {
 	}
 	else if ( isList( data )) {
 		// If evaluating a list, the head must eval to an atom
-		// That atom must be a function?
 		sterm* func = eval( data->head );
-//		assert( isFunction( func ));
 		if ( isFunction( func ))
 			return ((script_func)func->head)( data->tail );
 		else
@@ -446,7 +448,7 @@ transformData* transformData_create() {
 void transformData_processElement( void* e, void* data ) {
 	sterm* element = e;
 	transformData* t = data;
-	if ( isPropertyType( element, "modelData" ) || isTransform( element ) || isPropertyType( element, "light" )) {
+	if ( isPropertyType( element, "modelInstance" ) || isTransform( element ) || isPropertyType( element, "light" )) {
 		t->elements = cons( element, t->elements );
 	}
 	// If it's a translation, copy the vector to the transformData
@@ -532,16 +534,6 @@ void* s_vector( sterm* raw_elements ) {
 	return NULL;
 }
 
-typedef struct modelData_s {
-	const char* filename;
-} modelData;
-
-modelData* modelData_create() {
-	modelData* m = (modelData*)mem_alloc( sizeof( modelData ));
-	m->filename = "dat/model/sphere.obj";
-	return m;
-}
-
 // Process a Filename
 // ( filename <string> )
 void* s_readString( const char* property_name, sterm* raw_elements ) {
@@ -598,9 +590,6 @@ void parse_init() {
 	// Light
 	register_propertyOffset( "light", "diffuse", offsetof( light, diffuse_color ));
 	register_propertyOffset( "light", "specular", offsetof( light, specular_color ));
-
-	// ModelData	
-	register_propertyOffset( "modelData", "filename", offsetof( modelData, filename ));
 }
 
 // Generic property process function
@@ -627,28 +616,77 @@ void processProperty( void* p, void* object, /* (const char*) */ void* type_name
 	}
 }
 
+// Creates a model instance
+// Returns that model instance
+void* s_modelInstance( sterm* raw_properties ) {
+	modelHandle handle = -1;
+	if ( raw_properties ) {
+		sterm* properties = eval_list( raw_properties );
+		while ( properties ) {
+			sterm* property = properties->head;
+			if ( isPropertyType( property, "filename" )) {
+				printf( "Modelinstance filename \"%s\"\n", (char*)property->tail->head );
+				handle = model_getHandleFromFilename( property->tail->head );
+			}
+			properties = properties->tail;
+		}
+	}
+	
+	vAssert( handle != -1 );
+	modelInstance* m = modelInstance_create( handle );
+	return m;
+}
+
+/*
+	(def s_object
+		( sterm-createProperty (map (processProperty object object-type) (eval-list args) )))
+   */
+/*
 void* s_object( void* object, const char* object_type, sterm* raw_properties ) {
-	printf( "Creating object type: %s\n", object_type );
 	if ( raw_properties ) {
 		sterm* properties = eval_list( raw_properties );
 		map_vv( properties, processProperty, object, (char*)object_type );
 	}
-	sterm* o = sterm_createProperty( object_type, typeObject, object );
-	return o;
+	return sterm_createProperty( object_type, typeObject, object );
+}
+*/
+
+void* s_object( /* void* object, const char* object_type,*/ sterm* raw_args ) {
+	vAssert ( raw_args );
+	sterm* args = eval_list( raw_args );
+	// The object and object_type come first
+	void* object = args->head; // We just have a native light type in the list, not a property
+	args = args->tail;
+	const char* object_type = ((sterm*)args->head)->head;
+	printf( "s_object called with type \"%s\"\n", object_type );
+	args = args->tail;
+
+	map_vv( args, processProperty, object, (char*)object_type );
+
+	return sterm_createProperty( object_type, typeObject, object );
 }
 
-// Creates a model instance
-// Returns that model instance
-void* s_modelInstance( sterm* raw_properties ) {
-	modelData* mData = modelData_create();
-	sterm* m = s_object( mData, "modelData", raw_properties );
-	return m;
+void append( sterm* before, sterm* after ) {
+	sterm* s = before;
+	while ( s->tail)
+		s = s->tail;
+	s->tail = after;
+}
+/*
+	(def s_light
+		( s_object light-create "light" args ))
+   */
+void* s_light( sterm* args ) {
+//	return eval( parse_string( "(object light_create \"light\" args)" ));
+	sterm* s = parse_string( "(object (light_create) \"light\" )" );
+	append( s, args );
+	return eval( s );
+//	return s_object( light_create(), "light", args );
 }
 
-void* s_light( sterm* raw_properties ) {
-	light* l = light_create();
-	sterm* l_term = s_object( l, "light", raw_properties );
-	return l_term;
+void* s_light_create( sterm* args ) {
+	printf( "light_create\n");
+	return light_create();
 }
 
 void scene_processTransform( scene* s, transform* parent, transformData* tData ) {
@@ -662,9 +700,7 @@ void scene_processTransform( scene* s, transform* parent, transformData* tData )
 		map_vv( tData->elements, scene_processObject, s, t );
 }
 
-void scene_processModel( scene* s, transform* parent, modelData* mData ) {
-	modelHandle handle = model_getHandleFromFilename( mData->filename );
-	modelInstance* m = modelInstance_create( handle );
+void scene_processModel( scene* s, transform* parent, modelInstance* m ) {
 	m->trans = parent;
 	scene_addModel( s, m );
 }
@@ -680,7 +716,7 @@ void scene_processObject( void* object_, void* scene_, void* transform_ ) {
 	transform* parent = transform_;
 	if ( isTransform( object ))
 		scene_processTransform( s, parent, object->head );
-	if ( isPropertyType( object, "modelData" ))
+	if ( isPropertyType( object, "modelInstance" ))
 		scene_processModel( s, parent, object->tail->head );
 	if ( isPropertyType( object, "light" )) {
 		printf( "Scene processing light.\n" );
