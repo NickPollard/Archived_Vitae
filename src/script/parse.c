@@ -136,16 +136,7 @@ bool isString( sterm* s ) {
 }
 
 bool isPropertyType( sterm* s, const char* property_name ) {
-	/*
-	return ( s->head &&
-		   ((sterm*)s->head)->type == typeAtom &&
-		    string_equal( ((sterm*)s->head)->head, property_name ));
-			*/
 	return ( isAtom( s ) && s->tail && string_equal( s->head, property_name ));
-}
-
-bool isObject( sterm* s, const char* type ) {
-	return ( s->type == typeObject ) && ( string_equal( s->head, type ));
 }
 
 bool isTransform( sterm* s ) {
@@ -276,7 +267,7 @@ void map_( sterm* list, function f ) {
 
 void* s_print( sterm* s );
 void* s_concat( sterm* s );
-void* s_model( sterm* s );
+void* s_modelInstance( sterm* s );
 void* s_light( sterm* s );
 void* s_transform( sterm* s );
 void* s_scene( sterm* s );
@@ -285,6 +276,7 @@ void* s_diffuse( sterm* s );
 void* s_specular( sterm* s );
 void* s_filename( sterm* s );
 void* s_vector( sterm* s );
+void* s_model( sterm* s );
 
 void scene_processObject( void* object_, void* scene_, void* transform_ );
 
@@ -298,6 +290,7 @@ void scene_processObject( void* object_, void* scene_, void* transform_ );
 void* lookup( sterm* data ) {
 	S_FUNC( "print", s_print )
 	S_FUNC( "concat", s_concat )
+	S_FUNC( "model-instance", s_modelInstance )
 	S_FUNC( "model", s_model )
 	S_FUNC( "light", s_light )
 	S_FUNC( "transform", s_transform )
@@ -362,8 +355,11 @@ void* eval( sterm* data ) {
 		// If evaluating a list, the head must eval to an atom
 		// That atom must be a function?
 		sterm* func = eval( data->head );
-		assert( isFunction( func ));
-		return ((script_func)func->head)( data->tail );
+//		assert( isFunction( func ));
+		if ( isFunction( func ))
+			return ((script_func)func->head)( data->tail );
+		else
+			return data;
 	}
 	else if ( isString( data )) {
 		return data;
@@ -447,7 +443,9 @@ transformData* transformData_create() {
 	return t;
 }
 
-void transformData_processElement( transformData* t, sterm* element ) {
+void transformData_processElement( void* e, void* data ) {
+	sterm* element = e;
+	transformData* t = data;
 	if ( isPropertyType( element, "modelData" ) || isTransform( element ) || isPropertyType( element, "light" )) {
 		t->elements = cons( element, t->elements );
 	}
@@ -458,14 +456,6 @@ void transformData_processElement( transformData* t, sterm* element ) {
 	}
 }
 
-// Receives a heterogenous list of elements, some might be transform properties
-// some might be sub-elements
-void transformData_processElements( transformData* t, sterm* elements ) {
-	transformData_processElement( t, elements->head );
-	if ( elements->tail )
-		transformData_processElements( t, elements->tail );
-}
-
 // Creates a transformdata
 // with a list of all modelInstancs passed into it
 // and all other sub transforms
@@ -474,7 +464,7 @@ void* s_transform( sterm* raw_elements ) {
 	transformData* tData = transformData_create();
 	if ( raw_elements ) {
 		sterm* elements = eval_list( raw_elements );
-		transformData_processElements( tData, elements );
+		map_v( elements, transformData_processElement, tData );
 	}
 	sterm* t = sterm_create( typeTransform, tData );
 	return t;
@@ -503,7 +493,6 @@ void* s_readVector( const char* property_name, sterm* raw_elements ) {
 	assert( raw_elements );
 	sterm* elements = eval_list( raw_elements );
 	// Should be a list of one single vector
-	// So take the head and check that
 	assert( isVector( (sterm*)elements->head ));
 	// For now, copy the vector head from the vector sterm
 	sterm* property = sterm_createProperty( property_name, typeVector, ((sterm*)elements->head)->head );
@@ -574,11 +563,6 @@ void* s_filename( sterm* raw_elements) {
 map* object_offsets = NULL;
 
 void register_propertyOffset( const char* type, const char* property, int offset ) {
-	if ( !object_offsets ) {
-		printf( "Creating Object_offsets hashmap.\n" );
-		object_offsets = map_create( kMaxObjectTypes, sizeof( map* ));
-	}
-
 	int t = mhash( type );
 	map* m = NULL;
 	map** m_ptr = map_find( object_offsets, t );
@@ -597,23 +581,19 @@ void register_propertyOffset( const char* type, const char* property, int offset
 }
 
 int propertyOffset( const char* type, const char* property ) {
-	int t = mhash( type );
-	int p = mhash( property );
+	map** m_ptr = map_find( object_offsets, mhash( type ));
+	vAssert( m_ptr && *m_ptr );
 
-	map** m_ptr = map_find( object_offsets, t );
-	vAssert( m_ptr );
-	map* m = *m_ptr;
-	vAssert( m );
-
-	int* offset_ptr = map_find( m, p );
-	vAssert( offset_ptr );
-	vAssert( *offset_ptr >= 0 );
-//	printf( "Offset returned: ( \"%s\", \"%s\", %d )\n", type, property, offset );
+	int* offset_ptr = map_find( *m_ptr, mhash( property ));
+	vAssert( offset_ptr && (*offset_ptr >= 0) );
 	return (*offset_ptr);
 }
 
 void parse_init() {
 	global_string_heap = heap_create( kStringHeapSize );
+
+	printf( "Creating Object_offsets hashmap.\n" );
+	object_offsets = map_create( kMaxObjectTypes, sizeof( map* ));
 
 	// Light
 	register_propertyOffset( "light", "diffuse", offsetof( light, diffuse_color ));
@@ -634,22 +614,8 @@ void processProperty( void* p, void* object, /* (const char*) */ void* type_name
 	const char*	property_name	= property->head;
 	sterm*		value_term		= property->tail;
 	int			property_type	= value_term->type;
-	/*
-	const char*	property_name	= ((sterm*)property->head)->head;
-	sterm*		value_term		= property->tail->head;
-	int			property_type	= value_term->type;
-	*/
 
 	void* data = (uint8_t*)object + propertyOffset( type_name, property_name );
-	/*
-	if ( property_type == typeVector ) {
-		*(vector*)data = *(vector*)value_term->head;
-	}
-	else if ( property_type == typeString ) {
-		const char* string = value_term->head;
-		*(const char**)data = (void*)string;
-	}
-	*/
 
 	switch ( property_type ) {
 		case typeVector:
@@ -673,20 +639,10 @@ void* s_object( void* object, const char* object_type, sterm* raw_properties ) {
 
 // Creates a model instance
 // Returns that model instance
-void* s_model( sterm* raw_properties ) {
+void* s_modelInstance( sterm* raw_properties ) {
 	modelData* mData = modelData_create();
 	sterm* m = s_object( mData, "modelData", raw_properties );
 	return m;
-
-/*
-	modelData* mData = modelData_create();
-	if ( raw_properties ) {
-		sterm* properties = eval_list( raw_properties );
-		map_vv( properties, processProperty, mData, "modelData" );
-	}
-	sterm* m = sterm_create( typeModel, mData );
-	return m;
-	*/
 }
 
 void* s_light( sterm* raw_properties ) {
@@ -713,8 +669,7 @@ void scene_processModel( scene* s, transform* parent, modelData* mData ) {
 	scene_addModel( s, m );
 }
 
-void scene_processLight( scene* s, transform* parent, sterm* lData ) {
-	light* l = lData->head;
+void scene_processLight( scene* s, transform* parent, light* l ) {
 	l->trans = parent;
 	scene_addLight( s, l );
 }
@@ -729,7 +684,7 @@ void scene_processObject( void* object_, void* scene_, void* transform_ ) {
 		scene_processModel( s, parent, object->tail->head );
 	if ( isPropertyType( object, "light" )) {
 		printf( "Scene processing light.\n" );
-		scene_processLight( s, parent, object->tail );
+		scene_processLight( s, parent, object->tail->head );
 	}
 }
 
@@ -761,7 +716,28 @@ void test_s_concat() {
 	return;
 }
 
+// Creates a model def
+// Returns that model def
+void* s_model( sterm* raw_properties ) {
+	return NULL;
+}
+
+// pass through to model?
+/*
+void* s_mesh( sterm* raw_properties ) {
+
+}
+*/
+
+void test_smodel() {
+	const char* test_string = "(model (mesh \"dat/model/ship_hd_2.obj\"))";
+	sterm* s = parse_string( test_string );
+	model* result = eval( s );
+	(void)result;
+}
+
 void test_sfile( ) {
+	test_smodel();
 	/*
 	printf( "FILE: Beginning test: test dat/test2.s\n" );
 	sterm* s = parse_file( "dat/test2.s" );

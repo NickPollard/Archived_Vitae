@@ -126,7 +126,7 @@ void mesh_calculateNormals( mesh* m ) {
 
 // Create a test model of a cube
 model* model_createTestCube( ) {
-	model* m = LoadObj( "dat/model/cityscape.obj" );
+	model* m = model_load( "dat/model/cityscape.obj" );
 	return m;
 }
 
@@ -229,7 +229,7 @@ model* model_getByHandle( modelHandle h ) {
 // Synchronously load a model from a given file
 model* model_loadFromFileSync( const char* filename ) {
 	// TODO: Implement
-	return LoadObj( filename );
+	return model_load( filename );
 }
 
 const char* model_getFileNameFromID( int id ) {

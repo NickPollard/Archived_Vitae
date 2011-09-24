@@ -5,4 +5,4 @@
 #define kObjMaxVertices 64 << 10
 #define kObjMaxIndices 128 << 10
 
-model* LoadObj( const char* filename );
+model* model_load( const char* filename );

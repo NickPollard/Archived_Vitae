@@ -6,20 +6,11 @@
 #include "scene.h"
 #include "model.h"
 
-model* LoadObj( const char* filename ) {
+mesh* mesh_loadObj( const char* filename ) {
 	// Load the raw data
 	int vert_count = 0, index_count = 0, normal_count = 0, uv_count = 0;
 	// Lets create these arrays on the heap, as they need to be big
 	// TODO: Could make these static perhaps?
-	/*
-	vector	vertices[kObjMaxVertices];
-	vector	normals[kObjMaxVertices];
-	vector	uvs[kObjMaxVertices];
-	uint16_t		indices[kObjMaxIndices];
-	int		normal_indices[kObjMaxIndices];
-	int		uv_indices[kObjMaxIndices];
-	*/
-
 	vector* vertices = mem_alloc( sizeof( vector ) * kObjMaxVertices );
 	vector* normals = mem_alloc( sizeof( vector ) * kObjMaxVertices );
 	vector* uvs = mem_alloc( sizeof( vector ) * kObjMaxVertices );
@@ -31,15 +22,6 @@ model* LoadObj( const char* filename ) {
 	memset( array, 0, sizeof( array[0] ) * size );
 
 	// Initialise to 0;
-	/*
-	memset( vertices, 0, sizeof( vertices[0] ) * kObjMaxVertices );
-	memset( normals, 0, sizeof( normals[0] ) * kObjMaxVertices );
-	memset( uvs, 0, sizeof( uvs[0] ) * kObjMaxVertices );
-	memset( indices, 0, sizeof( uint16_t ) * kObjMaxIndices );
-	memset( normal_indices, 0, sizeof( uint16_t ) * kObjMaxIndices );
-	memset( uv_indices, 0, sizeof( uint16_t ) * kObjMaxIndices );
-	*/
-
 	array_clear( vertices, kObjMaxVertices );
 	array_clear( normals, kObjMaxVertices );
 	array_clear( uvs, kObjMaxVertices );
@@ -47,7 +29,7 @@ model* LoadObj( const char* filename ) {
 	array_clear( normal_indices, kObjMaxIndices );
 	array_clear( uv_indices, kObjMaxIndices );
 
-	int file_length;
+	int file_length = -1;
 	char* file_buffer = vfile_contents( filename, &file_length );
 	inputStream* stream = inputStream_create( file_buffer );
 
@@ -62,7 +44,6 @@ model* LoadObj( const char* filename ) {
 				vertices[vert_count].val[i] = strtof( token, NULL );
 			}
 			vertices[vert_count].coord.w = 1.f; // Force 1.0 w value for all vertices.
-//			printf( " Vertex: %.2f %.2f %.2f \n", vertices[vert_count].val[0], vertices[vert_count].val[1], vertices[vert_count].val[2] );
 			vert_count++;
 		}
 		if ( string_equal( token, "vn" )) {
@@ -74,7 +55,6 @@ model* LoadObj( const char* filename ) {
 				normals[normal_count].val[i] = strtof( token, NULL );
 			}
 			normals[normal_count].coord.w = 0.f; // Force 0.0 w value for all normals
-//			printf( " Normal: %.2f %.2f %.2f \n", normals[normal_count].val[0], normals[normal_count].val[1], normals[vert_count].val[2] );
 			normal_count++;
 		}
 		if ( string_equal( token, "vt" )) {
@@ -85,7 +65,6 @@ model* LoadObj( const char* filename ) {
 				token = inputStream_nextToken( stream );
 				uvs[uv_count].val[i] = strtof( token, NULL );
 			}
-//			printf( " Uv:  %.2f %.2f \n", uvs[uv_count].val[0], uvs[uv_count].val[1] );
 			uv_count++;
 		}
 		if ( string_equal( token, "f" )) {
@@ -130,14 +109,11 @@ model* LoadObj( const char* filename ) {
 				}
 				norm[i] = '\0';
 
-				//printf( "Vert: %s, UV: %s, Norm %s.\n", vert, uv, norm );
-
 				indices[index_count] = atoi( vert ) - 1; // -1 as obj uses 1-based indices, not 0-based as we do
 				normal_indices[index_count] = atoi( norm ) - 1; // -1 as obj uses 1-based indices, not 0-based as we do
 				uv_indices[index_count] = atoi( uv ) - 1; // -1 as obj uses 1-based indices, not 0-based as we do
 				index_count++;
 			}
-			//printf( " Face: %d %d %d \n", indices[index_count-3], indices[index_count-2], indices[index_count-1] );
 		}
 		mem_free( token );
 		inputStream_nextLine( stream );
@@ -146,10 +122,7 @@ model* LoadObj( const char* filename ) {
 	printf( "MODEL_LOADER: Parsed .obj file \"%s\" with %d verts and %d faces.\n", filename, vert_count, index_count / 3 );
 	printf( "MODEL_LOADER: Parsed .obj file \"%s\" with %d normals and %d uvs.\n", filename, normal_count, uv_count );
 
-	// Create the Vitae Model
-	model* mdl = model_createModel( 1 ); // Only one mesh by default
 	mesh* msh = mesh_createMesh( vert_count, index_count, index_count, uv_count );
-	mdl->meshes[0] = msh;
 
 	// Copy our loaded data into the Mesh structure
 	memcpy( msh->verts, vertices, vert_count * sizeof( vector ));
@@ -163,5 +136,12 @@ model* LoadObj( const char* filename ) {
 
 	mem_free( file_buffer );
 
+	return msh;
+}
+
+model* model_load( const char* filename ) {
+	// Create the Vitae Model
+	model* mdl = model_createModel( 1 ); // Only one mesh by default
+	mdl->meshes[0] = mesh_loadObj( filename );
 	return mdl;
 }

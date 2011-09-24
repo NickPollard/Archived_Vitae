@@ -51,7 +51,7 @@ void skybox_init( ) {
 
 	skybox_texture = texture_loadTGA( "assets/3rdparty/img/grimmnight_medium.tga" );
 
-	skybox_model = LoadObj( "dat/model/inverse_cube.obj" );
+	skybox_model = model_load( "dat/model/inverse_cube.obj" );
 	skybox_model->meshes[0]->texture_diffuse = skybox_texture;
 }
 
