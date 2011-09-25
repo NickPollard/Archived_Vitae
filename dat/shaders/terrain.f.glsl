@@ -10,6 +10,8 @@ varying vec4 frag_position;
 varying vec4 frag_normal;
 varying vec2 texcoord;
 varying float height;
+varying vec4 vert_color;
+//varying float fog;
 
 const int LIGHT_COUNT = 2;
 
@@ -27,8 +29,6 @@ const vec4 directional_light_direction = vec4( 1.0, -0.5, 1.0, 0.0 );
 const vec4 directional_light_diffuse = vec4( 1.0, 1.0, 0.4, 1.0 );
 const vec4 directional_light_specular = vec4( 0.5, 0.5, 0.5, 1.0 );
 
-//const vec4 material_diffuse = vec4( 1.0, 1.0, 1.0, 1.0 );
-//const vec4 material_specular = vec4( 0.5, 0.5, 0.5, 1.0 );
 const float light_radius = 20.0;
 
 void main() {
@@ -39,6 +39,7 @@ void main() {
 	vec4 total_diffuse_color = light_ambient;
 	vec4 total_specular_color = vec4( 0.0, 0.0, 0.0, 0.0 );
 
+#if 0
 	// Directional light
 	{
 		// Ambient + Diffuse
@@ -55,6 +56,7 @@ void main() {
 		vec4 specular_color = directional_light_specular * specular;
 		total_specular_color += specular_color;
 	}
+#endif
 #if 0	
 	for ( int i = 0; i < LIGHT_COUNT; i++ ) 
 		// Per-light calculations
@@ -77,24 +79,21 @@ void main() {
 	}
 #endif
 
-	float r = clamp( height / 10.0 + 0.2, 0.4, 0.8 );
-//	float r = 0.8;
-	float g = clamp( height / 20.0, 0.2, 0.3 );
-	float b = clamp( height / 20.0, 0.2, 0.3 );
-	vec4 material_diffuse = vec4( r, g, b, 1.0 ) * texture2D( tex, texcoord );
-	vec4 material_specular = vec4( r, g, b, 1.0 ) * texture2D( tex, texcoord );
-	vec4 fragColor =	total_specular_color * material_specular + 
-					total_diffuse_color * material_diffuse;
+	vec4 tex_color = texture2D( tex, texcoord );
+	vec4 material_diffuse = vert_color * tex_color;
+//	vec4 material_specular = vert_color * tex_color;
+//	vec4 fragColor =	total_specular_color * material_specular + 
+//					total_diffuse_color * material_diffuse;
+	vec4 fragColor = (total_specular_color + total_diffuse_color) * material_diffuse;
 
-	float fog_far = 150.0;
-	float fog_near = 50.0;
-	float fog = (frag_position.z - fog_near) / ( fog_far - fog_near );
 	// Temporary Terrain Fog
-	gl_FragColor = mix ( fragColor, vec4( 0.0, 0.0, 0.0, 1.0 ), fog );
-
+//	float fog = 0.0;
+//	gl_FragColor = mix( fragColor, vec4( 0.0, 0.0, 0.0, 1.0 ), fog );
+	gl_FragColor = material_diffuse;
 	gl_FragColor.w = 1.0;
 
+#else
+	gl_FragColor = vec4( 0.3, 0.3, 0.2, 1.0 );
 #endif
-//	gl_FragColor = vec4( 0.2, 1.0, 0.2, 1.0 );
 
 }

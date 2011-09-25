@@ -192,7 +192,7 @@ void input_tick( input* in, float dt ) {
 #endif
 
 #ifdef TOUCH
-	printf( "INPUT: tick" );
+//	printf( "INPUT: tick" );
 	// TODO - probably need to sync this properly with Android input thread?
 	// Store current state of touch
 	in->data[in->active].touched = in->touched;

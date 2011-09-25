@@ -19,22 +19,17 @@ terrain* terrain_create() {
 	t->sample_point = Vector( 0.f, 0.f, 0.f, 1.f );
 
 	if ( terrain_texture == -1 )
-		terrain_texture = texture_loadTGA( "assets/3rdparty/img/rock02_tile.tga" );
+		terrain_texture = texture_loadTGA( "assets/3rdparty/img/rock02_tile_small.tga" );
 
 	return t;
 }
 
 // The procedural function
 float terrain_sample( float u, float v ) {
-//	return sin( u ) * sin( v );
-
-/*
-	return (
-			0.5 * sin( u ) * sin( v ) +
-			sin( u / 3.f ) * sin( v / 3.f ) +
-			5 * sin( u / 10.f ) * sin( v / 10.f ) * sin( u / 10.f ) * sin( v / 10.f )
-		   );
-*/
+#if 0
+//	return 0.f;
+	return sin( u * 0.25f ) * sin( v * 0.25f ) * 5.f;
+#else
 	float detail =
 	(
 			0.5 * sin( u ) * sin( v ) +
@@ -54,6 +49,7 @@ float terrain_sample( float u, float v ) {
 			mask * canyon
 		   ) * height
 		+ detail;
+#endif
 }
 
 void terrain_updateIntervals( terrain* t ) {
@@ -71,6 +67,16 @@ void terrain_setResolution( terrain* t, int u, int v ) {
 	t->u_samples = u;
 	t->v_samples = v;
 	terrain_updateIntervals( t );
+
+	// Setup buffers
+	int triangle_count = ( t->u_samples - 1 ) * ( t->v_samples - 1 ) * 2;
+	t->index_count = triangle_count * 3;
+	if ( !t->vertex_buffer ) {
+		t->vertex_buffer = mem_alloc( t->index_count * sizeof( vertex ));
+	}
+	if ( !t->element_buffer ) {
+		t->element_buffer = mem_alloc( t->index_count * sizeof( GLushort ));
+	}
 }
 
 // Calculate vertex and element buffers from procedural definition
@@ -84,15 +90,7 @@ void terrain_calculateBuffers( terrain* t ) {
 	*/
 
 	int triangle_count = ( t->u_samples - 1 ) * ( t->v_samples - 1 ) * 2;
-	t->index_count = triangle_count * 3;
 	int vert_count = t->u_samples * t->v_samples;
-
-	if ( !t->vertex_buffer ) {
-		t->vertex_buffer = mem_alloc( t->index_count * sizeof( vertex ));
-	}
-	if ( !t->element_buffer ) {
-		t->element_buffer = mem_alloc( t->index_count * sizeof( GLushort ));
-	}
 
 	vector* verts = mem_alloc( vert_count * sizeof( vector ));
 	vector* normals = mem_alloc( vert_count * sizeof( vector ));
@@ -103,20 +101,26 @@ void terrain_calculateBuffers( terrain* t ) {
    */
 
 	int vert_index = 0;
-	for ( float u = t->sample_point.coord.x - t->u_radius; u < t->u_radius + ( 0.5 * t->u_interval ) + t->sample_point.coord.x; u+= t->u_interval ) {
-		for ( float v = t->sample_point.coord.z - t->v_radius; v < t->v_radius + ( 0.5 * t->v_interval ) + t->sample_point.coord.z; v+= t->v_interval ) {
-			float u_round = fround( u, t->u_interval );
-			float v_round = fround( v, t->v_interval );
-			float h = terrain_sample( u_round, v_round );
-			verts[vert_index++] = Vector( u_round, h, v_round, 1.f );
+	float u_min = fround( t->sample_point.coord.x - t->u_radius, t->u_interval );
+	float v_min = fround( t->sample_point.coord.z - t->v_radius, t->v_interval );
+	const float u_max = u_min + ( 2 * t->u_radius ) + ( 0.5 * t->u_interval );
+	const float v_max = v_min + ( 2 * t->v_radius ) + ( 0.5 * t->v_interval );
+	for ( float u = u_min; u < u_max; u+= t->u_interval ) {
+		for ( float v = v_min; v < v_max; v+= t->v_interval ) {
+//			float u_round = fround( u, t->u_interval );
+//			float v_round = fround( v, t->v_interval );
+			float h = terrain_sample( u, v );
+			verts[vert_index++] = Vector( u, h, v, 1.f );
 //			vAssert( u != 0.f || v != 0.f || h != 0.f );
 		}
 	}
 	assert( vert_index == vert_count );
 
 	for ( int i = 0; i < vert_count; i++ ) {
-		if ( i-1 < 0 || 
-			i + 1 >= vert_count ||
+			normals[i] = Vector( 0.f, 1.f, 0.f, 0.f );
+#if 0
+		if ( /*i-1 < 0 || 
+			i + 1 >= vert_count ||*/
 			i - t->u_samples < 0 ||							// Top Edge
 			i + t->u_samples >= vert_count ||				// Bottom Edge
 		  	i % t->u_samples == 0 ||						// Left edge
@@ -157,17 +161,20 @@ void terrain_calculateBuffers( terrain* t ) {
 		total.coord.w = 0.f;
 		Normalize( &total, &total );
 		normals[i] = total;
+#endif
 	}
+
+	float texture_scale = 0.125f;
 
 	int element_count = 0;
 	// Calculate elements
 	int tw = ( t->u_samples - 1 ) * 2; // Triangles per row
-	for ( int i = 0; i < triangle_count; i++ ) {
+	for ( int i = 0; i < triangle_count; i+=2 ) {
 		GLushort tl = ( i / 2 ) + i / tw;
 		GLushort tr = tl + 1;
 		GLushort bl = tl + t->u_samples;
 		GLushort br = bl + 1;
-
+/*
 		vAssert( tl >= 0 );
 		vAssert( tr >= 0 );
 		vAssert( bl >= 0 );
@@ -177,28 +184,20 @@ void terrain_calculateBuffers( terrain* t ) {
 		vAssert( tr < vert_count );
 		vAssert( bl < vert_count );
 		vAssert( br < vert_count );
-
-		if ( i % 2 ) {
-			// bottom right triangle - br, bl, tr
-			t->element_buffer[element_count++] = br;
-			t->element_buffer[element_count++] = bl;
-			t->element_buffer[element_count++] = tr;
-		}
-		else {
-			// top left triangle - tl, tr, bl
-			t->element_buffer[element_count++] = tl;
-			t->element_buffer[element_count++] = tr;
-			t->element_buffer[element_count++] = bl;
-		}
+		*/
+		// Unroll this, do two triangles at a time
+		// bottom right triangle - br, bl, tr
+		t->element_buffer[element_count+0] = br;
+		t->element_buffer[element_count+1] = bl;
+		t->element_buffer[element_count+2] = tr;
+		// top left triangle - tl, tr, bl
+		t->element_buffer[element_count+3] = tl;
+		t->element_buffer[element_count+4] = tr;
+		t->element_buffer[element_count+5] = bl;
+		element_count += 6;
 	}
-/*
-	// Test print
-	for ( int i = 0; i < t->index_count; i++ ) {
-		printf( "Index %d: %u.\n", i, t->element_buffer[i] );
-	}
-*/
 
-	float texture_scale = 0.125f;
+	// TODO: Should be able to skip this by generating them unrolled? Or not unrolling them at all?
 
 	// For each element index
 	// Unroll the vertex/index bindings
@@ -209,14 +208,14 @@ void terrain_calculateBuffers( terrain* t ) {
 		t->vertex_buffer[i].uv = Vector( verts[t->element_buffer[i]].coord.x * texture_scale, verts[t->element_buffer[i]].coord.z * texture_scale, 0.f, 0.f );
 		t->element_buffer[i] = i;
 	}
-/*	
+	/*	
 	// Test print
 	for ( int i = 0; i < t->index_count; i++ ) {
-		printf( "Index %d: Vert:", i );
-		vector_print( &t->vertex_buffer[i].position );
-		printf( "\n" );
+	printf( "Index %d: Vert:", i );
+	vector_print( &t->vertex_buffer[i].position );
+	printf( "\n" );
 	}
-*/
+	*/
 	mem_free( verts );
 	mem_free( normals );
 }

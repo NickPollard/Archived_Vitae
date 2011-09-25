@@ -117,13 +117,6 @@ void gl_dumpInfoLog( GLuint object, func_getIV getIV, func_getInfoLog getInfoLog
 // Compile a GLSL shader object from the given source code
 // Based on code from Joe's Blog: http://duriansoftware.com/joe/An-intro-to-modern-OpenGL.-Chapter-2.2:-Shaders.html
 GLuint shader_compile( GLenum type, const char* path, const char* source ) {
-	/*
-	GLboolean compiler = false;
-	glGetBooleanv( GL_SHADER_COMPILER, &compiler );
-	printf( "SHADER: compiler support %s\n", compiler ? "true" : "false" );
-	assert( 0 );
-*/
-
 	GLint length = strlen( source );
 	GLuint glShader;
 	GLint shader_ok;
@@ -160,8 +153,7 @@ GLuint shader_link( GLuint vertex_shader, GLuint fragment_shader ) {
 	glGetProgramiv( program, GL_LINK_STATUS, &program_ok );
 	if ( !program_ok ) {
 		printf( "Failed to link shader program.\n" );
-		gl_dumpInfoLog( program, glGetProgramiv,  glGetProgramInfoLog);
-	//	glDeleteProgram( program );
+		gl_dumpInfoLog( program, glGetProgramiv, glGetProgramInfoLog );
 		assert( 0 );
 	}
 
