@@ -77,7 +77,7 @@ void test_engine_init( engine* e ) {
 #ifdef ANDROID
 	terrain_setResolution( t, 45, 45 );
 #else
-	terrain_setResolution( t, 90, 90 );
+	terrain_setResolution( t, 10, 10 );
 #endif // ANDROID
 	terrain_calculateBuffers( t );
 	engine_addRender( e, (void*)t, terrain_render );

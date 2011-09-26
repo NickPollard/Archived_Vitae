@@ -9,7 +9,6 @@ precision mediump float;
 varying vec4 frag_position;
 varying vec4 frag_normal;
 varying vec2 texcoord;
-varying float height;
 varying vec4 vert_color;
 //varying float fog;
 
@@ -39,11 +38,15 @@ void main() {
 	vec4 total_diffuse_color = light_ambient;
 	vec4 total_specular_color = vec4( 0.0, 0.0, 0.0, 0.0 );
 
-#if 0
+#if 1
 	// Directional light
 	{
 		// Ambient + Diffuse
+		// TODO: This is constant, can be calculated once
 		vec4 light_direction = normalize( worldspace * directional_light_direction );
+
+		// TODO: Can this be done in the vertex shader?
+		// how does dot( -light_direction, frag_normal ) vary accross a poly?
 		float diffuse = max( 0.0, dot( -light_direction, frag_normal )) * 1.0;
 		vec4 diffuse_color = directional_light_diffuse * diffuse;
 		total_diffuse_color += diffuse_color;
@@ -84,12 +87,12 @@ void main() {
 //	vec4 material_specular = vert_color * tex_color;
 //	vec4 fragColor =	total_specular_color * material_specular + 
 //					total_diffuse_color * material_diffuse;
-	vec4 fragColor = (total_specular_color + total_diffuse_color) * material_diffuse;
+	vec4 fragColor = (/*total_specular_color +*/ total_diffuse_color) * material_diffuse;
 
 	// Temporary Terrain Fog
 //	float fog = 0.0;
 //	gl_FragColor = mix( fragColor, vec4( 0.0, 0.0, 0.0, 1.0 ), fog );
-	gl_FragColor = material_diffuse;
+	gl_FragColor = fragColor;
 	gl_FragColor.w = 1.0;
 
 #else
