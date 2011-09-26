@@ -30,6 +30,7 @@ typedef struct terrain_s {
 	int				u_block_count;
 	int				v_block_count;
 	terrainBlock**	blocks;		// An array of block pointers
+	int				bounds[2][2];
 
 	// For Rendering
 	int index_count;

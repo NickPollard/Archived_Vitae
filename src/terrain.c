@@ -8,15 +8,14 @@
 #include "render/texture.h"
 #include "system/hash.h"
 
+// Forward declarations
+void terrain_calculateBounds( int bounds[2][2], terrain* t, vector* sample_point );
+
 GLint terrain_texture = -1;
 
-terrainBlock* terrainBlock_create( float u_min, float v_min, float u_max, float v_max ) {
+terrainBlock* terrainBlock_create( ) {
 	terrainBlock* b = mem_alloc( sizeof( terrainBlock ));
 	memset( b, 0, sizeof( terrainBlock ));
-	b->u_min = u_min;
-	b->v_min = v_min;
-	b->u_max = u_max;
-	b->v_max = v_max;
 	return b;
 }
 
@@ -52,23 +51,32 @@ terrain* terrain_create() {
 	return t;
 }
 
+void terrainBlock_calculateExtents( terrainBlock* b, terrain* t, int coord[2] ) {
+	float u_size = (2 * t->u_radius) / (float)t->u_block_count;
+	float v_size = (2 * t->v_radius) / (float)t->v_block_count;
+	b->u_min = ((float)coord[0] - 0.5f) * u_size;
+	b->v_min = ((float)coord[1] - 0.5f) * v_size;
+	b->u_max = b->u_min + u_size;
+	b->v_max = b->v_min + v_size;
+//	printf( "Recalcing terrain block: (%.2f %.2f) to (%.2f %.2f)\n", b->u_min, b->v_min, b->u_max, b->v_max );
+}
+
 void terrain_createBlocks( terrain* t ) {
 	t->total_block_count = t->u_block_count * t->v_block_count;
 	if ( !t->blocks ) {
 		t->blocks = mem_alloc( sizeof( terrainBlock* ) * t->total_block_count );
 	}
+
+	// Ensure the block bounds are initialised;
+	terrain_calculateBounds( t->bounds, t, &t->sample_point );
+
 	// Calculate block extents
 	int i = 0;
-	float u_size = (2 * t->u_radius) / (float)t->u_block_count;
-	float v_size = (2 * t->v_radius) / (float)t->v_block_count;
 	for ( int u = 0; u < t->u_block_count; u++ ) {
 		for ( int v = 0; v < t->v_block_count; v++ ) {
-			float u_min = (-t->u_radius) + (u * u_size);
-			float v_min = (-t->v_radius) + (v * v_size);
-			float u_max = u_min + u_size;
-			float v_max = v_min + v_size;
-			printf( "Creating terrain block: (%.2f %.2f) to (%.2f %.2f)\n", u_min, v_min, u_max, v_max );
-			t->blocks[i] = terrainBlock_create( u_min, v_min, u_max, v_max );
+			int coord[2] = {u, v};
+			t->blocks[i] = terrainBlock_create( );
+			terrainBlock_calculateExtents( t->blocks[i], t, coord );
 			terrainBlock_createBuffers( t, t->blocks[i] );
 			i++;
 		}
@@ -108,31 +116,19 @@ void terrain_updateIntervals( terrain* t ) {
 	t->v_interval = ( t->v_radius / (float)t->v_block_count ) / ((float)(t->v_samples - 1) * 0.5);
 }
 
+// Could be called during runtime, in which case reinit render variables
 void terrain_setSize( terrain* t, float u, float v ) {
 	t->u_radius = u;
 	t->v_radius = v;
 	terrain_updateIntervals( t );
 }
 
-void terrain_createBuffers( terrain* t ) {
-	// Setup buffers
-	int triangle_count = ( t->u_samples - 1 ) * ( t->v_samples - 1 ) * 2;
-	t->index_count = triangle_count * 3;
-	if ( !t->vertex_buffer ) {
-		t->vertex_buffer = mem_alloc( t->index_count * sizeof( vertex ));
-	}
-	if ( !t->element_buffer ) {
-		t->element_buffer = mem_alloc( t->index_count * sizeof( GLushort ));
-	}
-}
-
 // Set the resolution PER BLOCK
+// Could be called during runtime, in which case reinit render variables
 void terrain_setResolution( terrain* t, int u, int v ) {
 	t->u_samples = u;
 	t->v_samples = v;
 	terrain_updateIntervals( t );
-//	terrain_createBuffers( t );
-
 	terrain_createBlocks( t );
 }
 
@@ -217,148 +213,141 @@ void terrainBlock_calculateBuffers( terrain* t, terrainBlock* b ) {
 	mem_free( normals );
 }
 
+// Calculate the intersection of the two block bounds specified
+void terrain_boundsIntersection( int intersection[2][2], int a[2][2], int b[2][2] ) {
+	intersection[0][0] = max( a[0][0], b[0][0] );
+	intersection[0][1] = max( a[0][1], b[0][1] );
+	intersection[1][0] = min( a[1][0], b[1][0] );
+	intersection[1][1] = min( a[1][1], b[1][1] );
+}
+
+void terrain_blockContaining( int coord[2], terrain* t, vector* point ) {
+	float block_width = (2 * t->u_radius) / (float)t->u_block_count;
+	float block_height = (2 * t->v_radius) / (float)t->v_block_count;
+	coord[0] = fround( point->coord.x / block_width, 1.f );
+	coord[1] = fround( point->coord.z / block_height, 1.f );
+}
+
+// Calculate the block bounds for the terrain, at a given sample point
+void terrain_calculateBounds( int bounds[2][2], terrain* t, vector* sample_point ) {
+	/*
+	   Find the block we are in
+	   Then extend by the correct radius
+
+	   The center block [0] is from -half_block_width to half_block_width
+	   */
+	int block[2];
+	terrain_blockContaining( block, t, sample_point );
+	int rx = ( t->u_block_count - 1 ) / 2;
+	int ry = ( t->v_block_count - 1 ) / 2;
+	bounds[0][0] = block[0] - rx;
+	bounds[0][1] = block[1] - ry;
+	bounds[1][0] = block[0] + rx;
+	bounds[1][1] = block[1] + ry;
+}
+
+bool boundsContains( int bounds[2][2], int coord[2] ) {
+	return ( coord[0] >= bounds[0][0] &&
+			coord[1] >= bounds[0][1] &&
+			coord[0] <= bounds[1][0] &&
+			coord[1] <= bounds[1][1] );
+}
+
+void terrain_updateBlocks( terrain* t ) {
+	/*
+	   We have a set of current blocks, B
+	   We have a set of projected blocks based on the new position, B'
+
+	   Calculate the intersection I = B n B';
+	   All blocks ( b | b is in I ) we keep, shifting their pointers to the correct position
+	   All other blocks fill up the empty spaces, then are recalculated
+
+	   We are not freeing or allocating any blocks here; only reusing existing ones
+	   The block pointer array remains sorted
+	   */
+
+//	printf( "TERRAIN: Updating blocks.\n" );
+
+	int bounds[2][2];
+	terrain_calculateBounds( bounds, t, &t->sample_point );
+
+	int intersection[2][2];
+	terrain_boundsIntersection( intersection, bounds, t->bounds );
+/*	
+	printf( "Old Bounds: (%d %d) to (%d %d)\n", t->bounds[0][0], 
+												t->bounds[0][1], 
+												t->bounds[1][0], 
+												t->bounds[1][1] );
+	printf( "New Bounds: (%d %d) to (%d %d)\n", bounds[0][0], 
+												bounds[0][1], 
+												bounds[1][0], 
+												bounds[1][1] );
+*/
+
+	terrainBlock**	newBlocks = mem_alloc( sizeof( terrainBlock* ) * t->total_block_count );
+
+	int empty_index = 0;
+	// For Each old block
+	for ( int i = 0; i < t->total_block_count; i++ ) {
+		int coord[2];
+		coord[0] = t->bounds[0][0] + ( i % t->u_block_count );
+		coord[1] = t->bounds[0][1] + ( i / t->u_block_count );
+		// if in new bounds
+		if ( boundsContains( intersection, coord )) {
+			// copy to new array;
+			int new_u = coord[0] - bounds[0][0];
+			int new_v = coord[1] - bounds[0][1];
+			int new_index = new_u + ( new_v * t->u_block_count );
+			vAssert( new_index >= 0 );
+			vAssert( new_index < t->total_block_count );
+			newBlocks[new_index] = t->blocks[i];
+			
+//			printf( "KEEPING: Moving block %d to new block %d.\n", i, new_index );
+		}
+		else {
+			// Copy unused blocks
+			// Find next empty index
+			int new_coord[2];
+			while ( true ) {
+				new_coord[0] = bounds[0][0] + ( empty_index % t->u_block_count );
+				new_coord[1] = bounds[0][1] + ( empty_index / t->u_block_count );
+				if ( !boundsContains( intersection, new_coord )) {
+					break;
+				}
+				empty_index++;
+			}
+			newBlocks[empty_index] = t->blocks[i];
+//			printf( "RECYCLING: Moving block %d to new block %d.\n", i, empty_index );
+			empty_index++;
+		}
+	}
+
+
+	// For each new block
+	for ( int i = 0; i < t->total_block_count; i++ ) {
+		int coord[2];
+		coord[0] = bounds[0][0] + ( i % t->u_block_count );
+		coord[1] = bounds[0][1] + ( i / t->u_block_count );
+		// if not in old bounds
+		if ( !boundsContains( intersection, coord )) {
+			terrainBlock_calculateExtents( newBlocks[i], t, coord );
+			terrainBlock_calculateBuffers( t, newBlocks[i] );
+		}
+	}
+
+	memcpy( t->bounds, bounds, sizeof( int ) * 2 * 2 );
+	memcpy( t->blocks, newBlocks, sizeof( terrainBlock* ) * t->total_block_count );
+
+	mem_free( newBlocks );
+}
+
 // Calculate vertex and element buffers from procedural definition
 void terrain_calculateBuffers( terrain* t ) {
-#if 1
+	/*
 	for ( int i = 0; i < t->total_block_count; i++ ) {
 		terrainBlock_calculateBuffers( t, t->blocks[i] );
 	}
-#endif
-#if 0
-/*
-	We have a grid of x * y points
-	So (x-1) * (y-1) quads
-	So (x-1) * (y-1) * 2 tris
-	So (x-1) * (y-1) * 6 indices
 	*/
-
-	int triangle_count = ( t->u_samples - 1 ) * ( t->v_samples - 1 ) * 2;
-	int vert_count = t->u_samples * t->v_samples;
-
-	vector* verts = mem_alloc( vert_count * sizeof( vector ));
-	vector* normals = mem_alloc( vert_count * sizeof( vector ));
-
-/*
-	We want to draw the mesh from ( -u_radius, -v_radius ) to ( u_radius, v_radius )
-	We sample at an interval of ( u_interval, v_interval )
-   */
-
-	int vert_index = 0;
-	float u_min = fround( t->sample_point.coord.x - t->u_radius, t->u_interval );
-	float v_min = fround( t->sample_point.coord.z - t->v_radius, t->v_interval );
-	const float u_max = u_min + ( 2 * t->u_radius ) + ( 0.5 * t->u_interval );
-	const float v_max = v_min + ( 2 * t->v_radius ) + ( 0.5 * t->v_interval );
-	for ( float u = u_min; u < u_max; u+= t->u_interval ) {
-		for ( float v = v_min; v < v_max; v+= t->v_interval ) {
-			float h = terrain_sample( u, v );
-			verts[vert_index++] = Vector( u, h, v, 1.f );
-		}
-	}
-	assert( vert_index == vert_count );
-
-	for ( int i = 0; i < vert_count; i++ ) {
-			normals[i] = Vector( 0.f, 1.f, 0.f, 0.f );
-#if 0
-		if ( /*i-1 < 0 || 
-			i + 1 >= vert_count ||*/
-			i - t->u_samples < 0 ||							// Top Edge
-			i + t->u_samples >= vert_count ||				// Bottom Edge
-		  	i % t->u_samples == 0 ||						// Left edge
-		  	i % t->u_samples == ( t->u_samples - 1 ) ) {	// Right Edge
-			normals[i] = Vector( 0.f, 1.f, 0.f, 0.f );
-			continue;
-		}
-		vector center = verts[i];
-		vector left = verts[i - t->u_samples];
-		vector right = verts[i + t->u_samples];
-		vector top = verts[i-1];
-		vector bottom = verts[i+1];
-
-		vector a, b, c, d, e, f, x, y;
-		x = Vector( -1.f, 0.f, 0.f, 0.f ); // Negative to ensure cross products come out correctly
-		y = Vector( 0.f, 0.f, 1.f, 0.f );
-
-		// Calculate two vertical vectors
-		Sub( &a, &center, &top );
-		Sub( &b, &bottom, &center );
-		// Take cross product to calculate normals
-		Cross( &c, &x, &a );
-		Cross( &d, &x, &b );
-
-		// Calculate two horizontal vectors
-		Sub( &a, &center, &left );
-		Sub( &b, &right, &center );
-		// Take cross product to calculate normals
-		Cross( &e, &y, &a );
-		Cross( &f, &y, &b );
-
-		// Average normals
-		vector total = Vector( 0.f, 0.f, 0.f, 0.f );
-		Add( &total, &total, &c );
-		Add( &total, &total, &d );
-		Add( &total, &total, &e );
-		Add( &total, &total, &f );
-		total.coord.w = 0.f;
-		Normalize( &total, &total );
-		normals[i] = total;
-#endif
-	}
-
-	float texture_scale = 0.125f;
-
-	int element_count = 0;
-	// Calculate elements
-	int tw = ( t->u_samples - 1 ) * 2; // Triangles per row
-	for ( int i = 0; i < triangle_count; i+=2 ) {
-		GLushort tl = ( i / 2 ) + i / tw;
-		GLushort tr = tl + 1;
-		GLushort bl = tl + t->u_samples;
-		GLushort br = bl + 1;
-/*
-		vAssert( tl >= 0 );
-		vAssert( tr >= 0 );
-		vAssert( bl >= 0 );
-		vAssert( br >= 0 );
-
-		vAssert( tl < vert_count );
-		vAssert( tr < vert_count );
-		vAssert( bl < vert_count );
-		vAssert( br < vert_count );
-		*/
-		// Unroll this, do two triangles at a time
-		// bottom right triangle - br, bl, tr
-		t->element_buffer[element_count+0] = br;
-		t->element_buffer[element_count+1] = bl;
-		t->element_buffer[element_count+2] = tr;
-		// top left triangle - tl, tr, bl
-		t->element_buffer[element_count+3] = tl;
-		t->element_buffer[element_count+4] = tr;
-		t->element_buffer[element_count+5] = bl;
-		element_count += 6;
-	}
-
-	// TODO: Should be able to skip this by generating them unrolled? Or not unrolling them at all?
-
-	// For each element index
-	// Unroll the vertex/index bindings
-	for ( int i = 0; i < t->index_count; i++ ) {
-		// Copy the required vertex position, normal, and uv
-		t->vertex_buffer[i].position = verts[t->element_buffer[i]];
-		t->vertex_buffer[i].normal = normals[t->element_buffer[i]];
-		t->vertex_buffer[i].uv = Vector( verts[t->element_buffer[i]].coord.x * texture_scale, verts[t->element_buffer[i]].coord.z * texture_scale, 0.f, 0.f );
-		t->element_buffer[i] = i;
-	}
-	/*	
-	// Test print
-	for ( int i = 0; i < t->index_count; i++ ) {
-	printf( "Index %d: Vert:", i );
-	vector_print( &t->vertex_buffer[i].position );
-	printf( "\n" );
-	}
-	*/
-	mem_free( verts );
-	mem_free( normals );
-#endif
 }
 
 void terrainBlock_render( terrainBlock* b ) {
@@ -387,6 +376,7 @@ void terrainBlock_render( terrainBlock* b ) {
 void terrain_render( void* data ) {
 	terrain* t = data;
 
+	terrain_updateBlocks( t );
 	terrain_calculateBuffers( t );
 
 	// Switch to terrain shader
@@ -406,33 +396,10 @@ void terrain_render( void* data ) {
 		render_setUniform_texture( *tex, terrain_texture );
 
 
-
 	// *** Render the blocks
-	for ( int i = 0; i < t->total_block_count; i+=2 ) {
+	for ( int i = 0; i < t->total_block_count; i++ ) {
 		terrainBlock_render( t->blocks[i] );
 	}
-
-
-
-	// Copy our data to the GPU
-	// There are now <index_count> vertices, as we have unrolled them
-	GLsizei vertex_buffer_size = t->index_count * sizeof( vertex );
-	GLsizei element_buffer_size = t->index_count * sizeof( GLushort );
-
-	VERTEX_ATTRIBS( VERTEX_ATTRIB_LOOKUP );
-	// *** Vertex Buffer
-	glBindBuffer( GL_ARRAY_BUFFER, resources.vertex_buffer );
-	glBufferData( GL_ARRAY_BUFFER, vertex_buffer_size, t->vertex_buffer, GL_DYNAMIC_DRAW );// OpenGL ES only supports DYNAMIC_DRAW or STATIC_DRAW
-	VERTEX_ATTRIBS( VERTEX_ATTRIB_POINTER );
-	// *** Element Buffer
-	glBindBuffer( GL_ELEMENT_ARRAY_BUFFER, resources.element_buffer );
-	glBufferData( GL_ELEMENT_ARRAY_BUFFER, element_buffer_size, t->element_buffer, GL_DYNAMIC_DRAW ); // OpenGL ES only supports DYNAMIC_DRAW or STATIC_DRAW
-
-	// Draw!
-	glDrawElements( GL_TRIANGLES, t->index_count, GL_UNSIGNED_SHORT, (void*)0 );
-
-	// Cleanup
-	VERTEX_ATTRIBS( VERTEX_ATTRIB_DISABLE_ARRAY )
 }
 
 void terrain_delete( terrain* t ) {
@@ -444,10 +411,48 @@ void terrain_delete( terrain* t ) {
 }
 
 void test_terrain() {
+	// Bounds test
+	int i[2][2];
+	int a[2][2] = {{1, 1}, {3, 3}};
+	int b[2][2] = {{2, 2}, {4, 4}};
+	terrain_boundsIntersection( i, a, b );
+	vAssert( i[0][0] == 2 );
+	vAssert( i[0][1] == 2 );
+	vAssert( i[1][0] == 3 );
+	vAssert( i[1][1] == 3 );
+
+	a[0][0] = -1;
+	b[0][0] = -2;
+	a[0][1] = -3;
+	b[0][1] = -4;
+	terrain_boundsIntersection( i, a, b );
+	vAssert( i[0][0] == -1 );
+	vAssert( i[0][1] == -3 );
+	vAssert( i[1][0] == 3 );
+	vAssert( i[1][1] == 3 );
+
+
 	terrain* t = terrain_create();
 	terrain_setSize( t, 5.f, 5.f );
 	terrain_setResolution( t, 8, 8 );
 	terrain_calculateBuffers( t );
+
+	// Should be -2, -2, 2, 2, if the block radius is 5	
+	vector v = Vector( 0.f, 0.f, 0.f, 1.f );
+	int bounds[2][2];
+	terrain_calculateBounds( bounds, t, &v );
+	vAssert( bounds[0][0] == -2 );
+	vAssert( bounds[0][1] == -2 );
+	vAssert( bounds[1][0] == 2 );
+	vAssert( bounds[1][1] == 2 );
+
+	int coord[2] = { 0, 2 };
+	vAssert( boundsContains( bounds, coord ));
+	coord[0] = 3;
+	vAssert( !boundsContains( bounds, coord ));
+	coord[0] = 2;
+	vAssert( boundsContains( bounds, coord ));
+
 	terrain_delete( t );
 //	vAssert( 0 );
 }

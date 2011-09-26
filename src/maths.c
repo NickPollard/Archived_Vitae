@@ -657,4 +657,8 @@ void test_matrix() {
 	vAssert( !isPowerOf2( 5 ) );
 	vAssert( !isPowerOf2( 1536 ) );
 
+	vAssert( f_eq( fround( -0.6f, 1.f ), -1.f ));
+	vAssert( f_eq( fround( -0.5f, 1.f ), 0.f ));
+	vAssert( f_eq( fround( -1.3f, 1.f ),  -1.f ));
+
 }
