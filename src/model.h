@@ -3,14 +3,9 @@
 
 #include "common.fwd.h"
 #include "maths.h"
+#include "render/render.h"
 
 #define MAX_SUBMESHES 4
-
-typedef struct vertex_s {
-	vector	position;
-	vector	normal;
-	vector	uv;
-} vertex;
 
 // *** Mesh ***
 /*

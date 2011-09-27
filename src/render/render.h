@@ -57,6 +57,12 @@ typedef struct gl_resources_s {
 	shader* shader_ui;
 } gl_resources;
 
+typedef struct vertex_s {
+	vector	position;
+	vector	normal;
+	vector	uv;
+} vertex;
+
 extern gl_resources resources;
 extern matrix modelview;
 extern matrix camera_inverse;
@@ -99,7 +105,7 @@ void render_terminate();
 
 // Render the current scene
 // This is where the business happens
-void render( scene* s , int w, int h );
+void render( scene* s );
 
 void render_resetModelView( );
 void render_setUniform_matrix( GLuint uniform, matrix m );
@@ -111,3 +117,14 @@ typedef void (*func_getIV)( GLuint, GLenum, GLint* );
 typedef void (*func_getInfoLog)( GLuint, GLint, GLint*, GLchar* );
 
 void gl_dumpInfoLog( GLuint object, func_getIV getIV, func_getInfoLog getInfoLog );
+
+// Draw Calls
+
+typedef struct drawCall_s {
+	GLushort*	element_buffer;
+	vertex*		vertex_buffer;
+	int			element_count;
+} drawCall;
+
+drawCall* drawCall_create( int count, GLushort* elements, vertex* verts);
+void render_drawCall( drawCall* draw );

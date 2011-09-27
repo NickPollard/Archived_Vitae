@@ -47,11 +47,12 @@ void render_setBuffers( float* vertex_buffer, int vertex_buffer_size, int* eleme
 }
 
 void render_buildShaders() {
-	resources.shader_default = shader_load( "dat/shaders/phong.v.glsl", "dat/shaders/phong.f.glsl" );
-	resources.shader_particle = shader_load( "dat/shaders/textured_phong.v.glsl", "dat/shaders/textured_phong.f.glsl" );
-	resources.shader_terrain = shader_load( "dat/shaders/terrain.v.glsl", "dat/shaders/terrain.f.glsl" );
-	resources.shader_skybox = shader_load( "dat/shaders/skybox.v.glsl", "dat/shaders/skybox.f.glsl" );
-	resources.shader_ui = shader_load( "dat/shaders/ui.v.glsl", "dat/shaders/ui.f.glsl" );
+	// Load Shaders								Vertex								Fragment
+	resources.shader_default	= shader_load( "dat/shaders/phong.v.glsl",			"dat/shaders/phong.f.glsl" );
+	resources.shader_particle	= shader_load( "dat/shaders/textured_phong.v.glsl",	"dat/shaders/textured_phong.f.glsl" );
+	resources.shader_terrain	= shader_load( "dat/shaders/terrain.v.glsl",		"dat/shaders/terrain.f.glsl" );
+	resources.shader_skybox		= shader_load( "dat/shaders/skybox.v.glsl",			"dat/shaders/skybox.f.glsl" );
+	resources.shader_ui			= shader_load( "dat/shaders/ui.v.glsl",				"dat/shaders/ui.f.glsl" );
 
 #define GET_UNIFORM_LOCATION( var ) \
 	resources.uniforms.var = shader_findConstant( mhash( #var )); \
@@ -73,29 +74,18 @@ void render_set3D( int w, int h ) {
 }
 
 void render_set2D() {
-#ifndef OPENGL_ES
-	// *** Set an orthographic projection
-	glMatrixMode( GL_PROJECTION );
-	glLoadIdentity();
-	glOrtho( 0,		// left
-			640.0,	// right
-		   	480.0,	// bottom
-		   	0,		// top
-		   	0,		// near
-		   	1 );	// far
-
-	glDisable( GL_DEPTH_TEST );
-#endif
+	vAssert( 0 ); // NYI	
 }
 
 #ifdef ANDROID
 void render_swapBuffers( egl_renderer* egl ) {
     eglSwapBuffers( egl->display, egl->surface );
+}
 #else
 void render_swapBuffers() {
 	glfwSwapBuffers(); // Send the 3d scene to the screen (flips display buffers)
-#endif // ANDROID
 }
+#endif // ANDROID
 
 // Iterate through each model in the scene
 // Translate by their transform
@@ -144,11 +134,8 @@ void render_init() {
 	glEnable( GL_CULL_FACE );
 
 	texture_init();
-
 	shader_init();
-
 	render_buildShaders();
-
 	skybox_init();
 	
 	// Allocate space for buffers
@@ -163,14 +150,6 @@ void render_terminate() {
 #ifndef ANDROID
 	glfwTerminate();
 #endif
-}
-
-void render_shader( scene* s );
-
-// Render the current scene
-// This is where the business happens
-void render( scene* s, int w, int h ) {
-	render_shader( s );
 }
 
 void render_perspectiveMatrix( matrix m, float fov, float aspect, float near, float far ) {
@@ -215,7 +194,7 @@ void render_setUniform_texture( GLuint uniform, GLuint texture ) {
 
 
 // Shader version
-void render_shader( scene* s ) {
+void render( scene* s ) {
 	// Load our shader
 	shader_activate( resources.shader_default );
 	matrix_setIdentity( modelview );
@@ -242,10 +221,36 @@ void render_shader( scene* s ) {
 	render_setUniform_matrix( *resources.uniforms.modelview, modelview );
 	render_setUniform_matrix( *resources.uniforms.worldspace, modelview );
 
-	// Textures
-//	render_setUniform_texture( *resources.uniforms.tex, g_texture_default );
-
 	render_lighting( s );
 
 	render_scene( s );
+}
+
+drawCall* drawCall_create( int count, GLushort* elements, vertex* verts) {
+	drawCall* draw = mem_alloc( sizeof( drawCall ));
+	draw->element_buffer = elements;
+	draw->vertex_buffer = verts;
+	draw->element_count = count;
+	return draw;
+}
+
+void render_drawCall( drawCall* draw ) {
+	// Copy our data to the GPU
+	GLsizei vertex_buffer_size = draw->element_count * sizeof( vertex );
+	GLsizei element_buffer_size = draw->element_count * sizeof( GLushort );
+
+	VERTEX_ATTRIBS( VERTEX_ATTRIB_LOOKUP );
+	// *** Vertex Buffer
+	glBindBuffer( GL_ARRAY_BUFFER, resources.vertex_buffer );
+	glBufferData( GL_ARRAY_BUFFER, vertex_buffer_size, draw->vertex_buffer, GL_DYNAMIC_DRAW );// OpenGL ES only supports DYNAMIC_DRAW or STATIC_DRAW
+	VERTEX_ATTRIBS( VERTEX_ATTRIB_POINTER );
+	// *** Element Buffer
+	glBindBuffer( GL_ELEMENT_ARRAY_BUFFER, resources.element_buffer );
+	glBufferData( GL_ELEMENT_ARRAY_BUFFER, element_buffer_size, draw->element_buffer, GL_DYNAMIC_DRAW ); // OpenGL ES only supports DYNAMIC_DRAW or STATIC_DRAW
+
+	// Draw!
+	glDrawElements( GL_TRIANGLES, draw->element_count, GL_UNSIGNED_SHORT, (void*)0 );
+
+	// Cleanup
+	VERTEX_ATTRIBS( VERTEX_ATTRIB_DISABLE_ARRAY )
 }

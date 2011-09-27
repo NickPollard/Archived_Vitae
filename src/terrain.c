@@ -405,6 +405,10 @@ void terrain_updateBlocks( terrain* t ) {
 }
 
 void terrainBlock_render( terrainBlock* b ) {
+	drawCall* block_render = drawCall_create( b->index_count, b->element_buffer, b->vertex_buffer );
+	render_drawCall( block_render );
+
+	/*
 	// Copy our data to the GPU
 	// There are now <index_count> vertices, as we have unrolled them
 	GLsizei vertex_buffer_size = b->index_count * sizeof( vertex );
@@ -424,6 +428,7 @@ void terrainBlock_render( terrainBlock* b ) {
 
 	// Cleanup
 	VERTEX_ATTRIBS( VERTEX_ATTRIB_DISABLE_ARRAY )
+	*/
 }
 
 void terrain_tick( void* data, float dt ) {

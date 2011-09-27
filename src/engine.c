@@ -265,7 +265,7 @@ void engine_render( engine* e ) {
 	if ( e->egl ) {
 		render_set3D( e->egl->width, e->egl->height );
 		render_clear();
-		render( theScene, w, h );
+		render( theScene );
 		skybox_render( NULL );
 		engine_renderRenders( e );
 		//temp
@@ -275,7 +275,7 @@ void engine_render( engine* e ) {
 #else
 	render_set3D( w, h );
 	render_clear();
-	render( theScene, w, h );
+	render( theScene );
 	skybox_render( NULL );
 	engine_renderRenders( e );
 	// temp
