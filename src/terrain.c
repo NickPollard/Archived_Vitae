@@ -174,7 +174,51 @@ void terrainBlock_calculateBuffers( terrain* t, terrainBlock* b ) {
 	assert( vert_index == vert_count );
 
 	for ( int i = 0; i < vert_count; i++ ) {
+//		normals[i] = Vector( 0.f, 1.f, 0.f, 0.f );
+#if 1
+		if ( /*i-1 < 0 || 
+			   i + 1 >= vert_count ||*/
+				i - t->u_samples < 0 ||                                                 // Top Edge
+				i + t->u_samples >= vert_count ||                               // Bottom Edge
+				i % t->u_samples == 0 ||                                                // Left edge
+				i % t->u_samples == ( t->u_samples - 1 ) ) {    // Right Edge
 			normals[i] = Vector( 0.f, 1.f, 0.f, 0.f );
+			continue;
+		}
+		vector center = verts[i];
+		vector left = verts[i - t->u_samples];
+		vector right = verts[i + t->u_samples];
+		vector top = verts[i-1];
+		vector bottom = verts[i+1];
+
+		vector a, b, c, d, e, f, x, y;
+		x = Vector( -1.f, 0.f, 0.f, 0.f ); // Negative to ensure cross products come out correctly
+		y = Vector( 0.f, 0.f, 1.f, 0.f );
+
+		// Calculate two vertical vectors
+		Sub( &a, &center, &top );
+		Sub( &b, &bottom, &center );
+		// Take cross product to calculate normals
+		Cross( &c, &x, &a );
+		Cross( &d, &x, &b );
+
+		// Calculate two horizontal vectors
+		Sub( &a, &center, &left );
+		Sub( &b, &right, &center );
+		// Take cross product to calculate normals
+		Cross( &e, &y, &a );
+		Cross( &f, &y, &b );
+
+		// Average normals
+		vector total = Vector( 0.f, 0.f, 0.f, 0.f );
+		Add( &total, &total, &c );
+		Add( &total, &total, &d );
+		Add( &total, &total, &e );
+		Add( &total, &total, &f );
+		total.coord.w = 0.f;
+		Normalize( &total, &total );
+		normals[i] = total;
+#endif
 	}
 
 	float texture_scale = 0.125f;

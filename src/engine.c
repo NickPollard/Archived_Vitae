@@ -75,7 +75,7 @@ void test_engine_init( engine* e ) {
 	t->trans = transform_createAndAdd( theScene );
 	terrain_setSize( t, 50.f, 150.f );
 #ifdef ANDROID
-	terrain_setResolution( t, 45, 45 );
+	terrain_setResolution( t, 10, 10 );
 #else
 	terrain_setResolution( t, 10, 10 );
 #endif // ANDROID
