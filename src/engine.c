@@ -70,25 +70,28 @@ void test_engine_init( engine* e ) {
 //	theScene->debugtext = e->debugtext;
 	lua_setScene( e->lua, theScene );
 
-	terrain* t = terrain_create();
-	theTerrain = t;
-	t->trans = transform_createAndAdd( theScene );
-	terrain_setSize( t, 50.f, 150.f );
-#ifdef ANDROID
-	terrain_setResolution( t, 10, 10 );
-#else
-	terrain_setResolution( t, 10, 10 );
-#endif // ANDROID
-	terrain_calculateBuffers( t );
-	engine_addRender( e, (void*)t, terrain_render );
+	// Terrain
+	{
+		terrain* t = terrain_create();
+		theTerrain = t;
+		t->trans = transform_createAndAdd( theScene );
+		terrain_setSize( t, 50.f, 150.f );
+		terrain_setResolution( t, 10, 10 );
 
-	panel* p = panel_create();
-	p->x = 560.f;
-	p->y = 0.f;
-	p->width = 240.f;
-	p->height = 240.f;
-	p->texture = texture_loadTGA( "assets/img/circle.tga" );
-	static_test_panel = p;
+		engine_addRender( e, (void*)t, terrain_render );
+		startTick( e, (void*)t, terrain_tick );
+	}
+
+	// UI
+	{
+		panel* p = panel_create();
+		p->x = 560.f;
+		p->y = 0.f;
+		p->width = 240.f;
+		p->height = 240.f;
+		p->texture = texture_loadTGA( "assets/img/circle.tga" );
+		static_test_panel = p;
+	}
 
 }
 

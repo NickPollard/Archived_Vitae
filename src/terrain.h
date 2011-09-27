@@ -3,10 +3,10 @@
 #include "src/model.h"
 
 typedef struct terrainBlock_s {
-	float u_min;
-	float u_max;
-	float v_min;
-	float v_max;
+	float	u_min;
+	float	u_max;
+	float	v_min;
+	float	v_max;
 	int		u_samples;
 	int		v_samples;
 
@@ -31,25 +31,20 @@ typedef struct terrain_s {
 	int				v_block_count;
 	terrainBlock**	blocks;		// An array of block pointers
 	int				bounds[2][2];
-
-	// For Rendering
-	int index_count;
-	vertex*		vertex_buffer;
-	unsigned short*		element_buffer;
 } terrain;
-
 
 // Create a procedural terrain
 terrain* terrain_create();
 
+// Set rendering parameters
 void terrain_setSize( terrain* t, float u, float v );
 void terrain_setResolution( terrain* t, int u, int v );
 
-// Calculate vertex and element buffers from procedural definition
-void terrain_calculateBuffers( terrain* t );
-
 // The renderfunc
 void terrain_render( void* data );
+
+// The tickfunc
+void terrain_tick( void* data, float dt );
 
 // *** Test
 void test_terrain();

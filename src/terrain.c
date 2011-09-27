@@ -10,6 +10,7 @@
 
 // Forward declarations
 void terrain_calculateBounds( int bounds[2][2], terrain* t, vector* sample_point );
+void terrainBlock_calculateBuffers( terrain* t, terrainBlock* b );
 
 GLint terrain_texture = -1;
 
@@ -25,12 +26,10 @@ void terrainBlock_createBuffers( terrain* t, terrainBlock* b ) {
 	// Setup buffers
 	int triangle_count = ( b->u_samples - 1 ) * ( b->v_samples - 1 ) * 2;
 	b->index_count = triangle_count * 3;
-	if ( !b->vertex_buffer ) {
+	if ( !b->vertex_buffer )
 		b->vertex_buffer = mem_alloc( b->index_count * sizeof( vertex ));
-	}
-	if ( !b->element_buffer ) {
+	if ( !b->element_buffer )
 		b->element_buffer = mem_alloc( b->index_count * sizeof( GLushort ));
-	}
 }
 
 // Create a procedural terrain
@@ -58,26 +57,28 @@ void terrainBlock_calculateExtents( terrainBlock* b, terrain* t, int coord[2] ) 
 	b->v_min = ((float)coord[1] - 0.5f) * v_size;
 	b->u_max = b->u_min + u_size;
 	b->v_max = b->v_min + v_size;
-//	printf( "Recalcing terrain block: (%.2f %.2f) to (%.2f %.2f)\n", b->u_min, b->v_min, b->u_max, b->v_max );
 }
 
 void terrain_createBlocks( terrain* t ) {
 	t->total_block_count = t->u_block_count * t->v_block_count;
-	if ( !t->blocks ) {
-		t->blocks = mem_alloc( sizeof( terrainBlock* ) * t->total_block_count );
-	}
+	vAssert( !t->blocks );
+	t->blocks = mem_alloc( sizeof( terrainBlock* ) * t->total_block_count );
 
 	// Ensure the block bounds are initialised;
 	terrain_calculateBounds( t->bounds, t, &t->sample_point );
 
 	// Calculate block extents
 	int i = 0;
-	for ( int u = 0; u < t->u_block_count; u++ ) {
-		for ( int v = 0; v < t->v_block_count; v++ ) {
-			int coord[2] = {u, v};
+	for ( int v = 0; v < t->v_block_count; v++ ) {
+		for ( int u = 0; u < t->u_block_count; u++ ) {
+			int coord[2];
+			coord[0] = t->bounds[0][0] + u;
+			coord[1] = t->bounds[0][1] + v;
+
 			t->blocks[i] = terrainBlock_create( );
 			terrainBlock_calculateExtents( t->blocks[i], t, coord );
 			terrainBlock_createBuffers( t, t->blocks[i] );
+			terrainBlock_calculateBuffers( t, t->blocks[i] );
 			i++;
 		}
 	}
@@ -174,7 +175,6 @@ void terrainBlock_calculateBuffers( terrain* t, terrainBlock* b ) {
 	assert( vert_index == vert_count );
 
 	for ( int i = 0; i < vert_count; i++ ) {
-//		normals[i] = Vector( 0.f, 1.f, 0.f, 0.f );
 #if 1
 		if ( /*i-1 < 0 || 
 			   i + 1 >= vert_count ||*/
@@ -385,15 +385,6 @@ void terrain_updateBlocks( terrain* t ) {
 	mem_free( newBlocks );
 }
 
-// Calculate vertex and element buffers from procedural definition
-void terrain_calculateBuffers( terrain* t ) {
-	/*
-	for ( int i = 0; i < t->total_block_count; i++ ) {
-		terrainBlock_calculateBuffers( t, t->blocks[i] );
-	}
-	*/
-}
-
 void terrainBlock_render( terrainBlock* b ) {
 	// Copy our data to the GPU
 	// There are now <index_count> vertices, as we have unrolled them
@@ -416,12 +407,14 @@ void terrainBlock_render( terrainBlock* b ) {
 	VERTEX_ATTRIBS( VERTEX_ATTRIB_DISABLE_ARRAY )
 }
 
+void terrain_tick( void* data, float dt ) {
+	terrain* t = data;
+	terrain_updateBlocks( t );
+}
+
 // Send the buffers to the GPU
 void terrain_render( void* data ) {
 	terrain* t = data;
-
-	terrain_updateBlocks( t );
-	terrain_calculateBuffers( t );
 
 	// Switch to terrain shader
 	shader_activate( resources.shader_terrain );
@@ -439,7 +432,6 @@ void terrain_render( void* data ) {
 	if ( tex )
 		render_setUniform_texture( *tex, terrain_texture );
 
-
 	// *** Render the blocks
 	for ( int i = 0; i < t->total_block_count; i++ ) {
 		terrainBlock_render( t->blocks[i] );
@@ -447,10 +439,6 @@ void terrain_render( void* data ) {
 }
 
 void terrain_delete( terrain* t ) {
-	if ( t->vertex_buffer )
-		mem_free( t->vertex_buffer );
-	if ( t->element_buffer )
-		mem_free( t->element_buffer );
 	mem_free( t );
 }
 
@@ -475,11 +463,9 @@ void test_terrain() {
 	vAssert( i[1][0] == 3 );
 	vAssert( i[1][1] == 3 );
 
-
 	terrain* t = terrain_create();
 	terrain_setSize( t, 5.f, 5.f );
 	terrain_setResolution( t, 8, 8 );
-	terrain_calculateBuffers( t );
 
 	// Should be -2, -2, 2, 2, if the block radius is 5	
 	vector v = Vector( 0.f, 0.f, 0.f, 1.f );
@@ -498,5 +484,4 @@ void test_terrain() {
 	vAssert( boundsContains( bounds, coord ));
 
 	terrain_delete( t );
-//	vAssert( 0 );
 }
