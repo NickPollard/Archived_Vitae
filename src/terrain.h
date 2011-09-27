@@ -22,8 +22,8 @@ typedef struct terrain_s {
 	float	v_radius;
 	int		u_samples;
 	int		v_samples;
-	float	u_interval;
-	float	v_interval;
+//	float	u_interval;
+//	float	v_interval;
 	vector	sample_point;
 	// Block system
 	int				total_block_count;

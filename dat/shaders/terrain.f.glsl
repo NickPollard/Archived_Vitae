@@ -87,7 +87,7 @@ void main() {
 //	vec4 material_specular = vert_color * tex_color;
 //	vec4 fragColor =	total_specular_color * material_specular + 
 //					total_diffuse_color * material_diffuse;
-	vec4 fragColor = (/*total_specular_color +*/ total_diffuse_color) * material_diffuse;
+	vec4 fragColor = (total_specular_color + total_diffuse_color) * material_diffuse;
 
 	// Temporary Terrain Fog
 //	float fog = 0.0;

@@ -60,8 +60,9 @@ void terrainBlock_calculateExtents( terrainBlock* b, terrain* t, int coord[2] ) 
 }
 
 void terrain_createBlocks( terrain* t ) {
-	t->total_block_count = t->u_block_count * t->v_block_count;
 	vAssert( !t->blocks );
+	t->total_block_count = t->u_block_count * t->v_block_count;
+	vAssert( t->total_block_count > 0 );
 	t->blocks = mem_alloc( sizeof( terrainBlock* ) * t->total_block_count );
 
 	// Ensure the block bounds are initialised;
@@ -76,8 +77,8 @@ void terrain_createBlocks( terrain* t ) {
 			coord[1] = t->bounds[0][1] + v;
 
 			t->blocks[i] = terrainBlock_create( );
-			terrainBlock_calculateExtents( t->blocks[i], t, coord );
 			terrainBlock_createBuffers( t, t->blocks[i] );
+			terrainBlock_calculateExtents( t->blocks[i], t, coord );
 			terrainBlock_calculateBuffers( t, t->blocks[i] );
 			i++;
 		}
@@ -112,16 +113,15 @@ float terrain_sample( float u, float v ) {
 #endif
 }
 
-void terrain_updateIntervals( terrain* t ) {
-	t->u_interval = ( t->u_radius / (float)t->u_block_count ) / ((float)(t->u_samples - 1) * 0.5);
-	t->v_interval = ( t->v_radius / (float)t->v_block_count ) / ((float)(t->v_samples - 1) * 0.5);
-}
-
 // Could be called during runtime, in which case reinit render variables
 void terrain_setSize( terrain* t, float u, float v ) {
 	t->u_radius = u;
 	t->v_radius = v;
-	terrain_updateIntervals( t );
+
+	// TODO:
+	// Could be called during runtime, in which case reinit render variables
+	// For now just disallow that
+	vAssert( !t->blocks );
 }
 
 // Set the resolution PER BLOCK
@@ -129,10 +129,8 @@ void terrain_setSize( terrain* t, float u, float v ) {
 void terrain_setResolution( terrain* t, int u, int v ) {
 	t->u_samples = u;
 	t->v_samples = v;
-	terrain_updateIntervals( t );
 	terrain_createBlocks( t );
 }
-
 
 /*
    Calculate vertex and element buffers for a given block from a given
@@ -150,47 +148,46 @@ void terrainBlock_calculateBuffers( terrain* t, terrainBlock* b ) {
 	int vert_count = b->u_samples * b->v_samples;
 
 	// Calculate bounds and intervals
-	float u_min = b->u_min;
-	float v_min = b->v_min;
-	float u_max = b->u_max;
-	float v_max = b->v_max;
-	vAssert( u_max > u_min );
-	vAssert( v_max > v_min );
-	float u_interval = ( u_max - u_min ) / ( b->u_samples - 1);
-	float v_interval = ( v_max - v_min ) / ( b->v_samples - 1);
+	vAssert( b->u_max > b->u_min );
+	vAssert( b->v_max > b->v_min );
+	float u_interval = ( b->u_max - b->u_min ) / ( b->u_samples - 1);
+	float v_interval = ( b->v_max - b->v_min ) / ( b->v_samples - 1);
 	// Loosen max edges to ensure final verts aren't dropped
-	u_max += u_interval * 0.5f;
-	v_max += v_interval * 0.5f;
+	float u_max = b->u_max + (u_interval * 0.5f);
+	float v_max = b->v_max + (v_interval * 0.5f);
 
 	vector* verts = mem_alloc( vert_count * sizeof( vector ));
 	vector* normals = mem_alloc( vert_count * sizeof( vector ));
 
 	int vert_index = 0;
-	for ( float u = u_min; u < u_max; u+= u_interval ) {
-		for ( float v = v_min; v < v_max; v+= v_interval ) {
+	for ( float u = b->u_min; u < u_max; u+= u_interval ) {
+		for ( float v = b->v_min; v < v_max; v+= v_interval ) {
 			float h = terrain_sample( u, v );
 			verts[vert_index++] = Vector( u, h, v, 1.f );
 		}
 	}
 	assert( vert_index == vert_count );
 
-	for ( int i = 0; i < vert_count; i++ ) {
-#if 1
-		if ( /*i-1 < 0 || 
-			   i + 1 >= vert_count ||*/
-				i - t->u_samples < 0 ||                                                 // Top Edge
-				i + t->u_samples >= vert_count ||                               // Bottom Edge
-				i % t->u_samples == 0 ||                                                // Left edge
-				i % t->u_samples == ( t->u_samples - 1 ) ) {    // Right Edge
+	// Do top and bottom edges first
+	for ( int i = 0; i < t->u_samples; i++ )
+		normals[i] = Vector( 0.f, 1.f, 0.f, 0.f );
+	for ( int i = vert_count - t->u_samples; i < vert_count; i++ )
+		normals[i] = Vector( 0.f, 1.f, 0.f, 0.f );
+
+	//Now the rest
+	for ( int i = t->u_samples; i < ( vert_count - t->u_samples ); i++ ) {
+		// Ignoring Left and Right Edges
+		if ( i % t->u_samples == 0 || i % t->u_samples == ( t->u_samples - 1 ) ) {    
 			normals[i] = Vector( 0.f, 1.f, 0.f, 0.f );
 			continue;
 		}
-		vector center = verts[i];
 		vector left = verts[i - t->u_samples];
 		vector right = verts[i + t->u_samples];
 		vector top = verts[i-1];
 		vector bottom = verts[i+1];
 
+#if 0
+		vector center = verts[i];
 		vector a, b, c, d, e, f, x, y;
 		x = Vector( -1.f, 0.f, 0.f, 0.f ); // Negative to ensure cross products come out correctly
 		y = Vector( 0.f, 0.f, 1.f, 0.f );
@@ -215,6 +212,28 @@ void terrainBlock_calculateBuffers( terrain* t, terrainBlock* b ) {
 		Add( &total, &total, &d );
 		Add( &total, &total, &e );
 		Add( &total, &total, &f );
+		total.coord.w = 0.f;
+		Normalize( &total, &total );
+		normals[i] = total;
+#else
+		vector a, b, c, x, y;
+		x = Vector( -1.f, 0.f, 0.f, 0.f ); // Negative to ensure cross products come out correctly
+		y = Vector( 0.f, 0.f, 1.f, 0.f );
+
+		// Calculate vertical vector
+		// Take cross product to calculate normals
+		Sub( &a, &bottom, &top );
+		Cross( &b, &x, &a );
+
+		// Calculate horizontal vector
+		// Take cross product to calculate normals
+		Sub( &a, &right, &left );
+		Cross( &c, &y, &a );
+
+		// Average normals
+		vector total = Vector( 0.f, 0.f, 0.f, 0.f );
+		Add( &total, &total, &b );
+		Add( &total, &total, &c );
 		total.coord.w = 0.f;
 		Normalize( &total, &total );
 		normals[i] = total;
