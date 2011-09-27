@@ -407,28 +407,6 @@ void terrain_updateBlocks( terrain* t ) {
 void terrainBlock_render( terrainBlock* b ) {
 	drawCall* block_render = drawCall_create( b->index_count, b->element_buffer, b->vertex_buffer );
 	render_drawCall( block_render );
-
-	/*
-	// Copy our data to the GPU
-	// There are now <index_count> vertices, as we have unrolled them
-	GLsizei vertex_buffer_size = b->index_count * sizeof( vertex );
-	GLsizei element_buffer_size = b->index_count * sizeof( GLushort );
-
-	VERTEX_ATTRIBS( VERTEX_ATTRIB_LOOKUP );
-	// *** Vertex Buffer
-	glBindBuffer( GL_ARRAY_BUFFER, resources.vertex_buffer );
-	glBufferData( GL_ARRAY_BUFFER, vertex_buffer_size, b->vertex_buffer, GL_DYNAMIC_DRAW );// OpenGL ES only supports DYNAMIC_DRAW or STATIC_DRAW
-	VERTEX_ATTRIBS( VERTEX_ATTRIB_POINTER );
-	// *** Element Buffer
-	glBindBuffer( GL_ELEMENT_ARRAY_BUFFER, resources.element_buffer );
-	glBufferData( GL_ELEMENT_ARRAY_BUFFER, element_buffer_size, b->element_buffer, GL_DYNAMIC_DRAW ); // OpenGL ES only supports DYNAMIC_DRAW or STATIC_DRAW
-
-	// Draw!
-	glDrawElements( GL_TRIANGLES, b->index_count, GL_UNSIGNED_SHORT, (void*)0 );
-
-	// Cleanup
-	VERTEX_ATTRIBS( VERTEX_ATTRIB_DISABLE_ARRAY )
-	*/
 }
 
 void terrain_tick( void* data, float dt ) {

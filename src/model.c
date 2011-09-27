@@ -15,18 +15,12 @@
 #include "system/hash.h"
 #include "system/string.h"
 
-#define maxModels 256
+#define kMaxModels 256
 
-int model_count;
-model* models[maxModels];
-const char* modelFiles[maxModels];
-int modelIDs[maxModels];
-
-/*
-void vgl_vertexDraw(vector* v) {
-	glVertex3fv((GLfloat*)v);
-}
-*/
+int			model_count;
+model*		models[kMaxModels];
+const char*	modelFiles[kMaxModels];
+int 		modelIDs[kMaxModels];
 
 unsigned int aligned_size( unsigned int size, unsigned int alignment ) {
 	return ( (size / alignment) + (( size % alignment > 0 ) ? 1 : 0) ) * alignment;
@@ -69,39 +63,12 @@ mesh* mesh_createMesh( int vertCount, int index_count, int normal_count, int uv_
 	data = advance_align( data + sizeof( m->uvs[0] ) * uv_count, 4 );		// UVs
 	m->uv_indices = data;
 
-	/*
-	void* data = mem_alloc( sizeof( mesh ) +
-						sizeof( vector ) * vertCount +		// Verts
-						sizeof( uint16_t )	 * index_count +	// Indices
-						sizeof( vector )	 * uv_count +	// UVs
-						sizeof( uint16_t )	 * index_count +	// UV indices
-						sizeof( uint16_t )	 * index_count +	// Normal indices
-						sizeof( vector ) * normal_count );	// Normals
-	mesh* m = data;
-
-	// TODO: Align (4-byte);
-	data += sizeof(mesh);
-	m->verts = data;
-	data += sizeof( m->verts[0] ) * vertCount;			// Verts
-	m->indices = data;
-	data += sizeof( m->indices[0] ) * index_count;	// Indices
-	m->normals = data;
-	data += sizeof( m->normals[0] ) * normal_count;	// Normals	
-	m->normal_indices = data;
-	data += sizeof( m->normal_indices[0] ) * index_count;	// Normal Indices
-	m->uvs = data;
-	data += sizeof( m->uvs[0] ) * uv_count;		// UVs
-	m->uv_indices = data;
-*/
-
 	m->vert_count = vertCount;
 	m->index_count = index_count;
 	m->normal_count = normal_count;
-
 	m->vertex_buffer = NULL;
 	m->element_buffer = NULL;
 
-	//m->texture_diffuse = texture_loadTGA( "assets/img/test64rgba.tga" );
 	m->texture_diffuse = texture_loadTGA( "assets/img/ship_hd_2.tga" );
 
 	return m;
@@ -130,7 +97,6 @@ model* model_createTestCube( ) {
 	return m;
 }
 
-
 // Create an empty model with meshCount submeshes
 model* model_createModel(int meshCount) {
 	model* m = mem_alloc(sizeof(model) +
@@ -153,14 +119,6 @@ void mesh_buildBuffers( mesh* m ) {
 	if ( all_smooth_shaded ) {
 
 	} else {
-//		printf( "MODEL: Build Buffers. Index count: %d\n", m->index_count );
-		/*
-		printf( "MODEL: Alignment vertex: %d", ((unsigned int)m->vertex_buffer) % sizeof( vertex ) );
-		printf( "MODEL: Alignment vector: %d", ((unsigned int)m->vertex_buffer) % sizeof( vector ) );
-		printf( "MODEL: Alignment verts: %d", ((unsigned int)m->verts) % sizeof( vector ) );
-		printf( "MODEL: Alignment normals: %d", ((unsigned int)m->normals) % sizeof( vector ) );
-		printf( "MODEL: Alignment uvs: %d", ((unsigned int)m->uvs) % sizeof( vector ) );
-		*/
 		// For each element index
 		// Unroll the vertex/index bindings
 		for ( int i = 0; i < m->index_count; i++ ) {
@@ -170,36 +128,18 @@ void mesh_buildBuffers( mesh* m ) {
 			m->vertex_buffer[i].uv = m->uvs[m->uv_indices[i]];
 			m->element_buffer[i] = i;
 		}
-//		printf( "MODEL: Buffers built successfully.\n" );
 	}
 }
 
 // Draw the verts of a mesh to the openGL buffer
 void mesh_drawVerts( mesh* m ) {
-	// Copy our data to the GPU
-	// There are now <index_count> vertices, as we have unrolled them
-	GLsizei vertex_buffer_size = m->index_count * sizeof( vertex );
-	GLsizei element_buffer_size = m->index_count * sizeof( GLushort );
-
 	// Textures
 	GLint* tex = shader_findConstant( mhash( "tex" ));
 	if ( tex )
 		render_setUniform_texture( *tex, m->texture_diffuse );
 
-	VERTEX_ATTRIBS( VERTEX_ATTRIB_LOOKUP );
-	// *** Vertex Buffer
-	glBindBuffer( GL_ARRAY_BUFFER, resources.vertex_buffer );
-	glBufferData( GL_ARRAY_BUFFER, vertex_buffer_size, m->vertex_buffer, GL_DYNAMIC_DRAW );// OpenGL ES only supports DYNAMIC_DRAW or STATIC_DRAW
-	VERTEX_ATTRIBS( VERTEX_ATTRIB_POINTER );
-	// *** Element Buffer
-	glBindBuffer( GL_ELEMENT_ARRAY_BUFFER, resources.element_buffer );
-	glBufferData( GL_ELEMENT_ARRAY_BUFFER, element_buffer_size, m->element_buffer, GL_DYNAMIC_DRAW ); // OpenGL ES only supports DYNAMIC_DRAW or STATIC_DRAW
-
-	// Draw!
-	glDrawElements( GL_TRIANGLES, m->index_count, GL_UNSIGNED_SHORT, (void*)0 );
-
-	// Cleanup
-	VERTEX_ATTRIBS( VERTEX_ATTRIB_DISABLE_ARRAY )
+	drawCall* model_render = drawCall_create( m->index_count, m->element_buffer, m->vertex_buffer );
+	render_drawCall( model_render );
 }
 
 // Get the i-th submesh of a given model
@@ -217,8 +157,8 @@ void model_draw( model* m ) {
 }
 
 void model_initModelStorage() {
-	memset( models, 0, sizeof( model* ) * maxModels );
-	memset( modelFiles, 0, sizeof( const char* ) * maxModels );
+	memset( models, 0, sizeof( model* ) * kMaxModels );
+	memset( modelFiles, 0, sizeof( const char* ) * kMaxModels );
 	model_count = 0;
 }
 
@@ -245,7 +185,7 @@ modelHandle model_getHandleFromID( int id ) {
 		}
 	}
 	// Otherwise add it and return
-	assert( model_count < maxModels );
+	assert( model_count < kMaxModels );
 	modelHandle handle = (modelHandle)model_count;
 	modelIDs[handle] = id;
 	models[handle] = model_loadFromFileSync( model_getFileNameFromID( id ) );
@@ -262,7 +202,7 @@ modelHandle model_getHandleFromFilename( const char* filename ) {
 		}
 	}
 	// Otherwise add it and return
-	assert( model_count < maxModels );
+	assert( model_count < kMaxModels );
 	modelHandle handle = (modelHandle)model_count;
 	modelFiles[handle] = string_createCopy( filename );
 	models[handle] = model_loadFromFileSync( filename );
