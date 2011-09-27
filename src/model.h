@@ -18,19 +18,19 @@ struct mesh_s {
 	vector*		verts;
 	//
 	int			index_count;
-	uint16_t*		indices;
+	uint16_t*	indices;
 	//
 	int			normal_count;
 	vector*		normals;
 	//
-	uint16_t*		normal_indices;
+	uint16_t*	normal_indices;
 	//
 	vector*		uvs;
 	int			uv_count;
-	uint16_t*		uv_indices;
+	uint16_t*	uv_indices;
 
-	vertex*		vertex_buffer;
-	unsigned short*		element_buffer;
+	vertex*			vertex_buffer;
+	unsigned short*	element_buffer;
 
 	GLint		texture_diffuse;
 };
