@@ -6,6 +6,8 @@
 #include <stdio.h>
 #include <stdint.h>
 
+#define kGuardValue 0xdeadbeef
+
 #define static_heap_size (64 * 1024 * 1024) // In MegaBytes
 heapAllocator* static_heap = NULL;
 
@@ -137,7 +139,7 @@ block* heap_findEmptyBlock( heapAllocator* heap, int min_size ) {
 	block* b = heap->first;
 	while ((( b->size < min_size ) || !b->free ) && b->next ) {
 #ifdef MEM_GUARD_BLOCK
-		assert( b->guard == 0x0 );
+		assert( b->guard == kGuardValue );
 #endif
 		b = b->next;
 	}
@@ -153,7 +155,7 @@ block* heap_findBlock( heapAllocator* heap, void* mem_addr ) {
 	block* b = heap->first;
 	while ( (b->data != mem_addr) && b->next ) {
 #ifdef MEM_GUARD_BLOCK
-		assert( b->guard == 0x0 );
+		assert( b->guard == kGuardValue );
 #endif
 	   	b = b->next;
 	}
@@ -273,7 +275,7 @@ block* block_create( void* data, int size ) {
 	b->free = true;
 	b->prev = b->next = NULL;
 #ifdef MEM_GUARD_BLOCK
-	b->guard = 0x0;
+	b->guard = kGuardValue;
 #endif
 	return b;
 }

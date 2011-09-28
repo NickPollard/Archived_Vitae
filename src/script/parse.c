@@ -10,6 +10,7 @@
 #include "scene.h"
 #include "mem/allocator.h"
 #include "render/modelinstance.h"
+#include "render/texture.h"
 #include "system/hash.h"
 #include "system/string.h"
 
@@ -205,6 +206,11 @@ void append( sterm* before, sterm* after ) {
 // Read a token at a time from the inputstream, advancing the read head,
 // and build it into an slist of atoms
 sterm* parse( inputStream* stream ) {
+	if ( inputStream_endOfFile( stream )) {
+		printf( "ERROR: End of file reached during parse, with incorrect number of closing parentheses.\n" );
+		vAssert( 0 );
+		return NULL;
+	}
 	char* token = inputStream_nextToken( stream );
 	if ( isListEnd( *token ) ) {
 		mem_free( token ); // It's a bracket, discard it
@@ -304,6 +310,7 @@ void* s_translation( sterm* s );
 void* s_diffuse( sterm* s );
 void* s_specular( sterm* s );
 void* s_filename( sterm* s );
+void* s_diffuse_texture( sterm* s );
 void* s_vector( sterm* s );
 void* s_model( sterm* s );
 
@@ -332,6 +339,7 @@ void* lookup( sterm* data ) {
 	S_FUNC( "specular", s_specular )
 	S_FUNC( "vector", s_vector )
 	S_FUNC( "filename", s_filename )
+	S_FUNC( "diffuse_texture", s_diffuse_texture )
 
 	return data;
 }
@@ -576,8 +584,12 @@ void* s_readString( const char* property_name, sterm* raw_elements ) {
 	return property;
 }
 
-void* s_filename( sterm* raw_elements) {
-	return s_readString( "filename", raw_elements );
+void* s_filename( sterm* args ) {
+	return s_readString( "filename", args );
+}
+
+void* s_diffuse_texture( sterm* args ) {
+	return s_readString( "diffuse_texture", args );
 }
 
 #define kMaxObjectTypes	16
@@ -684,7 +696,7 @@ void* s_object( /* void* object, const char* object_type,*/ sterm* raw_args ) {
 	void* object = args->head; // We just have a native type in the list, not a property
 	args = args->tail;
 	const char* object_type = ((sterm*)args->head)->head;
-	printf( "s_object called with type \"%s\"\n", object_type );
+//	printf( "s_object called with type \"%s\"\n", object_type );
 	args = args->tail;
 
 	map_vv( args, processProperty, object, (char*)object_type );
@@ -703,7 +715,7 @@ void* s_light( sterm* args ) {
 }
 
 void* s_light_create( sterm* args ) {
-	printf( "light_create\n");
+//	printf( "light_create\n");
 	return light_create();
 }
 
@@ -783,10 +795,16 @@ void* s_model( sterm* raw_properties ) {
 
 // pass through to model?
 void* s_mesh( sterm* raw_properties ) {
-//	printf( "s_mesh\n" );
+	printf( "s_mesh\n" );
+	debug_sterm_printList( raw_properties );
+
 	sterm* args = eval_list( raw_properties );
+	debug_sterm_printList( args );
 	const char* filename = property_find( args, "filename" );
+	const char* diffuse_texture = property_find( args, "diffuse_texture" );
 	mesh* m = mesh_loadObj( filename );
+	if ( diffuse_texture )
+		m->texture_diffuse = texture_loadTGA( diffuse_texture );
 	sterm* sm = sterm_createProperty( "mesh", typeObject, m );
 	return sm;
 }
