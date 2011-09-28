@@ -1,10 +1,11 @@
 #include "common.h"
 #include "model_loader.h"
 //--------------------------------------------------------
-#include "system/file.h"
-#include "system/string.h"
 #include "scene.h"
 #include "model.h"
+#include "script/parse.h"
+#include "system/file.h"
+#include "system/string.h"
 
 mesh* mesh_loadObj( const char* filename ) {
 	// Load the raw data
@@ -119,8 +120,8 @@ mesh* mesh_loadObj( const char* filename ) {
 		inputStream_nextLine( stream );
 	}
 
-	printf( "MODEL_LOADER: Parsed .obj file \"%s\" with %d verts and %d faces.\n", filename, vert_count, index_count / 3 );
-	printf( "MODEL_LOADER: Parsed .obj file \"%s\" with %d normals and %d uvs.\n", filename, normal_count, uv_count );
+	printf( "MESH_LOAD: Parsed .obj file \"%s\" with %d verts and %d faces.\n", filename, vert_count, index_count / 3 );
+	printf( "MESH_LOAD: Parsed .obj file \"%s\" with %d normals and %d uvs.\n", filename, normal_count, uv_count );
 
 	mesh* msh = mesh_createMesh( vert_count, index_count, index_count, uv_count );
 
@@ -140,8 +141,14 @@ mesh* mesh_loadObj( const char* filename ) {
 }
 
 model* model_load( const char* filename ) {
+	sterm* s = parse_file( "dat/model/cube.s" );
+	model* mdl = eval( s );
+	return mdl;
+
+	/*
 	// Create the Vitae Model
 	model* mdl = model_createModel( 1 ); // Only one mesh by default
 	mdl->meshes[0] = mesh_loadObj( filename );
 	return mdl;
+	*/
 }

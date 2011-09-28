@@ -177,6 +177,24 @@ void* property_value( sterm* property ) {
 	return property->tail->head;
 }
 
+// Find a named property in a list
+void* property_find( sterm* args, const char* name ) {
+	sterm* term = args;
+	sterm* property = NULL;
+	while ( term ) {
+		if ( string_equal( ((sterm*)term->head)->head, name )) {
+			property = term->head;
+			break;
+		}
+		term = term->tail;
+	}
+	if ( !property )
+		return NULL;
+//	printf( "Found property \"%s\"\n", name );
+//	printf( "Found property value \"%s\"\n", (char*)property_value( property ) );
+	return property_value( property );	
+}
+
 void append( sterm* before, sterm* after ) {
 	sterm* s = before;
 	while ( s->tail)
@@ -757,18 +775,20 @@ void test_s_concat() {
 void* s_model( sterm* raw_properties ) {
 	printf( "s_model\n" );
 	sterm* args = eval_list( raw_properties );
-	(void)args;
-	return NULL;
+	mesh* me = property_find( args, "mesh" );
+	model* mdl = model_createModel( 1 ); // Only one mesh by default
+	mdl->meshes[0] = me;
+	return mdl;
 }
 
 // pass through to model?
 void* s_mesh( sterm* raw_properties ) {
 	printf( "s_mesh\n" );
 	sterm* args = eval_list( raw_properties );
-	(void)args;
-	const char* filename = NULL;
+	const char* filename = property_find( args, "filename" );
 	mesh* m = mesh_loadObj( filename );
-	return m;
+	sterm* sm = sterm_createProperty( "mesh", typeObject, m );
+	return sm;
 }
 
 void test_smodel() {
@@ -777,7 +797,7 @@ void test_smodel() {
 	debug_sterm_printList( s );
 	model* result = eval( s );
 	(void)result;
-	vAssert( 0 );
+//	vAssert( 0 );
 }
 
 void test_sfile( ) {
