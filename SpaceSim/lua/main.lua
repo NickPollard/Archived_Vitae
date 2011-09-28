@@ -89,7 +89,7 @@ end
 -- Create a player. The player is a specialised form of Gameobject
 function playership_create()
 	vprint( "playership_create" )
-	local p = gameobject_create( "dat/model/ship_hd_2.obj" )
+	local p = gameobject_create( "dat/model/ship_hd.s" )
 
 	--[[
 	vitae_register_keybind( "accelerate", "w", player_accelerate( p, acceleration ) )

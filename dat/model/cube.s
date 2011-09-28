@@ -1,1 +1,1 @@
-(model (mesh ( filename "dat/model/cityscape.obj")))
+(model (mesh ( filename "dat/model/textured_cube.obj")))

@@ -773,7 +773,7 @@ void test_s_concat() {
 // Creates a model def
 // Returns that model def
 void* s_model( sterm* raw_properties ) {
-	printf( "s_model\n" );
+//	printf( "s_model\n" );
 	sterm* args = eval_list( raw_properties );
 	mesh* me = property_find( args, "mesh" );
 	model* mdl = model_createModel( 1 ); // Only one mesh by default
@@ -783,7 +783,7 @@ void* s_model( sterm* raw_properties ) {
 
 // pass through to model?
 void* s_mesh( sterm* raw_properties ) {
-	printf( "s_mesh\n" );
+//	printf( "s_mesh\n" );
 	sterm* args = eval_list( raw_properties );
 	const char* filename = property_find( args, "filename" );
 	mesh* m = mesh_loadObj( filename );

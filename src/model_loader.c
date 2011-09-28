@@ -141,7 +141,7 @@ mesh* mesh_loadObj( const char* filename ) {
 }
 
 model* model_load( const char* filename ) {
-	sterm* s = parse_file( "dat/model/cube.s" );
+	sterm* s = parse_file( filename );
 	model* mdl = eval( s );
 	return mdl;
 
