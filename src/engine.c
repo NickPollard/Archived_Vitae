@@ -40,7 +40,6 @@ IMPLEMENT_LIST(delegate)
 // *** Static Hacks
 scene* theScene = NULL;
 terrain* theTerrain = NULL;
-engine* static_engine_hack;
 int w = 640, h = 480;
 
 // Function Declarations
@@ -144,11 +143,6 @@ void engine_tick( engine* e ) {
 
 }
 
-// Static wrapper
-void handleKeyPress(uchar key, int x, int y) {
-	engine_handleKeyPress(static_engine_hack, key, x, y);
-}
-
 // Handle a key press from the user
 void engine_handleKeyPress(engine* e, uchar key, int x, int y) {
 	// Lua Test
@@ -234,14 +228,6 @@ void init(int argc, char** argv) {
 	// *** Static Module initialization
 	scene_static_init();
 	parse_init();
-
-	// *** Initialise Engine
-	/*
-	engine* e = engine_create();
-	engine_init(e, argc, argv);
-	static_engine_hack = e;
-	*/
-
 }
 
 // terminateLua - terminates the Lua interpreter

@@ -53,7 +53,6 @@ int main(int argc, char** argv) {
 	// *** Initialise Engine
 	engine* e = engine_create();
 	engine_init( e, argc, argv );
-	static_engine_hack = e;
 
 #if TEST
 	test();

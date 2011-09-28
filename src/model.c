@@ -99,8 +99,9 @@ model* model_createTestCube( ) {
 
 // Create an empty model with meshCount submeshes
 model* model_createModel(int meshCount) {
-	model* m = mem_alloc(sizeof(model) +
-						sizeof(mesh*) * meshCount);
+	model* m = mem_alloc(	sizeof( model ) +
+							sizeof( mesh* ) * meshCount );
+	memset( m, 0, sizeof( model ) + sizeof( mesh* ) * meshCount );
 	m->meshCount = meshCount;
 	return m;
 }

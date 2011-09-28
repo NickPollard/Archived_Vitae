@@ -3,9 +3,9 @@
 #include "common.h"
 #include "modelinstance.h"
 //-----------------------
-#include "model.h"
 #include "camera.h"
 #include "render/render.h"
+#include "particle.h"
 #include "transform.h"
 
 IMPLEMENT_POOL( modelInstance )
@@ -22,10 +22,40 @@ modelInstance* modelInstance_createEmpty( ) {
 	return i;
 }
 
+void modelInstance_createSubTransforms( modelInstance* instance ) {
+	model* m = model_fromInstance( instance );
+	printf( "Creating %d subtransforms.\n", m->transform_count );
+	for ( int i = 0; i < m->transform_count; i++ ) {
+		printf( "Creating subtransform.\n" );
+		instance->transforms[i] = transform_create();
+		matrix_cpy( instance->transforms[i]->local, m->transforms[i]->local );
+	}
+	instance->transform_count = m->transform_count;
+}
+
+void modelInstance_createSubEmitters( modelInstance* instance ) {
+	model* m = model_fromInstance( instance );
+	printf( "Creating %d subemitters.\n", m->emitter_count );
+	for ( int i = 0; i < m->emitter_count; i++ ) {
+		printf( "Creating subemitter.\n" );
+		instance->emitters[i] = particleEmitter_create();
+
+		// TEST setup particle stuff
+		// TODO cleanup particle/particleDef split (inc. creation)
+		vAssert( m->emitters[i]->definition );
+		mem_free( instance->emitters[i]->definition );
+		instance->emitters[i]->definition = m->emitters[i]->definition;
+	}
+	instance->emitter_count = m->emitter_count;
+}
+
 modelInstance* modelInstance_create( modelHandle m ) {
-	modelInstance* i = modelInstance_createEmpty();
-	i->model = m;
-	return i;
+	modelInstance* instance = modelInstance_createEmpty();
+	instance->model = m;
+
+	modelInstance_createSubTransforms( instance );
+	modelInstance_createSubEmitters( instance );
+	return instance;
 }
 
 aabb aabb_calculate( int vert_count, vector* verts, matrix m ) {

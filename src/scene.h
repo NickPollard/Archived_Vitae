@@ -19,6 +19,7 @@
 #define MAX_TRANSFORMS 128
 #define MAX_MODELS 128
 #define MAX_LIGHTS 128
+#define MAX_EMITTERS 128
 
 #define kSceneDebugTransforms	0x00000001
 #define kSceneLightsTransforms	0x00000002
@@ -35,6 +36,9 @@ struct scene_s {
 	//
 	int			transform_count;
 	transform**	transforms;
+	//
+	int					emitter_count;
+	particleEmitter**	emitters;
 	//
 	GLfloat		ambient[4];
 	camera*		cam;
@@ -99,6 +103,9 @@ void		scene_addModel(scene* s, modelInstance* m);
 // Light Access
 light*		scene_light( scene* s, int i );
 void		scene_addLight( scene* s, light* l );
+
+// Emitter Access
+void scene_addEmitter( scene* s, particleEmitter* e );
 
 // Load & Save
 sceneData* scene_save( scene* s );

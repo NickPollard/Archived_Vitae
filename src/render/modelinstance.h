@@ -4,6 +4,8 @@
 #include "mem/pool.h"
 #include "maths.h"
 
+#include "model.h"
+
 /*
 	ModelInstance
 
@@ -20,6 +22,11 @@ typedef struct aabb_s {
 struct modelInstance_s {
 	modelHandle	model;
 	transform* trans;
+	// Sub Elements
+	int		transform_count;
+	int		emitter_count;
+	transform*			transforms[kMaxSubTransforms];
+	particleEmitter*	emitters[kMaxSubEmitters];
 	aabb	bb;
 };
 

@@ -34,32 +34,14 @@ typedef struct particleEmitterDef_s {
 	uint8_t	flags;
 } particleEmitterDef;
 
-typedef struct particleEmitter_s {
+struct particleEmitter_s {
 	transform*	trans;
-
 	particle	particles[kMaxParticles];
 	int		start;
 	int		count;
-
 	float	next_spawn;
-
 	particleEmitterDef*	definition;
-	// Spawn control
-//	float	lifetime;
-//	float	spawn_interval;
-//	vector	spawn_box;
-
-	/*
-	// Properties
-	property* size;
-	property* color;
-	vector	velocity;
-	GLint	texture_diffuse;
-
-	// Flags
-	uint8_t flags;
-	*/
-} particleEmitter;
+};
 
 particleEmitter* particleEmitter_create();
 void particleEmitter_render( void* data );

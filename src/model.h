@@ -5,7 +5,10 @@
 #include "maths.h"
 #include "render/render.h"
 
-#define MAX_SUBMESHES 4
+#define kMaxSubMeshes 4
+#define kMaxHardPoints	16
+#define kMaxSubTransforms	16
+#define kMaxSubEmitters		16
 
 // *** Mesh ***
 /*
@@ -41,7 +44,13 @@ struct mesh_s {
    */
 struct model_s {
 	int			meshCount;
-	mesh*		meshes[MAX_SUBMESHES];
+	mesh*		meshes[kMaxSubMeshes];
+	// Sub-elements
+//	transform*	hardpoints[kMaxHardPoints];
+	int	transform_count;
+	int emitter_count;
+	transform*			transforms[kMaxSubTransforms];
+	particleEmitter*	emitters[kMaxSubEmitters];
 };
 
 

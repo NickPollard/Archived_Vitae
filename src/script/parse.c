@@ -8,6 +8,7 @@
 #include "model.h"
 #include "model_loader.h"
 #include "scene.h"
+#include "particle.h"
 #include "mem/allocator.h"
 #include "render/modelinstance.h"
 #include "render/texture.h"
@@ -300,7 +301,6 @@ void map_( sterm* list, function f ) {
 void* s_print( sterm* s );
 void* s_concat( sterm* s );
 void* s_modelInstance( sterm* s );
-void* s_mesh( sterm* s );
 void* s_light( sterm* s );
 void* s_light_create( sterm* s );
 void* s_object( sterm* s );
@@ -313,6 +313,8 @@ void* s_filename( sterm* s );
 void* s_diffuse_texture( sterm* s );
 void* s_vector( sterm* s );
 void* s_model( sterm* s );
+void* s_mesh( sterm* s );
+void* s_particle_emitter( sterm* s );
 
 void scene_processObject( void* object_, void* scene_, void* transform_ );
 
@@ -340,6 +342,7 @@ void* lookup( sterm* data ) {
 	S_FUNC( "vector", s_vector )
 	S_FUNC( "filename", s_filename )
 	S_FUNC( "diffuse_texture", s_diffuse_texture )
+	S_FUNC( "particle_emitter", s_particle_emitter )
 
 	return data;
 }
@@ -486,7 +489,10 @@ transformData* transformData_create() {
 void transformData_processElement( void* e, void* data ) {
 	sterm* element = e;
 	transformData* t = data;
-	if ( isPropertyType( element, "modelInstance" ) || isTransform( element ) || isPropertyType( element, "light" )) {
+	if ( isPropertyType( element, "modelInstance" ) || 
+			isTransform( element ) || 
+			isPropertyType( element, "light" ) || 
+			isPropertyType( element, "particle_emitter" )) {
 		t->elements = cons( element, t->elements );
 	}
 	// If it's a translation, copy the vector to the transformData
@@ -782,24 +788,56 @@ void test_s_concat() {
 	return;
 }
 
+void model_processObject( void* arg, void* data ) {
+	model* mdl = data;
+	(void)mdl;
+	if ( isTransform( arg )) {
+		printf( "model_processObject: Transform\n" );
+		mdl->transforms[mdl->transform_count++] = transform_create();
+	}
+	if ( isPropertyType( arg, "particle_emitter" )) {
+		printf( "model_processObject: Emitter\n" );
+
+		particleEmitter* p = particleEmitter_create();
+		p->definition->lifetime = 2.f;
+		p->definition->spawn_box = Vector( 0.3f, 0.3f, 0.3f, 0.f );
+
+		// size
+		p->definition->size = property_create( 2 );
+		property_addf( p->definition->size, 0.f, 1.f );
+
+		// color
+		p->definition->color = property_create( 5 );
+		property_addv( p->definition->color, 0.f, Vector( 1.f, 0.f, 0.f, 1.f ));
+
+		p->definition->velocity = Vector( 0.f, 0.1f, 0.f, 0.f );
+		p->definition->spawn_interval = 0.03f;
+		//p->definition->flags = p->definition->flags | kParticleWorldSpace;
+		//p->trans = t;
+
+		mdl->emitters[mdl->emitter_count++] = p;
+	}
+}
+
 // Creates a model def
 // Returns that model def
-void* s_model( sterm* raw_properties ) {
+void* s_model( sterm* raw_args ) {
 //	printf( "s_model\n" );
-	sterm* args = eval_list( raw_properties );
+	sterm* args = eval_list( raw_args );
+	vAssert( args );
 	mesh* me = property_find( args, "mesh" );
 	model* mdl = model_createModel( 1 ); // Only one mesh by default
 	mdl->meshes[0] = me;
+
+	map_v( args, model_processObject, mdl );
+
 	return mdl;
 }
 
 // pass through to model?
 void* s_mesh( sterm* raw_properties ) {
-	printf( "s_mesh\n" );
-	debug_sterm_printList( raw_properties );
-
+//	printf( "s_mesh\n" );
 	sterm* args = eval_list( raw_properties );
-	debug_sterm_printList( args );
 	const char* filename = property_find( args, "filename" );
 	const char* diffuse_texture = property_find( args, "diffuse_texture" );
 	mesh* m = mesh_loadObj( filename );
@@ -809,17 +847,30 @@ void* s_mesh( sterm* raw_properties ) {
 	return sm;
 }
 
-void test_smodel() {
-	const char* test_string = "(model (mesh ( filename \"dat/model/ship.obj\")))";
-	sterm* s = parse_string( test_string );
-	debug_sterm_printList( s );
-	model* result = eval( s );
-	(void)result;
-//	vAssert( 0 );
+void* s_particle_emitter( sterm* args ) {
+	printf( "s_particle_emitter!\n" );
+	
+	particleEmitter* p = particleEmitter_create();
+	p->definition->lifetime = 2.f;
+	p->definition->spawn_box = Vector( 0.3f, 0.3f, 0.3f, 0.f );
+
+	// size
+	p->definition->size = property_create( 2 );
+	property_addf( p->definition->size, 0.f, 1.f );
+
+	// color
+	p->definition->color = property_create( 5 );
+	property_addv( p->definition->color, 0.f, Vector( 1.f, 0.f, 0.f, 1.f ));
+
+	p->definition->velocity = Vector( 0.f, 0.1f, 0.f, 0.f );
+	p->definition->spawn_interval = 0.03f;
+	//p->definition->flags = p->definition->flags | kParticleWorldSpace;
+	//p->trans = t;
+
+	return sterm_createProperty( "particle_emitter", typeObject, p );
 }
 
 void test_sfile( ) {
-	test_smodel();
 	/*
 	printf( "FILE: Beginning test: test dat/test2.s\n" );
 	sterm* s = parse_file( "dat/test2.s" );

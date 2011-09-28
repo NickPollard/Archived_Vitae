@@ -9,6 +9,7 @@
 #include "model.h"
 #include "model_loader.h"
 #include "mem/allocator.h"
+#include "particle.h"
 #include "physic.h"
 #include "render/debugdraw.h"
 #include "render/modelinstance.h"
@@ -41,10 +42,25 @@ void scene_static_init( ) {
 }
 
 // Add an existing modelInstance to the scene
-void scene_addModel( scene* s, modelInstance* m ) {
+void scene_addModel( scene* s, modelInstance* instance ) {
 	assert( s->model_count < MAX_MODELS );
-	assert( m->trans ); // Disallow adding a model without a transform already set
-	s->modelInstances[s->model_count++] = m;
+	assert( instance->trans ); // Disallow adding a model without a transform already set
+	s->modelInstances[s->model_count++] = instance;
+
+	for ( int i = 0; i < instance->transform_count; i++ ) {
+		scene_addTransform( s, instance->transforms[i] );
+		// At this point we set up subtransforms to be parented by the modelinstance transform
+		// Can't do it earlier as the transform doesn't exist when modelinstance is created
+		instance->transforms[i]->parent = instance->trans;
+	}
+	for ( int i = 0; i < instance->emitter_count; i++ ) {
+		scene_addEmitter( s, instance->emitters[i] );
+		instance->emitters[i]->trans = instance->trans;
+	}
+}
+
+void scene_addEmitter( scene* s, particleEmitter* e ) {
+	s->emitters[s->emitter_count++] = e;
 }
 
 // Add an existing light to the scene
@@ -96,27 +112,22 @@ void scene_free( scene* s ) {
 
 // Initialise a scene with some test data
 scene* test_scene_init( engine* e ) { 
-//	LoadObj( "dat/model/cube.obj" );
 
 	sterm* stree = parse_file( "dat/scene/testscene.s" );
 	scene* s = eval( stree );
 	sterm_free( stree );
 	s->eng = e;
 
+	// Activate emitters
+	for ( int i = 0; i < s->emitter_count; i++ ) {
+		particleEmitter* p = s->emitters[i];
+		engine_addRender( s->eng, p, particleEmitter_render );
+		startTick( s->eng, p, particleEmitter_tick );
+	}
+
 	// Test Misc scene setup
-/*	
-	s->cam = camera_create( s );
-	s->cam->trans = transform_createAndAdd( s );
-	scene_setCamera(s, 0.f, 0.f, 0.f, 1.f);
-	*/
 	scene_setAmbient( s, 0.2f, 0.2f, 0.2f, 1.f );
 
-	/*
-	physic* p = physic_create();
-	p->trans = scene_model( s, 0 )->trans;
-	p->velocity = Vector( 0.1f, 0.f, 0.f, 0.f );
-	engine_addTicker( s->eng, p, physic_tick );
-*/
 	return s;
 
 //	scene_saveFile( s, "dat/test_scene.s" );
@@ -138,9 +149,10 @@ scene* scene_create() {
 	memset( s, 0, sizeof( scene ));
 	s->model_count = s->light_count = s->transform_count = 0;
 	s->modelInstances = mem_alloc( sizeof( modelInstance* ) * MAX_MODELS );
-	s->lights = mem_alloc( sizeof( light* ) * MAX_LIGHTS );
-	s->transforms = mem_alloc( sizeof( transform* ) * MAX_TRANSFORMS );
+	s->lights =			mem_alloc( sizeof( light* ) * MAX_LIGHTS );
+	s->transforms =		mem_alloc( sizeof( transform* ) * MAX_TRANSFORMS );
 	memset( s->transforms, 0, sizeof( transform* ) * MAX_TRANSFORMS );
+	s->emitters =		mem_alloc( sizeof( particleEmitter* ) * MAX_EMITTERS );
 	return s;
 }
 
