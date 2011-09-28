@@ -11,12 +11,12 @@ mesh* mesh_loadObj( const char* filename ) {
 	int vert_count = 0, index_count = 0, normal_count = 0, uv_count = 0;
 	// Lets create these arrays on the heap, as they need to be big
 	// TODO: Could make these static perhaps?
-	vector* vertices = mem_alloc( sizeof( vector ) * kObjMaxVertices );
-	vector* normals = mem_alloc( sizeof( vector ) * kObjMaxVertices );
-	vector* uvs = mem_alloc( sizeof( vector ) * kObjMaxVertices );
-	uint16_t* indices = mem_alloc( sizeof( uint16_t ) * kObjMaxIndices );
-	uint16_t* normal_indices = mem_alloc( sizeof( uint16_t ) * kObjMaxIndices );
-	uint16_t* uv_indices = mem_alloc( sizeof( uint16_t ) * kObjMaxIndices );
+	vector* vertices	= mem_alloc( sizeof( vector ) * kObjMaxVertices );
+	vector* normals		= mem_alloc( sizeof( vector ) * kObjMaxVertices );
+	vector* uvs			= mem_alloc( sizeof( vector ) * kObjMaxVertices );
+	uint16_t* indices			= mem_alloc( sizeof( uint16_t ) * kObjMaxIndices );
+	uint16_t* normal_indices	= mem_alloc( sizeof( uint16_t ) * kObjMaxIndices );
+	uint16_t* uv_indices		= mem_alloc( sizeof( uint16_t ) * kObjMaxIndices );
 
 #define array_clear( array, size ) \
 	memset( array, 0, sizeof( array[0] ) * size );
@@ -109,9 +109,9 @@ mesh* mesh_loadObj( const char* filename ) {
 				}
 				norm[i] = '\0';
 
-				indices[index_count] = atoi( vert ) - 1; // -1 as obj uses 1-based indices, not 0-based as we do
-				normal_indices[index_count] = atoi( norm ) - 1; // -1 as obj uses 1-based indices, not 0-based as we do
-				uv_indices[index_count] = atoi( uv ) - 1; // -1 as obj uses 1-based indices, not 0-based as we do
+				indices[index_count]		= atoi( vert ) - 1; // -1 as obj uses 1-based indices, not 0-based as we do
+				normal_indices[index_count]	= atoi( norm ) - 1; // -1 as obj uses 1-based indices, not 0-based as we do
+				uv_indices[index_count]		= atoi( uv ) - 1; // -1 as obj uses 1-based indices, not 0-based as we do
 				index_count++;
 			}
 		}
@@ -125,12 +125,12 @@ mesh* mesh_loadObj( const char* filename ) {
 	mesh* msh = mesh_createMesh( vert_count, index_count, index_count, uv_count );
 
 	// Copy our loaded data into the Mesh structure
-	memcpy( msh->verts, vertices, vert_count * sizeof( vector ));
-	memcpy( msh->indices, indices, index_count * sizeof( uint16_t ));
-	memcpy( msh->normals, normals, normal_count * sizeof( vector ));
-	memcpy( msh->normal_indices, normal_indices, index_count * sizeof( uint16_t ));
-	memcpy( msh->uvs, uvs, uv_count * sizeof( vector ));
-	memcpy( msh->uv_indices, uv_indices, index_count * sizeof( uint16_t ));
+	memcpy( msh->verts,			vertices,			vert_count * sizeof( vector ));
+	memcpy( msh->indices,		indices,			index_count * sizeof( uint16_t ));
+	memcpy( msh->normals,		normals,			normal_count * sizeof( vector ));
+	memcpy( msh->normal_indices, normal_indices,	index_count * sizeof( uint16_t ));
+	memcpy( msh->uvs,			uvs,				uv_count * sizeof( vector ));
+	memcpy( msh->uv_indices,	uv_indices,			index_count * sizeof( uint16_t ));
 
 	mesh_buildBuffers( msh );
 

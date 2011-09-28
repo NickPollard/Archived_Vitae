@@ -6,6 +6,7 @@
 #include "light.h"
 #include "maths.h"
 #include "model.h"
+#include "model_loader.h"
 #include "scene.h"
 #include "mem/allocator.h"
 #include "render/modelinstance.h"
@@ -176,6 +177,13 @@ void* property_value( sterm* property ) {
 	return property->tail->head;
 }
 
+void append( sterm* before, sterm* after ) {
+	sterm* s = before;
+	while ( s->tail)
+		s = s->tail;
+	s->tail = after;
+}
+
 // Read a token at a time from the inputstream, advancing the read head,
 // and build it into an slist of atoms
 sterm* parse( inputStream* stream ) {
@@ -268,6 +276,7 @@ void map_( sterm* list, function f ) {
 void* s_print( sterm* s );
 void* s_concat( sterm* s );
 void* s_modelInstance( sterm* s );
+void* s_mesh( sterm* s );
 void* s_light( sterm* s );
 void* s_light_create( sterm* s );
 void* s_object( sterm* s );
@@ -294,6 +303,7 @@ void* lookup( sterm* data ) {
 	S_FUNC( "concat", s_concat )
 	S_FUNC( "model-instance", s_modelInstance )
 	S_FUNC( "model", s_model )
+	S_FUNC( "mesh", s_mesh )
 	S_FUNC( "light", s_light )
 	S_FUNC( "light_create", s_light_create )
 	S_FUNC( "object", s_object )
@@ -328,6 +338,8 @@ void debug_sterm_print( sterm* term ) {
 
 	if ( isAtom( term ) )
 		printf( "%s ", (const char*)term->head );
+	if ( isString( term ) )
+		printf( "\"%s\" ", (const char*)term->head );
 	if ( term->tail )
 		debug_sterm_print( term->tail );
 }
@@ -616,6 +628,11 @@ void processProperty( void* p, void* object, /* (const char*) */ void* type_name
 	}
 }
 
+/*
+   (def s_modelInstance
+   		(object (modelInstance_create) "modelInstance" args))
+
+   */
 // Creates a model instance
 // Returns that model instance
 void* s_modelInstance( sterm* raw_properties ) {
@@ -625,7 +642,7 @@ void* s_modelInstance( sterm* raw_properties ) {
 		while ( properties ) {
 			sterm* property = properties->head;
 			if ( isPropertyType( property, "filename" )) {
-				printf( "Modelinstance filename \"%s\"\n", (char*)property->tail->head );
+		//		printf( "Modelinstance filename \"%s\"\n", (char*)property->tail->head );
 				handle = model_getHandleFromFilename( property->tail->head );
 			}
 			properties = properties->tail;
@@ -634,28 +651,19 @@ void* s_modelInstance( sterm* raw_properties ) {
 	
 	vAssert( handle != -1 );
 	modelInstance* m = modelInstance_create( handle );
-	return m;
+	sterm* sm = sterm_createProperty( "modelInstance", typeObject, m );
+	return sm;
 }
 
 /*
 	(def s_object
 		( sterm-createProperty (map (processProperty object object-type) (eval-list args) )))
    */
-/*
-void* s_object( void* object, const char* object_type, sterm* raw_properties ) {
-	if ( raw_properties ) {
-		sterm* properties = eval_list( raw_properties );
-		map_vv( properties, processProperty, object, (char*)object_type );
-	}
-	return sterm_createProperty( object_type, typeObject, object );
-}
-*/
-
 void* s_object( /* void* object, const char* object_type,*/ sterm* raw_args ) {
 	vAssert ( raw_args );
 	sterm* args = eval_list( raw_args );
 	// The object and object_type come first
-	void* object = args->head; // We just have a native light type in the list, not a property
+	void* object = args->head; // We just have a native type in the list, not a property
 	args = args->tail;
 	const char* object_type = ((sterm*)args->head)->head;
 	printf( "s_object called with type \"%s\"\n", object_type );
@@ -666,22 +674,14 @@ void* s_object( /* void* object, const char* object_type,*/ sterm* raw_args ) {
 	return sterm_createProperty( object_type, typeObject, object );
 }
 
-void append( sterm* before, sterm* after ) {
-	sterm* s = before;
-	while ( s->tail)
-		s = s->tail;
-	s->tail = after;
-}
 /*
 	(def s_light
 		( s_object light-create "light" args ))
    */
 void* s_light( sterm* args ) {
-//	return eval( parse_string( "(object light_create \"light\" args)" ));
 	sterm* s = parse_string( "(object (light_create) \"light\" )" );
 	append( s, args );
 	return eval( s );
-//	return s_object( light_create(), "light", args );
 }
 
 void* s_light_create( sterm* args ) {
@@ -755,21 +755,29 @@ void test_s_concat() {
 // Creates a model def
 // Returns that model def
 void* s_model( sterm* raw_properties ) {
+	printf( "s_model\n" );
+	sterm* args = eval_list( raw_properties );
+	(void)args;
 	return NULL;
 }
 
 // pass through to model?
-/*
 void* s_mesh( sterm* raw_properties ) {
-
+	printf( "s_mesh\n" );
+	sterm* args = eval_list( raw_properties );
+	(void)args;
+	const char* filename = NULL;
+	mesh* m = mesh_loadObj( filename );
+	return m;
 }
-*/
 
 void test_smodel() {
-	const char* test_string = "(model (mesh \"dat/model/ship_hd_2.obj\"))";
+	const char* test_string = "(model (mesh ( filename \"dat/model/ship.obj\")))";
 	sterm* s = parse_string( test_string );
+	debug_sterm_printList( s );
 	model* result = eval( s );
 	(void)result;
+	vAssert( 0 );
 }
 
 void test_sfile( ) {
