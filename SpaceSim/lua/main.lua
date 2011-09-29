@@ -54,7 +54,7 @@ function player_yaw( p, y )
 	vitae_physic_yaw( p.physic, y )
 end
 
-projectile_model = "dat/model/smoothsphere2.obj"
+projectile_model = "dat/model/sphere.s"
 function player_fire( p )
 	local g = {}
 	-- Create a new Projectile

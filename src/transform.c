@@ -169,7 +169,7 @@ void transform_yaw( transform* t, float yaw ) {
 	vector angles = Vector( 0.f, yaw, 0.f, 0.f );
 	matrix_fromEuler( m, &angles );
 	matrix_mul( t->local, t->local, m );
-	matrix_normalize( t->local );
+//	matrix_normalize( t->local );
 }
 
 void transform_pitch( transform* t, float pitch ) {
@@ -177,7 +177,7 @@ void transform_pitch( transform* t, float pitch ) {
 	vector angles = Vector( pitch, 0.f, 0.f, 0.f );
 	matrix_fromEuler( m, &angles );
 	matrix_mul( t->local, t->local, m );
-	matrix_normalize( t->local );
+//	matrix_normalize( t->local );
 }
 
 void transform_roll( transform* t, float roll ) {
@@ -185,5 +185,5 @@ void transform_roll( transform* t, float roll ) {
 	vector angles = Vector( 0.f, 0.f, roll , 0.f );
 	matrix_fromEuler( m, &angles );
 	matrix_mul( t->local, t->local, m );
-	matrix_normalize( t->local );
+//	matrix_normalize( t->local );
 }

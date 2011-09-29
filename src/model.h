@@ -85,3 +85,6 @@ model* model_fromInstance( modelInstance* instance );
 // Handle lookups
 modelHandle model_getHandleFromID( int id );
 modelHandle model_getHandleFromFilename( const char* filename );
+
+// Sub-element lookups
+int model_transformIndex( model* m, transform* ptr );

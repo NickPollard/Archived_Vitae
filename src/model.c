@@ -213,3 +213,11 @@ modelHandle model_getHandleFromFilename( const char* filename ) {
 model* model_fromInstance( modelInstance* instance ) {
 	return model_getByHandle( instance->model );
 }
+
+int model_transformIndex( model* m, transform* ptr ) {
+	for ( int i = 0; i < m->transform_count; i++ ) {
+		if ( m->transforms[i] == ptr )
+			return i;
+	}
+	return -1;
+}

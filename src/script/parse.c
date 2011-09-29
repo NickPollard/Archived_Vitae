@@ -787,17 +787,27 @@ void test_s_concat() {
 	return;
 }
 
-void model_processObject( void* arg, void* data ) {
-	model* mdl = data;
+void model_processObject( void* arg, void* model_, void* transform_ ) {
+	model* mdl = model_;
 	(void)mdl;
 	if ( isTransform( arg )) {
 		printf( "model_processObject: Transform\n" );
-		mdl->transforms[mdl->transform_count++] = transform_create();
+		transform* t = transform_create();
+		t->parent = transform_;
+		transformData* tdata = ((sterm*)arg)->head;
+		matrix_setTranslation( t->local, &tdata->translation );
+		mdl->transforms[mdl->transform_count++] = t;
+		map_vv( tdata->elements, model_processObject, model_, t );
+		vector_printf( "model transform translation: ", matrix_getTranslation( t->local ));
 	}
 	if ( isPropertyType( arg, "particle_emitter" )) {
 		printf( "model_processObject: Emitter\n" );
 
 		particleEmitter* p = particleEmitter_create();
+
+		// Convert pointer to index
+		p->trans = (transform*)model_transformIndex( mdl, transform_ );
+
 		p->definition->lifetime = 2.f;
 		p->definition->spawn_box = Vector( 0.3f, 0.3f, 0.3f, 0.f );
 
@@ -828,7 +838,7 @@ void* s_model( sterm* raw_args ) {
 	model* mdl = model_createModel( 1 ); // Only one mesh by default
 	mdl->meshes[0] = me;
 
-	map_v( args, model_processObject, mdl );
+	map_vv( args, model_processObject, mdl, NULL ); // Initial transform is NULL
 
 	return mdl;
 }

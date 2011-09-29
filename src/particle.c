@@ -132,6 +132,8 @@ void particleEmitter_render( void* data ) {
 	render_setUniform_matrix( *resources.uniforms.worldspace, modelview );
 
 	particleEmitter* p = data;
+		
+	vector_printf( "particle Translation: ", matrix_getTranslation( p->trans->local ));
 
 	// Textures
 	GLint* tex = shader_findConstant( mhash( "tex" ));

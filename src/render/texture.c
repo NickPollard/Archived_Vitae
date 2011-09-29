@@ -74,7 +74,7 @@ uint8_t* read_tga( const char* file, int* w, int* h ) {
 }
 
 GLuint texture_loadTGA( const char* filename ) {
-	printf( "Loading TGA \"%s\"\n" , filename );
+//	printf( "Loading TGA \"%s\"\n" , filename );
 	GLuint tex;
 	int w, h;
 	void* img = read_tga( filename, &w, &h );

@@ -40,7 +40,17 @@ void modelInstance_createSubEmitters( modelInstance* instance ) {
 		// TODO cleanup particle/particleDef split (inc. creation)
 		vAssert( m->emitters[i]->definition );
 		mem_free( instance->emitters[i]->definition );
+
 		instance->emitters[i]->definition = m->emitters[i]->definition;
+
+		// Take parent transform if in model
+		// This is stored as an index rather than a pointer
+		int transform_index = (int)m->emitters[i]->trans;
+#define NULL_INDEX -1
+		if ( transform_index == NULL_INDEX )
+			instance->emitters[i]->trans = NULL;
+		else
+			instance->emitters[i]->trans = instance->transforms[transform_index];
 	}
 	instance->emitter_count = m->emitter_count;
 }
