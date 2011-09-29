@@ -133,8 +133,6 @@ void particleEmitter_render( void* data ) {
 
 	particleEmitter* p = data;
 		
-	vector_printf( "particle Translation: ", matrix_getTranslation( p->trans->local ));
-
 	// Textures
 	GLint* tex = shader_findConstant( mhash( "tex" ));
 	if ( tex )

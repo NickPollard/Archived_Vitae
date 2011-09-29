@@ -109,7 +109,7 @@ int transform_concatenate(transform* t) {
 	if (t->parent)	{
 		if (transform_concatenate(t->parent) || transform_isDirty(t)) {
 			transform_markDirty(t);
-			matrix_mul(t->world, t->local, t->parent->world);
+			matrix_mul(t->world, t->parent->world, t->local );
 			return true;
 		}
 	}

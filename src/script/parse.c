@@ -809,20 +809,23 @@ void model_processObject( void* arg, void* model_, void* transform_ ) {
 		p->trans = (transform*)model_transformIndex( mdl, transform_ );
 
 		p->definition->lifetime = 2.f;
-		p->definition->spawn_box = Vector( 0.3f, 0.3f, 0.3f, 0.f );
+		p->definition->spawn_box = Vector( 0.1f, 0.1f, 0.1f, 0.f );
 
 		// size
 		p->definition->size = property_create( 2 );
-		property_addf( p->definition->size, 0.f, 1.f );
+		property_addf( p->definition->size, 0.f, 0.6f );
+		property_addf( p->definition->size, 1.0f, 0.1f );
 
 		// color
 		p->definition->color = property_create( 5 );
-		property_addv( p->definition->color, 0.f, Vector( 1.f, 0.f, 0.f, 1.f ));
+		property_addv( p->definition->color, 0.f, Vector( 1.f, 1.f, 1.f, 0.f ));
+		property_addv( p->definition->color, 0.1f, Vector( 0.f, 1.f, 1.f, 1.f ));
+		property_addv( p->definition->color, 1.f, Vector( 0.f, 0.f, 1.f, 0.f ));
 
-		p->definition->velocity = Vector( 0.f, 0.1f, 0.f, 0.f );
-		p->definition->spawn_interval = 0.03f;
-		p->definition->flags = p->definition->flags | kParticleWorldSpace;
-		//p->trans = t;
+		p->definition->velocity = Vector( 0.f, 0.0f, -3.f, 0.f );
+		p->definition->spawn_interval = 0.01f;
+//		p->definition->flags = p->definition->flags | kParticleWorldSpace;
+		p->definition->texture_diffuse = texture_loadTGA( "assets/img/star_rgba64.tga" );
 
 		mdl->emitters[mdl->emitter_count++] = p;
 	}
