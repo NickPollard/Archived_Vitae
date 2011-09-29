@@ -43,8 +43,8 @@ void scene_static_init( ) {
 
 // Add an existing modelInstance to the scene
 void scene_addModel( scene* s, modelInstance* instance ) {
-	assert( s->model_count < MAX_MODELS );
-	assert( instance->trans ); // Disallow adding a model without a transform already set
+	vAssert( s->model_count < MAX_MODELS );
+	vAssert( instance->trans ); // Disallow adding a model without a transform already set
 	s->modelInstances[s->model_count++] = instance;
 
 	for ( int i = 0; i < instance->transform_count; i++ ) {
@@ -54,8 +54,14 @@ void scene_addModel( scene* s, modelInstance* instance ) {
 		instance->transforms[i]->parent = instance->trans;
 	}
 	for ( int i = 0; i < instance->emitter_count; i++ ) {
+		printf( "Adding emitter.\n" );
 		scene_addEmitter( s, instance->emitters[i] );
 		instance->emitters[i]->trans = instance->trans;
+		// If the scene is active, activate components immediately
+		if ( s->eng ) {
+			engine_addRender( s->eng, instance->emitters[i], particleEmitter_render );
+			startTick( s->eng, instance->emitters[i], particleEmitter_tick );
+		}
 	}
 }
 

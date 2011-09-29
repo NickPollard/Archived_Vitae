@@ -24,9 +24,7 @@ modelInstance* modelInstance_createEmpty( ) {
 
 void modelInstance_createSubTransforms( modelInstance* instance ) {
 	model* m = model_fromInstance( instance );
-	printf( "Creating %d subtransforms.\n", m->transform_count );
 	for ( int i = 0; i < m->transform_count; i++ ) {
-		printf( "Creating subtransform.\n" );
 		instance->transforms[i] = transform_create();
 		matrix_cpy( instance->transforms[i]->local, m->transforms[i]->local );
 	}
@@ -35,9 +33,7 @@ void modelInstance_createSubTransforms( modelInstance* instance ) {
 
 void modelInstance_createSubEmitters( modelInstance* instance ) {
 	model* m = model_fromInstance( instance );
-	printf( "Creating %d subemitters.\n", m->emitter_count );
 	for ( int i = 0; i < m->emitter_count; i++ ) {
-		printf( "Creating subemitter.\n" );
 		instance->emitters[i] = particleEmitter_create();
 
 		// TEST setup particle stuff
@@ -55,6 +51,9 @@ modelInstance* modelInstance_create( modelHandle m ) {
 
 	modelInstance_createSubTransforms( instance );
 	modelInstance_createSubEmitters( instance );
+	
+	vAssert( !instance->trans );
+
 	return instance;
 }
 

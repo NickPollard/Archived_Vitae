@@ -134,6 +134,7 @@ int LUA_scene_addModel( lua_State* l ) {
 //		m->trans = t;
 //		scene_addModel( s, m );
 //		scene_addTransform( s, t );
+	vAssert( m->trans );
 	scene_addModel( s, m );
 	return 0;
 }

@@ -755,7 +755,6 @@ void scene_processObject( void* object_, void* scene_, void* transform_ ) {
 	if ( isPropertyType( object, "modelInstance" ))
 		scene_processModel( s, parent, object->tail->head );
 	if ( isPropertyType( object, "light" )) {
-		printf( "Scene processing light.\n" );
 		scene_processLight( s, parent, object->tail->head );
 	}
 }
@@ -812,7 +811,7 @@ void model_processObject( void* arg, void* data ) {
 
 		p->definition->velocity = Vector( 0.f, 0.1f, 0.f, 0.f );
 		p->definition->spawn_interval = 0.03f;
-		//p->definition->flags = p->definition->flags | kParticleWorldSpace;
+		p->definition->flags = p->definition->flags | kParticleWorldSpace;
 		//p->trans = t;
 
 		mdl->emitters[mdl->emitter_count++] = p;
@@ -848,7 +847,7 @@ void* s_mesh( sterm* raw_properties ) {
 }
 
 void* s_particle_emitter( sterm* args ) {
-	printf( "s_particle_emitter!\n" );
+//	printf( "s_particle_emitter!\n" );
 	
 	particleEmitter* p = particleEmitter_create();
 	p->definition->lifetime = 2.f;
