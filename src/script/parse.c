@@ -138,6 +138,10 @@ bool isString( sterm* s ) {
 	return ( s->type == typeString );
 }
 
+bool isFunction( sterm* s ) {
+	return s->type == typeFunc;
+}
+
 bool isPropertyType( sterm* s, const char* property_name ) {
 	return ( isAtom( s ) && s->tail && string_equal( s->head, property_name ));
 }
@@ -175,7 +179,6 @@ const char* sstring_create( const char* token ) {
 };
 
 void* property_value( sterm* property ) {
-//	return ((sterm*)property->tail->head)->head;
 	return property->tail->head;
 }
 
@@ -192,8 +195,6 @@ void* property_find( sterm* args, const char* name ) {
 	}
 	if ( !property )
 		return NULL;
-//	printf( "Found property \"%s\"\n", name );
-//	printf( "Found property value \"%s\"\n", (char*)property_value( property ) );
 	return property_value( property );	
 }
 
@@ -203,6 +204,9 @@ void append( sterm* before, sterm* after ) {
 		s = s->tail;
 	s->tail = after;
 }
+
+// Forward Declaration
+void* lookup( sterm* data );
 
 // Read a token at a time from the inputstream, advancing the read head,
 // and build it into an slist of atoms
@@ -254,8 +258,6 @@ sterm* parse( inputStream* stream ) {
 //		return sterm_create( typeNumber );
 }
 
-
-
 sterm* parse_string( const char* string ) {
 	inputStream* stream = inputStream_create( string );
 	sterm* s = parse( stream );
@@ -294,66 +296,6 @@ void map_( sterm* list, function f ) {
 	f( list->head );
 	if ( list->tail )
 		map_( list->tail, f );
-}
-
-// Load a scene from a .sc file (s-expression based)
-
-void* s_print( sterm* s );
-void* s_concat( sterm* s );
-void* s_modelInstance( sterm* s );
-void* s_light( sterm* s );
-void* s_light_create( sterm* s );
-void* s_object( sterm* s );
-void* s_transform( sterm* s );
-void* s_scene( sterm* s );
-void* s_translation( sterm* s );
-void* s_diffuse( sterm* s );
-void* s_specular( sterm* s );
-void* s_filename( sterm* s );
-void* s_diffuse_texture( sterm* s );
-void* s_vector( sterm* s );
-void* s_model( sterm* s );
-void* s_mesh( sterm* s );
-void* s_particle_emitter( sterm* s );
-
-void scene_processObject( void* object_, void* scene_, void* transform_ );
-
-#define S_FUNC( atom, func )	if ( string_equal( (const char*)data->head, atom ) ) { \
-									sterm* s = sterm_create( typeFunc, func ); \
-									return s; \
-								}
-
-// TODO PLACEHOLDER
-// ( should be a hash lookup or similar )
-void* lookup( sterm* data ) {
-	S_FUNC( "print", s_print )
-	S_FUNC( "concat", s_concat )
-	S_FUNC( "model-instance", s_modelInstance )
-	S_FUNC( "model", s_model )
-	S_FUNC( "mesh", s_mesh )
-	S_FUNC( "light", s_light )
-	S_FUNC( "light_create", s_light_create )
-	S_FUNC( "object", s_object )
-	S_FUNC( "transform", s_transform )
-	S_FUNC( "scene", s_scene )
-	S_FUNC( "translation", s_translation )
-	S_FUNC( "diffuse", s_diffuse )
-	S_FUNC( "specular", s_specular )
-	S_FUNC( "vector", s_vector )
-	S_FUNC( "filename", s_filename )
-	S_FUNC( "diffuse_texture", s_diffuse_texture )
-	S_FUNC( "particle_emitter", s_particle_emitter )
-
-	return data;
-}
-
-bool isFunction( sterm* s ) {
-	return s->type == typeFunc;
-}
-
-const char* getAtom( sterm* term ) {
-	assert( term->type = typeAtom );
-	return (const char*)term->head;
 }
 
 void debug_sterm_print( sterm* term ) {
@@ -472,7 +414,6 @@ void* s_print( sterm* s ) {
 	return NULL;
 }
 
-
 // TODO - could this be removed, just an slist but with the term above having the typeTransform?
 typedef struct transformData_s {
 	sterm* elements;
@@ -526,41 +467,36 @@ void* s_transform( sterm* raw_elements ) {
 sterm* sterm_createProperty( const char* property_name, int property_type, void* property_data ) {
 	sterm* property = sterm_create( typeAtom, (char*)property_name );
 	sterm* value = sterm_create( property_type, property_data );
-	property->tail =value;
+	property->tail = value;
 	return property;
-	/*
-	return cons(	sterm_create( typeAtom, (void*)property_name ), 
-					cons(	sterm_create( property_type, property_data ), 
-							NULL ));
-							*/
 }
 
-void* s_readVector( const char* property_name, sterm* raw_elements ) {
-	assert( raw_elements );
-	sterm* elements = eval_list( raw_elements );
+void* s_readVector( const char* property_name, sterm* args ) {
+	vAssert( args );
+	sterm* elements = eval_list( args );
 	// Should be a list of one single vector
-	assert( isVector( (sterm*)elements->head ));
+	vAssert( isVector( (sterm*)elements->head ));
 	// For now, copy the vector head from the vector sterm
 	sterm* property = sterm_createProperty( property_name, typeVector, ((sterm*)elements->head)->head );
 	return property;
 }
 
 // Creates a translation
-void* s_translation( sterm* raw_elements ) {
-	return s_readVector( "translation", raw_elements );
+void* s_translation( sterm* args ) {
+	return s_readVector( "translation", args );
 }
 
-void* s_diffuse( sterm* raw_elements ) {
-	return s_readVector( "diffuse", raw_elements );
+void* s_diffuse( sterm* args ) {
+	return s_readVector( "diffuse", args );
 }
 
-void* s_specular( sterm* raw_elements ) {
-	return s_readVector( "specular", raw_elements );
+void* s_specular( sterm* args ) {
+	return s_readVector( "specular", args );
 }
 
-void* s_vector( sterm* raw_elements ) {
-	if ( raw_elements ) {
-		sterm* elements = eval_list( raw_elements );
+void* s_vector( sterm* args ) {
+	if ( args ) {
+		sterm* elements = eval_list( args );
 		vector* v = mem_alloc( sizeof( vector ));
 		memset( v, 0, sizeof( vector ));
 		sterm* element = elements;
@@ -580,9 +516,9 @@ void* s_vector( sterm* raw_elements ) {
 
 // Process a Filename
 // ( filename <string> )
-void* s_readString( const char* property_name, sterm* raw_elements ) {
-	vAssert( raw_elements );
-	sterm* elements = eval_list( raw_elements );
+void* s_readString( const char* property_name, sterm* args ) {
+	vAssert( args );
+	sterm* elements = eval_list( args );
 	// Should be a single string, so check the head
 	vAssert( isString( elements->head ));
 	// The string is stored in the string heap
@@ -721,41 +657,33 @@ void* s_light( sterm* args ) {
 }
 
 void* s_light_create( sterm* args ) {
-//	printf( "light_create\n");
 	return light_create();
-}
-
-void scene_processTransform( scene* s, transform* parent, transformData* tData ) {
-	transform* t = transform_create();
-	matrix_setTranslation( t->local, &tData->translation );
-	t->parent = parent;
-	scene_addTransform( s, t );
-
-	// If it has children, process those
-	if ( tData->elements )
-		map_vv( tData->elements, scene_processObject, s, t );
-}
-
-void scene_processModel( scene* s, transform* parent, modelInstance* m ) {
-	m->trans = parent;
-	scene_addModel( s, m );
-}
-
-void scene_processLight( scene* s, transform* parent, light* l ) {
-	l->trans = parent;
-	scene_addLight( s, l );
 }
 
 void scene_processObject( void* object_, void* scene_, void* transform_ ) {
 	sterm* object = object_;
 	scene* s = scene_;
 	transform* parent = transform_;
-	if ( isTransform( object ))
-		scene_processTransform( s, parent, object->head );
-	if ( isPropertyType( object, "modelInstance" ))
-		scene_processModel( s, parent, object->tail->head );
+	if ( isTransform( object )) {
+		transform* t = transform_create();
+		t->parent = parent;
+		transformData* tdata = object->head;
+		matrix_setTranslation( t->local, &tdata->translation );
+		scene_addTransform( s, t );
+
+		// If it has children, process those
+		if ( tdata->elements )
+			map_vv( tdata->elements, scene_processObject, s, t );
+	}
+	if ( isPropertyType( object, "modelInstance" )) {
+		modelInstance* m = property_value( object );
+		m->trans = parent;
+		scene_addModel( s, m );
+	}
 	if ( isPropertyType( object, "light" )) {
-		scene_processLight( s, parent, object->tail->head );
+		light* l = property_value( object );
+		l->trans = parent;
+		scene_addLight( s, l );
 	}
 }
 
@@ -834,7 +762,6 @@ void model_processObject( void* arg, void* model_, void* transform_ ) {
 // Creates a model def
 // Returns that model def
 void* s_model( sterm* raw_args ) {
-//	printf( "s_model\n" );
 	sterm* args = eval_list( raw_args );
 	vAssert( args );
 	mesh* me = property_find( args, "mesh" );
@@ -848,7 +775,6 @@ void* s_model( sterm* raw_args ) {
 
 // pass through to model?
 void* s_mesh( sterm* raw_properties ) {
-//	printf( "s_mesh\n" );
 	sterm* args = eval_list( raw_properties );
 	const char* filename = property_find( args, "filename" );
 	const char* diffuse_texture = property_find( args, "diffuse_texture" );
@@ -860,8 +786,6 @@ void* s_mesh( sterm* raw_properties ) {
 }
 
 void* s_particle_emitter( sterm* args ) {
-//	printf( "s_particle_emitter!\n" );
-	
 	particleEmitter* p = particleEmitter_create();
 	p->definition->lifetime = 2.f;
 	p->definition->spawn_box = Vector( 0.3f, 0.3f, 0.3f, 0.f );
@@ -881,6 +805,43 @@ void* s_particle_emitter( sterm* args ) {
 
 	return sterm_createProperty( "particle_emitter", typeObject, p );
 }
+
+#define S_FUNC( atom, func )	if ( string_equal( (const char*)data->head, atom ) ) { \
+									sterm* s = sterm_create( typeFunc, func ); \
+									return s; \
+								}
+
+// TODO PLACEHOLDER
+// ( should be a hash lookup or similar )
+void* lookup( sterm* data ) {
+	S_FUNC( "print", s_print )
+	S_FUNC( "concat", s_concat )
+	S_FUNC( "model-instance", s_modelInstance )
+	S_FUNC( "model", s_model )
+	S_FUNC( "mesh", s_mesh )
+	S_FUNC( "light", s_light )
+	S_FUNC( "light_create", s_light_create )
+	S_FUNC( "object", s_object )
+	S_FUNC( "transform", s_transform )
+	S_FUNC( "scene", s_scene )
+	S_FUNC( "translation", s_translation )
+	S_FUNC( "diffuse", s_diffuse )
+	S_FUNC( "specular", s_specular )
+	S_FUNC( "vector", s_vector )
+	S_FUNC( "filename", s_filename )
+	S_FUNC( "diffuse_texture", s_diffuse_texture )
+	S_FUNC( "particle_emitter", s_particle_emitter )
+
+	return data;
+}
+
+/*
+void test_sproperty() {
+	const char* string = "(property (0.0 1.0 0.0 0.0 1.0) (1.0 0.0 0.0 0.0 0.0))"
+	void* ptr = eval( parse_string( string ));
+	(void)ptr;
+}
+*/
 
 void test_sfile( ) {
 	/*
