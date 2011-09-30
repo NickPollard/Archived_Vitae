@@ -16,6 +16,7 @@
    */
 struct mesh_s {
 	transform*	trans;
+	shader*		shader;
 	//
 	int			vert_count;
 	vector*		verts;

@@ -275,6 +275,9 @@ void render_drawCall( drawCall* draw ) {
 }
 
 void render_drawCall_internal( drawCall* draw ) {
+	// For now, *always* write to depth buffer
+	glDepthMask( GL_TRUE );
+
 	shader_activate( draw->vitae_shader );
 	// Textures
 	GLint* tex = shader_findConstant( mhash( "tex" ));

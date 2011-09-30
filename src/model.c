@@ -70,6 +70,7 @@ mesh* mesh_createMesh( int vertCount, int index_count, int normal_count, int uv_
 	m->element_buffer = NULL;
 
 	m->texture_diffuse = texture_loadTGA( "assets/img/ship_hd_2.tga" );
+	m->shader = resources.shader_default;
 
 	return m;
 }
@@ -139,7 +140,7 @@ void mesh_drawVerts( mesh* m ) {
 	if ( tex )
 		render_setUniform_texture( *tex, m->texture_diffuse );
 
-	drawCall* model_render = drawCall_create( resources.shader_default, m->index_count, m->element_buffer, m->vertex_buffer, m->texture_diffuse, modelview );
+	drawCall* model_render = drawCall_create( m->shader, m->index_count, m->element_buffer, m->vertex_buffer, m->texture_diffuse, modelview );
 	render_drawCall( model_render );
 }
 

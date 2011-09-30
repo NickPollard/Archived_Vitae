@@ -12,47 +12,14 @@
 
 model*			skybox_model = NULL;
 GLint			skybox_texture = -1;
-GLushort		skybox_index_count = 36;
-skybox_vertex*	skybox_static_vertex_buffer = NULL;
-GLushort		skybox_static_element_buffer[] = {
-	// TOP
-	0, 1, 2,
-	1, 3, 2,
-	// BOTTOM,
-	4, 6, 5,
-	5, 6, 7,
-	// FRONT
-	2, 3, 6,
-	3, 7, 6,
-	// BACK
-	0, 4, 1,
-	1, 4, 5,
-	// LEFT
-	1, 5, 3,
-	3, 5, 7,
-	// RIGHT
-	0, 2, 4,
-	2, 6, 4
-};
 
 // Initialise static data for the skybox system
 void skybox_init( ) {
-	const float distance = 100.f;
-	assert( skybox_static_vertex_buffer == NULL );
-	skybox_static_vertex_buffer = mem_alloc( sizeof( skybox_vertex ) * 8 );
-	skybox_static_vertex_buffer[0].position = Vector(  distance,  distance,  distance, 1.0 );
-	skybox_static_vertex_buffer[1].position = Vector( -distance,  distance,  distance, 1.0 );
-	skybox_static_vertex_buffer[2].position = Vector(  distance,  distance, -distance, 1.0 );
-	skybox_static_vertex_buffer[3].position = Vector( -distance,  distance, -distance, 1.0 );
-	skybox_static_vertex_buffer[4].position = Vector(  distance, -distance,  distance, 1.0 );
-	skybox_static_vertex_buffer[5].position = Vector( -distance, -distance,  distance, 1.0 );
-	skybox_static_vertex_buffer[6].position = Vector(  distance, -distance, -distance, 1.0 );
-	skybox_static_vertex_buffer[7].position = Vector( -distance, -distance, -distance, 1.0 );
-
 	skybox_texture = texture_loadTGA( "assets/3rdparty/img/grimmnight_medium.tga" );
 
 	skybox_model = model_load( "dat/model/inverse_cube.s" );
 	skybox_model->meshes[0]->texture_diffuse = skybox_texture;
+	skybox_model->meshes[0]->shader = resources.shader_skybox;
 }
 
 #define SKYBOX_VERTEX_ATTRIB_POINTER( attrib ) \
