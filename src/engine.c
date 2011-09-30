@@ -21,6 +21,7 @@
 #include "debug/debug.h"
 #include "debug/debugtext.h"
 #include "script/parse.h"
+#include "system/thread.h"
 #include "ui/panel.h"
 
 // Lua Libraries
@@ -317,12 +318,23 @@ void engine_androidPollEvents( engine* e ) {
 }
 #endif // ANDROID
 
+void* render_renderThreadFunc( void* args ) {
+	printf( "Hello from the render thread!\n" );
+	return NULL;
+}
+
 // run - executes the main loop of the engine
 void engine_run(engine* e) {
 	//	TextureLibrary* textures = texture_library_create();
+
 #ifndef ANDROID
 	handleResize( 640, 480 );	// Call once to init
 #endif
+	
+	// Kick off rendering thread
+	vthread render_thread = vthread_create( render_renderThreadFunc, NULL );
+	(void)render_thread;
+
 	printf( "running: %d, active %d.\n", e->running, e->active );
 	while ( e->running ) {
 #ifdef ANDROID
