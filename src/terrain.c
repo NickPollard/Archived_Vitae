@@ -26,10 +26,11 @@ void terrainBlock_createBuffers( terrain* t, terrainBlock* b ) {
 	// Setup buffers
 	int triangle_count = ( b->u_samples - 1 ) * ( b->v_samples - 1 ) * 2;
 	b->index_count = triangle_count * 3;
-	if ( !b->vertex_buffer )
-		b->vertex_buffer = mem_alloc( b->index_count * sizeof( vertex ));
-	if ( !b->element_buffer )
-		b->element_buffer = mem_alloc( b->index_count * sizeof( GLushort ));
+
+	vAssert( !b->vertex_buffer );
+	vAssert( !b->element_buffer );
+	b->vertex_buffer = mem_alloc( b->index_count * sizeof( vertex ));
+	b->element_buffer = mem_alloc( b->index_count * sizeof( GLushort ));
 }
 
 // Create a procedural terrain
@@ -405,7 +406,17 @@ void terrain_updateBlocks( terrain* t ) {
 }
 
 void terrainBlock_render( terrainBlock* b ) {
-	drawCall* block_render = drawCall_create( b->index_count, b->element_buffer, b->vertex_buffer );
+	GLsizei element_buffer_size = b->index_count * sizeof( GLushort );
+	GLsizei vertex_buffer_size = b->index_count * sizeof( vertex );
+
+	// Create new element_buffer and vertex_buffer space on the Render temp stack
+	GLushort*	element_buffer	= render_bufferAlloc( element_buffer_size );
+	vertex*		vertex_buffer	= render_bufferAlloc( vertex_buffer_size );
+
+	memcpy( element_buffer, b->element_buffer, element_buffer_size );
+	memcpy( vertex_buffer, b->vertex_buffer, vertex_buffer_size );
+
+	drawCall* block_render = drawCall_create( resources.shader_terrain, b->index_count, b->element_buffer, b->vertex_buffer, terrain_texture, modelview );
 	render_drawCall( block_render );
 }
 

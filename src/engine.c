@@ -255,7 +255,11 @@ void engine_render( engine* e ) {
 		skybox_render( NULL );
 		engine_renderRenders( e );
 		//temp
-		panel_draw( static_test_panel, 0.f, 0.f );
+		//panel_draw( static_test_panel, 0.f, 0.f );
+
+		// Under drawcall system, this is what actually makes the GPU draw stuff out
+		render_draw();
+
 		render_swapBuffers( e->egl );
 	}
 #else
@@ -265,7 +269,11 @@ void engine_render( engine* e ) {
 	skybox_render( NULL );
 	engine_renderRenders( e );
 	// temp
-	panel_draw( static_test_panel, 0.f, 0.f );
+	//panel_draw( static_test_panel, 0.f, 0.f );
+
+	// Under drawcall system, this is what actually makes the GPU draw stuff out
+	render_draw();
+
 	render_swapBuffers();
 #endif // ANDROID
 }

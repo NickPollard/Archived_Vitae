@@ -75,6 +75,22 @@ void render_clearCallBuffer( ) {
 #endif
 }
 
+#define		kRenderDrawBufferSize 2 * 1024 * 1024
+uint8_t*	render_draw_buffer;
+uint8_t*	render_draw_buffer_free;
+
+// Temporary allocation that is only valid for a frame
+void* render_bufferAlloc( size_t size ) {
+	// TODO: Aligned!
+	vAssert( ( render_draw_buffer_free + size ) < ( render_draw_buffer + kRenderDrawBufferSize ));
+	void* p = render_draw_buffer_free;
+	render_draw_buffer_free += size;
+	return p;
+}
+
+void render_resetBufferBuffer() {
+	render_draw_buffer_free = render_draw_buffer;
+}
 // Private Function declarations
 
 void render_set3D( int w, int h ) {
@@ -154,6 +170,9 @@ void render_init() {
 	const GLsizei element_buffer_size = sizeof( GLushort ) * MAX_VERTEX_ARRAY_COUNT;
 	resources.vertex_buffer = gl_bufferCreate( GL_ARRAY_BUFFER, NULL, vertex_buffer_size );
 	resources.element_buffer = gl_bufferCreate( GL_ELEMENT_ARRAY_BUFFER, NULL, element_buffer_size );
+
+	// Allocate draw buffer
+	render_draw_buffer = mem_alloc( kRenderDrawBufferSize );
 }
 
 // Terminate the 3D rendering
@@ -207,6 +226,7 @@ void render_setUniform_texture( GLuint uniform, GLuint texture ) {
 // Shader version
 void render( scene* s ) {
 	render_clearCallBuffer();
+	render_resetBufferBuffer();
 	// Load our shader
 	shader_activate( resources.shader_default );
 	matrix_setIdentity( modelview );
@@ -238,17 +258,34 @@ void render( scene* s ) {
 	render_scene( s );
 }
 
-drawCall* drawCall_create( int count, GLushort* elements, vertex* verts) {
+drawCall* drawCall_create( shader* vshader, int count, GLushort* elements, vertex* verts, GLint tex, matrix mv ) {
 	vAssert( next_call_index < kMaxDrawCalls );
 	drawCall* draw = &call_buffer[next_call_index++];
-	//drawCall* draw = mem_alloc( sizeof( drawCall ));
+	draw->vitae_shader = vshader;
 	draw->element_buffer = elements;
 	draw->vertex_buffer = verts;
 	draw->element_count = count;
+	draw->texture = tex;
+	matrix_cpy( draw->modelview, mv );
 	return draw;
 }
 
 void render_drawCall( drawCall* draw ) {
+	return;
+}
+
+void render_drawCall_internal( drawCall* draw ) {
+	shader_activate( draw->vitae_shader );
+	// Textures
+	GLint* tex = shader_findConstant( mhash( "tex" ));
+	if ( tex )
+		render_setUniform_texture( *tex, draw->texture );
+
+	// Set up uniform matrices
+	render_setUniform_matrix( *resources.uniforms.modelview, draw->modelview );
+	render_setUniform_matrix( *resources.uniforms.worldspace, draw->modelview );
+	render_setUniform_matrix( *resources.uniforms.projection, perspective );
+
 	// Copy our data to the GPU
 	GLsizei vertex_buffer_size = draw->element_count * sizeof( vertex );
 	GLsizei element_buffer_size = draw->element_count * sizeof( GLushort );
@@ -267,4 +304,10 @@ void render_drawCall( drawCall* draw ) {
 
 	// Cleanup
 	VERTEX_ATTRIBS( VERTEX_ATTRIB_DISABLE_ARRAY )
+}
+
+void render_draw() {
+	for ( int i = 0; i < next_call_index; i++ ) {
+		render_drawCall_internal( &call_buffer[i] );
+	}
 }

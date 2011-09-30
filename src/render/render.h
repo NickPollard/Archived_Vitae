@@ -58,12 +58,12 @@ typedef struct gl_resources_s {
 	shader* shader_ui;
 } gl_resources;
 
-typedef struct vertex_s {
+struct vertex_s {
 	vector	position;
 	vector	normal;
 	vector	uv;
 	vector	color;
-} vertex;
+};
 
 typedef struct vertex_s particle_vertex;
 
@@ -125,10 +125,15 @@ void gl_dumpInfoLog( GLuint object, func_getIV getIV, func_getInfoLog getInfoLog
 // Draw Calls
 
 typedef struct drawCall_s {
+	matrix		modelview;
 	GLushort*	element_buffer;
 	vertex*		vertex_buffer;
 	int			element_count;
+	GLint		texture;
+	shader*		vitae_shader;
 } drawCall;
 
-drawCall* drawCall_create( int count, GLushort* elements, vertex* verts);
+drawCall* drawCall_create( shader* vshader, int count, GLushort* elements, vertex* verts, GLint tex, matrix mv );
 void render_drawCall( drawCall* draw );
+void* render_bufferAlloc( size_t size );
+void render_draw();

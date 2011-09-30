@@ -24,6 +24,10 @@ particleEmitter* particleEmitter_create() {
 	p->definition = particleEmitterDef_create();
 	p->definition->spawn_box = Vector( 0.f, 0.f, 0.f, 0.f );
 	p->definition->texture_diffuse = texture_loadTGA( "assets/img/cloud_rgba128.tga" );
+
+	p->vertex_buffer = mem_alloc( sizeof( vertex ) * kMaxParticleVerts );
+	p->element_buffer = mem_alloc( sizeof( vertex ) * kMaxParticleVerts );
+
 	return p;
 }
 
@@ -136,22 +140,19 @@ void particleEmitter_render( void* data ) {
 	render_resetModelView();
 	matrix_mul( modelview, modelview, p->trans->world );
 
-	vertex vertex_buffer[kmax_particle_verts];
-	GLushort element_buffer[kmax_particle_verts];
-
 	for ( int i = 0; i < p->count; i++ ) {
 		int particle_index = (p->start + i) % kMaxParticles;
 		float size = property_samplef( p->definition->size, p->particles[particle_index].age );
 		vector color = property_samplev( p->definition->color, p->particles[particle_index].age );
-		particle_quad( p, &vertex_buffer[i*4], &p->particles[particle_index].position, size, color );
-		assert( i*6 + 5 < kmax_particle_verts );
+		particle_quad( p, &p->vertex_buffer[i*4], &p->particles[particle_index].position, size, color );
+		assert( i*6 + 5 < kMaxParticleVerts );
 		// TODO: Indices can be initialised once
-		element_buffer[i*6+0] = i*4+1;
-		element_buffer[i*6+1] = i*4+0;
-		element_buffer[i*6+2] = i*4+2;
-		element_buffer[i*6+3] = i*4+0;
-		element_buffer[i*6+4] = i*4+1;
-		element_buffer[i*6+5] = i*4+3;
+		p->element_buffer[i*6+0] = i*4+1;
+		p->element_buffer[i*6+1] = i*4+0;
+		p->element_buffer[i*6+2] = i*4+2;
+		p->element_buffer[i*6+3] = i*4+0;
+		p->element_buffer[i*6+4] = i*4+1;
+		p->element_buffer[i*6+5] = i*4+3;
 	}
 
 
@@ -162,7 +163,7 @@ void particleEmitter_render( void* data ) {
 
 	int index_count = 6 * p->count;
 
-	drawCall* particle_render = drawCall_create( index_count, element_buffer, vertex_buffer );
+	drawCall* particle_render = drawCall_create( resources.shader_particle, index_count, p->element_buffer, p->vertex_buffer, p->definition->texture_diffuse, modelview );
 	render_drawCall( particle_render );
 }
 

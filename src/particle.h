@@ -3,7 +3,7 @@
 #include "maths.h"
 
 #define kMaxParticles 128
-#define kmax_particle_verts (kMaxParticles * 6)
+#define kMaxParticleVerts (kMaxParticles * 6)
 
 #define kmax_property_values 16
 
@@ -41,6 +41,9 @@ struct particleEmitter_s {
 	int		count;
 	float	next_spawn;
 	particleEmitterDef*	definition;
+
+	vertex*		vertex_buffer;
+	GLushort*	element_buffer;
 };
 
 particleEmitter* particleEmitter_create();
