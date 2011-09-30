@@ -811,6 +811,32 @@ void* s_particle_emitter( sterm* args ) {
 									return s; \
 								}
 
+// Parse a particle-style time-based property
+void* s_property( sterm* args ) {
+	debug_sterm_printList( args );
+	property* p = property_create( 5 ); // TEMP force vector stride
+
+	sterm* eargs = eval_list( args );
+	sterm* term = eargs;
+	while ( term ) {
+		debug_sterm_printList( ((sterm*)term->head) );
+		debug_sterm_printList( ((sterm*)term->head)->head );
+		vAssert( isAtom( ((sterm*)term->head)->head ));
+		// TEMP Force vector for now
+		vector vec;
+//		float time = 0.f;
+		// The term should be a list of time followed by value
+		// Term->head is the property value
+		// term->head->head is the time atom
+		// term->head->head->head is the time value as a string?
+		float time = strtof( ((sterm*)((sterm*)term->head)->head)->head, NULL );
+		printf( "Adding property value with time %.2f.\n", time );
+		property_addv( p, time, vec );
+		term = term->tail;
+	}
+	return p;
+}
+
 // TODO PLACEHOLDER
 // ( should be a hash lookup or similar )
 void* lookup( sterm* data ) {
@@ -831,19 +857,22 @@ void* lookup( sterm* data ) {
 	S_FUNC( "filename", s_filename )
 	S_FUNC( "diffuse_texture", s_diffuse_texture )
 	S_FUNC( "particle_emitter", s_particle_emitter )
+	S_FUNC( "property", s_property );
 
 	return data;
 }
 
-/*
 void test_sproperty() {
-	const char* string = "(property (0.0 1.0 0.0 0.0 1.0) (1.0 0.0 0.0 0.0 0.0))"
+	printf( "TEST: sproperty.\n" );
+	const char* string = "(property (0.0 (vector 1.0 0.0 0.0 1.0)) (1.0  (vector 0.0 0.0 0.0 0.0)))";
 	void* ptr = eval( parse_string( string ));
 	(void)ptr;
+	vAssert( 0 );
 }
-*/
 
 void test_sfile( ) {
+
+	test_sproperty();
 	/*
 	printf( "FILE: Beginning test: test dat/test2.s\n" );
 	sterm* s = parse_file( "dat/test2.s" );
