@@ -64,6 +64,17 @@ void render_buildShaders() {
 	SHADER_UNIFORMS( GET_UNIFORM_LOCATION_PARTICLE )
 }
 
+#define kMaxDrawCalls 256
+drawCall call_buffer[kMaxDrawCalls];
+int next_call_index = 0;
+
+void render_clearCallBuffer( ) {
+	next_call_index = 0;
+#if debug
+	memset( call_buffer, 0, sizeof( drawCall ) * kMaxDrawCalls );
+#endif
+}
+
 // Private Function declarations
 
 void render_set3D( int w, int h ) {
@@ -195,6 +206,7 @@ void render_setUniform_texture( GLuint uniform, GLuint texture ) {
 
 // Shader version
 void render( scene* s ) {
+	render_clearCallBuffer();
 	// Load our shader
 	shader_activate( resources.shader_default );
 	matrix_setIdentity( modelview );
@@ -227,7 +239,9 @@ void render( scene* s ) {
 }
 
 drawCall* drawCall_create( int count, GLushort* elements, vertex* verts) {
-	drawCall* draw = mem_alloc( sizeof( drawCall ));
+	vAssert( next_call_index < kMaxDrawCalls );
+	drawCall* draw = &call_buffer[next_call_index++];
+	//drawCall* draw = mem_alloc( sizeof( drawCall ));
 	draw->element_buffer = elements;
 	draw->vertex_buffer = verts;
 	draw->element_count = count;

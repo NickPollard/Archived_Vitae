@@ -210,7 +210,6 @@ void android_init( struct android_app* app ) {
 	// *** Initialise Engine
 	// already created
 	engine* e = engine_create();
-	static_engine_hack = e;
 	e->egl = NULL;
 	e->app = app;
 	e->active = false;
@@ -267,5 +266,5 @@ void android_main( struct android_app* app ) {
 	test();
 #endif
 
-	engine_run( static_engine_hack );
+	engine_run( app->userData );
 }
