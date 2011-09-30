@@ -75,32 +75,5 @@ void skybox_render( void* data ) {
 	render_setUniform_matrix( *resources.uniforms.modelview, modelview );
 	render_setUniform_matrix( *resources.uniforms.worldspace, modelview );
 
-#if 0
-	// Copy our data to the GPU
-	// There are now <index_count> vertices, as we have unrolled them
-	GLsizei vertex_buffer_size = skybox_index_count * sizeof( skybox_vertex );
-	GLsizei element_buffer_size = skybox_index_count * sizeof( GLushort );
-
-	// Textures
-	GLint* tex = shader_findConstant( mhash( "tex" ));
-	if ( tex )
-		render_setUniform_texture( *tex, skybox_texture );
-
-	SKYBOX_VERTEX_ATTRIBS( VERTEX_ATTRIB_LOOKUP );
-	// *** Vertex Buffer
-	glBindBuffer( GL_ARRAY_BUFFER, resources.vertex_buffer );
-	glBufferData( GL_ARRAY_BUFFER, vertex_buffer_size, skybox_static_vertex_buffer, GL_DYNAMIC_DRAW );// OpenGL ES only supports DYNAMIC_DRAW or STATIC_DRAW
-	SKYBOX_VERTEX_ATTRIBS( SKYBOX_VERTEX_ATTRIB_POINTER );
-	// *** Element Buffer
-	glBindBuffer( GL_ELEMENT_ARRAY_BUFFER, resources.element_buffer );
-	glBufferData( GL_ELEMENT_ARRAY_BUFFER, element_buffer_size, skybox_static_element_buffer, GL_DYNAMIC_DRAW ); // OpenGL ES only supports DYNAMIC_DRAW or STATIC_DRAW
-
-	// Draw!
-	glDrawElements( GL_TRIANGLES, skybox_index_count, GL_UNSIGNED_SHORT, (void*)0 );
-
-	// Cleanup
-	SKYBOX_VERTEX_ATTRIBS( VERTEX_ATTRIB_DISABLE_ARRAY )
-#endif
-
 	mesh_drawVerts( skybox_model->meshes[0] );
 }

@@ -80,16 +80,9 @@ void particleEmitter_tick( void* data, float dt ) {
 	}
 }
 
-typedef struct particle_vertex_s {
-	vector	position;
-	vector	normal;
-	vector	uv;
-	vector	color;
-} particle_vertex;
-
 // Output the 4 verts of the quad to the target vertex array
 // both position and normals
-void particle_quad( particleEmitter* e, particle_vertex* dst, vector* point, float size, vector color ) {
+void particle_quad( particleEmitter* e, vertex* dst, vector* point, float size, vector color ) {
 	vector offset = Vector( size, size, 0.f, 0.f );
 
 	vector p;
@@ -143,7 +136,7 @@ void particleEmitter_render( void* data ) {
 	render_resetModelView();
 	matrix_mul( modelview, modelview, p->trans->world );
 
-	particle_vertex vertex_buffer[kmax_particle_verts];
+	vertex vertex_buffer[kmax_particle_verts];
 	GLushort element_buffer[kmax_particle_verts];
 
 	for ( int i = 0; i < p->count; i++ ) {
@@ -168,42 +161,9 @@ void particleEmitter_render( void* data ) {
 	render_setUniform_matrix( *resources.uniforms.modelview, modelview );
 
 	int index_count = 6 * p->count;
-	
-#define PARTICLE_VERTEX_ATTRIBS( f ) \
-	f( position ) \
-	f( normal ) \
-	f( uv ) \
-	f( color )
 
-#define VERTEX_ATTRIB_DISABLE_ARRAY( attrib ) \
-	glDisableVertexAttribArray( attrib );
-
-#define VERTEX_ATTRIB_LOOKUP( attrib ) \
-	GLint attrib = *(shader_findConstant( mhash( #attrib )));
-
-#define PARTICLE_VERTEX_ATTRIB_POINTER( attrib ) \
-	glVertexAttribPointer( attrib, /*vec4*/ 4, GL_FLOAT, /*Normalized?*/GL_FALSE, sizeof( particle_vertex ), (void*)offsetof( particle_vertex, attrib) ); \
-	glEnableVertexAttribArray( attrib );
-
-	// Copy our data to the GPU
-	// There are now <index_count> vertices, as we have unrolled them
-	GLsizei vertex_buffer_size = index_count * sizeof( particle_vertex );
-	GLsizei element_buffer_size = index_count * sizeof( GLushort );
-	PARTICLE_VERTEX_ATTRIBS( VERTEX_ATTRIB_LOOKUP );
-
-	// *** Vertex Buffer
-	glBindBuffer( GL_ARRAY_BUFFER, resources.vertex_buffer );
-	glBufferData( GL_ARRAY_BUFFER, vertex_buffer_size, vertex_buffer, GL_DYNAMIC_DRAW ); // OpenGL ES
-	PARTICLE_VERTEX_ATTRIBS( PARTICLE_VERTEX_ATTRIB_POINTER );
-	// *** Element Buffer
-	glBindBuffer( GL_ELEMENT_ARRAY_BUFFER, resources.element_buffer );
-	glBufferData( GL_ELEMENT_ARRAY_BUFFER, element_buffer_size, element_buffer, GL_DYNAMIC_DRAW ); // OpenGL ES
-
-	// Draw!
-	glDrawElements( GL_TRIANGLES, index_count, GL_UNSIGNED_SHORT, (void*)0 );
-
-	// Cleanup
-	PARTICLE_VERTEX_ATTRIBS( VERTEX_ATTRIB_DISABLE_ARRAY );
+	drawCall* particle_render = drawCall_create( index_count, element_buffer, vertex_buffer );
+	render_drawCall( particle_render );
 }
 
 property* property_create( int stride ) {

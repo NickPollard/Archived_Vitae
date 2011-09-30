@@ -17,7 +17,8 @@
 #define VERTEX_ATTRIBS( f ) \
 	f( position ) \
 	f( normal ) \
-	f( uv )
+	f( uv ) \
+	f( color )
 
 #define VERTEX_ATTRIB_DISABLE_ARRAY( attrib ) \
 	glDisableVertexAttribArray( attrib );
@@ -61,7 +62,10 @@ typedef struct vertex_s {
 	vector	position;
 	vector	normal;
 	vector	uv;
+	vector	color;
 } vertex;
+
+typedef struct vertex_s particle_vertex;
 
 extern gl_resources resources;
 extern matrix modelview;
