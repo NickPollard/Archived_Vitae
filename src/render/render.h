@@ -71,6 +71,7 @@ extern gl_resources resources;
 extern matrix modelview;
 extern matrix camera_inverse;
 extern matrix perspective;
+extern bool	render_initialised;
 
 void render_setBuffers( float* vertex_buffer, int vertex_buffer_size, int* element_buffer, int element_buffer_size );
 
@@ -137,3 +138,8 @@ drawCall* drawCall_create( shader* vshader, int count, GLushort* elements, verte
 void render_drawCall( drawCall* draw );
 void* render_bufferAlloc( size_t size );
 void render_draw();
+
+//
+// *** The Rendering Thread itself
+//
+void* render_renderThreadFunc( void* args );

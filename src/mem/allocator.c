@@ -2,6 +2,7 @@
 #include "common.h"
 #include "allocator.h"
 //---------------------
+#include "system/thread.h"
 #include <assert.h>
 #include <stdio.h>
 #include <stdint.h>
@@ -10,6 +11,7 @@
 
 #define static_heap_size (64 * 1024 * 1024) // In MegaBytes
 heapAllocator* static_heap = NULL;
+vmutex allocator_mutex = kMutexInitialiser;
 
 void heap_dumpBlocks( heapAllocator* heap );
 
@@ -36,41 +38,15 @@ void* heap_allocate( heapAllocator* heap, int size ) {
 #ifdef MEM_FORCE_ALIGNED
 	return heap_allocate_aligned( heap, size, 4 );
 #else
-#ifdef MEM_DEBUG_VERBOSE
-	printf( "HeapAllocator request for %d bytes.\n", size );
-#endif
-	block* b = heap_findEmptyBlock( heap, size );
-	if ( !b ) {
-//		heap_dumpBlocks( heap );
-		printError( "HeapAllocator out of memory on request for %d bytes. Total size: %d bytes, Used size: %d bytes\n", size, heap->total_size, heap->total_allocated );
-		assert( 0 );
-	}
-	if ( b->size > ( size + sizeof( block ) ) ) {
-//		printf( "Allocator: Splitting Block of size %d into sizes %d ad %d\n", b->size, size, b->size-size );
-		block* remaining = block_create( b->data + size, b->size - size );
-		block_insertAfter( b, remaining );
-		b->size = size;
-		heap->total_allocated += sizeof( block );
-		heap->total_free -= sizeof( block );
-		// Try to merge blocks
-		if ( remaining->next && remaining->next->free )
-			block_merge( heap, remaining, remaining->next );
-	}
-	b->free = false;
-
-	heap->total_allocated += size;
-	heap->total_free -= size;
-
-#ifdef MEM_DEBUG_VERBOSE
-	printf("Allocator returned address: %x.\n", (unsigned int)b->data );
-#endif
-	return b->data;
+	return heap_allocate_aligned( heap, size, 0 );
 #endif
 }
 
 // Allocates *size* bytes from the given heapAllocator *heap*
 // Will crash if out of memory
+// NEEDS TO BE THREADSAFE
 void* heap_allocate_aligned( heapAllocator* heap, unsigned int size, unsigned int alignment ) {
+	vmutex_lock( &allocator_mutex );
 #ifdef MEM_DEBUG_VERBOSE
 	printf( "HeapAllocator request for %d bytes, %d byte aligned.\n", size, alignment );
 #endif
@@ -121,7 +97,7 @@ void* heap_allocate_aligned( heapAllocator* heap, unsigned int size, unsigned in
 	printf("Allocator returned address: %x.\n", (unsigned int)b->data );
 #endif
 
-
+	vmutex_unlock( &allocator_mutex );
 	return b->data;
 }
 void heap_dumpBlocks( heapAllocator* heap ) {
@@ -166,6 +142,7 @@ block* heap_findBlock( heapAllocator* heap, void* mem_addr ) {
 
 // Release a block from the heapAllocator
 void heap_deallocate( heapAllocator* heap, void* data ) {
+	vmutex_lock( &allocator_mutex );
 	block* b = heap_findBlock( heap, data );
 	vAssert( b );
 #ifdef MEM_DEBUG_VERBOSE
@@ -181,6 +158,7 @@ void heap_deallocate( heapAllocator* heap, void* data ) {
 		block_merge( heap, b, b->next );
 	if ( b->prev && b->prev->free )
 		block_merge( heap, b->prev, b );
+	vmutex_unlock( &allocator_mutex );
 }
 
 // Merge two continous blocks, *first* and *second*

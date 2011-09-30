@@ -120,9 +120,9 @@ void particle_quad( particleEmitter* e, vertex* dst, vector* point, float size, 
 
 // Render a particleEmitter system
 void particleEmitter_render( void* data ) {
-	glDepthMask( GL_FALSE );
+//	glDepthMask( GL_FALSE );
 	// switch to particle shader
-	shader_activate( resources.shader_particle );
+//	shader_activate( resources.shader_particle );
 
 	// Set up uniforms
 	render_setUniform_matrix( *resources.uniforms.projection, perspective );

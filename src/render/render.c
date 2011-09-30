@@ -21,6 +21,8 @@
 // GLFW Libraries
 #include <GL/glfw.h>
 
+bool	render_initialised = false;
+
 #define MAX_VERTEX_ARRAY_COUNT 1024
 
 // *** Shader Pipeline
@@ -132,7 +134,7 @@ void render_lighting( scene* s ) {
 
 // Clear information from last draw
 void render_clear() {
-	glClearColor( 0.f, 0.f, 0.0, 0.f );
+	glClearColor( 1.f, 0.f, 0.0, 0.f );
 	glClear( GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT );
 }
 
@@ -173,6 +175,8 @@ void render_init() {
 
 	// Allocate draw buffer
 	render_draw_buffer = mem_alloc( kRenderDrawBufferSize );
+
+	render_initialised = true;
 }
 
 // Terminate the 3D rendering
@@ -228,7 +232,7 @@ void render( scene* s ) {
 	render_clearCallBuffer();
 	render_resetBufferBuffer();
 	// Load our shader
-	shader_activate( resources.shader_default );
+//	shader_activate( resources.shader_default );
 	matrix_setIdentity( modelview );
 
 	const float fov = 0.8f; // In radians
@@ -249,9 +253,11 @@ void render( scene* s ) {
 	render_resetModelView();
 
 	// Set up uniforms
+	/*
 	render_setUniform_matrix( *resources.uniforms.projection, perspective );
 	render_setUniform_matrix( *resources.uniforms.modelview, modelview );
 	render_setUniform_matrix( *resources.uniforms.worldspace, modelview );
+*/
 
 	render_lighting( s );
 
@@ -310,7 +316,35 @@ void render_drawCall_internal( drawCall* draw ) {
 }
 
 void render_draw() {
+	printf( "Render draw.\n" );
+
+	int w = 640;
+	int h = 480;
+	render_set3D( w, h );
+	render_clear();
+
 	for ( int i = 0; i < next_call_index; i++ ) {
+		printf( "RENDER_THREAD: Drawing something.\n" );
 		render_drawCall_internal( &call_buffer[i] );
 	}
+
+	render_swapBuffers();
+}
+
+//
+// *** The Rendering Thread itself
+//
+void* render_renderThreadFunc( void* args ) {
+	printf( "Hello from the render thread!\n" );
+	render_init();
+
+	while( true ) {
+		while ( threadsignal_render == 0 ) {
+		}
+		render_draw();
+		// Indicate that we have finished
+		threadsignal_render = 0;
+	}
+
+	return NULL;
 }

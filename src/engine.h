@@ -23,6 +23,8 @@ extern scene* theScene;
 
 extern float depth;
 
+extern int threadsignal_render;
+
 DEF_LIST(delegate)
 #define kDefaultDelegateSize 16
 

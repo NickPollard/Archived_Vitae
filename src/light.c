@@ -102,8 +102,9 @@ void light_renderLights( int count, light** lights ) {
 #endif
 	}
 
-
+/*
 	glUniform4fv( *resources.uniforms.light_position, light_count, (GLfloat*)positions );
 	glUniform4fv( *resources.uniforms.light_diffuse, light_count, (GLfloat*)diffuses );
 	glUniform4fv( *resources.uniforms.light_specular, light_count, (GLfloat*)speculars );
+	*/
 }

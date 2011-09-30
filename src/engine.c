@@ -43,6 +43,8 @@ scene* theScene = NULL;
 terrain* theTerrain = NULL;
 int w = 640, h = 480;
 
+int threadsignal_render = 0;
+
 // Function Declarations
 void engine_tickTickers( engine* e, float dt );
 void engine_renderRenders( engine* e );
@@ -202,7 +204,14 @@ void engine_init(engine* e, int argc, char** argv) {
 	// On Android this is done in response to window events
 	// see Android.c
 #ifndef ANDROID
-	render_init();
+	//render_init();
+	// Kick off rendering thread
+	vthread render_thread = vthread_create( render_renderThreadFunc, NULL );
+	(void)render_thread;
+	// Wait for initialization to finish
+	while ( !render_initialised ) {
+		sleep( 1 );
+	}
 #endif // ANDROID
 
 	// *** Start up Core Systems
@@ -259,13 +268,14 @@ void engine_render( engine* e ) {
 		//panel_draw( static_test_panel, 0.f, 0.f );
 
 		// Under drawcall system, this is what actually makes the GPU draw stuff out
-		render_draw();
+		//render_draw();
 
 		render_swapBuffers( e->egl );
 	}
 #else
-	render_set3D( w, h );
-	render_clear();
+	while ( threadsignal_render == 1 ) {
+//		sleep( 1 );
+	}
 	render( theScene );
 	skybox_render( NULL );
 	engine_renderRenders( e );
@@ -273,9 +283,11 @@ void engine_render( engine* e ) {
 	//panel_draw( static_test_panel, 0.f, 0.f );
 
 	// Under drawcall system, this is what actually makes the GPU draw stuff out
-	render_draw();
+//	render_draw();
 
-	render_swapBuffers();
+	// Allow the render thread to start
+	threadsignal_render = 1;
+
 #endif // ANDROID
 }
 
@@ -318,11 +330,6 @@ void engine_androidPollEvents( engine* e ) {
 }
 #endif // ANDROID
 
-void* render_renderThreadFunc( void* args ) {
-	printf( "Hello from the render thread!\n" );
-	return NULL;
-}
-
 // run - executes the main loop of the engine
 void engine_run(engine* e) {
 	//	TextureLibrary* textures = texture_library_create();
@@ -331,9 +338,6 @@ void engine_run(engine* e) {
 	handleResize( 640, 480 );	// Call once to init
 #endif
 	
-	// Kick off rendering thread
-	vthread render_thread = vthread_create( render_renderThreadFunc, NULL );
-	(void)render_thread;
 
 	printf( "running: %d, active %d.\n", e->running, e->active );
 	while ( e->running ) {

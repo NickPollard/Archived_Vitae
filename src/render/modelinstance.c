@@ -164,7 +164,7 @@ void modelInstance_draw( modelInstance* instance, camera* cam ) {
 
 	render_resetModelView();
 	matrix_mul( modelview, modelview, instance->trans->world );
-	render_setUniform_matrix( *resources.uniforms.modelview, modelview );
+//	render_setUniform_matrix( *resources.uniforms.modelview, modelview );
 
 	model_draw( model_fromInstance( instance ) );
 }

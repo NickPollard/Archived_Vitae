@@ -135,10 +135,12 @@ void mesh_buildBuffers( mesh* m ) {
 
 // Draw the verts of a mesh to the openGL buffer
 void mesh_drawVerts( mesh* m ) {
+	/*
 	// Textures
 	GLint* tex = shader_findConstant( mhash( "tex" ));
 	if ( tex )
 		render_setUniform_texture( *tex, m->texture_diffuse );
+*/
 
 	drawCall* model_render = drawCall_create( m->shader, m->index_count, m->element_buffer, m->vertex_buffer, m->texture_diffuse, modelview );
 	render_drawCall( model_render );

@@ -33,7 +33,7 @@ static const int vert_count = 4;
 // The draw function gets passed the current 'cursor' x and y
 void panel_draw( panel* p, float x, float y ) {
 
-	glDisable(GL_DEPTH_TEST);
+//	glDisable(GL_DEPTH_TEST);
 
 	// We draw a quad as two triangles
 	vertex_buffer[0].position = Vector( p->x,				p->y,				0.1f, 1.f );
@@ -53,7 +53,7 @@ void panel_draw( panel* p, float x, float y ) {
 	if ( tex )
 		render_setUniform_texture( *tex, p->texture );
 
-	shader_activate( resources.shader_ui );
+//	shader_activate( resources.shader_ui );
 
 	drawCall* panel_render = drawCall_create( resources.shader_ui, element_count, element_buffer, vertex_buffer, p->texture, modelview );
 	render_drawCall( panel_render );

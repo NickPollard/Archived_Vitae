@@ -12,6 +12,9 @@
 
 #include "debug/debug.h"
 
+// For sleep
+#include <unistd.h>
+
 // For openGL compatibility
 #define GL_GLEXT_PROTOTYPES
 

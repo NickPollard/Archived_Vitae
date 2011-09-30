@@ -430,12 +430,13 @@ void terrain_render( void* data ) {
 	terrain* t = data;
 
 	// Switch to terrain shader
-	shader_activate( resources.shader_terrain );
-	glDepthMask( GL_TRUE );
+//	shader_activate( resources.shader_terrain );
+//	glDepthMask( GL_TRUE );
 
 	render_resetModelView();
 	matrix_mul( modelview, modelview, t->trans->world );
 	// Set up uniforms
+	/*
 	render_setUniform_matrix( *resources.uniforms.projection, perspective );
 	render_setUniform_matrix( *resources.uniforms.modelview, modelview );
 	render_setUniform_matrix( *resources.uniforms.worldspace, modelview );
@@ -444,6 +445,7 @@ void terrain_render( void* data ) {
 	GLint* tex = shader_findConstant( mhash( "tex" ));
 	if ( tex )
 		render_setUniform_texture( *tex, terrain_texture );
+*/
 
 	// *** Render the blocks
 	for ( int i = 0; i < t->total_block_count; i++ ) {
