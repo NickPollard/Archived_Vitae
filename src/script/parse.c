@@ -753,7 +753,8 @@ void model_processObject( void* arg, void* model_, void* transform_ ) {
 		p->definition->velocity = Vector( 0.f, 0.0f, -3.f, 0.f );
 		p->definition->spawn_interval = 0.01f;
 //		p->definition->flags = p->definition->flags | kParticleWorldSpace;
-		p->definition->texture_diffuse = texture_loadTGA( "assets/img/star_rgba64.tga" );
+		//p->definition->texture_diffuse = texture_loadTGA( "assets/img/star_rgba64.tga" );
+		texture_request( &p->definition->texture_diffuse, "assets/img/star_rgba64.tga" );
 
 		mdl->emitters[mdl->emitter_count++] = p;
 	}

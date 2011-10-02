@@ -206,7 +206,8 @@ void engine_init(engine* e, int argc, char** argv) {
 #ifndef ANDROID
 	//render_init();
 	// Kick off rendering thread
-	vthread render_thread = vthread_create( render_renderThreadFunc, NULL );
+	// Pass a pointer to the engine as args
+	vthread render_thread = vthread_create( render_renderThreadFunc, (void*)e );
 	(void)render_thread;
 	// Wait for initialization to finish
 	while ( !render_initialised ) {

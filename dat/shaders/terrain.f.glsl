@@ -22,7 +22,7 @@ uniform vec4 light_specular[LIGHT_COUNT];
 uniform sampler2D tex;
 
 // Test Light values
-const vec4 light_ambient = vec4( 0.0, 0.0, 0.0, 0.0 );
+const vec4 light_ambient = vec4( 0.2, 0.2, 0.2, 1.0 );
 // Directional Light
 const vec4 directional_light_direction = vec4( 1.0, -0.5, 1.0, 0.0 );
 const vec4 directional_light_diffuse = vec4( 1.0, 1.0, 0.4, 1.0 );

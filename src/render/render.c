@@ -22,6 +22,7 @@
 #include <GL/glfw.h>
 
 bool	render_initialised = false;
+vmutex	gl_mutex = kMutexInitialiser;
 
 #define MAX_VERTEX_ARRAY_COUNT 1024
 
@@ -77,7 +78,7 @@ void render_clearCallBuffer( ) {
 #endif
 }
 
-#define		kRenderDrawBufferSize 2 * 1024 * 1024
+#define		kRenderDrawBufferSize 1 * 1024 * 1024
 uint8_t*	render_draw_buffer;
 uint8_t*	render_draw_buffer_free;
 
@@ -113,6 +114,7 @@ void render_swapBuffers( egl_renderer* egl ) {
 #else
 void render_swapBuffers() {
 	glfwSwapBuffers(); // Send the 3d scene to the screen (flips display buffers)
+	glFlush();
 }
 #endif // ANDROID
 
@@ -176,7 +178,9 @@ void render_init() {
 	// Allocate draw buffer
 	render_draw_buffer = mem_alloc( kRenderDrawBufferSize );
 
-	render_initialised = true;
+
+// Now done in the main threadfunc due to separate android code path
+//	render_initialised = true;
 }
 
 // Terminate the 3D rendering
@@ -315,20 +319,24 @@ void render_drawCall_internal( drawCall* draw ) {
 	VERTEX_ATTRIBS( VERTEX_ATTRIB_DISABLE_ARRAY )
 }
 
-void render_draw() {
-	printf( "Render draw.\n" );
-
+void render_draw( engine* e ) {
+	vmutex_lock( &gl_mutex );
 	int w = 640;
 	int h = 480;
 	render_set3D( w, h );
 	render_clear();
 
 	for ( int i = 0; i < next_call_index; i++ ) {
-		printf( "RENDER_THREAD: Drawing something.\n" );
+		printf( "Drawing something!\n" );
 		render_drawCall_internal( &call_buffer[i] );
 	}
 
+#if ANDROID
+	render_swapBuffers( e->egl );
+#else
 	render_swapBuffers();
+#endif
+	vmutex_unlock( &gl_mutex );
 }
 
 //
@@ -336,12 +344,24 @@ void render_draw() {
 //
 void* render_renderThreadFunc( void* args ) {
 	printf( "Hello from the render thread!\n" );
+
+#ifdef ANDROID
+	struct android_app* app = args;
+	engine* e = app->userData;
+	e->egl = egl_init( app );
+#else
+	engine* e = args;
 	render_init();
+#endif
+	render_initialised = true;
+	printf( "RENDER THREAD: Render system initialised.\n ");
 
 	while( true ) {
+		texture_tick();
 		while ( threadsignal_render == 0 ) {
 		}
-		render_draw();
+		printf( "render_draw!\n" );
+		render_draw( e );
 		// Indicate that we have finished
 		threadsignal_render = 0;
 	}

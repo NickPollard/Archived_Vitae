@@ -32,18 +32,13 @@ void skybox_render( void* data ) {
 	// Skybox does not write to the depth buffer
 	glDepthMask( GL_FALSE );
 
-	// Switch to terrain shader
-	shader_activate( resources.shader_skybox );
 */
 	render_resetModelView();
 	vector v = Vector( 0.f, 0.f, 0.f, 1.f );
 	matrix_setTranslation( modelview, &v );
-	// Set up uniforms
-	/*
-	render_setUniform_matrix( *resources.uniforms.projection, perspective );
-	render_setUniform_matrix( *resources.uniforms.modelview, modelview );
-	render_setUniform_matrix( *resources.uniforms.worldspace, modelview );
-*/
 
-	//	mesh_drawVerts( skybox_model->meshes[0] );
+	// TEMP: Force texture again as delayed tex loading from model can override this
+	skybox_model->meshes[0]->texture_diffuse = skybox_texture;
+
+	mesh_drawVerts( skybox_model->meshes[0] );
 }

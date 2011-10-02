@@ -1,6 +1,7 @@
 // render.h
 #pragma once
 #include "scene.h"
+#include "system/thread.h"
 
 #define SHADER_UNIFORMS( f ) \
 	f( projection ) \
@@ -72,6 +73,7 @@ extern matrix modelview;
 extern matrix camera_inverse;
 extern matrix perspective;
 extern bool	render_initialised;
+extern vmutex	gl_mutex;
 
 void render_setBuffers( float* vertex_buffer, int vertex_buffer_size, int* element_buffer, int element_buffer_size );
 

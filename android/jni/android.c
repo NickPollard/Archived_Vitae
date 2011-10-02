@@ -159,7 +159,17 @@ static void handle_cmd( struct android_app* app, int32_t cmd ) {
 				printf( "ANDROID: init EGL." );
 				vAssert( app->userData );
 				engine* e = app->userData;
-                e->egl = egl_init( app );
+
+				// Spawn the renderer thread here
+				vthread render_thread = vthread_create( render_renderThreadFunc, (void*)app );
+				(void)render_thread;
+				// Wait for initialization to finish
+				while ( !render_initialised ) {
+					sleep( 1 );
+				}
+				printf( "MAIN THREAD: Renderer has been initialised.\n" );
+
+//				e->egl = egl_init( app );
 				// Set the touch window boundaries in the input
 				input_setWindowSize( e->input, e->egl->width, e->egl->height );
 				e->active = true;

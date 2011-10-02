@@ -23,7 +23,8 @@ particleEmitter* particleEmitter_create() {
 	memset( p, 0, sizeof( particleEmitter ));
 	p->definition = particleEmitterDef_create();
 	p->definition->spawn_box = Vector( 0.f, 0.f, 0.f, 0.f );
-	p->definition->texture_diffuse = texture_loadTGA( "assets/img/cloud_rgba128.tga" );
+	//p->definition->texture_diffuse = texture_loadTGA( "assets/img/cloud_rgba128.tga" );
+	//texture_request( &p->definition->texture_diffuse, "assets/img/cloud_rgba128.tga" );
 
 	p->vertex_buffer = mem_alloc( sizeof( vertex ) * kMaxParticleVerts );
 	p->element_buffer = mem_alloc( sizeof( vertex ) * kMaxParticleVerts );

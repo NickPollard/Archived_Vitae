@@ -30,7 +30,7 @@ typedef struct particleEmitterDef_s {
 	property* size;
 	property* color;
 	vector	velocity;
-	GLint	texture_diffuse;
+	GLuint	texture_diffuse;
 	uint8_t	flags;
 } particleEmitterDef;
 

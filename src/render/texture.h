@@ -48,5 +48,7 @@ typedef struct tga_header_s {
 } tga_header;
 
 
+void texture_tick();
+void texture_request( GLuint* tex, const char* filename );
 
 #endif // __TEXTURE_H__

@@ -12,7 +12,7 @@
 void terrain_calculateBounds( int bounds[2][2], terrain* t, vector* sample_point );
 void terrainBlock_calculateBuffers( terrain* t, terrainBlock* b );
 
-GLint terrain_texture = -1;
+GLuint terrain_texture = -1;
 
 terrainBlock* terrainBlock_create( ) {
 	terrainBlock* b = mem_alloc( sizeof( terrainBlock ));
@@ -45,8 +45,10 @@ terrain* terrain_create() {
 	t->u_block_count = 5;
 	t->v_block_count = 5;
 
-	if ( terrain_texture == -1 )
-		terrain_texture = texture_loadTGA( "assets/3rdparty/img/rock02_tile_small.tga" );
+	if ( terrain_texture == -1 ) {
+		texture_request( &terrain_texture, "assets/3rdparty/img/rock02_tile_small.tga" );
+	//	terrain_texture = texture_loadTGA( "assets/3rdparty/img/rock02_tile_small.tga" );
+	}
 
 	return t;
 }
@@ -416,6 +418,7 @@ void terrainBlock_render( terrainBlock* b ) {
 	memcpy( element_buffer, b->element_buffer, element_buffer_size );
 	memcpy( vertex_buffer, b->vertex_buffer, vertex_buffer_size );
 
+//	printf( "Terrain texture: %d.\n", terrain_texture );
 	drawCall* block_render = drawCall_create( resources.shader_terrain, b->index_count, b->element_buffer, b->vertex_buffer, terrain_texture, modelview );
 	render_drawCall( block_render );
 }
