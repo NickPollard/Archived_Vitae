@@ -340,14 +340,12 @@ void engine_run(engine* e) {
 #endif
 	
 	while ( e->running ) {
-		printf( "Engine frame begun.\n" );
 #ifdef ANDROID
 		engine_androidPollEvents( e );
 		if ( e->active ) {
 #endif // ANDROID
 		engine_input( e );
 		engine_tick( e );
-		printf( "Engine frame finished.\n" );
 		engine_waitForRenderThread();
 		engine_render( e );
 		e->running = e->running && !input_keyPressed( e->input, KEY_ESC );
