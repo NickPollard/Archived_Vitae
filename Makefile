@@ -1,6 +1,6 @@
 C = gcc
-CFLAGS = -Wall -Werror -m32 -std=c99 -I . `pkg-config --cflags libglfw` -I/usr/include/lua5.1  -Isrc
-LFLAGS = -m32 -Wl,--no-warn-search-mismatch
+CFLAGS = -Wall -Werror -m32 -std=c99 -I . `pkg-config --cflags libglfw` -I/usr/include/lua5.1  -Isrc -pg
+LFLAGS = -m32 -Wl,--no-warn-search-mismatch -pg
 LIBS = -lGLU -L/usr/lib -L/usr/local/lib -llua `pkg-config --libs libglfw`
 EXECUTABLE = vitae
 include Makelist
@@ -59,6 +59,3 @@ bin/release/%.o : src/%.c
 	@mkdir -pv `echo "$@" | sed -e 's/\/[^/]*\.o//'`
 	@echo "- Compiling $@"
 	@$(C) $(CFLAGS) -O2 -MD -c -o $@ $<
-#	$(C) -MM $(CFLAGS) -O2 -MD -c $< > $*.d.tmp
-#	sed -e 's/.*:/bin\/$*.o:/' < $*.d.tmp > bin/$*.d
-#	rm $*.d.tmp

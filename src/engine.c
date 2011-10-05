@@ -211,7 +211,7 @@ void engine_init(engine* e, int argc, char** argv) {
 	(void)render_thread;
 	// Wait for initialization to finish
 	while ( !render_initialised ) {
-		sleep( 1 );
+//		sleep( 1 );
 	}
 #endif // ANDROID
 
@@ -257,24 +257,23 @@ void engine_terminate(engine* e) {
 	exit(0);
 }
 
-void engine_render( engine* e ) {
+void engine_waitForRenderThread() {
+	/*
 	while ( threadsignal_render == 1 ) {
-//		sleep( 1 );
+		vthread_yield();
 	}
+	*/
+	vthread_waitCondition( finished_render );
+}
+
+void engine_render( engine* e ) {
 #ifdef ANDROID
 	if ( e->egl ) {
-//		render_set3D( e->egl->width, e->egl->height );
-//		render_clear();
 		render( theScene );
 		skybox_render( NULL );
 		engine_renderRenders( e );
 		//temp
 		//panel_draw( static_test_panel, 0.f, 0.f );
-
-		// Under drawcall system, this is what actually makes the GPU draw stuff out
-		//render_draw();
-
-//		render_swapBuffers( e->egl );
 	}
 #else
 	render( theScene );
@@ -282,14 +281,10 @@ void engine_render( engine* e ) {
 	engine_renderRenders( e );
 	// temp
 	//panel_draw( static_test_panel, 0.f, 0.f );
-
-	// Under drawcall system, this is what actually makes the GPU draw stuff out
-//	render_draw();
-
-
 #endif // ANDROID
 	// Allow the render thread to start
 	threadsignal_render = 1;
+	vthread_signalCondition( start_render );
 }
 
 #ifdef ANDROID
@@ -348,6 +343,7 @@ void engine_run(engine* e) {
 #endif // ANDROID
 		engine_input( e );
 		engine_tick( e );
+		engine_waitForRenderThread();
 		engine_render( e );
 		e->running = e->running && !input_keyPressed( e->input, KEY_ESC );
 #ifdef ANDROID

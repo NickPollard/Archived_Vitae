@@ -184,6 +184,7 @@ static void handle_cmd( struct android_app* app, int32_t cmd ) {
 				engine* e = app->userData;
 				egl_term( e->egl );
 				e->active = false;
+				android_exit();
 				break;
 			}
 		case APP_CMD_GAINED_FOCUS:
@@ -214,8 +215,18 @@ static int32_t handle_input(struct android_app* app, AInputEvent* event) {
     return 0;
 }
 
+void android_exit() {
+	// Cleanup the profiling library
+	moncleanup();
+
+	exit( EXIT_SUCCESS );
+}
+
 void android_init( struct android_app* app ) {
 	printf("Loading Vitae.\n");
+
+	// Initialise the profiling library
+	monstartup("libvitae.so");
 
 	// *** Initialise Engine
 	// already created

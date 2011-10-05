@@ -13,3 +13,8 @@ android/assets
 android/libs
 android/xxx.map
 
+# profile output
+android_profile_results
+profile_results
+android_gmon.out
+gmon.out

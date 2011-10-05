@@ -719,17 +719,17 @@ void model_processObject( void* arg, void* model_, void* transform_ ) {
 	model* mdl = model_;
 	(void)mdl;
 	if ( isTransform( arg )) {
-		printf( "model_processObject: Transform\n" );
+//		printf( "model_processObject: Transform\n" );
 		transform* t = transform_create();
 		t->parent = transform_;
 		transformData* tdata = ((sterm*)arg)->head;
 		matrix_setTranslation( t->local, &tdata->translation );
 		mdl->transforms[mdl->transform_count++] = t;
 		map_vv( tdata->elements, model_processObject, model_, t );
-		vector_printf( "model transform translation: ", matrix_getTranslation( t->local ));
+//		vector_printf( "model transform translation: ", matrix_getTranslation( t->local ));
 	}
 	if ( isPropertyType( arg, "particle_emitter" )) {
-		printf( "model_processObject: Emitter\n" );
+//		printf( "model_processObject: Emitter\n" );
 
 		particleEmitter* p = particleEmitter_create();
 

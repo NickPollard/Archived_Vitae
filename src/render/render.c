@@ -342,6 +342,25 @@ void render_draw( engine* e ) {
 	vmutex_unlock( &gl_mutex );
 }
 
+// threadsignal_render == 0 means that we are not ready to render
+// threadsignal_render == 1 means that the engine thread has fully prepared and we can begin
+void render_waitForEngineThread() {
+	/*
+	while ( threadsignal_render == 0 ) {
+		vthread_yield();
+	}
+	*/
+	vthread_waitCondition( start_render );
+}
+
+void render_renderThreadTick( engine* e ) {
+	texture_tick();
+	render_draw( e );
+	// Indicate that we have finished
+	threadsignal_render = 0;
+	vthread_signalCondition( finished_render );
+}
+
 //
 // *** The Rendering Thread itself
 //
@@ -357,15 +376,12 @@ void* render_renderThreadFunc( void* args ) {
 #endif
 	render_init();
 	render_initialised = true;
-	printf( "RENDER THREAD: Render system initialised.\n ");
+	printf( "RENDER THREAD: Render system initialised.\n");
+	vthread_signalCondition( finished_render );
 
 	while( true ) {
-		texture_tick();
-		while ( threadsignal_render == 0 ) {
-		}
-		render_draw( e );
-		// Indicate that we have finished
-		threadsignal_render = 0;
+		render_waitForEngineThread();
+		render_renderThreadTick( e );
 	}
 
 	return NULL;

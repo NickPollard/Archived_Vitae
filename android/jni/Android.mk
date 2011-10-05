@@ -18,9 +18,12 @@
 ##
 
 
-## LUA
 LOCAL_PATH		:= $(call my-dir)/../..
 
+# include the profiler snippet
+-include android-ndk-profiler.mk
+
+## LUA
 include $(CLEAR_VARS)
 
 LOCAL_MODULE    := lua
@@ -54,17 +57,19 @@ LOCAL_LDFLAGS := -Wl,-Map,xxx.map #create map file
 
 include $(BUILD_STATIC_LIBRARY)
 
+
 ## Vitae
 
 ## Reset make state
 include $(CLEAR_VARS)
+
 
 LOCAL_MODULE    := vitae
 include ../Makelist
 LOCAL_SRC_FILES := android/jni/android.c
 LOCAL_SRC_FILES	+= $(SRCS)
 LOCAL_LDLIBS    := -llog -landroid -lEGL -lGLESv2 -L$(SYSROOT)/usr/lib -lz 
-LOCAL_STATIC_LIBRARIES := android_native_app_glue lua zip
+LOCAL_STATIC_LIBRARIES := android_native_app_glue lua zip andprof
 
 MY_LUA_PATH := 3rdparty/Lua/lua-5.1.4/src
 MY_GLFW_PATH := 3rdparty/glfw-2.7.2/include
@@ -75,7 +80,7 @@ LOCAL_C_INCLUDES += $(LOCAL_PATH)/$(MY_LUA_PATH)
 LOCAL_C_INCLUDES += $(LOCAL_PATH)/$(MY_GLFW_PATH)
 LOCAL_C_INCLUDES += $(LOCAL_PATH)/$(MY_LIBZIP_PATH)
 
-LOCAL_CFLAGS := -g #debug
+LOCAL_CFLAGS := -g -pg #debug
 LOCAL_LDFLAGS := -Wl,-Map,xxx.map #create map file
 LOCAL_CFLAGS += -std=gnu99
 

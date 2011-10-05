@@ -48,15 +48,15 @@ void scene_addModel( scene* s, modelInstance* instance ) {
 	s->modelInstances[s->model_count++] = instance;
 
 	for ( int i = 0; i < instance->transform_count; i++ ) {
-		printf( "Adding transform.\n" );
+//		printf( "Adding transform.\n" );
 		scene_addTransform( s, instance->transforms[i] );
 		// At this point we set up subtransforms to be parented by the modelinstance transform
 		// Can't do it earlier as the transform doesn't exist when modelinstance is created
 		instance->transforms[i]->parent = instance->trans;
-		vector_printf( "subtransform Translation: ", matrix_getTranslation( instance->transforms[i]->local ));
+//		vector_printf( "subtransform Translation: ", matrix_getTranslation( instance->transforms[i]->local ));
 	}
 	for ( int i = 0; i < instance->emitter_count; i++ ) {
-		printf( "Adding emitter.\n" );
+//		printf( "Adding emitter.\n" );
 		scene_addEmitter( s, instance->emitters[i] );
 		if ( !instance->emitters[i]->trans )
 			instance->emitters[i]->trans = instance->trans;
