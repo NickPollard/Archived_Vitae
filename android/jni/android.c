@@ -173,7 +173,7 @@ static void handle_cmd( struct android_app* app, int32_t cmd ) {
 				// Set the touch window boundaries in the input
 				input_setWindowSize( e->input, e->egl->width, e->egl->height );
 				e->active = true;
-				render_init();
+				//render_init();
                 draw_frame( ((engine*)app->userData)->egl );
             }
             break;

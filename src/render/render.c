@@ -321,13 +321,16 @@ void render_drawCall_internal( drawCall* draw ) {
 
 void render_draw( engine* e ) {
 	vmutex_lock( &gl_mutex );
+#ifdef ANDROID
+	int w = 800;
+#else
 	int w = 640;
+#endif
 	int h = 480;
 	render_set3D( w, h );
 	render_clear();
 
 	for ( int i = 0; i < next_call_index; i++ ) {
-		printf( "Drawing something!\n" );
 		render_drawCall_internal( &call_buffer[i] );
 	}
 
@@ -343,7 +346,7 @@ void render_draw( engine* e ) {
 // *** The Rendering Thread itself
 //
 void* render_renderThreadFunc( void* args ) {
-	printf( "Hello from the render thread!\n" );
+	printf( "RENDER THREAD: Hello from the render thread!\n" );
 
 #ifdef ANDROID
 	struct android_app* app = args;
@@ -351,8 +354,8 @@ void* render_renderThreadFunc( void* args ) {
 	e->egl = egl_init( app );
 #else
 	engine* e = args;
-	render_init();
 #endif
+	render_init();
 	render_initialised = true;
 	printf( "RENDER THREAD: Render system initialised.\n ");
 
@@ -360,7 +363,6 @@ void* render_renderThreadFunc( void* args ) {
 		texture_tick();
 		while ( threadsignal_render == 0 ) {
 		}
-		printf( "render_draw!\n" );
 		render_draw( e );
 		// Indicate that we have finished
 		threadsignal_render = 0;

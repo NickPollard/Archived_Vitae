@@ -258,10 +258,13 @@ void engine_terminate(engine* e) {
 }
 
 void engine_render( engine* e ) {
+	while ( threadsignal_render == 1 ) {
+//		sleep( 1 );
+	}
 #ifdef ANDROID
 	if ( e->egl ) {
-		render_set3D( e->egl->width, e->egl->height );
-		render_clear();
+//		render_set3D( e->egl->width, e->egl->height );
+//		render_clear();
 		render( theScene );
 		skybox_render( NULL );
 		engine_renderRenders( e );
@@ -271,12 +274,9 @@ void engine_render( engine* e ) {
 		// Under drawcall system, this is what actually makes the GPU draw stuff out
 		//render_draw();
 
-		render_swapBuffers( e->egl );
+//		render_swapBuffers( e->egl );
 	}
 #else
-	while ( threadsignal_render == 1 ) {
-//		sleep( 1 );
-	}
 	render( theScene );
 	skybox_render( NULL );
 	engine_renderRenders( e );
@@ -286,10 +286,10 @@ void engine_render( engine* e ) {
 	// Under drawcall system, this is what actually makes the GPU draw stuff out
 //	render_draw();
 
-	// Allow the render thread to start
-	threadsignal_render = 1;
 
 #endif // ANDROID
+	// Allow the render thread to start
+	threadsignal_render = 1;
 }
 
 #ifdef ANDROID

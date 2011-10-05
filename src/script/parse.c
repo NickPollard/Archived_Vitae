@@ -864,11 +864,13 @@ void* lookup( sterm* data ) {
 }
 
 void test_sproperty() {
+	/*
 	printf( "TEST: sproperty.\n" );
 	const char* string = "(property (0.0 (vector 1.0 0.0 0.0 1.0)) (1.0  (vector 0.0 0.0 0.0 0.0)))";
 	void* ptr = eval( parse_string( string ));
 	(void)ptr;
 	//vAssert( 0 );
+	*/
 }
 
 void test_sfile( ) {
