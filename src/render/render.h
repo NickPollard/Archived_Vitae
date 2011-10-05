@@ -6,10 +6,10 @@
 #define SHADER_UNIFORMS( f ) \
 	f( projection ) \
 	f( modelview ) \
-	f( worldspace ) \
 	f( light_position ) \
 	f( light_diffuse ) \
-	f( light_specular )
+	f( light_specular ) \
+	f( tex )
 
 
 #define DECLARE_AS_GLINT_P( var ) \
@@ -22,14 +22,14 @@
 	f( color )
 
 #define VERTEX_ATTRIB_DISABLE_ARRAY( attrib ) \
-	glDisableVertexAttribArray( attrib );
+	glDisableVertexAttribArray( *resources.attributes.attrib );
 
 #define VERTEX_ATTRIB_LOOKUP( attrib ) \
-	GLint attrib = *(shader_findConstant( mhash( #attrib )));
+	resources.attributes.attrib = (shader_findConstant( mhash( #attrib )));
 
 #define VERTEX_ATTRIB_POINTER( attrib ) \
-	glVertexAttribPointer( attrib, /*vec4*/ 4, GL_FLOAT, /*Normalized?*/GL_FALSE, sizeof( vertex ), (void*)offsetof( vertex, attrib) ); \
-	glEnableVertexAttribArray( attrib );
+	glVertexAttribPointer( *resources.attributes.attrib, /*vec4*/ 4, GL_FLOAT, /*Normalized?*/GL_FALSE, sizeof( vertex ), (void*)offsetof( vertex, attrib) ); \
+	glEnableVertexAttribArray( *resources.attributes.attrib );
 
 typedef struct gl_resources_s {
 	GLuint vertex_buffer, element_buffer;
@@ -43,9 +43,12 @@ typedef struct gl_resources_s {
 	} particle_uniforms;
 
 	struct {
+		VERTEX_ATTRIBS( DECLARE_AS_GLINT_P )
+			/*
 		GLint position;
 		GLint normal;
 		GLint uv;
+		*/
 	} attributes;
 
 	// Shader objects

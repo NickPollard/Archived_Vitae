@@ -44,10 +44,12 @@ GLuint gl_bufferCreate( GLenum target, const void* data, GLsizei size ) {
 	return buffer;
 }
 
+/*
 void render_setBuffers( float* vertex_buffer, int vertex_buffer_size, int* element_buffer, int element_buffer_size ) {
 	resources.vertex_buffer = gl_bufferCreate( GL_ARRAY_BUFFER, vertex_buffer, vertex_buffer_size );
 	resources.element_buffer = gl_bufferCreate( GL_ELEMENT_ARRAY_BUFFER, element_buffer, element_buffer_size );
 }
+*/
 
 void render_buildShaders() {
 	// Load Shaders								Vertex								Fragment
@@ -61,10 +63,7 @@ void render_buildShaders() {
 	resources.uniforms.var = shader_findConstant( mhash( #var )); \
 	assert( resources.uniforms.var != NULL );
 	SHADER_UNIFORMS( GET_UNIFORM_LOCATION )
-
-#define GET_UNIFORM_LOCATION_PARTICLE( var ) \
-	resources.uniforms.var = shader_findConstant( mhash( #var ));
-	SHADER_UNIFORMS( GET_UNIFORM_LOCATION_PARTICLE )
+	VERTEX_ATTRIBS( VERTEX_ATTRIB_LOOKUP );
 }
 
 #define kMaxDrawCalls 256
@@ -235,8 +234,7 @@ void render_setUniform_texture( GLuint uniform, GLuint texture ) {
 void render( scene* s ) {
 	render_clearCallBuffer();
 	render_resetBufferBuffer();
-	// Load our shader
-//	shader_activate( resources.shader_default );
+	
 	matrix_setIdentity( modelview );
 
 	const float fov = 0.8f; // In radians
@@ -255,13 +253,6 @@ void render( scene* s ) {
 	matrix_inverse( camera_inverse, cam->trans->world );
 	render_validateMatrix( modelview );
 	render_resetModelView();
-
-	// Set up uniforms
-	/*
-	render_setUniform_matrix( *resources.uniforms.projection, perspective );
-	render_setUniform_matrix( *resources.uniforms.modelview, modelview );
-	render_setUniform_matrix( *resources.uniforms.worldspace, modelview );
-*/
 
 	render_lighting( s );
 
@@ -283,27 +274,47 @@ drawCall* drawCall_create( shader* vshader, int count, GLushort* elements, verte
 void render_drawCall( drawCall* draw ) {
 	return;
 }
+void render_drawCall_draw( drawCall* draw ) {
+	// Copy our data to the GPU
+	GLsizei vertex_buffer_size = draw->element_count * sizeof( vertex );
+	GLsizei element_buffer_size = draw->element_count * sizeof( GLushort );
+
+	// *** Vertex Buffer
+	glBindBuffer( GL_ARRAY_BUFFER, resources.vertex_buffer );
+	glBufferData( GL_ARRAY_BUFFER, vertex_buffer_size, draw->vertex_buffer, GL_DYNAMIC_DRAW );// OpenGL ES only supports DYNAMIC_DRAW or STATIC_DRAW
+//	glBufferSubData( GL_ARRAY_BUFFER, 0, vertex_buffer_size, draw->vertex_buffer );
+	VERTEX_ATTRIBS( VERTEX_ATTRIB_POINTER );
+	// *** Element Buffer
+	glBindBuffer( GL_ELEMENT_ARRAY_BUFFER, resources.element_buffer );
+	glBufferData( GL_ELEMENT_ARRAY_BUFFER, element_buffer_size, draw->element_buffer, GL_DYNAMIC_DRAW ); // OpenGL ES only supports DYNAMIC_DRAW or STATIC_DRAW
+//	glBufferSubData( GL_ELEMENT_ARRAY_BUFFER, 0, element_buffer_size, draw->element_buffer );
+
+	// Draw!
+	glDrawElements( GL_TRIANGLES, draw->element_count, GL_UNSIGNED_SHORT, (void*)0 );
+
+	// Cleanup
+	VERTEX_ATTRIBS( VERTEX_ATTRIB_DISABLE_ARRAY )
+}
 
 void render_drawCall_internal( drawCall* draw ) {
 	// For now, *always* write to depth buffer
 	glDepthMask( GL_TRUE );
 
 	shader_activate( draw->vitae_shader );
+	
 	// Textures
-	GLint* tex = shader_findConstant( mhash( "tex" ));
-	if ( tex )
-		render_setUniform_texture( *tex, draw->texture );
+	render_setUniform_texture( *resources.uniforms.tex, draw->texture );
 
 	// Set up uniform matrices
-	render_setUniform_matrix( *resources.uniforms.modelview, draw->modelview );
-	render_setUniform_matrix( *resources.uniforms.worldspace, draw->modelview );
-	render_setUniform_matrix( *resources.uniforms.projection, perspective );
+	render_setUniform_matrix( *resources.uniforms.modelview,	draw->modelview );
+	render_setUniform_matrix( *resources.uniforms.projection,	perspective );
 
+	render_drawCall_draw( draw );
+	/*
 	// Copy our data to the GPU
 	GLsizei vertex_buffer_size = draw->element_count * sizeof( vertex );
 	GLsizei element_buffer_size = draw->element_count * sizeof( GLushort );
 
-	VERTEX_ATTRIBS( VERTEX_ATTRIB_LOOKUP );
 	// *** Vertex Buffer
 	glBindBuffer( GL_ARRAY_BUFFER, resources.vertex_buffer );
 	glBufferData( GL_ARRAY_BUFFER, vertex_buffer_size, draw->vertex_buffer, GL_DYNAMIC_DRAW );// OpenGL ES only supports DYNAMIC_DRAW or STATIC_DRAW
@@ -317,6 +328,7 @@ void render_drawCall_internal( drawCall* draw ) {
 
 	// Cleanup
 	VERTEX_ATTRIBS( VERTEX_ATTRIB_DISABLE_ARRAY )
+	*/
 }
 
 void render_draw( engine* e ) {
@@ -354,11 +366,15 @@ void render_waitForEngineThread() {
 }
 
 void render_renderThreadTick( engine* e ) {
+	PROFILE_BEGIN( PROFILE_RENDER_TICK );
+	printf( "Render frame begun.\n" );
 	texture_tick();
 	render_draw( e );
+	printf( "Render frame finished.\n" );
 	// Indicate that we have finished
 	threadsignal_render = 0;
 	vthread_signalCondition( finished_render );
+	PROFILE_END( PROFILE_RENDER_TICK );
 }
 
 //

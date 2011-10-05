@@ -9,6 +9,7 @@ SRCS =	src/camera.c \
 		src/model_loader.c \
 		src/particle.c \
 		src/physic.c \
+		src/profile.c \
 		src/scene.c \
 		src/skybox.c \
 		src/terrain.c \

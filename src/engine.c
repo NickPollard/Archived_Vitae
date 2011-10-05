@@ -114,6 +114,7 @@ float frame_times[10];
 
 // tick - process a frame of game update
 void engine_tick( engine* e ) {
+	PROFILE_BEGIN( PROFILE_ENGINE_TICK );
 	float dt = timer_getDelta( e->timer );
 
 	float time = 0.f;
@@ -143,6 +144,7 @@ void engine_tick( engine* e ) {
 
 	vector v = Vector( 0.0, 0.0, 30.0, 1.0 );
 	theTerrain->sample_point = matrixVecMul( theScene->cam->trans->world, &v );
+	PROFILE_END( PROFILE_ENGINE_TICK );
 
 }
 
@@ -258,15 +260,13 @@ void engine_terminate(engine* e) {
 }
 
 void engine_waitForRenderThread() {
-	/*
-	while ( threadsignal_render == 1 ) {
-		vthread_yield();
-	}
-	*/
+	PROFILE_BEGIN( PROFILE_ENGINE_WAIT );
 	vthread_waitCondition( finished_render );
+	PROFILE_END( PROFILE_ENGINE_WAIT );
 }
 
 void engine_render( engine* e ) {
+	PROFILE_BEGIN( PROFILE_ENGINE_RENDER );
 #ifdef ANDROID
 	if ( e->egl ) {
 		render( theScene );
@@ -285,6 +285,7 @@ void engine_render( engine* e ) {
 	// Allow the render thread to start
 	threadsignal_render = 1;
 	vthread_signalCondition( start_render );
+	PROFILE_END( PROFILE_ENGINE_RENDER );
 }
 
 #ifdef ANDROID
@@ -328,21 +329,25 @@ void engine_androidPollEvents( engine* e ) {
 
 // run - executes the main loop of the engine
 void engine_run(engine* e) {
+#if PROFILE_ENABLE
+	profile_init();
+#endif
+	PROFILE_BEGIN( PROFILE_MAIN );
 	//	TextureLibrary* textures = texture_library_create();
 
 #ifndef ANDROID
 	handleResize( 640, 480 );	// Call once to init
 #endif
 	
-
-	printf( "running: %d, active %d.\n", e->running, e->active );
 	while ( e->running ) {
+		printf( "Engine frame begun.\n" );
 #ifdef ANDROID
 		engine_androidPollEvents( e );
 		if ( e->active ) {
 #endif // ANDROID
 		engine_input( e );
 		engine_tick( e );
+		printf( "Engine frame finished.\n" );
 		engine_waitForRenderThread();
 		engine_render( e );
 		e->running = e->running && !input_keyPressed( e->input, KEY_ESC );
@@ -351,7 +356,15 @@ void engine_run(engine* e) {
 #else
 		e->running = e->running && glfwGetWindowParam( GLFW_OPENED );
 #endif // ANDROID
+#if PROFILE_ENABLE
+		profile_newFrame();
+#endif
 	}
+	PROFILE_END( PROFILE_MAIN );
+#if PROFILE_ENABLE
+		profile_newFrame();
+	profile_dumpProfileTimes();
+#endif
 }
 
 // Run through all the delegates, ticking each of them

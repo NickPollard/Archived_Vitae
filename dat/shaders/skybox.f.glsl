@@ -11,10 +11,6 @@ varying vec2 texcoord;
 const int LIGHT_COUNT = 2;
 
 // Uniform
-uniform mat4 worldspace;
-uniform vec4 light_position[LIGHT_COUNT];
-uniform vec4 light_diffuse[LIGHT_COUNT];
-uniform vec4 light_specular[LIGHT_COUNT];
 uniform sampler2D tex;
 
 // Test Light values

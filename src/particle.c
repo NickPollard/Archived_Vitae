@@ -121,13 +121,11 @@ void particle_quad( particleEmitter* e, vertex* dst, vector* point, float size, 
 
 // Render a particleEmitter system
 void particleEmitter_render( void* data ) {
-//	glDepthMask( GL_FALSE );
+	//	glDepthMask( GL_FALSE );
 	// switch to particle shader
-//	shader_activate( resources.shader_particle );
 
 	// Set up uniforms
-	render_setUniform_matrix( *resources.uniforms.projection, perspective );
-	render_setUniform_matrix( *resources.uniforms.worldspace, modelview );
+//	render_setUniform_matrix( *resources.uniforms.projection, perspective );
 
 	particleEmitter* p = data;
 		
@@ -160,7 +158,7 @@ void particleEmitter_render( void* data ) {
 	// For Billboard particles; cancel out the rotation of the matrix
 	// The transformation has been applied already for particle positions
 	matrix_setIdentity( modelview );
-	render_setUniform_matrix( *resources.uniforms.modelview, modelview );
+//	render_setUniform_matrix( *resources.uniforms.modelview, modelview );
 
 	int index_count = 6 * p->count;
 

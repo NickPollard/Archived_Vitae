@@ -52,7 +52,7 @@ bin/debug/%.o : src/%.c
 #	Calculate the directory required and create it
 	@mkdir -pv `echo "$@" | sed -e 's/\/[^/]*\.o//'`
 	@echo "- Compiling $@"
-	@$(C) -g $(CFLAGS) -D DEBUG -c -o $@ $<
+	@$(C) -g $(CFLAGS) -MD -D DEBUG -c -o $@ $<
 
 bin/release/%.o : src/%.c
 #	Calculate the directory required and create it

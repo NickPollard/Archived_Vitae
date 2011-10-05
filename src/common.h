@@ -11,6 +11,7 @@
 #include "common.fwd.h"
 
 #include "debug/debug.h"
+#include "profile.h"
 
 // For sleep
 #include <unistd.h>

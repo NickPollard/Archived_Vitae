@@ -1,4 +1,7 @@
 //#version 110
+#ifdef GL_ES
+precision mediump float;
+#endif
 // Phong Vertex Shader
 // Attributes
 attribute vec4 position;

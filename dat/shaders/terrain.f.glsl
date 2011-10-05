@@ -15,7 +15,7 @@ varying vec4 vert_color;
 const int LIGHT_COUNT = 2;
 
 // Uniform
-uniform mat4 worldspace;
+uniform mat4 modelview;
 uniform vec4 light_position[LIGHT_COUNT];
 uniform vec4 light_diffuse[LIGHT_COUNT];
 uniform vec4 light_specular[LIGHT_COUNT];
@@ -43,7 +43,7 @@ void main() {
 	{
 		// Ambient + Diffuse
 		// TODO: This is constant, can be calculated once
-		vec4 light_direction = normalize( worldspace * directional_light_direction );
+		vec4 light_direction = normalize( modelview * directional_light_direction );
 
 		// TODO: Can this be done in the vertex shader?
 		// how does dot( -light_direction, frag_normal ) vary accross a poly?
@@ -63,7 +63,7 @@ void main() {
 #if 0	
 	for ( int i = 0; i < LIGHT_COUNT; i++ ) 
 		// Per-light calculations
-		vec4 cs_light_position = worldspace * light_position[i];
+		vec4 cs_light_position = modelview * light_position[i];
 		vec4 light_direction = normalize( frag_position - cs_light_position );
 		float light_distance = length( frag_position - cs_light_position );
 
