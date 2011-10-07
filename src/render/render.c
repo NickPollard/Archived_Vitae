@@ -402,11 +402,6 @@ void render_draw( engine* e ) {
 // threadsignal_render == 0 means that we are not ready to render
 // threadsignal_render == 1 means that the engine thread has fully prepared and we can begin
 void render_waitForEngineThread() {
-	/*
-	while ( threadsignal_render == 0 ) {
-		vthread_yield();
-	}
-	*/
 	vthread_waitCondition( start_render );
 }
 

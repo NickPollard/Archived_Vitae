@@ -213,7 +213,9 @@ void engine_init(engine* e, int argc, char** argv) {
 	(void)render_thread;
 	// Wait for initialization to finish
 	while ( !render_initialised ) {
-//		sleep( 1 );
+//		printf( "blarg.\n" );
+		vthread_waitCondition( finished_render );
+//		sleep( 0 );
 	}
 #endif // ANDROID
 
@@ -338,6 +340,9 @@ void engine_run(engine* e) {
 #ifndef ANDROID
 	handleResize( 640, 480 );	// Call once to init
 #endif
+
+	// We need to ensure we can run the first time without waiting for render
+	vthread_signalCondition( finished_render );
 	
 	while ( e->running ) {
 #ifdef ANDROID

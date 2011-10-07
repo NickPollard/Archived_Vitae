@@ -47,7 +47,9 @@ void vmutex_unlock( vmutex* mutex ) {
 // *** Conditions
 
 void vthread_signalCondition( int i ) {
-//	printf( "THREAD: Setting condition %d.\n", i );
+#ifdef DEBUG_THREAD_CONDITIONS
+	printf( "THREAD: Setting condition %d.\n", i );
+#endif
 	vmutex*		condition_mutex	= &condition_mutices[i];
 	vcondition*	condition		= &conditions[i];
 
@@ -58,7 +60,9 @@ void vthread_signalCondition( int i ) {
 }
 
 void vthread_waitCondition( int i ) {
-//	printf( "THREAD: Waiting for condition %d.\n", i );
+#ifdef DEBUG_THREAD_CONDITIONS
+	printf( "THREAD: Waiting for condition %d.\n", i );
+#endif
 	vmutex*		condition_mutex	= &condition_mutices[i];
 	vcondition*	condition		= &conditions[i];
 
@@ -66,7 +70,9 @@ void vthread_waitCondition( int i ) {
 	while ( condition_values[i] == false ) {
 		pthread_cond_wait( condition, condition_mutex );
 	}
-//	printf( "THREAD: Received condition %d.\n", i );
+#ifdef DEBUG_THREAD_CONDITIONS
+	printf( "THREAD: Received condition %d.\n", i );
+#endif
 	condition_values[i] = false;
 	vmutex_unlock( condition_mutex );
 }
