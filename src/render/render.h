@@ -130,16 +130,25 @@ typedef void (*func_getIV)( GLuint, GLenum, GLint* );
 typedef void (*func_getInfoLog)( GLuint, GLint, GLint*, GLchar* );
 
 void gl_dumpInfoLog( GLuint object, func_getIV getIV, func_getInfoLog getInfoLog );
+GLuint render_glBufferCreate( GLenum target, const void* data, GLsizei size );
 
 // Draw Calls
 
 typedef struct drawCall_s {
+	// Shader
+	shader*		vitae_shader;
+	// Uniforms
 	matrix		modelview;
+	GLint		texture;
+
+	// Buffer data
 	GLushort*	element_buffer;
 	vertex*		vertex_buffer;
-	int			element_count;
-	GLint		texture;
-	shader*		vitae_shader;
+
+	GLuint		vertex_VBO;
+	GLuint		element_VBO;
+	unsigned int	element_count;
+	unsigned int	element_buffer_offset;
 } drawCall;
 
 drawCall* drawCall_create( shader* vshader, int count, GLushort* elements, vertex* verts, GLint tex, matrix mv );

@@ -37,6 +37,10 @@ struct mesh_s {
 	unsigned short*	element_buffer;
 
 	GLuint		texture_diffuse;
+
+	//
+	GLuint		vertex_VBO;
+	GLuint		element_VBO;
 };
 
 // *** Model ***
@@ -61,7 +65,7 @@ struct model_s {
 mesh* mesh_createMesh( int vertCount, int index_count, int normal_count, int uv_count );
 
 // Draw the verts of a mesh to the openGL buffer
-void mesh_drawVerts(mesh* m);
+void mesh_render(mesh* m);
 
 // Precalculate flat normals for a mesh
 void mesh_calculateNormals( mesh* m );

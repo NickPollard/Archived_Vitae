@@ -28,11 +28,8 @@ void skybox_init( ) {
 
 // Render the skybox
 void skybox_render( void* data ) {
-	/*
 	// Skybox does not write to the depth buffer
-	glDepthMask( GL_FALSE );
 
-*/
 	render_resetModelView();
 	vector v = Vector( 0.f, 0.f, 0.f, 1.f );
 	matrix_setTranslation( modelview, &v );
@@ -40,5 +37,5 @@ void skybox_render( void* data ) {
 	// TEMP: Force texture again as delayed tex loading from model can override this
 	skybox_model->meshes[0]->texture_diffuse = skybox_texture;
 
-	mesh_drawVerts( skybox_model->meshes[0] );
+	mesh_render( skybox_model->meshes[0] );
 }

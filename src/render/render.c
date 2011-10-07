@@ -22,7 +22,6 @@
 #include <GL/glfw.h>
 
 bool	render_initialised = false;
-vmutex	gl_mutex = kMutexInitialiser;
 
 #define MAX_VERTEX_ARRAY_COUNT 1024
 
@@ -33,7 +32,7 @@ matrix perspective;
 
 gl_resources resources;
 
-GLuint gl_bufferCreate( GLenum target, const void* data, GLsizei size ) {
+GLuint render_glBufferCreate( GLenum target, const void* data, GLsizei size ) {
 	GLuint buffer; // The OpenGL object handle we generate
 	glGenBuffers( 1, &buffer );
 	glBindBuffer( target, buffer );
@@ -46,8 +45,8 @@ GLuint gl_bufferCreate( GLenum target, const void* data, GLsizei size ) {
 
 /*
 void render_setBuffers( float* vertex_buffer, int vertex_buffer_size, int* element_buffer, int element_buffer_size ) {
-	resources.vertex_buffer = gl_bufferCreate( GL_ARRAY_BUFFER, vertex_buffer, vertex_buffer_size );
-	resources.element_buffer = gl_bufferCreate( GL_ELEMENT_ARRAY_BUFFER, element_buffer, element_buffer_size );
+	resources.vertex_buffer = render_glBufferCreate( GL_ARRAY_BUFFER, vertex_buffer, vertex_buffer_size );
+	resources.element_buffer = render_glBufferCreate( GL_ELEMENT_ARRAY_BUFFER, element_buffer, element_buffer_size );
 }
 */
 
@@ -67,11 +66,6 @@ void render_buildShaders() {
 }
 
 #define kMaxDrawCalls 256
-/*
-drawCall call_buffer[kMaxDrawCalls];
-int next_call_index = 0;
-*/
-
 #define kCallBufferCount 8		// Needs to be at least as many as we have shaders
 drawCall	call_buffer[kCallBufferCount][kMaxDrawCalls];
 int			next_call_index[kCallBufferCount];
@@ -82,10 +76,8 @@ int callbatch_count = 0;
 
 void render_clearCallBuffer( ) {
 	memset( next_call_index, 0, sizeof( int ) * kCallBufferCount );
-//	next_call_index = 0;
 #if debug
 	memset( call_buffer, 0, sizeof( drawCall ) * kMaxDrawCalls * kCallBufferCount );
-	//memset( call_buffer, 0, sizeof( drawCall ) * kMaxDrawCalls );
 #endif
 }
 
@@ -184,16 +176,13 @@ void render_init() {
 	const GLsizei vertex_buffer_size = sizeof( vector ) * MAX_VERTEX_ARRAY_COUNT;
 	const GLsizei element_buffer_size = sizeof( GLushort ) * MAX_VERTEX_ARRAY_COUNT;
 	for ( int i = 0; i < kVboCount; i++ ) {
-		resources.vertex_buffer[i]	= gl_bufferCreate( GL_ARRAY_BUFFER, NULL, vertex_buffer_size );
-		resources.element_buffer[i]	= gl_bufferCreate( GL_ELEMENT_ARRAY_BUFFER, NULL, element_buffer_size );
+		resources.vertex_buffer[i]	= render_glBufferCreate( GL_ARRAY_BUFFER, NULL, vertex_buffer_size );
+		resources.element_buffer[i]	= render_glBufferCreate( GL_ELEMENT_ARRAY_BUFFER, NULL, element_buffer_size );
 	}
 
 	// Allocate draw buffer
 	render_draw_buffer = mem_alloc( kRenderDrawBufferSize );
 	callbatch_map = map_create( kCallBufferCount, sizeof( unsigned int ));
-
-// Now done in the main threadfunc due to separate android code path
-//	render_initialised = true;
 }
 
 // Terminate the 3D rendering
@@ -290,18 +279,20 @@ int render_findDrawCallBuffer( shader* vshader ) {
 }
 
 drawCall* drawCall_create( shader* vshader, int count, GLushort* elements, vertex* verts, GLint tex, matrix mv ) {
-
 	// Lookup drawcall buffer from shader
 	int call_buffer_index = render_findDrawCallBuffer( vshader );
 	vAssert( next_call_index[call_buffer_index] < kMaxDrawCalls );
 	drawCall* draw = &call_buffer[call_buffer_index][next_call_index[call_buffer_index]++];
-
-//	drawCall* draw = &call_buffer[next_call_index++];
+	
 	draw->vitae_shader = vshader;
 	draw->element_buffer = elements;
 	draw->vertex_buffer = verts;
 	draw->element_count = count;
 	draw->texture = tex;
+	draw->element_buffer_offset = 0;
+	draw->element_VBO = resources.vertex_buffer[0];
+	draw->vertex_VBO = resources.element_buffer[0];
+
 	matrix_cpy( draw->modelview, mv );
 	return draw;
 }
@@ -319,33 +310,47 @@ void render_drawCall_draw( drawCall* draw ) {
 
 	VERTEX_ATTRIBS( VERTEX_ATTRIB_POINTER );
 	// *** Vertex Buffer
-	glBindBuffer( GL_ARRAY_BUFFER, resources.vertex_buffer[buffer_index] );
+	glBindBuffer( GL_ARRAY_BUFFER, draw->vertex_VBO );
 	glBufferData( GL_ARRAY_BUFFER, vertex_buffer_size, draw->vertex_buffer, GL_DYNAMIC_DRAW );// OpenGL ES only supports DYNAMIC_DRAW or STATIC_DRAW
 	// *** Element Buffer
-	glBindBuffer( GL_ELEMENT_ARRAY_BUFFER, resources.element_buffer[buffer_index] );
+	glBindBuffer( GL_ELEMENT_ARRAY_BUFFER, draw->element_VBO );
 	glBufferData( GL_ELEMENT_ARRAY_BUFFER, element_buffer_size, draw->element_buffer, GL_DYNAMIC_DRAW ); // OpenGL ES only supports DYNAMIC_DRAW or STATIC_DRAW
 
 	// Draw!
-	glDrawElements( GL_TRIANGLES, draw->element_count, GL_UNSIGNED_SHORT, (void*)0 );
+	glDrawElements( GL_TRIANGLES, draw->element_count, GL_UNSIGNED_SHORT, (void*)draw->element_buffer_offset );
 
-//	glBindBuffer( GL_ARRAY_BUFFER, 0 );
-//	glBindBuffer( GL_ELEMENT_ARRAY_BUFFER, 0 );
-	buffer_index = ( buffer_index + 1 ) % kVboCount;
-	VERTEX_ATTRIBS( VERTEX_ATTRIB_DISABLE_ARRAY )
+//	buffer_index = ( buffer_index + 1 ) % kVboCount;
+	VERTEX_ATTRIBS( VERTEX_ATTRIB_DISABLE_ARRAY );
+
+#if 0
+	// *** New Style
+
+	// Set-up Vertex Attribs (because we might be using a different VBO despite same shader?)
+	VERTEX_ATTRIBS( VERTEX_ATTRIB_POINTER );
+
+	// Bind the correct buffers for element and vertex buffers
+	// These can be specified by the drawCall
+	glBindBuffer( GL_ARRAY_BUFFER, draw->vertex_VBO );
+	glBindBuffer( GL_ELEMENT_ARRAY_BUFFER, draw->element_VBO );
+
+	// Draw the elements
+	// If this is the only data in the VBO, the offset is going to be 0
+	// Otherwise, we might store the offset in the drawcall
+	// for now store it regardless, initialised to 0 by default
+	unsigned int offset = draw->element_buffer_offset;
+	unsigned int element_count = draw->element_count;
+
+	glDrawElements( GL_TRIANGLES, element_count, GL_UNSIGNED_SHORT, (void*)offset );
+
+	// Clean-up Vertex Attribs (and perhaps buffers?)
+	VERTEX_ATTRIBS( VERTEX_ATTRIB_DISABLE_ARRAY );
+#endif
 }
 
-void render_drawCall_internal( drawCall* draw ) {
-	// For now, *always* write to depth buffer
-//	glDepthMask( GL_TRUE );
-
-//	shader_activate( draw->vitae_shader );
-	
-	// Textures
+void render_drawBatch( drawCall* draw ) {
+	// Set uniforms global to the batch	
 	render_setUniform_texture( *resources.uniforms.tex, draw->texture );
-
-	// Set up uniform matrices
 	render_setUniform_matrix( *resources.uniforms.modelview,	draw->modelview );
-//	render_setUniform_matrix( *resources.uniforms.projection,	perspective );
 
 	render_drawCall_draw( draw );
 }
@@ -353,25 +358,21 @@ void render_drawCall_internal( drawCall* draw ) {
 void render_drawCallBatch( int index ) {
 	int count = next_call_index[index];
 	if ( count > 0 ) {
-		drawCall* draw = &call_buffer[index][0];
 		// For now, *always* write to depth buffer
 		glDepthMask( GL_TRUE );
-		shader_activate( draw->vitae_shader );
+		shader_activate( call_buffer[index][0].vitae_shader );
 		// Set up uniform matrices
 		render_setUniform_matrix( *resources.uniforms.projection,	perspective );
 
 //		VERTEX_ATTRIBS( VERTEX_ATTRIB_POINTER );
-		//		render_drawCall_draw( draw );
-		//		printf( "RENDER: Drawing callbatch %d (%d calls).\n", index, count );
 		for ( int i = 0; i < count; i++ ) {
-			render_drawCall_internal( &call_buffer[index][i] );
+			render_drawBatch( &call_buffer[index][i] );
 		}
 //		VERTEX_ATTRIBS( VERTEX_ATTRIB_DISABLE_ARRAY )
 	}
 }
 
 void render_draw( engine* e ) {
-	vmutex_lock( &gl_mutex );
 #ifdef ANDROID
 	int w = 800;
 #else
@@ -385,22 +386,14 @@ void render_draw( engine* e ) {
 	for ( int i = 0; i < kCallBufferCount; i++ ) {
 		render_drawCallBatch( i );	
 	}
-/*
-	for ( int i = 0; i < next_call_index; i++ ) {
-		render_drawCall_internal( &call_buffer[i] );
-	}
-	*/
 
 #if ANDROID
 	render_swapBuffers( e->egl );
 #else
 	render_swapBuffers();
 #endif
-	vmutex_unlock( &gl_mutex );
 }
 
-// threadsignal_render == 0 means that we are not ready to render
-// threadsignal_render == 1 means that the engine thread has fully prepared and we can begin
 void render_waitForEngineThread() {
 	vthread_waitCondition( start_render );
 }
@@ -410,7 +403,6 @@ void render_renderThreadTick( engine* e ) {
 	texture_tick();
 	render_draw( e );
 	// Indicate that we have finished
-	threadsignal_render = 0;
 	vthread_signalCondition( finished_render );
 	PROFILE_END( PROFILE_RENDER_TICK );
 }

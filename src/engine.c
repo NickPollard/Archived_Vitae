@@ -43,8 +43,6 @@ scene* theScene = NULL;
 terrain* theTerrain = NULL;
 int w = 640, h = 480;
 
-int threadsignal_render = 0;
-
 // Function Declarations
 void engine_tickTickers( engine* e, float dt );
 void engine_renderRenders( engine* e );
@@ -285,7 +283,6 @@ void engine_render( engine* e ) {
 	//panel_draw( static_test_panel, 0.f, 0.f );
 #endif // ANDROID
 	// Allow the render thread to start
-	threadsignal_render = 1;
 	vthread_signalCondition( start_render );
 	PROFILE_END( PROFILE_ENGINE_RENDER );
 }

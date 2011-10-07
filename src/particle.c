@@ -121,12 +121,6 @@ void particle_quad( particleEmitter* e, vertex* dst, vector* point, float size, 
 
 // Render a particleEmitter system
 void particleEmitter_render( void* data ) {
-	//	glDepthMask( GL_FALSE );
-	// switch to particle shader
-
-	// Set up uniforms
-//	render_setUniform_matrix( *resources.uniforms.projection, perspective );
-
 	particleEmitter* p = data;
 		
 	// Textures
@@ -154,16 +148,11 @@ void particleEmitter_render( void* data ) {
 		p->element_buffer[i*6+5] = i*4+3;
 	}
 
-
 	// For Billboard particles; cancel out the rotation of the matrix
 	// The transformation has been applied already for particle positions
 	matrix_setIdentity( modelview );
-//	render_setUniform_matrix( *resources.uniforms.modelview, modelview );
-
 	int index_count = 6 * p->count;
-
-	drawCall* particle_render = drawCall_create( resources.shader_particle, index_count, p->element_buffer, p->vertex_buffer, p->definition->texture_diffuse, modelview );
-	render_drawCall( particle_render );
+	drawCall_create( resources.shader_particle, index_count, p->element_buffer, p->vertex_buffer, p->definition->texture_diffuse, modelview );
 }
 
 property* property_create( int stride ) {

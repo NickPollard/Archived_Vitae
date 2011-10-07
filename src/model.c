@@ -32,10 +32,8 @@ void*	advance_align( void* ptr, unsigned int alignment ) {
 
 // Create an empty mesh with vertCount distinct vertices and index_count vertex indices
 mesh* mesh_createMesh( int vertCount, int index_count, int normal_count, int uv_count ) {
-
 	// We know that the whole data block will be 4-byte aligned
 	// We need to ensure each sub-array is also 4-byte aligned
-
 	unsigned int data_size = 
 						aligned_size( sizeof( mesh ), 						4 ) +
 						aligned_size( sizeof( vector )		* vertCount,	4 ) +	// Verts
@@ -48,8 +46,6 @@ mesh* mesh_createMesh( int vertCount, int index_count, int normal_count, int uv_
 	void* data = mem_alloc( data_size );
 	mesh* m = data;
 
-	// TODO: Align (4-byte);
-//	data += sizeof(mesh);
 	data = advance_align( data + sizeof( mesh ), 4 );
 	m->verts = data;
 	data = advance_align( data + sizeof( m->verts[0] ) * vertCount, 4 );			// Verts
@@ -69,7 +65,6 @@ mesh* mesh_createMesh( int vertCount, int index_count, int normal_count, int uv_
 	m->vertex_buffer = NULL;
 	m->element_buffer = NULL;
 
-	//m->texture_diffuse = texture_loadTGA( "assets/img/ship_hd_2.tga" );
 	texture_request( &m->texture_diffuse, "assets/img/ship_hd_2.tga" );
 	m->shader = resources.shader_default;
 
@@ -115,8 +110,10 @@ model* model_createModel(int meshCount) {
 void mesh_buildBuffers( mesh* m ) {
 	vAssert( !m->vertex_buffer );
 	vAssert( !m->element_buffer );
-	m->vertex_buffer = mem_alloc( sizeof( vertex ) * m->index_count );
-	m->element_buffer = mem_alloc( sizeof( GLushort ) * m->index_count );
+	unsigned int size_vertex = sizeof( vertex ) * m->index_count;
+	unsigned int size_element = sizeof( GLushort ) * m->index_count;
+	m->vertex_buffer = mem_alloc( size_vertex );
+	m->element_buffer = mem_alloc( size_element );
 
 	bool all_smooth_shaded = false;
 	if ( all_smooth_shaded ) {
@@ -132,19 +129,15 @@ void mesh_buildBuffers( mesh* m ) {
 			m->element_buffer[i] = i;
 		}
 	}
+
+	// Now also build the OpenGL VBOs for the static data
+	m->vertex_VBO = render_glBufferCreate( GL_ARRAY_BUFFER, m->vertex_buffer, size_vertex );
+	m->element_VBO = render_glBufferCreate( GL_ELEMENT_ARRAY_BUFFER, m->element_buffer, size_element );
 }
 
 // Draw the verts of a mesh to the openGL buffer
-void mesh_drawVerts( mesh* m ) {
-	/*
-	// Textures
-	GLint* tex = shader_findConstant( mhash( "tex" ));
-	if ( tex )
-		render_setUniform_texture( *tex, m->texture_diffuse );
-*/
-
-	drawCall* model_render = drawCall_create( m->shader, m->index_count, m->element_buffer, m->vertex_buffer, m->texture_diffuse, modelview );
-	render_drawCall( model_render );
+void mesh_render( mesh* m ) {
+	drawCall_create( m->shader, m->index_count, m->element_buffer, m->vertex_buffer, m->texture_diffuse, modelview );
 }
 
 // Get the i-th submesh of a given model
@@ -156,7 +149,7 @@ mesh* model_getMesh(model* m, int i) {
 void model_draw( model* m ) {
 	glDepthMask( GL_TRUE );
 	for (int i = 0; i < m->meshCount; i++) {
-		mesh_drawVerts( model_getMesh( m, i ));
+		mesh_render( model_getMesh( m, i ));
 	}
 }
 
@@ -172,7 +165,6 @@ model* model_getByHandle( modelHandle h ) {
 
 // Synchronously load a model from a given file
 model* model_loadFromFileSync( const char* filename ) {
-	// TODO: Implement
 	return model_load( filename );
 }
 

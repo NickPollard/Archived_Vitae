@@ -112,7 +112,6 @@ uint8_t* read_tga( const char* file, int* w, int* h ) {
 }
 
 GLuint texture_loadTGA( const char* filename ) {
-	vmutex_lock( &gl_mutex );
 	printf( "Loading TGA \"%s\"\n" , filename );
 	GLuint tex;
 	int w, h;
@@ -149,6 +148,5 @@ GLuint texture_loadTGA( const char* filename ) {
 
 	mem_free( img );	// OpenGL copies the data, so we can free this here
 
-	vmutex_unlock( &gl_mutex );
 	return tex;
 }
