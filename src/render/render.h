@@ -3,6 +3,8 @@
 #include "scene.h"
 #include "system/thread.h"
 
+#define kVboCount 1
+
 #define SHADER_UNIFORMS( f ) \
 	f( projection ) \
 	f( modelview ) \
@@ -32,7 +34,8 @@
 	glEnableVertexAttribArray( *resources.attributes.attrib );
 
 typedef struct gl_resources_s {
-	GLuint vertex_buffer, element_buffer;
+	GLuint vertex_buffer[kVboCount];
+	GLuint element_buffer[kVboCount];
 	GLuint texture;
 
 	struct {

@@ -183,8 +183,10 @@ void render_init() {
 	// Allocate space for buffers
 	const GLsizei vertex_buffer_size = sizeof( vector ) * MAX_VERTEX_ARRAY_COUNT;
 	const GLsizei element_buffer_size = sizeof( GLushort ) * MAX_VERTEX_ARRAY_COUNT;
-	resources.vertex_buffer = gl_bufferCreate( GL_ARRAY_BUFFER, NULL, vertex_buffer_size );
-	resources.element_buffer = gl_bufferCreate( GL_ELEMENT_ARRAY_BUFFER, NULL, element_buffer_size );
+	for ( int i = 0; i < kVboCount; i++ ) {
+		resources.vertex_buffer[i]	= gl_bufferCreate( GL_ARRAY_BUFFER, NULL, vertex_buffer_size );
+		resources.element_buffer[i]	= gl_bufferCreate( GL_ELEMENT_ARRAY_BUFFER, NULL, element_buffer_size );
+	}
 
 	// Allocate draw buffer
 	render_draw_buffer = mem_alloc( kRenderDrawBufferSize );
@@ -307,24 +309,29 @@ drawCall* drawCall_create( shader* vshader, int count, GLushort* elements, verte
 void render_drawCall( drawCall* draw ) {
 	return;
 }
+
+int buffer_index = 0;
+
 void render_drawCall_draw( drawCall* draw ) {
 	// Copy our data to the GPU
 	GLsizei vertex_buffer_size = draw->element_count * sizeof( vertex );
 	GLsizei element_buffer_size = draw->element_count * sizeof( GLushort );
 
+	VERTEX_ATTRIBS( VERTEX_ATTRIB_POINTER );
 	// *** Vertex Buffer
-	glBindBuffer( GL_ARRAY_BUFFER, resources.vertex_buffer );
+	glBindBuffer( GL_ARRAY_BUFFER, resources.vertex_buffer[buffer_index] );
 	glBufferData( GL_ARRAY_BUFFER, vertex_buffer_size, draw->vertex_buffer, GL_DYNAMIC_DRAW );// OpenGL ES only supports DYNAMIC_DRAW or STATIC_DRAW
-//	VERTEX_ATTRIBS( VERTEX_ATTRIB_POINTER );
 	// *** Element Buffer
-	glBindBuffer( GL_ELEMENT_ARRAY_BUFFER, resources.element_buffer );
+	glBindBuffer( GL_ELEMENT_ARRAY_BUFFER, resources.element_buffer[buffer_index] );
 	glBufferData( GL_ELEMENT_ARRAY_BUFFER, element_buffer_size, draw->element_buffer, GL_DYNAMIC_DRAW ); // OpenGL ES only supports DYNAMIC_DRAW or STATIC_DRAW
 
 	// Draw!
 	glDrawElements( GL_TRIANGLES, draw->element_count, GL_UNSIGNED_SHORT, (void*)0 );
 
-	// Cleanup
-//	VERTEX_ATTRIBS( VERTEX_ATTRIB_DISABLE_ARRAY )
+//	glBindBuffer( GL_ARRAY_BUFFER, 0 );
+//	glBindBuffer( GL_ELEMENT_ARRAY_BUFFER, 0 );
+	buffer_index = ( buffer_index + 1 ) % kVboCount;
+	VERTEX_ATTRIBS( VERTEX_ATTRIB_DISABLE_ARRAY )
 }
 
 void render_drawCall_internal( drawCall* draw ) {
@@ -353,13 +360,13 @@ void render_drawCallBatch( int index ) {
 		// Set up uniform matrices
 		render_setUniform_matrix( *resources.uniforms.projection,	perspective );
 
-		VERTEX_ATTRIBS( VERTEX_ATTRIB_POINTER );
+//		VERTEX_ATTRIBS( VERTEX_ATTRIB_POINTER );
 		//		render_drawCall_draw( draw );
 		//		printf( "RENDER: Drawing callbatch %d (%d calls).\n", index, count );
 		for ( int i = 0; i < count; i++ ) {
 			render_drawCall_internal( &call_buffer[index][i] );
 		}
-		VERTEX_ATTRIBS( VERTEX_ATTRIB_DISABLE_ARRAY )
+//		VERTEX_ATTRIBS( VERTEX_ATTRIB_DISABLE_ARRAY )
 	}
 }
 
