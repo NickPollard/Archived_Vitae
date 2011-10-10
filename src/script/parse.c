@@ -247,7 +247,6 @@ sterm* parse( inputStream* stream ) {
 	// Actually not necessarily an atom, let's read it in as whichever base data type it is
 	// either: Atom, String, Number
 	if ( token_isString( token )) {
-//		printf( "Found String: %s\n", token );
 		const char* string = sstring_create( token );
 		return sterm_create( typeString, (char*)string );
 	}
@@ -614,7 +613,6 @@ void* s_modelInstance( sterm* raw_properties ) {
 		while ( properties ) {
 			sterm* property = properties->head;
 			if ( isPropertyType( property, "filename" )) {
-		//		printf( "Modelinstance filename \"%s\"\n", (char*)property->tail->head );
 				handle = model_getHandleFromFilename( property->tail->head );
 			}
 			properties = properties->tail;
@@ -719,14 +717,12 @@ void model_processObject( void* arg, void* model_, void* transform_ ) {
 	model* mdl = model_;
 	(void)mdl;
 	if ( isTransform( arg )) {
-//		printf( "model_processObject: Transform\n" );
 		transform* t = transform_create();
 		t->parent = transform_;
 		transformData* tdata = ((sterm*)arg)->head;
 		matrix_setTranslation( t->local, &tdata->translation );
 		mdl->transforms[mdl->transform_count++] = t;
 		map_vv( tdata->elements, model_processObject, model_, t );
-//		vector_printf( "model transform translation: ", matrix_getTranslation( t->local ));
 	}
 	if ( isPropertyType( arg, "particle_emitter" )) {
 //		printf( "model_processObject: Emitter\n" );
@@ -753,7 +749,6 @@ void model_processObject( void* arg, void* model_, void* transform_ ) {
 		p->definition->velocity = Vector( 0.f, 0.0f, -3.f, 0.f );
 		p->definition->spawn_interval = 0.01f;
 //		p->definition->flags = p->definition->flags | kParticleWorldSpace;
-		//p->definition->texture_diffuse = texture_loadTGA( "assets/img/star_rgba64.tga" );
 		texture_request( &p->definition->texture_diffuse, "assets/img/star_rgba64.tga" );
 
 		mdl->emitters[mdl->emitter_count++] = p;
@@ -780,8 +775,10 @@ void* s_mesh( sterm* raw_properties ) {
 	const char* filename = property_find( args, "filename" );
 	const char* diffuse_texture = property_find( args, "diffuse_texture" );
 	mesh* m = mesh_loadObj( filename );
-	if ( diffuse_texture )
-		m->texture_diffuse = texture_loadTGA( diffuse_texture );
+	if ( diffuse_texture ) {
+		texture_request( &m->texture_diffuse, diffuse_texture );
+//		m->texture_diffuse = texture_loadTGA( diffuse_texture );
+	}
 	sterm* sm = sterm_createProperty( "mesh", typeObject, m );
 	return sm;
 }

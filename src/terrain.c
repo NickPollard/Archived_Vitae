@@ -418,9 +418,7 @@ void terrainBlock_render( terrainBlock* b ) {
 	memcpy( element_buffer, b->element_buffer, element_buffer_size );
 	memcpy( vertex_buffer, b->vertex_buffer, vertex_buffer_size );
 
-//	printf( "Terrain texture: %d.\n", terrain_texture );
-	drawCall* block_render = drawCall_create( resources.shader_terrain, b->index_count, b->element_buffer, b->vertex_buffer, terrain_texture, modelview );
-	render_drawCall( block_render );
+	drawCall_create( resources.shader_terrain, b->index_count, b->element_buffer, b->vertex_buffer, terrain_texture, modelview );
 }
 
 void terrain_tick( void* data, float dt ) {

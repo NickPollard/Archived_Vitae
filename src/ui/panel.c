@@ -53,8 +53,5 @@ void panel_draw( panel* p, float x, float y ) {
 	if ( tex )
 		render_setUniform_texture( *tex, p->texture );
 
-//	shader_activate( resources.shader_ui );
-
-	drawCall* panel_render = drawCall_create( resources.shader_ui, element_count, element_buffer, vertex_buffer, p->texture, modelview );
-	render_drawCall( panel_render );
+	drawCall_create( resources.shader_ui, element_count, element_buffer, vertex_buffer, p->texture, modelview );
 }

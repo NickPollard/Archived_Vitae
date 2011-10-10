@@ -68,6 +68,9 @@ mesh* mesh_createMesh( int vertCount, int index_count, int normal_count, int uv_
 	texture_request( &m->texture_diffuse, "assets/img/ship_hd_2.tga" );
 	m->shader = resources.shader_default;
 
+	m->vertex_VBO = 0;
+	m->element_VBO = 0;
+
 	return m;
 }
 
@@ -110,10 +113,10 @@ model* model_createModel(int meshCount) {
 void mesh_buildBuffers( mesh* m ) {
 	vAssert( !m->vertex_buffer );
 	vAssert( !m->element_buffer );
-	unsigned int size_vertex = sizeof( vertex ) * m->index_count;
-	unsigned int size_element = sizeof( GLushort ) * m->index_count;
-	m->vertex_buffer = mem_alloc( size_vertex );
-	m->element_buffer = mem_alloc( size_element );
+	unsigned int size_vertex	= sizeof( vertex ) * m->index_count;
+	unsigned int size_element	= sizeof( GLushort ) * m->index_count;
+	m->vertex_buffer	= mem_alloc( size_vertex );
+	m->element_buffer	= mem_alloc( size_element );
 
 	bool all_smooth_shaded = false;
 	if ( all_smooth_shaded ) {
@@ -131,13 +134,22 @@ void mesh_buildBuffers( mesh* m ) {
 	}
 
 	// Now also build the OpenGL VBOs for the static data
-	m->vertex_VBO = render_glBufferCreate( GL_ARRAY_BUFFER, m->vertex_buffer, size_vertex );
-	m->element_VBO = render_glBufferCreate( GL_ELEMENT_ARRAY_BUFFER, m->element_buffer, size_element );
+	m->vertex_VBO = render_requestBuffer( GL_ARRAY_BUFFER, m->vertex_buffer, size_vertex );
+	m->element_VBO = render_requestBuffer( GL_ELEMENT_ARRAY_BUFFER, m->element_buffer, size_element );
+//	printf( "build buffers - Vertex vbo: %u\n", m->vertex_VBO );
+//	printf( "build buffers - Element vbo: %u\n", m->element_VBO );
 }
 
 // Draw the verts of a mesh to the openGL buffer
 void mesh_render( mesh* m ) {
-	drawCall_create( m->shader, m->index_count, m->element_buffer, m->vertex_buffer, m->texture_diffuse, modelview );
+	drawCall* draw = drawCall_create( m->shader, m->index_count, m->element_buffer, m->vertex_buffer, m->texture_diffuse, modelview );
+//	printf( "Vertex vbo: %u\n", m->vertex_VBO );
+//	printf( "Element vbo: %u\n", m->element_VBO );
+	vAssert( *m->vertex_VBO != 0 );
+	vAssert( *m->element_VBO != 0 );
+	draw->vertex_VBO = *m->vertex_VBO;
+	draw->element_VBO = *m->element_VBO;
+	(void)draw;
 }
 
 // Get the i-th submesh of a given model

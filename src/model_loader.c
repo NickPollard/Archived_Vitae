@@ -144,11 +144,4 @@ model* model_load( const char* filename ) {
 	sterm* s = parse_file( filename );
 	model* mdl = eval( s );
 	return mdl;
-
-	/*
-	// Create the Vitae Model
-	model* mdl = model_createModel( 1 ); // Only one mesh by default
-	mdl->meshes[0] = mesh_loadObj( filename );
-	return mdl;
-	*/
 }

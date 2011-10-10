@@ -39,8 +39,8 @@ struct mesh_s {
 	GLuint		texture_diffuse;
 
 	//
-	GLuint		vertex_VBO;
-	GLuint		element_VBO;
+	GLuint*		vertex_VBO;
+	GLuint*		element_VBO;
 };
 
 // *** Model ***

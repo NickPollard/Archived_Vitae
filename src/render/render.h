@@ -131,6 +131,7 @@ typedef void (*func_getInfoLog)( GLuint, GLint, GLint*, GLchar* );
 
 void gl_dumpInfoLog( GLuint object, func_getIV getIV, func_getInfoLog getInfoLog );
 GLuint render_glBufferCreate( GLenum target, const void* data, GLsizei size );
+GLuint* render_requestBuffer( GLenum target, const void* data, GLsizei size );
 
 // Draw Calls
 

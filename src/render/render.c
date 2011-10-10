@@ -34,21 +34,69 @@ gl_resources resources;
 
 GLuint render_glBufferCreate( GLenum target, const void* data, GLsizei size ) {
 	GLuint buffer; // The OpenGL object handle we generate
-	glGenBuffers( 1, &buffer );
-	glBindBuffer( target, buffer );
+	glGenBuffers( 1, &buffer );				// Generate a buffer name - effectively just a declaration
+	glBindBuffer( target, buffer );			// Bind the buffer name to a target, creating the vertex buffer object
 	// Usage hint can be: GL_[VARYING]_[USE]
 	// Varying: STATIC / DYNAMIC / STREAM
 	// Use: DRAW / READ / COPY
-	glBufferData( target, size, data, /*Usage hint*/ GL_DYNAMIC_DRAW ); // OpenGL ES only supports dynamic/static draw
+	// OpenGL ES only supports dynamic/static draw
+	glBufferData( target, size, data, /*Usage hint*/ GL_DYNAMIC_DRAW );	// Allocate the buffer, optionally copying data
+	printf( "render_glBufferCreate: Generated VBO name %u.\n", buffer );
 	return buffer;
 }
 
-/*
-void render_setBuffers( float* vertex_buffer, int vertex_buffer_size, int* element_buffer, int element_buffer_size ) {
-	resources.vertex_buffer = render_glBufferCreate( GL_ARRAY_BUFFER, vertex_buffer, vertex_buffer_size );
-	resources.element_buffer = render_glBufferCreate( GL_ELEMENT_ARRAY_BUFFER, element_buffer, element_buffer_size );
+typedef struct bufferRequest_s {
+	GLenum		target;
+	const void*	data;
+	GLsizei		size;
+	GLuint*		ptr;
+} bufferRequest;
+
+#define	kMaxBufferRequests	16
+bufferRequest	buffer_requests[kMaxBufferRequests];
+int				buffer_request_count = 0;
+
+// Mutex for buffer requests
+vmutex buffer_mutex = kMutexInitialiser;
+
+bufferRequest* getBufferRequest() {
+	vAssert( buffer_request_count < kMaxBufferRequests );
+	bufferRequest* r = &buffer_requests[buffer_request_count++];
+	return r;
 }
-*/
+
+// Asynchronously create a VertexBufferObject
+GLuint* render_requestBuffer( GLenum target, const void* data, GLsizei size ) {
+	printf( "RENDER: Buffer requested.\n" );
+	bufferRequest* b = NULL;
+	vmutex_lock( &buffer_mutex );
+	{
+		b = getBufferRequest();
+		b->target	= target;
+		b->data		= data;
+		b->size		= size;
+	}
+	vmutex_unlock( &buffer_mutex );
+	vAssert( b );
+	// Needs to allocate a GLuint somewhere
+	// and return a pointer to that
+	b->ptr = mem_alloc( sizeof( GLuint ));
+	return b->ptr;
+}
+
+// Load any waiting buffer requests
+void render_bufferTick() {
+	vmutex_lock( &buffer_mutex );
+	{
+		// TODO: This could be a lock-free queue
+		for ( int i = 0; i < buffer_request_count; i++ ) {
+			bufferRequest* b = &buffer_requests[i];
+			*b->ptr = render_glBufferCreate( b->target, b->data, b->size );
+		}
+		buffer_request_count = 0;
+	}
+	vmutex_unlock( &buffer_mutex );
+}
 
 void render_buildShaders() {
 	// Load Shaders								Vertex								Fragment
@@ -297,18 +345,11 @@ drawCall* drawCall_create( shader* vshader, int count, GLushort* elements, verte
 	return draw;
 }
 
-void render_drawCall( drawCall* draw ) {
-	return;
-}
-
-int buffer_index = 0;
-
 void render_drawCall_draw( drawCall* draw ) {
 	// Copy our data to the GPU
 	GLsizei vertex_buffer_size = draw->element_count * sizeof( vertex );
 	GLsizei element_buffer_size = draw->element_count * sizeof( GLushort );
 
-	VERTEX_ATTRIBS( VERTEX_ATTRIB_POINTER );
 	// *** Vertex Buffer
 	glBindBuffer( GL_ARRAY_BUFFER, draw->vertex_VBO );
 	glBufferData( GL_ARRAY_BUFFER, vertex_buffer_size, draw->vertex_buffer, GL_DYNAMIC_DRAW );// OpenGL ES only supports DYNAMIC_DRAW or STATIC_DRAW
@@ -316,10 +357,10 @@ void render_drawCall_draw( drawCall* draw ) {
 	glBindBuffer( GL_ELEMENT_ARRAY_BUFFER, draw->element_VBO );
 	glBufferData( GL_ELEMENT_ARRAY_BUFFER, element_buffer_size, draw->element_buffer, GL_DYNAMIC_DRAW ); // OpenGL ES only supports DYNAMIC_DRAW or STATIC_DRAW
 
+	VERTEX_ATTRIBS( VERTEX_ATTRIB_POINTER );
 	// Draw!
 	glDrawElements( GL_TRIANGLES, draw->element_count, GL_UNSIGNED_SHORT, (void*)draw->element_buffer_offset );
-
-//	buffer_index = ( buffer_index + 1 ) % kVboCount;
+	glFlush();
 	VERTEX_ATTRIBS( VERTEX_ATTRIB_DISABLE_ARRAY );
 
 #if 0
@@ -426,6 +467,7 @@ void* render_renderThreadFunc( void* args ) {
 	vthread_signalCondition( finished_render );
 
 	while( true ) {
+		render_bufferTick();
 		render_waitForEngineThread();
 		render_renderThreadTick( e );
 	}
