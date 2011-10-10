@@ -347,20 +347,19 @@ drawCall* drawCall_create( shader* vshader, int count, GLushort* elements, verte
 
 void render_drawCall_draw( drawCall* draw ) {
 	// Copy our data to the GPU
-	GLsizei vertex_buffer_size = draw->element_count * sizeof( vertex );
-	GLsizei element_buffer_size = draw->element_count * sizeof( GLushort );
+	//GLsizei vertex_buffer_size	= draw->element_count * sizeof( vertex );
+	//GLsizei element_buffer_size	= draw->element_count * sizeof( GLushort );
 
 	// *** Vertex Buffer
 	glBindBuffer( GL_ARRAY_BUFFER, draw->vertex_VBO );
-	glBufferData( GL_ARRAY_BUFFER, vertex_buffer_size, draw->vertex_buffer, GL_DYNAMIC_DRAW );// OpenGL ES only supports DYNAMIC_DRAW or STATIC_DRAW
+	//glBufferData( GL_ARRAY_BUFFER, vertex_buffer_size, draw->vertex_buffer, GL_DYNAMIC_DRAW );// OpenGL ES only supports DYNAMIC_DRAW or STATIC_DRAW
 	// *** Element Buffer
 	glBindBuffer( GL_ELEMENT_ARRAY_BUFFER, draw->element_VBO );
-	glBufferData( GL_ELEMENT_ARRAY_BUFFER, element_buffer_size, draw->element_buffer, GL_DYNAMIC_DRAW ); // OpenGL ES only supports DYNAMIC_DRAW or STATIC_DRAW
+	//glBufferData( GL_ELEMENT_ARRAY_BUFFER, element_buffer_size, draw->element_buffer, GL_DYNAMIC_DRAW ); // OpenGL ES only supports DYNAMIC_DRAW or STATIC_DRAW
 
-	VERTEX_ATTRIBS( VERTEX_ATTRIB_POINTER );
 	// Draw!
+	VERTEX_ATTRIBS( VERTEX_ATTRIB_POINTER );
 	glDrawElements( GL_TRIANGLES, draw->element_count, GL_UNSIGNED_SHORT, (void*)draw->element_buffer_offset );
-	glFlush();
 	VERTEX_ATTRIBS( VERTEX_ATTRIB_DISABLE_ARRAY );
 
 #if 0
@@ -390,7 +389,7 @@ void render_drawCall_draw( drawCall* draw ) {
 
 void render_drawBatch( drawCall* draw ) {
 	// Set uniforms global to the batch	
-	render_setUniform_texture( *resources.uniforms.tex, draw->texture );
+	render_setUniform_texture( *resources.uniforms.tex,			draw->texture );
 	render_setUniform_matrix( *resources.uniforms.modelview,	draw->modelview );
 
 	render_drawCall_draw( draw );
@@ -405,11 +404,9 @@ void render_drawCallBatch( int index ) {
 		// Set up uniform matrices
 		render_setUniform_matrix( *resources.uniforms.projection,	perspective );
 
-//		VERTEX_ATTRIBS( VERTEX_ATTRIB_POINTER );
 		for ( int i = 0; i < count; i++ ) {
 			render_drawBatch( &call_buffer[index][i] );
 		}
-//		VERTEX_ATTRIBS( VERTEX_ATTRIB_DISABLE_ARRAY )
 	}
 }
 
