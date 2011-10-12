@@ -43,14 +43,14 @@ void main() {
 	{
 		// Ambient + Diffuse
 		// TODO: This is constant, can be calculated once
-		vec4 light_direction = normalize( modelview * directional_light_direction );
+		vec4 light_direction = normalize( /*modelview * */ directional_light_direction );
 
 		// TODO: Can this be done in the vertex shader?
 		// how does dot( -light_direction, frag_normal ) vary accross a poly?
-		float diffuse = max( 0.0, dot( -light_direction, frag_normal )) * 1.0;
+		float diffuse = max( 0.0, dot( -light_direction, frag_normal ));
 		vec4 diffuse_color = directional_light_diffuse * diffuse;
 		total_diffuse_color += diffuse_color;
-
+/*
 		// Specular
 		vec4 spec_bounce = reflect( light_direction, frag_normal );
 		float spec = max( 0.0, dot( spec_bounce, -view_direction ));
@@ -58,6 +58,7 @@ void main() {
 		float specular = pow( spec, shininess );
 		vec4 specular_color = directional_light_specular * specular;
 		total_specular_color += specular_color;
+		*/
 	}
 #endif
 #if 0	

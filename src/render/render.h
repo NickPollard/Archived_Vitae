@@ -8,6 +8,7 @@
 #define SHADER_UNIFORMS( f ) \
 	f( projection ) \
 	f( modelview ) \
+	f( worldspace ) \
 	f( light_position ) \
 	f( light_diffuse ) \
 	f( light_specular ) \
@@ -150,6 +151,7 @@ typedef struct drawCall_s {
 	GLuint		element_VBO;
 	unsigned int	element_count;
 	unsigned int	element_buffer_offset;
+	GLenum		depth_mask;
 } drawCall;
 
 drawCall* drawCall_create( shader* vshader, int count, GLushort* elements, vertex* verts, GLint tex, matrix mv );

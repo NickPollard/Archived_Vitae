@@ -52,7 +52,7 @@ typedef struct bufferRequest_s {
 	GLuint*		ptr;
 } bufferRequest;
 
-#define	kMaxBufferRequests	16
+#define	kMaxBufferRequests	128
 bufferRequest	buffer_requests[kMaxBufferRequests];
 int				buffer_request_count = 0;
 
@@ -338,60 +338,36 @@ drawCall* drawCall_create( shader* vshader, int count, GLushort* elements, verte
 	draw->element_count = count;
 	draw->texture = tex;
 	draw->element_buffer_offset = 0;
-	draw->element_VBO = resources.vertex_buffer[0];
-	draw->vertex_VBO = resources.element_buffer[0];
+	draw->vertex_VBO	= resources.vertex_buffer[0];
+	draw->element_VBO	= resources.element_buffer[0];
+	draw->depth_mask = GL_TRUE;
 
 	matrix_cpy( draw->modelview, mv );
 	return draw;
 }
 
 void render_drawCall_draw( drawCall* draw ) {
-	// Copy our data to the GPU
-	//GLsizei vertex_buffer_size	= draw->element_count * sizeof( vertex );
-	//GLsizei element_buffer_size	= draw->element_count * sizeof( GLushort );
-
-	// *** Vertex Buffer
+	// Bind Correct buffers
 	glBindBuffer( GL_ARRAY_BUFFER, draw->vertex_VBO );
-	//glBufferData( GL_ARRAY_BUFFER, vertex_buffer_size, draw->vertex_buffer, GL_DYNAMIC_DRAW );// OpenGL ES only supports DYNAMIC_DRAW or STATIC_DRAW
-	// *** Element Buffer
 	glBindBuffer( GL_ELEMENT_ARRAY_BUFFER, draw->element_VBO );
-	//glBufferData( GL_ELEMENT_ARRAY_BUFFER, element_buffer_size, draw->element_buffer, GL_DYNAMIC_DRAW ); // OpenGL ES only supports DYNAMIC_DRAW or STATIC_DRAW
+	
+	// If required, copy our data to the GPU
+	if ( draw->vertex_VBO == resources.vertex_buffer[0] ) {
+		GLsizei vertex_buffer_size	= draw->element_count * sizeof( vertex );
+		GLsizei element_buffer_size	= draw->element_count * sizeof( GLushort );
+		glBufferData( GL_ARRAY_BUFFER, vertex_buffer_size, draw->vertex_buffer, GL_DYNAMIC_DRAW );// OpenGL ES only supports DYNAMIC_DRAW or STATIC_DRAW
+		glBufferData( GL_ELEMENT_ARRAY_BUFFER, element_buffer_size, draw->element_buffer, GL_DYNAMIC_DRAW ); // OpenGL ES only supports DYNAMIC_DRAW or STATIC_DRAW
+	}
 
-	// Draw!
+	// Now Draw!
 	VERTEX_ATTRIBS( VERTEX_ATTRIB_POINTER );
 	glDrawElements( GL_TRIANGLES, draw->element_count, GL_UNSIGNED_SHORT, (void*)draw->element_buffer_offset );
 	VERTEX_ATTRIBS( VERTEX_ATTRIB_DISABLE_ARRAY );
-
-#if 0
-	// *** New Style
-
-	// Set-up Vertex Attribs (because we might be using a different VBO despite same shader?)
-	VERTEX_ATTRIBS( VERTEX_ATTRIB_POINTER );
-
-	// Bind the correct buffers for element and vertex buffers
-	// These can be specified by the drawCall
-	glBindBuffer( GL_ARRAY_BUFFER, draw->vertex_VBO );
-	glBindBuffer( GL_ELEMENT_ARRAY_BUFFER, draw->element_VBO );
-
-	// Draw the elements
-	// If this is the only data in the VBO, the offset is going to be 0
-	// Otherwise, we might store the offset in the drawcall
-	// for now store it regardless, initialised to 0 by default
-	unsigned int offset = draw->element_buffer_offset;
-	unsigned int element_count = draw->element_count;
-
-	glDrawElements( GL_TRIANGLES, element_count, GL_UNSIGNED_SHORT, (void*)offset );
-
-	// Clean-up Vertex Attribs (and perhaps buffers?)
-	VERTEX_ATTRIBS( VERTEX_ATTRIB_DISABLE_ARRAY );
-#endif
 }
 
 void render_drawBatch( drawCall* draw ) {
-	// Set uniforms global to the batch	
 	render_setUniform_texture( *resources.uniforms.tex,			draw->texture );
 	render_setUniform_matrix( *resources.uniforms.modelview,	draw->modelview );
-
 	render_drawCall_draw( draw );
 }
 
@@ -399,10 +375,12 @@ void render_drawCallBatch( int index ) {
 	int count = next_call_index[index];
 	if ( count > 0 ) {
 		// For now, *always* write to depth buffer
-		glDepthMask( GL_TRUE );
+		glDepthMask( call_buffer[index][0].depth_mask );
 		shader_activate( call_buffer[index][0].vitae_shader );
+		render_lighting( theScene );
 		// Set up uniform matrices
 		render_setUniform_matrix( *resources.uniforms.projection,	perspective );
+		render_setUniform_matrix( *resources.uniforms.worldspace,	modelview );
 
 		for ( int i = 0; i < count; i++ ) {
 			render_drawBatch( &call_buffer[index][i] );
@@ -439,6 +417,7 @@ void render_waitForEngineThread() {
 void render_renderThreadTick( engine* e ) {
 	PROFILE_BEGIN( PROFILE_RENDER_TICK );
 	texture_tick();
+	render_resetModelView();
 	render_draw( e );
 	// Indicate that we have finished
 	vthread_signalCondition( finished_render );

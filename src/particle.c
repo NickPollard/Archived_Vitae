@@ -152,7 +152,8 @@ void particleEmitter_render( void* data ) {
 	// The transformation has been applied already for particle positions
 	matrix_setIdentity( modelview );
 	int index_count = 6 * p->count;
-	drawCall_create( resources.shader_particle, index_count, p->element_buffer, p->vertex_buffer, p->definition->texture_diffuse, modelview );
+	drawCall* draw = drawCall_create( resources.shader_particle, index_count, p->element_buffer, p->vertex_buffer, p->definition->texture_diffuse, modelview );
+	draw->depth_mask = GL_FALSE;
 }
 
 property* property_create( int stride ) {

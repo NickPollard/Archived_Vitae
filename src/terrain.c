@@ -47,7 +47,6 @@ terrain* terrain_create() {
 
 	if ( terrain_texture == -1 ) {
 		texture_request( &terrain_texture, "assets/3rdparty/img/rock02_tile_small.tga" );
-	//	terrain_texture = texture_loadTGA( "assets/3rdparty/img/rock02_tile_small.tga" );
 	}
 
 	return t;
@@ -90,10 +89,6 @@ void terrain_createBlocks( terrain* t ) {
 
 // The procedural function
 float terrain_sample( float u, float v ) {
-#if 0
-//	return 0.f;
-	return sin( u * 0.25f ) * sin( v * 0.25f ) * 5.f;
-#else
 	float detail =
 	(
 			0.5 * sin( u ) * sin( v ) +
@@ -109,11 +104,7 @@ float terrain_sample( float u, float v ) {
 	float mask = cos( fclamp( u / 4.f, -PI/2.f, PI/2.f ));
 	float canyon = fclamp( powf( u, 4.f ), 0.f, 1.f );
 
-	return (
-			mask * canyon
-		   ) * height
-		+ detail;
-#endif
+	return ( mask * canyon ) * height + detail;
 }
 
 // Could be called during runtime, in which case reinit render variables
@@ -140,12 +131,10 @@ void terrain_setResolution( terrain* t, int u, int v ) {
    terrain
    */
 void terrainBlock_calculateBuffers( terrain* t, terrainBlock* b ) {
-/*
-	We have a grid of x * y points
+/*	We have a grid of x * y points
 	So (x-1) * (y-1) quads
 	So (x-1) * (y-1) * 2 tris
-	So (x-1) * (y-1) * 6 indices
-	*/
+	So (x-1) * (y-1) * 6 indices */
 
 	int triangle_count = ( b->u_samples - 1 ) * ( b->v_samples - 1 ) * 2;
 	int vert_count = b->u_samples * b->v_samples;
@@ -159,8 +148,8 @@ void terrainBlock_calculateBuffers( terrain* t, terrainBlock* b ) {
 	float u_max = b->u_max + (u_interval * 0.5f);
 	float v_max = b->v_max + (v_interval * 0.5f);
 
-	vector* verts = mem_alloc( vert_count * sizeof( vector ));
-	vector* normals = mem_alloc( vert_count * sizeof( vector ));
+	vector* verts	= mem_alloc( vert_count * sizeof( vector ));
+	vector* normals	= mem_alloc( vert_count * sizeof( vector ));
 
 	int vert_index = 0;
 	for ( float u = b->u_min; u < u_max; u+= u_interval ) {
@@ -184,41 +173,11 @@ void terrainBlock_calculateBuffers( terrain* t, terrainBlock* b ) {
 			normals[i] = Vector( 0.f, 1.f, 0.f, 0.f );
 			continue;
 		}
-		vector left = verts[i - t->u_samples];
-		vector right = verts[i + t->u_samples];
-		vector top = verts[i-1];
-		vector bottom = verts[i+1];
+		vector left		= verts[i - t->u_samples];
+		vector right	= verts[i + t->u_samples];
+		vector top		= verts[i - 1];
+		vector bottom	= verts[i + 1];
 
-#if 0
-		vector center = verts[i];
-		vector a, b, c, d, e, f, x, y;
-		x = Vector( -1.f, 0.f, 0.f, 0.f ); // Negative to ensure cross products come out correctly
-		y = Vector( 0.f, 0.f, 1.f, 0.f );
-
-		// Calculate two vertical vectors
-		Sub( &a, &center, &top );
-		Sub( &b, &bottom, &center );
-		// Take cross product to calculate normals
-		Cross( &c, &x, &a );
-		Cross( &d, &x, &b );
-
-		// Calculate two horizontal vectors
-		Sub( &a, &center, &left );
-		Sub( &b, &right, &center );
-		// Take cross product to calculate normals
-		Cross( &e, &y, &a );
-		Cross( &f, &y, &b );
-
-		// Average normals
-		vector total = Vector( 0.f, 0.f, 0.f, 0.f );
-		Add( &total, &total, &c );
-		Add( &total, &total, &d );
-		Add( &total, &total, &e );
-		Add( &total, &total, &f );
-		total.coord.w = 0.f;
-		Normalize( &total, &total );
-		normals[i] = total;
-#else
 		vector a, b, c, x, y;
 		x = Vector( -1.f, 0.f, 0.f, 0.f ); // Negative to ensure cross products come out correctly
 		y = Vector( 0.f, 0.f, 1.f, 0.f );
@@ -240,10 +199,7 @@ void terrainBlock_calculateBuffers( terrain* t, terrainBlock* b ) {
 		total.coord.w = 0.f;
 		Normalize( &total, &total );
 		normals[i] = total;
-#endif
 	}
-
-	float texture_scale = 0.125f;
 
 	int element_count = 0;
 	// Calculate elements
@@ -266,6 +222,8 @@ void terrainBlock_calculateBuffers( terrain* t, terrainBlock* b ) {
 		element_count += 6;
 	}
 
+	float texture_scale = 0.125f;
+
 	// For each element index
 	// Unroll the vertex/index bindings
 	for ( int i = 0; i < b->index_count; i++ ) {
@@ -277,6 +235,10 @@ void terrainBlock_calculateBuffers( terrain* t, terrainBlock* b ) {
 	}
 	mem_free( verts );
 	mem_free( normals );
+
+	// Create GPU 
+	b->vertex_VBO = render_requestBuffer( GL_ARRAY_BUFFER, b->vertex_buffer, sizeof( vertex ) * b->index_count );
+	b->element_VBO = render_requestBuffer( GL_ELEMENT_ARRAY_BUFFER, b->element_buffer, sizeof( GLushort ) * b->index_count );
 }
 
 // Calculate the intersection of the two block bounds specified
@@ -332,24 +294,12 @@ void terrain_updateBlocks( terrain* t ) {
 	   The block pointer array remains sorted
 	   */
 
-//	printf( "TERRAIN: Updating blocks.\n" );
-
 	int bounds[2][2];
-	terrain_calculateBounds( bounds, t, &t->sample_point );
-
 	int intersection[2][2];
+	terrain_calculateBounds( bounds, t, &t->sample_point );
 	terrain_boundsIntersection( intersection, bounds, t->bounds );
-/*	
-	printf( "Old Bounds: (%d %d) to (%d %d)\n", t->bounds[0][0], 
-												t->bounds[0][1], 
-												t->bounds[1][0], 
-												t->bounds[1][1] );
-	printf( "New Bounds: (%d %d) to (%d %d)\n", bounds[0][0], 
-												bounds[0][1], 
-												bounds[1][0], 
-												bounds[1][1] );
-*/
 
+	// Could double buffer this and avoid a mem_alloc/free?
 	terrainBlock**	newBlocks = mem_alloc( sizeof( terrainBlock* ) * t->total_block_count );
 
 	int empty_index = 0;
@@ -367,8 +317,6 @@ void terrain_updateBlocks( terrain* t ) {
 			vAssert( new_index >= 0 );
 			vAssert( new_index < t->total_block_count );
 			newBlocks[new_index] = t->blocks[i];
-			
-//			printf( "KEEPING: Moving block %d to new block %d.\n", i, new_index );
 		}
 		else {
 			// Copy unused blocks
@@ -377,17 +325,14 @@ void terrain_updateBlocks( terrain* t ) {
 			while ( true ) {
 				new_coord[0] = bounds[0][0] + ( empty_index % t->u_block_count );
 				new_coord[1] = bounds[0][1] + ( empty_index / t->u_block_count );
-				if ( !boundsContains( intersection, new_coord )) {
+				if ( !boundsContains( intersection, new_coord ))
 					break;
-				}
 				empty_index++;
 			}
 			newBlocks[empty_index] = t->blocks[i];
-//			printf( "RECYCLING: Moving block %d to new block %d.\n", i, empty_index );
 			empty_index++;
 		}
 	}
-
 
 	// For each new block
 	for ( int i = 0; i < t->total_block_count; i++ ) {
@@ -408,17 +353,13 @@ void terrain_updateBlocks( terrain* t ) {
 }
 
 void terrainBlock_render( terrainBlock* b ) {
-	GLsizei element_buffer_size = b->index_count * sizeof( GLushort );
-	GLsizei vertex_buffer_size = b->index_count * sizeof( vertex );
-
-	// Create new element_buffer and vertex_buffer space on the Render temp stack
-	GLushort*	element_buffer	= render_bufferAlloc( element_buffer_size );
-	vertex*		vertex_buffer	= render_bufferAlloc( vertex_buffer_size );
-
-	memcpy( element_buffer, b->element_buffer, element_buffer_size );
-	memcpy( vertex_buffer, b->vertex_buffer, vertex_buffer_size );
-
-	drawCall_create( resources.shader_terrain, b->index_count, b->element_buffer, b->vertex_buffer, terrain_texture, modelview );
+	drawCall* draw = drawCall_create( resources.shader_terrain, b->index_count, b->element_buffer, b->vertex_buffer, terrain_texture, modelview );
+//	vAssert( *b->vertex_VBO != 0 );
+//	vAssert( *b->element_VBO != 0 );
+	if ( *b->vertex_VBO != 0 ) {
+		draw->vertex_VBO = *b->vertex_VBO;
+		draw->element_VBO = *b->element_VBO;
+	}
 }
 
 void terrain_tick( void* data, float dt ) {
@@ -430,23 +371,8 @@ void terrain_tick( void* data, float dt ) {
 void terrain_render( void* data ) {
 	terrain* t = data;
 
-	// Switch to terrain shader
-//	shader_activate( resources.shader_terrain );
-//	glDepthMask( GL_TRUE );
-
 	render_resetModelView();
 	matrix_mul( modelview, modelview, t->trans->world );
-	// Set up uniforms
-	/*
-	render_setUniform_matrix( *resources.uniforms.projection, perspective );
-	render_setUniform_matrix( *resources.uniforms.modelview, modelview );
-	render_setUniform_matrix( *resources.uniforms.worldspace, modelview );
-
-	// Textures
-	GLint* tex = shader_findConstant( mhash( "tex" ));
-	if ( tex )
-		render_setUniform_texture( *tex, terrain_texture );
-*/
 
 	// *** Render the blocks
 	for ( int i = 0; i < t->total_block_count; i++ ) {

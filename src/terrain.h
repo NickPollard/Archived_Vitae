@@ -14,6 +14,8 @@ typedef struct terrainBlock_s {
 	int				index_count;
 	vertex*			vertex_buffer;
 	unsigned short*	element_buffer;
+	GLuint*			vertex_VBO;
+	GLuint*			element_VBO;
 } terrainBlock;
 
 typedef struct terrain_s {
