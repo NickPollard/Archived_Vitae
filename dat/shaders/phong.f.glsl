@@ -5,6 +5,8 @@
 precision mediump float;
 #endif
 
+//#define POINT_LIGHTS
+
 // Varying
 varying vec4 frag_position;
 varying vec4 frag_normal;
@@ -25,11 +27,13 @@ const vec4 directional_light_direction = vec4( 1.0, -1.0, 1.0, 0.0 );
 const vec4 directional_light_diffuse = vec4( 0.2, 0.2, 0.1, 1.0 );
 const vec4 directional_light_specular = vec4( 0.2, 0.2, 0.1, 1.0 );
 
-//const vec4 material_diffuse = vec4( 1.0, 1.0, 1.0, 1.0 );
 const vec4 material_specular = vec4( 0.5, 0.5, 0.5, 1.0 );
 const float light_radius = 20.0;
 
 void main() {
+#if 0
+	gl_FragColor = vec4( 0.0, 1.0, 0.0, 1.0 );
+#else
 	// light-invariant calculations
 	vec4 view_direction = normalize( frag_position );
 
@@ -52,7 +56,7 @@ void main() {
 		vec4 specular_color = directional_light_specular * specular;
 		total_specular_color += specular_color;
 	}
-	
+#ifdef POINT_LIGHTS	
 	for ( int i = 0; i < LIGHT_COUNT; i++ ) {
 		// Per-light calculations
 		vec4 cs_light_position = modelview * light_position[i];
@@ -71,14 +75,14 @@ void main() {
 		float specular = pow( spec, shininess );
 		vec4 specular_color = light_specular[i] * specular;
 		total_specular_color += specular_color;
-
 	}
+#endif
 
 	vec4 material_diffuse = texture2D( tex, texcoord );
 	gl_FragColor =	total_specular_color * material_specular + 
 					total_diffuse_color * material_diffuse;
 	gl_FragColor.w = 1.0;
-
 //	gl_FragColor = vec4( texcoord.xy, 0.2, 1.0 );
+#endif
 
 }

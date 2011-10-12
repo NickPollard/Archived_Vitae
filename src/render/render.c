@@ -40,7 +40,7 @@ GLuint render_glBufferCreate( GLenum target, const void* data, GLsizei size ) {
 	// Varying: STATIC / DYNAMIC / STREAM
 	// Use: DRAW / READ / COPY
 	// OpenGL ES only supports dynamic/static draw
-	glBufferData( target, size, data, /*Usage hint*/ GL_DYNAMIC_DRAW );	// Allocate the buffer, optionally copying data
+	glBufferData( target, size, data, /*Usage hint*/ GL_STATIC_DRAW );	// Allocate the buffer, optionally copying data
 	printf( "render_glBufferCreate: Generated VBO name %u.\n", buffer );
 	return buffer;
 }
@@ -188,7 +188,7 @@ void render_lighting( scene* s ) {
 // Clear information from last draw
 void render_clear() {
 	glClearColor( 1.f, 0.f, 0.0, 0.f );
-	glClear( GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT );
+	glClear(/* GL_COLOR_BUFFER_BIT |*/ GL_DEPTH_BUFFER_BIT );
 }
 
 void render_initWindow() {
