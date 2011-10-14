@@ -146,6 +146,7 @@ void transform_setLocalTranslation(transform* t, vector* v) {
 }
 
 void transform_printDebug( transform* t, debugtextframe* f ) {
+	(void)f;
 	char string[128];
 #if DEBUG_STRINGS
 	sprintf( string, "Transform: Name: %s, Translation %.2f, %.2f, %.2f", 

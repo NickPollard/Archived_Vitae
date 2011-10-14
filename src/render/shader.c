@@ -203,7 +203,7 @@ shader* shader_load( const char* vertex_name, const char* fragment_name ) {
 	s->dict.count = 0;
 
 	// Load source code
-	int length = 0;
+	size_t length = 0;
 	const char* vertex_file = vfile_contents( vertex_name, &length );
 	const char* fragment_file = vfile_contents( fragment_name, &length );
 

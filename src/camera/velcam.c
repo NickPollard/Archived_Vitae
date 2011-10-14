@@ -91,6 +91,7 @@ void velcam_setTarget( velcam* f, camera* c ) {
 
 // Update the velcam, setting the target data to latest
 void velcam_tick( velcam* f, float dt ) {
+	(void)dt;
 	assert( f->camera_target );
 	vector vel;
 	vector forward = Vector( 0.f, 0.f, 1.f, 0.f );

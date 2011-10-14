@@ -487,11 +487,13 @@ void matrix_cpy( matrix dst, matrix src ) {
 	for (int i = 0; i < 16; i++) {
 		*a++ = *b++; } }
 
+/*
 void matrix_fromRotTrans( matrix dst, quaternion* rotation, vector* translation ) {
 	// TODO: implement
 	printf( "Not Yet Implemented: matrix_fromRotTrans \n");
 	assert( 0 );
 }
+*/
 
 // Normalize the axes to be unit axes
 void matrix_normalize( matrix m ) {
@@ -599,6 +601,7 @@ void matrix_fromEuler( matrix dst, vector* euler_angles ) {
 
 // Build a rotation quaternion from Euler Angle values
 quaternion quaternion_fromEuler( vector* euler_angles ) {
+	(void)euler_angles;
 	// TODO: implement
 	printf("Not Yet Implemented: quaternion_fromEuler.\n" );
 	assert( 0 );

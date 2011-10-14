@@ -181,6 +181,7 @@ model* model_loadFromFileSync( const char* filename ) {
 }
 
 const char* model_getFileNameFromID( int id ) {
+	(void)id;
 	// TODO: Implement
 	return NULL;
 }

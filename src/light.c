@@ -53,35 +53,14 @@ void light_setPosition(light* l, vector* pos) {
 	matrix_setTranslation(l->trans->local, pos);
 }
 
-void light_render( int index, light* l ) {
-/*
-	glEnable( index );
-	glLightfv(index, GL_DIFFUSE, (GLfloat*)(&l->diffuse_color));
-	glLightfv(index, GL_SPECULAR, (GLfloat*)(&l->specular_color));
-
-	// Position
-//	glLightfv( index, GL_POSITION, (GLfloat*)matrix_getTranslation( l->trans->world ));
-
-	if ( index == 0 ) {
-		glUniform4fv( *resources.uniforms.light_position, 1, (GLfloat*)matrix_getTranslation( l->trans->world ) );
-		glUniform4fv( *resources.uniforms.light_diffuse, 1, (GLfloat*)&l->diffuse_color );
-		glUniform4fv( *resources.uniforms.light_specular, 1, (GLfloat*)&l->specular_color );
-	}
-
-	// Attenuation
-	glLightf(index, GL_CONSTANT_ATTENUATION, (GLfloat)l->attenuationConstant);
-	glLightf(index, GL_LINEAR_ATTENUATION, (GLfloat)l->attenuationLinear);
-	glLightf(index, GL_QUADRATIC_ATTENUATION, (GLfloat)l->attenuationQuadratic);
-	debugdraw_cross( matrix_getTranslation( l->trans->world ), 1.f);
-	*/
-}
-
 // Render a batch of lights to the shader
 // This sets up the uniform parameters for the lights in the shader
 // Will setup <count> lights from the array pointed to by <lights>
 void light_renderLights( int count, light** lights ) {
 	int light_count = max( count, MAX_RENDER_LIGHTS );
-
+	(void)light_count;
+	(void)lights;
+/*
 	// the shader wants a struct of arrays, so we need to concatenate our
 	// data into that form.
 	// Extract the positions from each light into an array of positions
@@ -102,7 +81,6 @@ void light_renderLights( int count, light** lights ) {
 #endif
 	}
 
-/*
 	glUniform4fv( *resources.uniforms.light_position, light_count, (GLfloat*)positions );
 	glUniform4fv( *resources.uniforms.light_diffuse, light_count, (GLfloat*)diffuses );
 	glUniform4fv( *resources.uniforms.light_specular, light_count, (GLfloat*)speculars );

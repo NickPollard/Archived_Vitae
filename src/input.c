@@ -172,6 +172,7 @@ void input_setWindowSize( input* in, int w, int h ) {
 
 // tick the input, recording this frames input data from devices
 void input_tick( input* in, float dt ) {
+	(void)dt;
 	in->active = in->active ^ 0x1;		// flip the key buffers (we effectively double buffer the key state)
 
 #ifndef ANDROID	
@@ -192,7 +193,6 @@ void input_tick( input* in, float dt ) {
 #endif
 
 #ifdef TOUCH
-//	printf( "INPUT: tick" );
 	// TODO - probably need to sync this properly with Android input thread?
 	// Store current state of touch
 	in->data[in->active].touched = in->touched;

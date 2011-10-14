@@ -29,6 +29,8 @@ void mem_free( void* ptr ) {
 
 // Initialise the memory subsystem
 void mem_init(int argc, char** argv) {
+	(void)argc;
+	(void)argv;
 	static_heap = heap_create( static_heap_size );
 }
 
@@ -110,7 +112,7 @@ void heap_dumpBlocks( heapAllocator* heap ) {
 
 // Find a block of at least *min_size* bytes
 // First version will naively use first found block meeting the criteria
-block* heap_findEmptyBlock( heapAllocator* heap, int min_size ) {
+block* heap_findEmptyBlock( heapAllocator* heap, unsigned int min_size ) {
 //	heap_dumpBlocks( heap );
 	block* b = heap->first;
 	while ((( b->size < min_size ) || !b->free ) && b->next ) {

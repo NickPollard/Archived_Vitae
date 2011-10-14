@@ -30,7 +30,7 @@ mesh* mesh_loadObj( const char* filename ) {
 	array_clear( normal_indices, kObjMaxIndices );
 	array_clear( uv_indices, kObjMaxIndices );
 
-	int file_length = -1;
+	size_t file_length = -1;
 	char* file_buffer = vfile_contents( filename, &file_length );
 	inputStream* stream = inputStream_create( file_buffer );
 

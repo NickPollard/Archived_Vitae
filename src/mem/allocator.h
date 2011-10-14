@@ -1,7 +1,5 @@
-#ifndef __ALLOCATOR_H__
-#define __ALLOCATOR_H__
+#pragma once
 // Allocator.h
-#include <stddef.h>
 
 //#define MEM_DEBUG_VERBOSE
 #define MEM_GUARD_BLOCK
@@ -36,8 +34,6 @@ struct block_s {
 #endif
 };
 
-#endif // __ALLOCATOR_H__
-
 // Default allocate from the static heap
 // Passes straight through to heap_allocate()
 void* mem_alloc(size_t bytes);
@@ -56,7 +52,7 @@ void* heap_allocate_aligned( heapAllocator* heap, unsigned int size, unsigned in
 
 // Find a block of at least *min_size* bytes
 // First version will naively use first found block meeting the criteria
-block* heap_findEmptyBlock( heapAllocator* heap, int min_size );
+block* heap_findEmptyBlock( heapAllocator* heap, unsigned int min_size );
 
 // Find a block with a given data pointer to *mem_addr*
 // Returns NULL if no such block is found

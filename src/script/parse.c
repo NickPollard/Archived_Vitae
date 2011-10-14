@@ -265,8 +265,8 @@ sterm* parse_string( const char* string ) {
 }
 
 sterm* parse_file( const char* filename ) {
-	int length = 0;
 	printf( "FILE: Loading File \"%s\" for parsing.\n", filename );
+	size_t length = 0;
 	char* contents = vfile_contents( filename, &length );
 	vAssert( (contents) );
 	vAssert( (length != 0) );
@@ -655,6 +655,7 @@ void* s_light( sterm* args ) {
 }
 
 void* s_light_create( sterm* args ) {
+	(void)args;
 	return light_create();
 }
 
@@ -784,6 +785,7 @@ void* s_mesh( sterm* raw_properties ) {
 }
 
 void* s_particle_emitter( sterm* args ) {
+	(void)args;
 	particleEmitter* p = particleEmitter_create();
 	p->definition->lifetime = 2.f;
 	p->definition->spawn_box = Vector( 0.3f, 0.3f, 0.3f, 0.f );

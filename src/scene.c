@@ -205,6 +205,7 @@ void scene_input( scene* s, input* in ) {
 
 // Update the scene
 void scene_tick(scene* s, float dt) {
+	(void)dt;
 	scene_concatenateTransforms( s );
 
 	if ( s->debug_flags & kSceneDebugTransforms )
@@ -335,7 +336,7 @@ void scene_saveFile( scene* s, const char* filename ) {
 
 // TODO
 scene* scene_loadFile( const char* filename ) {
-	int buffer_length;
+	size_t buffer_length;
 	void* buffer = vfile_contents( filename, &buffer_length );
 	sceneData* data = (sceneData*)buffer;
 	printf( "Loading scene from file %s. File Size: %d, Data size: %d.\n", filename, buffer_length, data->size );

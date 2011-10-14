@@ -56,7 +56,7 @@ void texture_request( GLuint* tex, const char* filename ) {
 }
 
 uint8_t* read_tga( const char* file, int* w, int* h ) {
-	int length = 0;
+	size_t length = 0;
 	u8* image_data = vfile_contents( file, &length );
 	if ( image_data == 0 ) {
 		printf( "ERROR: Error reading TGA.\n" );

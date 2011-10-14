@@ -12,7 +12,7 @@
 void terrain_calculateBounds( int bounds[2][2], terrain* t, vector* sample_point );
 void terrainBlock_calculateBuffers( terrain* t, terrainBlock* b );
 
-GLuint terrain_texture = -1;
+GLuint terrain_texture = 0;
 
 terrainBlock* terrainBlock_create( ) {
 	terrainBlock* b = mem_alloc( sizeof( terrainBlock ));
@@ -45,7 +45,7 @@ terrain* terrain_create() {
 	t->u_block_count = 5;
 	t->v_block_count = 5;
 
-	if ( terrain_texture == -1 ) {
+	if ( terrain_texture == 0 ) {
 		texture_request( &terrain_texture, "assets/3rdparty/img/rock02_tile_small.tga" );
 	}
 
@@ -363,6 +363,7 @@ void terrainBlock_render( terrainBlock* b ) {
 }
 
 void terrain_tick( void* data, float dt ) {
+	(void)dt;
 	terrain* t = data;
 	terrain_updateBlocks( t );
 }

@@ -20,7 +20,7 @@ void	inputStream_nextLine( inputStream* in );
 // *** File Operations
 
 FILE* vfile_open( const char* path, const char* mode );
-void* vfile_contents(const char *path, int *length);
+void* vfile_contents(const char *path, size_t *length);
 void vfile_writeContents( const char* path, void* buffer, int length );
 
 

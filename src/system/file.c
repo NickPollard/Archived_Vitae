@@ -136,7 +136,7 @@ FILE* vfile_open( const char* path, const char* mode ) {
 // Load the entire contents of a file into a heap-allocated buffer of the same length
 // returns a pointer to that buffer
 // It its the caller's responsibility to free the buffer
-void* vfile_contents( const char* path, int* length ) {
+void* vfile_contents( const char* path, size_t* length ) {
 #ifdef ANDROID
 	return vfile_contentsApk( path, length );
 #endif

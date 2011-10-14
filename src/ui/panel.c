@@ -32,6 +32,8 @@ static const int vert_count = 4;
 
 // The draw function gets passed the current 'cursor' x and y
 void panel_draw( panel* p, float x, float y ) {
+	(void)x;
+	(void)y;
 
 //	glDisable(GL_DEPTH_TEST);
 

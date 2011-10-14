@@ -389,6 +389,7 @@ void render_drawCallBatch( int index ) {
 }
 
 void render_draw( engine* e ) {
+	(void)e;
 #ifdef ANDROID
 	int w = 800;
 #else

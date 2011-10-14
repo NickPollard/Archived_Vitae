@@ -10,13 +10,13 @@ void test_murmurHash( const char* source );
 void test_hash();
 
 // Simple (non-hashed) map
-typedef struct map_s {
+struct map_s {
 	int max;
 	int count;
 	int stride;
 	int*	keys;
 	uint8_t*	values;
-} map;
+};
 
 map*	map_create( int max, int stride );
 void	map_delete( map* m );

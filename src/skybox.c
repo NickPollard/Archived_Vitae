@@ -28,6 +28,7 @@ void skybox_init( ) {
 
 // Render the skybox
 void skybox_render( void* data ) {
+	(void)data;
 	// Skybox does not write to the depth buffer
 
 	render_resetModelView();

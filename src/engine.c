@@ -148,6 +148,8 @@ void engine_tick( engine* e ) {
 
 // Handle a key press from the user
 void engine_handleKeyPress(engine* e, uchar key, int x, int y) {
+	(void)x;
+	(void)y;
 	// Lua Test
 	lua_getglobal(e->lua, "handleKeyPress");
 	lua_pushnumber(e->lua, (int)key);
@@ -173,6 +175,8 @@ void handleResize(int w_, int h_) {
 
 // Initialise the Lua subsystem so that it is ready for use
 void engine_initLua(engine* e, int argc, char** argv) {
+	(void)argc;
+	(void)argv;
 	e->lua = vlua_create( e, "SpaceSim/lua/main.lua" );
 }
 

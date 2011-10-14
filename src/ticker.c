@@ -55,6 +55,7 @@ int delegate_isFull( delegate* d ) {
 //////////////
 
 void tick_tester_tick(void* t, float dt) {
+	(void)dt;
 	tick_tester* tester = (tick_tester*)t;
 	tester->tickcount += tester->tickinc;
 	printf("Tick Tester: Tick count is %d.\n", tester->tickcount);

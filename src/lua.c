@@ -45,6 +45,7 @@ void lua_init() {
 }
 
 void lua_preTick( float dt ) {
+	(void)dt;
 	// reset vectors at the start of every tick
 	lua_vector_count = 0;
 }
@@ -91,6 +92,7 @@ void luaInterface_registerCallback(luaInterface* i, const char* name, const char
 
 
 int LUA_registerCallback( lua_State* l ) {
+	(void)l;
 	printf("Register callback!\n");
 	return 0;
 }
@@ -447,7 +449,7 @@ lua_State* vlua_create( engine* e, const char* filename ) {
 
 	// We now use luaL_loadbuffer rather than luaL_loadfile as on Android we need
 	// to go through Libzip to get the data
-	int length;
+	size_t length;
 	const char* buffer = vfile_contents( filename, &length );
 	if ( luaL_loadbuffer( l, buffer, length, filename ) || lua_pcall( l, 0, 0, 0)) {
 		printf("Error: Failed loading lua from file %s!\n", filename );
@@ -497,7 +499,7 @@ lua_State* vlua_create( engine* e, const char* filename ) {
 }
 
 void lua_setScene( lua_State* l, scene* s ) {
-	lua_makeConstantPtr( l, "scene", theScene );
+	lua_makeConstantPtr( l, "scene", s );
 }
 
 

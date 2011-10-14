@@ -62,7 +62,6 @@ void flycam_input( void* data, input* in  ) {
 	fly_in.pan.coord.y = (float)x * mouseScale;
 	fly_in.pan.coord.x = -(float)y * mouseScale;
 
-
 	flycam_process( cam, &fly_in );
 }
 
@@ -87,6 +86,7 @@ void flycam_setTarget( flycam* f, camera* c ) {
 
 // Update the flycam, setting the target data to latest
 void flycam_tick( void* data, float dt ) {
+	(void)dt;
 	flycam* f = data;
 	transform_setWorldSpace( f->camera_target.trans, f->transform );
 }
