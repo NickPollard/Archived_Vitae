@@ -23,7 +23,6 @@ particleEmitter* particleEmitter_create() {
 	memset( p, 0, sizeof( particleEmitter ));
 	p->definition = particleEmitterDef_create();
 	p->definition->spawn_box = Vector( 0.f, 0.f, 0.f, 0.f );
-	//p->definition->texture_diffuse = texture_loadTGA( "assets/img/cloud_rgba128.tga" );
 	//texture_request( &p->definition->texture_diffuse, "assets/img/cloud_rgba128.tga" );
 
 	p->vertex_buffer = mem_alloc( sizeof( vertex ) * kMaxParticleVerts );
@@ -123,11 +122,6 @@ void particle_quad( particleEmitter* e, vertex* dst, vector* point, float size, 
 void particleEmitter_render( void* data ) {
 	particleEmitter* p = data;
 		
-	// Textures
-	GLint* tex = shader_findConstant( mhash( "tex" ));
-	if ( tex )
-		render_setUniform_texture( *tex, p->definition->texture_diffuse );
-
 	// reset modelview matrix so we can billboard
 	// particle_quad() will manually apply the modelview
 	render_resetModelView();
@@ -135,10 +129,15 @@ void particleEmitter_render( void* data ) {
 
 	for ( int i = 0; i < p->count; i++ ) {
 		int particle_index = (p->start + i) % kMaxParticles;
-		float size = property_samplef( p->definition->size, p->particles[particle_index].age );
-		vector color = property_samplev( p->definition->color, p->particles[particle_index].age );
+
+		// Sample properties
+		float	size	= property_samplef( p->definition->size, p->particles[particle_index].age );
+		vector	color	= property_samplev( p->definition->color, p->particles[particle_index].age );
+
 		particle_quad( p, &p->vertex_buffer[i*4], &p->particles[particle_index].position, size, color );
-		assert( i*6 + 5 < kMaxParticleVerts );
+
+		vAssert( ( i*6 + 5 ) < kMaxParticleVerts );
+
 		// TODO: Indices can be initialised once
 		p->element_buffer[i*6+0] = i*4+1;
 		p->element_buffer[i*6+1] = i*4+0;
@@ -202,7 +201,6 @@ float property_samplef( property* p, float time ) {
 	int before, after;
 	property_sample( p, time, &before, &after, &factor );
 	float value = lerp( p->data[before*p->stride+1], p->data[after*p->stride+1], factor );
-
 	return value;
 }
 
@@ -211,7 +209,6 @@ vector property_samplev( property* p, float time ) {
 	int before, after;
 	property_sample( p, time, &before, &after, &factor );
 	vector value = vector_lerp( (vector*)&p->data[before*p->stride+1], (vector*)&p->data[after*p->stride+1], factor );
-
 	return value;
 }
 

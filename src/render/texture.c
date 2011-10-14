@@ -19,7 +19,6 @@ vmutex	texture_mutex = kMutexInitialiser;
 
 void texture_init() {
 	g_texture_default = texture_loadTGA( "assets/img/test64rgba.tga" );
-	printf( "Loaded default texture as OpenGL texture name: %d\n", g_texture_default );
 }
 
 typedef struct textureRequest_s {
@@ -51,7 +50,6 @@ void texture_request( GLuint* tex, const char* filename ) {
 		vAssert( texture_request_count < kMaxTextureRequests );
 		textureRequest* request = &requests[texture_request_count++];
 		request->tex = tex;
-//		request->filename = filename;
 		request->filename = string_createCopy( filename );
 	}
 	vmutex_unlock( &texture_mutex );
@@ -61,7 +59,7 @@ uint8_t* read_tga( const char* file, int* w, int* h ) {
 	int length = 0;
 	u8* image_data = vfile_contents( file, &length );
 	if ( image_data == 0 ) {
-		printf( "Error reading TGA.\n" );
+		printf( "ERROR: Error reading TGA.\n" );
 		vAssert( 0 );
 	}
 
@@ -70,7 +68,7 @@ uint8_t* read_tga( const char* file, int* w, int* h ) {
 
 	static const int kTrueColor_Uncompressed = 0x2;
 	if ( header->image_type != kTrueColor_Uncompressed ) {
-		printf( "Error. TGA is not uncompressed and in TrueColor.\n" );
+		printf( "ERROR: TGA is not uncompressed and in TrueColor.\n" );
 		assert( 0 );
 	}
 
@@ -81,11 +79,6 @@ uint8_t* read_tga( const char* file, int* w, int* h ) {
 	u8* color_map = body + header->id_length;
 	tga_colormap_spec* mapspec = (tga_colormap_spec*)header->color_map_spec;
 	u8* pixels = color_map + mapspec->entry_count;
-
-	//printf( "width: %d, height: %d, bitdepth: %d.\n", width, height, header->pixel_depth );
-
-//	printf( "TGA dimensions: %d * %d.\n", width, height );
-//	printf( "TGA bitdepth: %d.\n", header->pixel_depth );
 
 	int pixel_bytes = header->pixel_depth / 8;
 	int size = width * height * pixel_bytes;
@@ -106,13 +99,18 @@ uint8_t* read_tga( const char* file, int* w, int* h ) {
 	*w = width;
 	*h = height;
 
-//	printf( "TGA data segment size: %d\n", size );
 	mem_free( image_data );
 	return tex;
 }
 
 GLuint texture_loadTGA( const char* filename ) {
-	printf( "Loading TGA \"%s\"\n" , filename );
+	//TODO:
+	/*
+	This should load from a texture library. ie. lookup the name, 
+	if it doesn't exist load it, otherwise return the already loaded one.
+	   */
+
+	printf( "TEXTURE: Loading TGA \"%s\"\n" , filename );
 	GLuint tex;
 	int w, h;
 	void* img = read_tga( filename, &w, &h );
@@ -142,9 +140,6 @@ GLuint texture_loadTGA( const char* filename ) {
 					GL_RGBA,		// TGA uses BGR order internally
 					GL_UNSIGNED_BYTE,	// 8-bits per channel
 					img );
-
-	glFlush();
-	printf( "Loaded TGA as gluint %u\n", tex );
 
 	mem_free( img );	// OpenGL copies the data, so we can free this here
 

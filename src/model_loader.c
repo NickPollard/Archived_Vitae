@@ -119,23 +119,18 @@ mesh* mesh_loadObj( const char* filename ) {
 		mem_free( token );
 		inputStream_nextLine( stream );
 	}
-
-	printf( "MESH_LOAD: Parsed .obj file \"%s\" with %d verts and %d faces.\n", filename, vert_count, index_count / 3 );
-	printf( "MESH_LOAD: Parsed .obj file \"%s\" with %d normals and %d uvs.\n", filename, normal_count, uv_count );
-
-	mesh* msh = mesh_createMesh( vert_count, index_count, index_count, uv_count );
+	mem_free( file_buffer );
+	printf( "MESH_LOAD: Parsed .obj file \"%s\" with %d verts, %d faces, %d normals, %d uvs.\n", filename, vert_count, index_count / 3, normal_count, uv_count );
 
 	// Copy our loaded data into the Mesh structure
+	mesh* msh = mesh_createMesh( vert_count, index_count, index_count, uv_count );
 	memcpy( msh->verts,			vertices,			vert_count * sizeof( vector ));
 	memcpy( msh->indices,		indices,			index_count * sizeof( uint16_t ));
 	memcpy( msh->normals,		normals,			normal_count * sizeof( vector ));
 	memcpy( msh->normal_indices, normal_indices,	index_count * sizeof( uint16_t ));
 	memcpy( msh->uvs,			uvs,				uv_count * sizeof( vector ));
 	memcpy( msh->uv_indices,	uv_indices,			index_count * sizeof( uint16_t ));
-
 	mesh_buildBuffers( msh );
-
-	mem_free( file_buffer );
 
 	return msh;
 }

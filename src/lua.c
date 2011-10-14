@@ -125,15 +125,8 @@ int LUA_createModelInstance( lua_State* l ) {
 
 // vscene_addModel( scene, model )
 int LUA_scene_addModel( lua_State* l ) {
-	printf( "Lua_scene_addModel\n" );
 	scene* s = lua_toptr( l, 1 );	
 	modelInstance* m = lua_toptr( l, 2 );	
-// TODO - fix static reference
-//		scene* s = theScene;
-//		transform* t = transform_create();
-//		m->trans = t;
-//		scene_addModel( s, m );
-//		scene_addTransform( s, t );
 	vAssert( m->trans );
 	scene_addModel( s, m );
 	return 0;
