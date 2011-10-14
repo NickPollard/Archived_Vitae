@@ -105,6 +105,7 @@ void render_buildShaders() {
 	resources.shader_terrain	= shader_load( "dat/shaders/terrain.v.glsl",		"dat/shaders/terrain.f.glsl" );
 	resources.shader_skybox		= shader_load( "dat/shaders/skybox.v.glsl",			"dat/shaders/skybox.f.glsl" );
 	resources.shader_ui			= shader_load( "dat/shaders/ui.v.glsl",				"dat/shaders/ui.f.glsl" );
+	resources.shader_filter		= shader_load( "dat/shaders/filter.v.glsl",			"dat/shaders/filter.f.glsl" );
 
 #define GET_UNIFORM_LOCATION( var ) \
 	resources.uniforms.var = shader_findConstant( mhash( #var )); \
@@ -187,8 +188,52 @@ void render_lighting( scene* s ) {
 
 // Clear information from last draw
 void render_clear() {
-	glClearColor( 1.f, 0.f, 0.0, 0.f );
+	glClearColor( 1.f, 0.f, 0.f, 0.f );
 	glClear(/* GL_COLOR_BUFFER_BIT |*/ GL_DEPTH_BUFFER_BIT );
+}
+
+	GLuint render_frame_buffer;
+	GLuint render_texture;
+	GLuint render_depth_buffer;
+
+void render_initFrameBuffer() {
+	glGenFramebuffers( 1, &render_frame_buffer );
+	glGenTextures( 1, &render_texture );
+	glGenRenderbuffers( 1, &render_depth_buffer );
+
+	// Create Frame Buffer
+	glBindFramebuffer( GL_FRAMEBUFFER, render_frame_buffer );
+	// Create render texture
+	glBindTexture( GL_TEXTURE_2D, render_texture );
+
+	// Set up sampling parameters, use defaults for now
+	// Bilinear interpolation, clamped
+	glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR );
+    glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR );
+    glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_WRAP_S,     GL_CLAMP_TO_EDGE );
+    glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_WRAP_T,     GL_CLAMP_TO_EDGE );
+
+	int w = 640;
+	int h = 480;
+
+	glTexImage2D( GL_TEXTURE_2D,
+		   			0,			// No Mipmaps for now
+					GL_RGBA,	// 3-channel, 8-bits per channel (32-bit stride)
+					(GLsizei)w, (GLsizei)h,
+					0,			// Border, unused
+					GL_RGBA,		// TGA uses BGR order internally
+					GL_UNSIGNED_BYTE,	// 8-bits per channel
+					NULL );
+
+
+	// Attach render texture to framebuffer
+	glFramebufferTexture2D( GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, render_texture, 0 );
+	// Generate and Attach Depth Buffer to framebuffer
+	glBindRenderbuffer( GL_RENDERBUFFER, render_depth_buffer );
+	glRenderbufferStorage( GL_RENDERBUFFER, GL_DEPTH_COMPONENT, w, h );
+	glFramebufferRenderbuffer( GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, render_depth_buffer );
+	glBindFramebuffer( GL_FRAMEBUFFER, 0 );
+	glBindTexture( GL_TEXTURE_2D, 0 );
 }
 
 void render_initWindow() {
@@ -196,7 +241,12 @@ void render_initWindow() {
 	if (!glfwInit())
 		printf("ERROR - failed to init glfw.\n");
 
-	glfwOpenWindow(640, 480, 8, 8, 8, 8, 8, 0, GLFW_WINDOW);
+	glfwOpenWindow(640, 480, 
+			8, 8, 8,		// RGB bits
+			8, 				// Alpha bits
+			8, 				// Depth bits
+			0,				// Stencil bits
+		   	GLFW_WINDOW);
 	glfwSetWindowTitle("Vitae");
 	glfwSetWindowSizeCallback(handleResize);
 #endif
@@ -207,8 +257,8 @@ void render_init() {
 	render_initWindow();
 
 	printf("RENDERING: Initialising OpenGL rendering settings.\n");
-	glEnable(GL_DEPTH_TEST);
-	glEnable(GL_BLEND);
+	glEnable( GL_DEPTH_TEST );
+	glEnable( GL_BLEND );
 	glBlendFunc( GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA );	// Standard Alpha Blending
 
 	// Backface Culling
@@ -231,6 +281,8 @@ void render_init() {
 	// Allocate draw buffer
 	render_draw_buffer = mem_alloc( kRenderDrawBufferSize );
 	callbatch_map = map_create( kCallBufferCount, sizeof( unsigned int ));
+
+	render_initFrameBuffer();
 }
 
 // Terminate the 3D rendering
@@ -388,6 +440,14 @@ void render_drawCallBatch( int index ) {
 	}
 }
 
+void render_attachFrameBuffer() {
+	glBindFramebuffer( GL_FRAMEBUFFER, render_frame_buffer );
+}
+
+void render_unattachFrameBuffer() {
+	glBindFramebuffer( GL_FRAMEBUFFER, 0 );
+}
+
 void render_draw( engine* e ) {
 	(void)e;
 #ifdef ANDROID
@@ -396,13 +456,46 @@ void render_draw( engine* e ) {
 	int w = 640;
 #endif
 	int h = 480;
-	render_set3D( w, h );
-	render_clear();
 
-	// Draw each batch of drawcalls
-	for ( int i = 0; i < kCallBufferCount; i++ ) {
-		render_drawCallBatch( i );	
+	glClearColor( 0.f, 0.f, 1.f, 0.f );
+	glClear( GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT );
+
+	// Attach the framebuffer
+	render_attachFrameBuffer();
+	{
+		render_set3D( w, h );
+		render_clear();
+
+		// Draw each batch of drawcalls
+		for ( int i = 0; i < kCallBufferCount; i++ ) {
+			render_drawCallBatch( i );	
+		}
 	}
+	render_unattachFrameBuffer();
+
+	// render the framebuffer to the main window
+	// Activate a blank shader
+	shader_activate( resources.shader_filter );
+	render_setUniform_texture( *resources.uniforms.tex, render_texture );
+	// Draw a screen-quad
+	vertex quad[4];
+	quad[0].position = Vector( -1.f, -1.f, 0.f, 1.f );
+	quad[1].position = Vector(  1.f, -1.f, 0.f, 1.f );
+	quad[2].position = Vector(  1.f,  1.f, 0.f, 1.f );
+	quad[3].position = Vector( -1.f,  1.f, 0.f, 1.f );
+	GLushort elements[6] = { 0, 2, 1, 0, 3, 2 };
+
+	GLsizei vertex_buffer_size	= 4 * sizeof( vertex );
+	GLsizei element_buffer_size	= 6 * sizeof( GLushort );
+	glBindBuffer( GL_ARRAY_BUFFER, resources.vertex_buffer[0] );
+	glBindBuffer( GL_ELEMENT_ARRAY_BUFFER, resources.element_buffer[0] );
+	glBufferData( GL_ARRAY_BUFFER, vertex_buffer_size, quad, GL_DYNAMIC_DRAW );// OpenGL ES only supports DYNAMIC_DRAW or STATIC_DRAW
+	glBufferData( GL_ELEMENT_ARRAY_BUFFER, element_buffer_size, elements, GL_DYNAMIC_DRAW ); // OpenGL ES only supports DYNAMIC_DRAW or STATIC_DRAW
+
+	// Now Draw!
+	VERTEX_ATTRIBS( VERTEX_ATTRIB_POINTER );
+	glDrawElements( GL_TRIANGLES, 6, GL_UNSIGNED_SHORT, (void*)0 );
+	VERTEX_ATTRIBS( VERTEX_ATTRIB_DISABLE_ARRAY );
 
 #if ANDROID
 	render_swapBuffers( e->egl );
