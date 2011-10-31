@@ -5,13 +5,17 @@
 struct camera_s {
 	transform* trans;
 	// z-clipping
-	float near;
-	float far;
+	float z_near;
+	float z_far;
+
+	float fov; // in Radians
 //	float focalLength;
 //	float aperture;
 };
 
 camera* camera_create();
+
+void camera_init( camera* c );
 
 camera* camera_createWithTransform(scene* s);
 

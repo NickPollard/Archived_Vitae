@@ -7,10 +7,21 @@
 #include "transform.h"
 #include "mem/allocator.h"
 
+static const float default_z_near = 1.f;
+static const float default_z_far = 500.f;
+static const float default_fov = 0.8f; // In Radians
+
 camera* camera_create() {
 	camera* c = mem_alloc( sizeof( camera ));
 	c->trans = NULL;
+	camera_init( c );
 	return c;
+}
+
+void camera_init( camera* c ) {
+	c->z_near = default_z_near;
+	c->z_far = default_z_far;
+	c->fov = default_fov;
 }
 
 camera* camera_createWithTransform( scene* s ) {
@@ -44,9 +55,9 @@ void camera_calculateFrustum( camera* c, vector* frustum ) {
 */
 
 	vector front = view;
-	front.coord.w = Dot( &p, &view ) + c->near;
+	front.coord.w = Dot( &p, &view ) + c->z_near;
 	vector back = view;
-	back.coord.w = Dot( &p, &view ) + c->far;
+	back.coord.w = Dot( &p, &view ) + c->z_far;
 
 //	vector_printf( "Near plane: ", &front );
 //	vector_printf( "Far plane: ", &back );

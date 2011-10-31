@@ -10,11 +10,16 @@
 // Flycam constructor
 flycam* flycam_create() {
 	flycam* f = mem_alloc( sizeof( flycam ));
+
 	f->pan_sensitivity = Vector(1.f, 1.f, 1.f, 0.f);
 	f->track_sensitivity = Vector(1.f, 1.f, 1.f, 0.f);
+
 	matrix_setIdentity( f->transform );
 	f->translation = Vector( 0.f, 0.f, 0.f, 1.f );
 	f->euler = Vector( 0.f, 0.f, 0.f, 0.f );
+
+	camera_init( &f->camera_target );
+
 	return f;
 }
 

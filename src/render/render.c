@@ -34,7 +34,11 @@ gl_resources resources;
 
 const int kInitialWidth = 640;
 const int kInitialHeight = 480;
+#ifdef ANDROID
+window window_main = { 800, 480 };
+#else
 window window_main = { 640, 480 };
+#endif
 
 GLuint render_glBufferCreate( GLenum target, const void* data, GLsizei size ) {
 	GLuint buffer; // The OpenGL object handle we generate
@@ -301,15 +305,10 @@ void render( scene* s ) {
 	
 	matrix_setIdentity( modelview );
 
-	const float fov = 0.8f; // In radians
 	const float aspect = 4.f/3.f;
-	const float z_near = 1.f;
-	const float z_far = 500.f;
-	render_perspectiveMatrix( perspective, fov, aspect, z_near, z_far );
 
 	camera* cam = s->cam;
-	cam->near = z_near;
-	cam->far = z_far;
+	render_perspectiveMatrix( perspective, cam->fov, aspect, cam->z_near, cam->z_far );
 	vector frustum[6];
 	camera_calculateFrustum( cam, frustum );
 
