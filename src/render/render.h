@@ -75,6 +75,11 @@ struct vertex_s {
 
 typedef struct vertex_s particle_vertex;
 
+typedef struct window_s {
+	int width;
+	int height;
+} window;
+
 extern gl_resources resources;
 extern matrix modelview;
 extern matrix camera_inverse;
@@ -157,7 +162,6 @@ typedef struct drawCall_s {
 drawCall* drawCall_create( shader* vshader, int count, GLushort* elements, vertex* verts, GLint tex, matrix mv );
 void render_drawCall( drawCall* draw );
 void* render_bufferAlloc( size_t size );
-void render_draw();
 
 //
 // *** The Rendering Thread itself

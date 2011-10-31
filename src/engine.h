@@ -113,5 +113,3 @@ void startTick( engine* e, void* entity, tickfunc tick );
 void startInput( engine* e, void* entity, inputfunc input );
 
 void engine_addRender( engine* e, void* entity, renderfunc render );
-
-void handleResize(int w, int h);

@@ -32,6 +32,10 @@ matrix perspective;
 
 gl_resources resources;
 
+const int kInitialWidth = 640;
+const int kInitialHeight = 480;
+window window_main = { 640, 480 };
+
 GLuint render_glBufferCreate( GLenum target, const void* data, GLsizei size ) {
 	GLuint buffer; // The OpenGL object handle we generate
 	glGenBuffers( 1, &buffer );				// Generate a buffer name - effectively just a declaration
@@ -191,14 +195,23 @@ void render_clear() {
 	glClear(/* GL_COLOR_BUFFER_BIT |*/ GL_DEPTH_BUFFER_BIT );
 }
 
+// Handle a window resize
+// Set the camera perspective and tell OpenGL how to convert 
+// from coordinates to pixel values
+void render_handleResize(int w, int h) {
+	window_main.width = w;
+	window_main.height = h;
+}
+
+// Initialise the window and the OpenGL buffers we need for rendering
 void render_initWindow() {
 #ifndef ANDROID
 	if (!glfwInit())
 		printf("ERROR - failed to init glfw.\n");
 
-	glfwOpenWindow(640, 480, 8, 8, 8, 8, 8, 0, GLFW_WINDOW);
+	glfwOpenWindow(kInitialWidth, kInitialHeight, 8, 8, 8, 8, 8, 0, GLFW_WINDOW);
 	glfwSetWindowTitle("Vitae");
-	glfwSetWindowSizeCallback(handleResize);
+	glfwSetWindowSizeCallback(render_handleResize);
 #endif
 }
 
@@ -388,15 +401,13 @@ void render_drawCallBatch( int index ) {
 	}
 }
 
-void render_draw( engine* e ) {
+void render_draw( window* w, engine* e ) {
 	(void)e;
 #ifdef ANDROID
-	int w = 800;
-#else
-	int w = 640;
+	w->width = 800;
+	w->height = 480;
 #endif
-	int h = 480;
-	render_set3D( w, h );
+	render_set3D( w->width, w->height );
 	render_clear();
 
 	// Draw each batch of drawcalls
@@ -419,7 +430,7 @@ void render_renderThreadTick( engine* e ) {
 	PROFILE_BEGIN( PROFILE_RENDER_TICK );
 	texture_tick();
 	render_resetModelView();
-	render_draw( e );
+	render_draw( &window_main, e );
 	// Indicate that we have finished
 	vthread_signalCondition( finished_render );
 	PROFILE_END( PROFILE_RENDER_TICK );

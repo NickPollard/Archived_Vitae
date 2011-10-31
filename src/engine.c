@@ -165,14 +165,6 @@ void engine_handleKeyPress(engine* e, uchar key, int x, int y) {
 	}
 }
 
-// Handle a window resize
-// Set the camera perspective and tell OpenGL how to convert 
-// from coordinates to pixel values
-void handleResize(int w_, int h_) {
-	w = w_;
-	h = h_;
-}
-
 // Initialise the Lua subsystem so that it is ready for use
 void engine_initLua(engine* e, int argc, char** argv) {
 	(void)argc;
@@ -337,10 +329,6 @@ void engine_run(engine* e) {
 #endif
 	PROFILE_BEGIN( PROFILE_MAIN );
 	//	TextureLibrary* textures = texture_library_create();
-
-#ifndef ANDROID
-	handleResize( 640, 480 );	// Call once to init
-#endif
 
 	// We need to ensure we can run the first time without waiting for render
 	vthread_signalCondition( finished_render );
