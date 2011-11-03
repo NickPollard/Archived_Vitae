@@ -125,12 +125,24 @@ int LUA_createModelInstance( lua_State* l ) {
 	}
 }
 
+int LUA_deleteModelInstance( lua_State* l ) {
+	modelInstance* m = lua_toptr( l, 1 );
+	mem_free( m );
+	return 0;
+}
+
 // vscene_addModel( scene, model )
 int LUA_scene_addModel( lua_State* l ) {
 	scene* s = lua_toptr( l, 1 );	
 	modelInstance* m = lua_toptr( l, 2 );	
 	vAssert( m->trans );
 	scene_addModel( s, m );
+	return 0;
+}
+int LUA_scene_removeModel( lua_State* l ) {
+	scene* s = lua_toptr( l, 1 );	
+	modelInstance* m = lua_toptr( l, 2 );	
+	scene_removeModel( s, m );
 	return 0;
 }
 
@@ -376,7 +388,7 @@ int LUA_transform_setWorldSpaceByTransform( lua_State* l ) {
 int LUA_particle_create( lua_State* l ) {
 	engine* e = lua_toptr( l, 1 );
 	transform* t = lua_toptr( l, 2 );
-	
+/*	
 	particleEmitter* p = particleEmitter_create();
 	p->definition->lifetime = 2.f;
 	p->definition->spawn_box = Vector( 0.3f, 0.3f, 0.3f, 0.f );
@@ -401,7 +413,7 @@ int LUA_particle_create( lua_State* l ) {
 	p->definition->flags = p->definition->flags | kParticleWorldSpace;
 	engine_addRender( e, p, particleEmitter_render );
 	startTick( e, p, particleEmitter_tick );
-
+*/
 	//
 	//
 	//
@@ -409,7 +421,7 @@ int LUA_particle_create( lua_State* l ) {
 	particleEmitter* p_ = particleEmitter_create();
 	p_->definition->lifetime = 2.3f;
 	p_->definition->size = property_create( 2 );
-	property_addf( p_->definition->size, 0.f, 10.f );
+	property_addf( p_->definition->size, 0.f, 0.f );
 	property_addf( p_->definition->size, 0.5f, 10.f );
 	property_addf( p_->definition->size, 2.f, 25.f );
 	p_->definition->color = property_create( 5 );
@@ -420,7 +432,9 @@ int LUA_particle_create( lua_State* l ) {
 	p_->definition->spawn_interval = 0.3f;
 	p_->definition->spawn_box = Vector( 0.3f, 0.f, 0.3f, 0.f );
 	p_->trans = t;
-	p_->definition->texture_diffuse = texture_loadTGA( "assets/img/star_rgba64.tga" );
+//	p_->definition->texture_diffuse = texture_loadTGA( "assets/img/star_rgba64.tga" );
+	texture_request( &p_->definition->texture_diffuse, "assets/img/star_rgba64.tga" );
+
 	engine_addRender( e, p_, particleEmitter_render );
 	startTick( e, p_, particleEmitter_tick );
 
@@ -468,12 +482,14 @@ lua_State* vlua_create( engine* e, const char* filename ) {
 	lua_registerFunction( l, LUA_touchHeld, "vtouchHeld" );
 	// *** Scene
 	lua_registerFunction( l, LUA_createModelInstance, "vcreateModelInstance" );
+	lua_registerFunction( l, LUA_deleteModelInstance, "vdeleteModelInstance" );
 	lua_registerFunction( l, LUA_createphysic, "vcreatePhysic" );
 	lua_registerFunction( l, LUA_createtransform, "vcreateTransform" );
 	lua_registerFunction( l, LUA_setWorldSpacePosition, "vsetWorldSpacePosition" );
 	lua_registerFunction( l, LUA_model_setTransform, "vmodel_setTransform" );
 	lua_registerFunction( l, LUA_physic_setTransform, "vphysic_setTransform" );
 	lua_registerFunction( l, LUA_scene_addModel, "vscene_addModel" );
+	lua_registerFunction( l, LUA_scene_removeModel, "vscene_removeModel" );
 	lua_registerFunction( l, LUA_physic_activate, "vphysic_activate" );
 	lua_registerFunction( l, LUA_physic_setVelocity, "vphysic_setVelocity" );
 	lua_registerFunction( l, LUA_transform_yaw, "vtransform_yaw" );

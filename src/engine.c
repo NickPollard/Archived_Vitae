@@ -124,7 +124,7 @@ void engine_tick( engine* e ) {
 	time += dt;
 	time = time / 10.f;
 
-	printf( "TICK: frametime %.4fms (%.2f fps)\n", time, 1.f/time );
+	//printf( "TICK: frametime %.4fms (%.2f fps)\n", time, 1.f/time );
 
 	lua_preTick( dt );
 

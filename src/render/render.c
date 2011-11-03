@@ -306,9 +306,9 @@ void render( scene* s ) {
 	matrix_setIdentity( modelview );
 
 	float aspect = window_main.width / window_main.height;
-
 	camera* cam = s->cam;
 	render_perspectiveMatrix( perspective, cam->fov, aspect, cam->z_near, cam->z_far );
+	
 	vector frustum[6];
 	camera_calculateFrustum( cam, frustum );
 

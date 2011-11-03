@@ -48,15 +48,12 @@ void scene_addModel( scene* s, modelInstance* instance ) {
 	s->modelInstances[s->model_count++] = instance;
 
 	for ( int i = 0; i < instance->transform_count; i++ ) {
-//		printf( "Adding transform.\n" );
 		scene_addTransform( s, instance->transforms[i] );
 		// At this point we set up subtransforms to be parented by the modelinstance transform
 		// Can't do it earlier as the transform doesn't exist when modelinstance is created
 		instance->transforms[i]->parent = instance->trans;
-//		vector_printf( "subtransform Translation: ", matrix_getTranslation( instance->transforms[i]->local ));
 	}
 	for ( int i = 0; i < instance->emitter_count; i++ ) {
-//		printf( "Adding emitter.\n" );
 		scene_addEmitter( s, instance->emitters[i] );
 		if ( !instance->emitters[i]->trans )
 			instance->emitters[i]->trans = instance->trans;
@@ -66,6 +63,19 @@ void scene_addModel( scene* s, modelInstance* instance ) {
 			startTick( s->eng, instance->emitters[i], particleEmitter_tick );
 		}
 	}
+}
+
+// TODO: Thread-Safe
+void scene_removeModel( scene* s, modelInstance* instance ) {
+	vAssert( instance );
+	for ( int i = 0; i > s->model_count; i++ ) {
+		if ( scene_model( s, i ) == instance ) {
+			s->modelInstances[i] = s->modelInstances[s->model_count];
+			s->modelInstances[s->model_count] = NULL;
+			--(s->model_count);
+		}
+	}
+	
 }
 
 void scene_addEmitter( scene* s, particleEmitter* e ) {

@@ -16,15 +16,6 @@ player = nil
 -- player_ship - the actual ship entity flying around
 player_ship = nil
 
---[[ Vitae C functions exposed for Lua 
-
-vitae_model_load( model )		-		Takes a string containing the model filename, creates a modelinstance of that model and registers it to be updated
-vitae_transform( )							- Creates a new transform and registers it for updating
-vitae_physic( )								- Creates a new physic and registers it for updating
-vitae_model_setTransform( model, transform )		- Sets the transform of the modelinstance <model> to be <transform>
-
-]]--
-
 -- Create a spacesim Game object
 -- A gameobject has a visual representation (model), a physical entity for velocity and momentum (physic)
 -- and a transform for locating it in space (transform)
@@ -44,14 +35,23 @@ function gameobject_create( model )
 
 	return g
 end
---[[
-function player_accelerate( p, a )
-	vitae_physic_accelerate( p.physic, a )
-end
---]]
 
-function player_yaw( p, y )
-	vitae_physic_yaw( p.physic, y )
+function gameobject_delete( obj )
+	vprint( "gameobject_delete" )
+	vscene_removeModel( scene, g.model )
+	vdeleteModelInstance( g.model )
+	--[[
+	vdeletePhysic( g.physic )
+	vdeleteTransform( g.transform )
+	--]]
+end
+
+function spawn_explosion( position )
+	-- Attach a particle effect to the object
+	local t = vcreateTransform()
+	vparticle_create( engine, t )
+	-- Position it at the correct muzzle position and rotation
+	vtransform_setWorldSpaceByTransform( t, position )
 end
 
 projectile_model = "dat/model/sphere.s"
@@ -60,16 +60,24 @@ function player_fire( p )
 	-- Create a new Projectile
 	g = gameobject_create( projectile_model );
 
-	-- Attach a particle effect to the object
-	vparticle_create( engine, g.transform );
-
 	-- Position it at the correct muzzle position and rotation
 	vtransform_setWorldSpaceByTransform( g.transform, p.transform )
+
+	--[[
+	-- Attach a particle effect to the object
+	vparticle_create( engine, g.transform )
+	--]]
+
 	-- Apply initial velocity
-	bullet_speed = 350.0;
+	bullet_speed = 150.0;
 	ship_v = Vector( 0.0, 0.0, bullet_speed, 0.0 )
 	world_v = vtransformVector( p.transform, ship_v )
 	vphysic_setVelocity( g.physic, world_v );
+
+--	inTime( 2, function () vprint("timertest") end );
+--	inTime( 2, function () gameobject_delete( g ) end );
+	inTime( 0.3, function () spawn_explosion( g.transform ) end );
+
 	--[[
 	gun_transform = vitae_attach_transform( g.model, "bullet_spawn" )
 	vitae_transform_setWorldSpace( g.transform, gun_transform )
@@ -85,18 +93,67 @@ function player_fire( p )
 --]]
 end
 
+timers = {}
+timers.count = 0
+
+function addTimer( timer )
+	timers.count = timers.count + 1
+	timers[timers.count] = timer
+end
+
+--[-[
+function timer_create( time, action )
+	timer = {
+		time = time,
+		action = action,
+	}
+	return timer
+end
+--]]
+
+function inTime( time, action )
+	addTimer( timer_create( time, action ))
+end
+
+function iterator( t )
+	local i = 0
+	local n = t.count
+	return function ()
+		i = i + 1
+		if i <= n then return t[i] end
+	end
+end
+
+function filter( array, func )
+	new_array = {}
+	local count = 0
+	for element in iterator( array ) do
+		if func( element ) then
+			count = count + 1
+			new_array[count] = element
+		end
+	end
+	new_array.count = count
+	return new_array
+end
+
+function timers_tick( dt )
+	for element in iterator( timers ) do
+		element.time = element.time - dt
+		if element.time < 0 then
+			element.action()
+		end
+	end
+
+	new_timers = filter( timers, function( e ) return ( e.time > 0 ) end )
+	timers = new_timers;
+end
+
 -- Create a player. The player is a specialised form of Gameobject
 function playership_create()
 	vprint( "playership_create" )
 	local p = gameobject_create( "dat/model/ship_hd.s" )
 
-	--[[
-	vitae_register_keybind( "accelerate", "w", player_accelerate( p, acceleration ) )
-	vitae_register_keybind( "decelerate", "s", player_accelerate( p, -acceleration ) )
-	vitae_register_keybind( "yaw left", "a", player_yaw( p, yaw) )
-	vitae_register_keybind( "yaw right", "d", player_yaw( p, -yaw) )
-	vitae_register_keybind( "fire", "space", player_fire( p ) )
---]]
 	p.speed = 0.0
 	return p
 end
@@ -107,21 +164,36 @@ starting = true
 function init()
 	vprint( "init" )
 	starting = true
+	library, msg = loadfile( "SpaceSim/lua/library.lua" )
+	library()
+
+--	vprint( tostring( msg ))
 end
 
 camera = "chase"
 flycam = nil
 chasecam = nil
 
+function ship_spawner()
+	local ship = gameobject_create( "dat/model/ship_hd.s" )
+	local speed = 10.0
+	ship_v = Vector( 0.0, 0.0, speed, 0.0 )
+	world_v = vtransformVector( ship.transform, ship_v )
+	vphysic_setVelocity( ship.physic, world_v )
+	inTime( 3, ship_spawner )
+end
+
 function start()
 	vprint( "start" )
 
-	-- We create a player object which is a game-specific Lua class
+	-- We create a player object which is a game-specific Lua lclass
 	-- The player class itself creates several native C classes in the engine
 	player_ship = playership_create()
 	chasecam = vchasecam_follow( engine, player_ship.transform )
 	flycam = vflycam( engine )
 	vscene_setCamera( chasecam )
+
+	ship_spawner()
 end
 
 wave_interval_time = 10.0
@@ -176,7 +248,16 @@ function debug_tick()
 	if vkeyPressed( input, key.c ) then
 		toggle_camera()
 	end
+--[[
+	array_a = { 6, 5, 3, 4, 2, 1 }
+	array_b = filter( array_a, function( e ) return (e % 2 == 0) end )
+	vprint( "array_b:" )
+	for key, value in ipairs(array_b) do
+		vprint( tostring( value ))
+	end
+	--]]
 end
+
 -- Called once per frame to update the current Lua State
 function tick()
 	if starting then
@@ -187,6 +268,9 @@ function tick()
 	playership_tick()
 
 	debug_tick()
+
+	dt = 0.033
+	timers_tick( dt )
 --[[
 	if wave_complete( current_wave ) then
 		current_wave = current_wave + 1

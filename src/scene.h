@@ -99,6 +99,7 @@ int			scene_transformIndex( scene* s, transform* t );
 // ModelInstance Access
 modelInstance* scene_model( scene* s, int i );
 void		scene_addModel(scene* s, modelInstance* m);
+void		scene_removeModel( scene* s, modelInstance* instance );
 
 // Light Access
 light*		scene_light( scene* s, int i );
