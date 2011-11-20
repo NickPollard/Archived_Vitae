@@ -297,6 +297,8 @@ void map_( sterm* list, function f ) {
 		map_( list->tail, f );
 }
 
+// *** Debug Printing
+
 void debug_sterm_print( sterm* term ) {
 	if ( isList( term ) ) {
 		if ( isList( term->head ))
@@ -726,32 +728,13 @@ void model_processObject( void* arg, void* model_, void* transform_ ) {
 		map_vv( tdata->elements, model_processObject, model_, t );
 	}
 	if ( isPropertyType( arg, "particle_emitter" )) {
-//		printf( "model_processObject: Emitter\n" );
-
-		particleEmitter* p = particleEmitter_create();
+		particleEmitter* p = property_value( arg );
 
 		// Convert pointer to index
 		p->trans = (transform*)model_transformIndex( mdl, transform_ );
-
-		p->definition->lifetime = 2.f;
-		p->definition->spawn_box = Vector( 0.1f, 0.1f, 0.1f, 0.f );
-
-		// size
-		p->definition->size = property_create( 2 );
-		property_addf( p->definition->size, 0.f, 0.6f );
-		property_addf( p->definition->size, 1.0f, 0.1f );
-
-		// color
-		p->definition->color = property_create( 5 );
-		property_addv( p->definition->color, 0.f, Vector( 1.f, 1.f, 1.f, 0.f ));
-		property_addv( p->definition->color, 0.1f, Vector( 0.f, 1.f, 1.f, 1.f ));
-		property_addv( p->definition->color, 1.f, Vector( 0.f, 0.f, 1.f, 0.f ));
-
-		p->definition->velocity = Vector( 0.f, 0.0f, -3.f, 0.f );
-		p->definition->spawn_interval = 0.01f;
+/*
 //		p->definition->flags = p->definition->flags | kParticleWorldSpace;
-		texture_request( &p->definition->texture_diffuse, "assets/img/star_rgba64.tga" );
-
+*/
 		mdl->emitters[mdl->emitter_count++] = p;
 	}
 }
@@ -784,24 +767,29 @@ void* s_mesh( sterm* raw_properties ) {
 	return sm;
 }
 
-void* s_particle_emitter( sterm* args ) {
+void* s_particle_emitter( sterm* raw_args ) {
+	sterm* args = eval_list( raw_args );
 	(void)args;
 	particleEmitter* p = particleEmitter_create();
 	p->definition->lifetime = 2.f;
-	p->definition->spawn_box = Vector( 0.3f, 0.3f, 0.3f, 0.f );
+	p->definition->spawn_box = Vector( 0.1f, 0.1f, 0.1f, 0.f );
 
 	// size
 	p->definition->size = property_create( 2 );
-	property_addf( p->definition->size, 0.f, 1.f );
+	property_addf( p->definition->size, 0.f, 0.6f );
+	property_addf( p->definition->size, 1.0f, 0.1f );
 
 	// color
 	p->definition->color = property_create( 5 );
-	property_addv( p->definition->color, 0.f, Vector( 1.f, 0.f, 0.f, 1.f ));
+	property_addv( p->definition->color, 0.f, Vector( 1.f, 1.f, 1.f, 0.f ));
+	property_addv( p->definition->color, 0.1f, Vector( 0.f, 1.f, 1.f, 1.f ));
+	property_addv( p->definition->color, 1.f, Vector( 0.f, 0.f, 1.f, 0.f ));
 
-	p->definition->velocity = Vector( 0.f, 0.1f, 0.f, 0.f );
-	p->definition->spawn_interval = 0.03f;
+	p->definition->velocity = Vector( 0.f, 0.0f, -3.f, 0.f );
+	p->definition->spawn_interval = 0.01f;
 	//p->definition->flags = p->definition->flags | kParticleWorldSpace;
 	//p->trans = t;
+	texture_request( &p->definition->texture_diffuse, "assets/img/star_rgba64.tga" );
 
 	return sterm_createProperty( "particle_emitter", typeObject, p );
 }
@@ -834,6 +822,7 @@ void* s_property( sterm* args ) {
 		property_addv( p, time, vec );
 		term = term->tail;
 	}
+	vAssert( 0 );
 	return p;
 }
 
