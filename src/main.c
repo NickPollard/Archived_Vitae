@@ -20,6 +20,7 @@
 
 #define TEST true
 
+void test_lisp();
 
 // ###################################
 
@@ -41,6 +42,8 @@ void test() {
 	test_terrain();
 
 	test_aabb_calculate();
+	
+	test_lisp();
 }
 
 // ###################################
