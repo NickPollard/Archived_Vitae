@@ -114,12 +114,12 @@ term* lisp_parse( inputStream* stream ) {
 		printf( "ERROR: End of file reached during lisp_parse, with incorrect number of closing parentheses.\n" );
 		vAssert( 0 );
 		return NULL;
-	}
+		}
 	char* token = inputStream_nextToken( stream );
 	if ( _isListEnd( *token ) ) {
 		mem_free( token ); // It's a bracket, discard it
 		return NULL;
-	}
+		}
 	if ( _isListStart( *token ) ) {
 		mem_free( token ); // It's a bracket, discard it
 		term* list = term_create( typeList, NULL );
@@ -128,7 +128,7 @@ term* lisp_parse( inputStream* stream ) {
 		s->head = lisp_parse( stream );
 		if ( !s->head ) { // The Empty list () 
 			return list;
-		}
+			}
 
 		while ( true ) {
 			term* sub_expr = lisp_parse( stream );				// parse a subexpr
@@ -138,9 +138,9 @@ term* lisp_parse( inputStream* stream ) {
 				s->head = sub_expr;
 			} else {
 				return list;
+				}
 			}
 		}
-	}
 	// When it's an atom, we keep the token, don't free it
 	return term_create( typeAtom, (void*)token );
 }
@@ -212,7 +212,30 @@ void* value( term* atom ) {
 	return atom->head;
 	}
 
-typedef map context;
+/*
+   Execution context
+   */
+typedef struct context_s {
+	struct context_s* parent;
+	map* lookup;
+	} context;
+
+void* context_lookup( context* c, int atom ) {
+	assert( c );
+	assert( c->lookup );
+	term* v = map_find( c->lookup, atom );
+	if ( v ) {
+		printf( "Found binding %d in context.\n", atom );
+		return v;
+		}
+	if ( c->parent ) {
+		printf( "No binding %d in context, checking parent.\n", atom );
+		return context_lookup( c->parent, atom );
+		}
+	printf( "Unable to find binding %d in current context.\n", atom );
+	return NULL;
+	}
+
 typedef void* (*fmap_func)( term*, void* );
 typedef void* (*lisp_func)( term* );
 
@@ -221,6 +244,8 @@ term* fmap_1( fmap_func f, void* arg, term* expr ) {
 		return NULL;
 	return _cons( f( head( expr ), arg ), fmap_1( f, arg, tail( expr )));
 	}
+
+void* exec( context* c, term* func, term* args);
 
 /*
    Eval
@@ -243,7 +268,9 @@ void* _eval( term* expr, void* _context ) {
 	// Eval arguments, then pass arguments to the binding of the first element and run
 	if ( isType( expr, typeAtom )) {
 		printf( "Found atom: %s\n", (const char*)( expr->head ));
-		return map_find(_context, mhash((const char*)( expr->head )));
+		term* value = context_lookup(_context, mhash((const char*)( expr->head )));
+		vAssert( value );
+		return value;
 		}
 	if ( isType( expr, typeValue )) {
 		return expr;	// Do we return as a term of typeValue, or just return the value itself? Probably the first, for macros and hijinks
@@ -251,7 +278,8 @@ void* _eval( term* expr, void* _context ) {
 	if ( isType( expr, typeList )) {
 		printf( "Found list.\n" );
 		term* e = fmap_1( _eval, _context, expr );
-		return ((lisp_func)head( e )) ( tail( e ));
+		//return ((lisp_func)head( e )) ( tail( e ));
+		return exec( _context, head( e ), tail( e ));
 		}
 	return NULL;
 	}
@@ -269,7 +297,7 @@ void* _eval( term* expr, void* _context ) {
 context* def( context* c, const char* atom, void* value ) {
 	context * new = mem_alloc( sizeof( context ));
 	memcpy( new, c, sizeof( context ));
-	map_add(new, mhash(atom), value);
+	map_add( new->lookup , mhash(atom), value);
 	return new;
 	}
 
@@ -279,11 +307,90 @@ void if () {
 }
 */
 
+context* context_create( context* parent ) {
+	context* c = mem_alloc( sizeof( context ));
+	int max = 128, stride = sizeof( term );
+	c->lookup = map_create( max, stride );
+	c->parent = parent;
+	return c;
+	}
+
 /*
    Lisp unit tests
    */
+
+void* print_func( term* arg ) {
+	printf( "Print_func.\n" );
+	printf( "%s\n", (const char*)head(arg)->head );
+	return NULL;
+}
+
+/*
+   Execute a lisp function
+   )
+   The lisp function is defined as it's argument bindings followed by it's expression
+   eg.
+   (def my_func (a b)
+   		(+ a b))
+
+		FUNC is a list where the first item (head) is a list of argument names
+		and the second item (tail->head) is the function expression
+		ARGS is a list of argument values
+   */
+typedef void (*zip1_func)( term*, term*, void* );
+
+void zip1( term* a_list, term* b_list, zip1_func func, void* arg ) {
+	assert( isType( a_list, typeList ));
+	assert( isType( b_list, typeList ));
+	func( head( a_list ), head( b_list ), arg );
+	if ( tail( a_list )) {
+		assert( tail( b_list ));
+		zip1( tail( a_list ), tail( b_list ), func, arg );
+		}
+	}
+
+void define_arg( term* symbol, term* value, void* _context ) {
+	context* c = _context;
+	map_add( c->lookup, mhash( symbol->head ), value );
+	}
+
+void* exec( context* c, term* func, term* args ) {
+	assert( func );
+	assert( head( func ));
+	assert( head( tail( func )));
+
+	term* arg_list = head( func );
+	term* expr = head( tail( func ));
+	(void)arg_list;
+	(void)expr;
+
+	context* local = context_create( c );
+
+	// Map all the arguments to the arglist
+	if ( args ) {
+		zip1( arg_list, args, define_arg, local );  
+		}
+
+	if (args) {
+		printf( "Function executed with arg\n" );
+		// Create a new context, then bind the arguments
+		//map_add( local->lookup, mhash( "arg" ), head( args ));
+		}
+	else
+		printf( "Function executed without arg\n" );
+
+	// Evaluate the function in the local context including the argument bindings
+	term* result = _eval( expr, local );
+	mem_free( local );
+	return result;
+	}
+
+void define_function( context* c, const char* name, const char* value ) {
+	term* func = lisp_parse_string( value );
+	map_add( c->lookup, mhash( name ), func );
+	}
+
 void test_lisp() {
-	//context* c = NULL;
 	term* script = lisp_parse_string( "(a b)" );
 	// Type tests
 	assert( isType( script, typeList ));
@@ -294,5 +401,46 @@ void test_lisp() {
 	assert( string_equal( value( head( script )) , "a" ));
 	assert( string_equal( value( head( tail( script ))) , "b" ));
 
+#define NO_PARENT NULL
+	context* c = context_create( NO_PARENT );
+	map_add( c->lookup, mhash("a"), print_func );
+	term* hello = term_create( typeValue, "Hello World" );
+	assert( hello->head );
+	map_add( c->lookup, mhash("b"), hello );
+	term* search = map_find( c->lookup, mhash("b"));
+	assert( search->head );
+
+	term* goodbye = term_create( typeValue, "Goodbye World" );
+	map_add( c->lookup, mhash("goodbye"), goodbye );
+
+	// Test #1 - Variable binding
+	term* result = _eval( lisp_parse_string( "b" ), c );
+	assert( isType( result, typeValue ));
+	assert( string_equal( result->head, "Hello World" ));
+
+	define_function( c, "value_of_b", "(() b )" );
+
+	// Test #2 - Function calling
+	result = _eval( lisp_parse_string( "( value_of_b )" ), c );
+	assert( string_equal( result->head, "Hello World" ));
+
+	// Test #3 - Single function argument
+	define_function( c, "value_of_arg", "(( arg ) arg )" );
+	result = _eval( lisp_parse_string( "( value_of_arg b )" ), c );
+	assert( string_equal( result->head, "Hello World" ));
+	
+	// Test #4 - Multiple function argument mapping
+	define_function( c, "value_of_first_arg", "(( arg1 arg2 ) arg1 )" );
+	define_function( c, "value_of_second_arg", "(( arg1 arg2 ) arg2 )" );
+	result = _eval( lisp_parse_string( "( value_of_first_arg b goodbye )" ), c );
+	assert( string_equal( result->head, "Hello World" ));
+	result = _eval( lisp_parse_string( "( value_of_second_arg goodbye b )" ), c );
+	assert( string_equal( result->head, "Hello World" ));
+	result = _eval( lisp_parse_string( "( value_of_first_arg goodbye b )" ), c );
+	assert( !string_equal( result->head, "Hello World" ));
+	result = _eval( lisp_parse_string( "( value_of_second_arg b goodbye )" ), c );
+	assert( !string_equal( result->head, "Hello World" ));
+
+	assert( 0 );
 	//term* test = _eval( lisp_parse_string( "(def a 10)" ), c);
 	}
