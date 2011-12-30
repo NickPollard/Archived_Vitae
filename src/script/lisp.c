@@ -76,7 +76,9 @@
 enum termType {
 	typeList,
 	typeAtom,
-	typeValue
+	typeString,
+	typeFloat,
+	typeIntrinsic
 	};
 
 /*
@@ -167,6 +169,10 @@ bool isType( term* t, enum termType type ) {
 	return t->type == type;
 	}
 
+bool isValue( term* t ) {
+	return isType( t, typeString ) || isType( t, typeFloat );
+	}
+
 /*  
    List accessors
 
@@ -236,8 +242,8 @@ void* context_lookup( context* c, int atom ) {
 	return NULL;
 	}
 
-typedef void* (*fmap_func)( term*, void* );
-typedef void* (*lisp_func)( term* );
+typedef term* (*fmap_func)( term*, void* );
+typedef term* (*lisp_func)( term* );
 
 term* fmap_1( fmap_func f, void* arg, term* expr ) {
 	if ( !expr )
@@ -264,7 +270,7 @@ void* exec( context* c, term* func, term* args);
    ( A ( B ( C ))) -> Context[A]( Context[B]( Context[C]()))
    */
 
-void* _eval( term* expr, void* _context ) {
+term* _eval( term* expr, void* _context ) {
 	// Eval arguments, then pass arguments to the binding of the first element and run
 	if ( isType( expr, typeAtom )) {
 		printf( "Found atom: %s\n", (const char*)( expr->head ));
@@ -272,13 +278,12 @@ void* _eval( term* expr, void* _context ) {
 		vAssert( value );
 		return value;
 		}
-	if ( isType( expr, typeValue )) {
+	if ( isValue( expr )) {
 		return expr;	// Do we return as a term of typeValue, or just return the value itself? Probably the first, for macros and hijinks
 		}
 	if ( isType( expr, typeList )) {
 		printf( "Found list.\n" );
 		term* e = fmap_1( _eval, _context, expr );
-		//return ((lisp_func)head( e )) ( tail( e ));
 		return exec( _context, head( e ), tail( e ));
 		}
 	return NULL;
@@ -316,16 +321,6 @@ context* context_create( context* parent ) {
 	}
 
 /*
-   Lisp unit tests
-   */
-
-void* print_func( term* arg ) {
-	printf( "Print_func.\n" );
-	printf( "%s\n", (const char*)head(arg)->head );
-	return NULL;
-}
-
-/*
    Execute a lisp function
    )
    The lisp function is defined as it's argument bindings followed by it's expression
@@ -356,38 +351,52 @@ void define_arg( term* symbol, term* value, void* _context ) {
 
 void* exec( context* c, term* func, term* args ) {
 	assert( func );
-	assert( head( func ));
-	assert( head( tail( func )));
+	assert( isType( func, typeList ) || isType( func, typeIntrinsic ));
 
-	term* arg_list = head( func );
-	term* expr = head( tail( func ));
-	(void)arg_list;
-	(void)expr;
+	if ( isType( func, typeList )) {
+		assert( head( func ));			// The argument binding
+		assert( head( tail( func )));	// The function definition
+		term* arg_list = head( func );
+		term* expr = head( tail( func ));
 
-	context* local = context_create( c );
+		context* local = context_create( c );
 
-	// Map all the arguments to the arglist
-	if ( args ) {
-		zip1( arg_list, args, define_arg, local );  
+		// Map all the arguments to the arglist
+		if ( args ) {
+			zip1( arg_list, args, define_arg, local );  
+			}
+
+		// Evaluate the function in the local context including the argument bindings
+		term* result = _eval( expr, local );
+		mem_free( local );
+		return result;
 		}
 
-	if (args) {
-		printf( "Function executed with arg\n" );
-		// Create a new context, then bind the arguments
-		//map_add( local->lookup, mhash( "arg" ), head( args ));
+	if ( isType( func, typeIntrinsic )) {
+		lisp_func f = func->head;
+		return f( args );
 		}
-	else
-		printf( "Function executed without arg\n" );
 
-	// Evaluate the function in the local context including the argument bindings
-	term* result = _eval( expr, local );
-	mem_free( local );
-	return result;
+	assert( 0 );
+	return NULL;
 	}
 
 void define_function( context* c, const char* name, const char* value ) {
 	term* func = lisp_parse_string( value );
 	map_add( c->lookup, mhash( name ), func );
+	}
+
+term* lisp_func_add( term* args ) {
+	assert( isType( args, typeList ));
+	assert( isType( head( args ), typeFloat ));
+	assert( isType( head( tail( args )), typeFloat ));
+
+	float a = *(float*)head( args )->head;
+	float b = *(float*)head( tail( args ))->head;
+	float* result = mem_alloc( sizeof( float ));
+	*result = a+b;
+	term* ret = term_create( typeFloat, result );
+	return ret;
 	}
 
 void test_lisp() {
@@ -403,19 +412,18 @@ void test_lisp() {
 
 #define NO_PARENT NULL
 	context* c = context_create( NO_PARENT );
-	map_add( c->lookup, mhash("a"), print_func );
-	term* hello = term_create( typeValue, "Hello World" );
+	term* hello = term_create( typeString, "Hello World" );
 	assert( hello->head );
 	map_add( c->lookup, mhash("b"), hello );
 	term* search = map_find( c->lookup, mhash("b"));
 	assert( search->head );
 
-	term* goodbye = term_create( typeValue, "Goodbye World" );
+	term* goodbye = term_create( typeString, "Goodbye World" );
 	map_add( c->lookup, mhash("goodbye"), goodbye );
 
 	// Test #1 - Variable binding
 	term* result = _eval( lisp_parse_string( "b" ), c );
-	assert( isType( result, typeValue ));
+	assert( isType( result, typeString ));
 	assert( string_equal( result->head, "Hello World" ));
 
 	define_function( c, "value_of_b", "(() b )" );
@@ -441,6 +449,29 @@ void test_lisp() {
 	result = _eval( lisp_parse_string( "( value_of_second_arg b goodbye )" ), c );
 	assert( !string_equal( result->head, "Hello World" ));
 
+	// Test #5 - Numeric types
+	float num = 5.f;
+	result = term_create( typeFloat, &num );
+	assert( isType( result, typeFloat ));
+	
+	map_add( c->lookup, mhash( "five" ), result );
+	result = _eval( lisp_parse_string( "five" ), c );
+
+	assert( isType( result, typeFloat ));
+	assert( *(float*)result->head == 5.f );
+
+	term* func_add = term_create( typeIntrinsic, (lisp_func*)lisp_func_add );
+	map_add( c->lookup, mhash( "+" ), func_add );
+	result = _eval( lisp_parse_string( "(+ five five)" ), c );
+	assert( *(float*)result->head == 10.f );
+
 	assert( 0 );
-	//term* test = _eval( lisp_parse_string( "(def a 10)" ), c);
+
+	// The final test!
+	/*
+	test_struct* object = _eval( lisp_parse_string( "(test_struct ((color (vector 0.0 0.0 1.0)) (size 1.0) (lifetime 2.0)))" ));
+	assert( object->size == 1.f );
+	assert( object->lifetime == 2.f );
+	assert( vector_equal( object->color, vector( 0.f, 0.f, 1.f, 1.f )));
+	*/
 	}
