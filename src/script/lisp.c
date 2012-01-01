@@ -72,6 +72,7 @@
 
 /*
    types of list term
+   all terms aside from LIST and ATOM are considered to be value terms
    */
 enum termType {
 	typeList,
@@ -82,9 +83,9 @@ enum termType {
 	};
 
 /*
-	A lisp term. Has a type to define what variable is stored in [head];
-	If it's a list, then [tail] stores the next item in the list
-	If it's not a list, then [tail] is undefined (should not be used; likely NULL)
+	A lisp term. Has a type to define what variable is stored in HEAD;
+	If it's a list, then TAIL stores the next item in the list
+	If it's not a list, then TAIL is undefined (should not be used; likely NULL)
    */
 struct term_s;
 typedef struct term_s term;
@@ -170,7 +171,7 @@ bool isType( term* t, enum termType type ) {
 	}
 
 bool isValue( term* t ) {
-	return isType( t, typeString ) || isType( t, typeFloat );
+	return !isType( t, typeList ) && !isType( t, typeAtom );
 	}
 
 /*  
@@ -243,7 +244,7 @@ void* context_lookup( context* c, int atom ) {
 	}
 
 typedef term* (*fmap_func)( term*, void* );
-typedef term* (*lisp_func)( term* );
+typedef term* (*lisp_func)( context*, term* );
 
 term* fmap_1( fmap_func f, void* arg, term* expr ) {
 	if ( !expr )
@@ -282,6 +283,8 @@ term* _eval( term* expr, void* _context ) {
 		return expr;	// Do we return as a term of typeValue, or just return the value itself? Probably the first, for macros and hijinks
 		}
 	if ( isType( expr, typeList )) {
+		// TODO - need to check for intrinsic here
+		// as if it's a special form, we might not want to eval all (eg. if)
 		printf( "Found list.\n" );
 		term* e = fmap_1( _eval, _context, expr );
 		return exec( _context, head( e ), tail( e ));
@@ -374,7 +377,7 @@ void* exec( context* c, term* func, term* args ) {
 
 	if ( isType( func, typeIntrinsic )) {
 		lisp_func f = func->head;
-		return f( args );
+		return f( c, args );
 		}
 
 	assert( 0 );
@@ -386,7 +389,9 @@ void define_function( context* c, const char* name, const char* value ) {
 	map_add( c->lookup, mhash( name ), func );
 	}
 
-term* lisp_func_add( term* args ) {
+// Intrinsic Maths functions
+term* lisp_func_add( context* c, term* args ) {
+	(void)c;
 	assert( isType( args, typeList ));
 	assert( isType( head( args ), typeFloat ));
 	assert( isType( head( tail( args )), typeFloat ));
@@ -394,9 +399,78 @@ term* lisp_func_add( term* args ) {
 	float a = *(float*)head( args )->head;
 	float b = *(float*)head( tail( args ))->head;
 	float* result = mem_alloc( sizeof( float ));
-	*result = a+b;
+	*result = a + b;
 	term* ret = term_create( typeFloat, result );
 	return ret;
+	}
+
+term* lisp_func_sub( context* c, term* args ) {
+	(void)c;
+	assert( isType( args, typeList ));
+	assert( isType( head( args ), typeFloat ));
+	assert( isType( head( tail( args )), typeFloat ));
+
+	float a = *(float*)head( args )->head;
+	float b = *(float*)head( tail( args ))->head;
+	float* result = mem_alloc( sizeof( float ));
+	*result = a - b;
+	term* ret = term_create( typeFloat, result );
+	return ret;
+	}
+
+term* lisp_func_mul( context* c, term* args ) {
+	(void)c;
+	assert( isType( args, typeList ));
+	assert( isType( head( args ), typeFloat ));
+	assert( isType( head( tail( args )), typeFloat ));
+
+	float a = *(float*)head( args )->head;
+	float b = *(float*)head( tail( args ))->head;
+	float* result = mem_alloc( sizeof( float ));
+	*result = a * b;
+	term* ret = term_create( typeFloat, result );
+	return ret;
+	}
+
+term* lisp_func_div( context* c, term* args ) {
+	(void)c;
+	assert( isType( args, typeList ));
+	assert( isType( head( args ), typeFloat ));
+	assert( isType( head( tail( args )), typeFloat ));
+
+	float a = *(float*)head( args )->head;
+	float b = *(float*)head( tail( args ))->head;
+	float* result = mem_alloc( sizeof( float ));
+	*result = a / b;
+	term* ret = term_create( typeFloat, result );
+	return ret;
+	}
+
+// Need to work out what returns true
+// Any non-empty list should probably return true?
+// Any non-false term should return true?
+bool isTrue( term* t ) {
+	(void)t;
+	return true;
+	}
+
+// lisp 'if' statement
+// of the form:
+//    (if (cond) a b)
+// evaluates cond
+// if cond is true, then returns _eval( a )
+// else returns _eval( b )
+term* lisp_func_if( context* c, term* args ) {
+		term* cond = head( args );
+		term* result_then = head( tail( args ));
+		term* result_else = head( tail( tail( args )));
+
+		if ( isTrue( _eval( cond, c ))) {
+			return result_then;
+			}
+		else {
+			return result_else;
+			}
 	}
 
 void test_lisp() {
@@ -449,7 +523,7 @@ void test_lisp() {
 	result = _eval( lisp_parse_string( "( value_of_second_arg b goodbye )" ), c );
 	assert( !string_equal( result->head, "Hello World" ));
 
-	// Test #5 - Numeric types
+	// Test #5 - Numeric types and intrinsic functions
 	float num = 5.f;
 	result = term_create( typeFloat, &num );
 	assert( isType( result, typeFloat ));
@@ -461,9 +535,29 @@ void test_lisp() {
 	assert( *(float*)result->head == 5.f );
 
 	term* func_add = term_create( typeIntrinsic, (lisp_func*)lisp_func_add );
+	term* func_sub = term_create( typeIntrinsic, (lisp_func*)lisp_func_sub );
+	term* func_mul = term_create( typeIntrinsic, (lisp_func*)lisp_func_mul );
+	term* func_div = term_create( typeIntrinsic, (lisp_func*)lisp_func_div );
 	map_add( c->lookup, mhash( "+" ), func_add );
+	map_add( c->lookup, mhash( "-" ), func_sub );
+	map_add( c->lookup, mhash( "*" ), func_mul );
+	map_add( c->lookup, mhash( "/" ), func_div );
 	result = _eval( lisp_parse_string( "(+ five five)" ), c );
 	assert( *(float*)result->head == 10.f );
+
+	// Test #6 - function definitions using intrinsics
+	define_function( c, "double", "(( a ) (+ a a))" );
+	result = _eval( lisp_parse_string( "(double (double five))" ), c );
+	assert( *(float*)result->head == 20.f );
+	
+	result = _eval( lisp_parse_string( "(* five five))" ), c );
+	assert( *(float*)result->head == 25.f );
+
+	// TODO - parse numeric types from a lisp string
+	// eg. (+ 5.f 7.f)
+
+	// TODO - If (intrinsic)
+
 
 	assert( 0 );
 
