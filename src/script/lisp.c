@@ -79,7 +79,9 @@ enum termType {
 	typeAtom,
 	typeString,
 	typeFloat,
-	typeIntrinsic
+	typeIntrinsic,
+	typeFalse,		// Special FALSE datatype
+	typeTrue		// Special TRUE datatype
 	};
 
 /*
@@ -93,14 +95,82 @@ struct term_s {
 	enum termType type;
 	void* head;
 	term* tail;
+	int refcount;
+	};
+	
+static const term lisp_false = { 
+	typeFalse, 
+	NULL,	// Head 
+	NULL,	// Tail
+	1		// Refcount
+	};
+static const term lisp_true = { 
+	typeTrue, 
+	NULL,	// Head 
+	NULL,	// Tail
+	1		// Refcount
 	};
 
+const term* lisp_true_ptr = &lisp_true;
+const term* lisp_false_ptr = &lisp_false;
+
+static const size_t kLispHeapSize = 1 << 20;
+static heapAllocator* lisp_heap = NULL;
+static passthroughAllocator* context_heap = NULL;
+
+bool isType( term* t, enum termType type ) {
+	return t->type == type;
+	}
+
+bool isValue( term* t ) {
+	return !isType( t, typeList ) && !isType( t, typeAtom );
+	}
+
+void term_delete( term* t );
+
+void term_takeRef( term* t ) {
+	++t->refcount;
+	}
+
+void term_deref( term* t ) {
+	--t->refcount;
+	vAssert( t->refcount >= 0 );
+	if ( isType( t, typeList ) && t->tail )
+		term_deref( t->tail );
+	if ( t->refcount == 0 )
+		term_delete( t );
+	}
+
+#ifdef MEM_STACK_TRACE
+static const char* kLispTermAllocString = "lisp.c:term_create()";
+static const char* kLispValueAllocString = "lisp.c:value_create()";
+#endif // MEM_STACK_TRACE
+
 term* term_create( enum termType type, void* value ) {
-	term* t = mem_alloc( sizeof( term ));
+	mem_pushStack( kLispTermAllocString );
+	term* t = heap_allocate( lisp_heap, sizeof( term ));
+	mem_popStack();
 	t->type = type;
 	t->head = value;
+	if ( type == typeList && value ) {
+		term_takeRef( (term*)value );
+		}
 	t->tail = NULL;
+	t->refcount = 0;
 	return t;
+	}
+
+term* term_copy( term* t ) {
+	return term_create( t->type, t->head );
+}
+
+void term_delete( term* t ) {
+	if ( isType( t, typeList )) {
+		// If, not assert, as it could be the empty list
+		if( t->head )
+			term_deref( t->head );
+		}
+	heap_deallocate( lisp_heap, t );
 	}
 
 int _isListStart( char c ) {
@@ -125,10 +195,9 @@ term* lisp_parse( inputStream* stream ) {
 		}
 	if ( _isListStart( *token ) ) {
 		mem_free( token ); // It's a bracket, discard it
-		term* list = term_create( typeList, NULL );
+		term* list = term_create( typeList, lisp_parse( stream ));
 		term* s = list;
 
-		s->head = lisp_parse( stream );
 		if ( !s->head ) { // The Empty list () 
 			return list;
 			}
@@ -136,9 +205,9 @@ term* lisp_parse( inputStream* stream ) {
 		while ( true ) {
 			term* sub_expr = lisp_parse( stream );				// parse a subexpr
 			if ( sub_expr ) {								// If a valid return
-				s->tail = term_create( typeList, NULL );	// Add it to the tail
+				s->tail = term_create( typeList, sub_expr );	// Add it to the tail
+				term_takeRef( s->tail );						// Take a ref (from the head to the tail)
 				s = s->tail;
-				s->head = sub_expr;
 			} else {
 				return list;
 				}
@@ -165,14 +234,6 @@ term* lisp_parse_file( const char* filename ) {
 	mem_free( contents );
 	return s;
 }
-
-bool isType( term* t, enum termType type ) {
-	return t->type == type;
-	}
-
-bool isValue( term* t ) {
-	return !isType( t, typeList ) && !isType( t, typeAtom );
-	}
 
 /*  
    List accessors
@@ -203,11 +264,27 @@ term* tail( term* list ) {
    List Constructors
    */
 term* _cons( void* head, term* tail ) {
-	term* t = mem_alloc( sizeof( term ));
-	t->type = typeList;
-	t->head = head;
+	term* t = term_create( typeList, head );
 	t->tail = tail;
+	if ( tail )
+		term_takeRef( tail );
 	return t;
+	}
+
+void list_delete( term* t ) {
+	assert( isType( t, typeList ));
+	if ( t->tail ) {
+		list_delete( t->tail );
+		}
+	term_delete( t );
+	}
+
+void list_deref( term* t ) {
+	assert( isType( t, typeList ));
+	if ( t->tail ) {
+		list_deref( t->tail );
+		}
+	term_deref( t );
 	}
 
 /*
@@ -230,17 +307,19 @@ typedef struct context_s {
 void* context_lookup( context* c, int atom ) {
 	assert( c );
 	assert( c->lookup );
-	term* v = map_find( c->lookup, atom );
+	term** v = (term**)map_find( c->lookup, atom );
 	if ( v ) {
-		printf( "Found binding %d in context.\n", atom );
-		return v;
+		return *v;
 		}
 	if ( c->parent ) {
-		printf( "No binding %d in context, checking parent.\n", atom );
 		return context_lookup( c->parent, atom );
 		}
-	printf( "Unable to find binding %d in current context.\n", atom );
 	return NULL;
+	}
+
+void context_add( context* c, const char* name, term* t ) {
+	map_add( c->lookup, mhash( name ), &t );
+	term_takeRef( t );
 	}
 
 typedef term* (*fmap_func)( term*, void* );
@@ -249,7 +328,8 @@ typedef term* (*lisp_func)( context*, term* );
 term* fmap_1( fmap_func f, void* arg, term* expr ) {
 	if ( !expr )
 		return NULL;
-	return _cons( f( head( expr ), arg ), fmap_1( f, arg, tail( expr )));
+	return _cons( f( head( expr ), arg ),
+		   			fmap_1( f, arg, tail( expr )));
 	}
 
 void* exec( context* c, term* func, term* args);
@@ -272,24 +352,56 @@ void* exec( context* c, term* func, term* args);
    */
 
 term* _eval( term* expr, void* _context ) {
+	term_takeRef( expr );
+	term* result = NULL;
 	// Eval arguments, then pass arguments to the binding of the first element and run
 	if ( isType( expr, typeAtom )) {
-		printf( "Found atom: %s\n", (const char*)( expr->head ));
 		term* value = context_lookup(_context, mhash((const char*)( expr->head )));
 		vAssert( value );
-		return value;
+		result = value;
 		}
 	if ( isValue( expr )) {
-		return expr;	// Do we return as a term of typeValue, or just return the value itself? Probably the first, for macros and hijinks
+		// Do we return as a term of typeValue, or just return the value itself? Probably the first, for macros and hijinks
+		result = term_copy( expr );
 		}
 	if ( isType( expr, typeList )) {
 		// TODO - need to check for intrinsic here
 		// as if it's a special form, we might not want to eval all (eg. if)
-		printf( "Found list.\n" );
-		term* e = fmap_1( _eval, _context, expr );
-		return exec( _context, head( e ), tail( e ));
+		term* h = _eval( head( expr ), _context );
+		if ( !isType( h, typeIntrinsic )) {
+			term* e = fmap_1( _eval, _context, tail( expr ));
+			if ( e )
+				term_takeRef( e );
+			result = exec( _context, h, e );
+			if ( e )
+				term_deref( e );
+			}
+		else {
+			result = exec( _context, h, tail( expr ));
+			}
 		}
-	return NULL;
+	term_deref( expr );
+	return result;
+	}
+
+context* context_create( context* parent ) {
+	context* c = passthrough_allocate( context_heap, sizeof( context ));
+	int max = 128, stride = sizeof( term* );
+	c->lookup = map_create( max, stride );
+	c->parent = parent;
+	return c;
+	}
+
+void context_delete( context* c ) {
+	// Deref all the contents
+	printf( "Deleting context with %d keys.\n", c->lookup->count );
+	for ( int i = 0; i < c->lookup->count; ++i ) {
+		term* t = *(term**)(c->lookup->values + (i * c->lookup->stride));
+		if ( t )
+			term_deref( t );
+		}
+
+	passthrough_deallocate( context_heap, c );
 	}
 
 /*
@@ -302,26 +414,13 @@ term* _eval( term* expr, void* _context ) {
 
 		returns a context with a copy of the old context, plus the new binding
    */
+/*
 context* def( context* c, const char* atom, void* value ) {
-	context * new = mem_alloc( sizeof( context ));
-	memcpy( new, c, sizeof( context ));
-	map_add( new->lookup , mhash(atom), value);
+	context * new = context_create( c );
+	context_add( new, atom, value);
 	return new;
 	}
-
-/*
-void if () {
-
-}
 */
-
-context* context_create( context* parent ) {
-	context* c = mem_alloc( sizeof( context ));
-	int max = 128, stride = sizeof( term );
-	c->lookup = map_create( max, stride );
-	c->parent = parent;
-	return c;
-	}
 
 /*
    Execute a lisp function
@@ -349,12 +448,13 @@ void zip1( term* a_list, term* b_list, zip1_func func, void* arg ) {
 
 void define_arg( term* symbol, term* value, void* _context ) {
 	context* c = _context;
-	map_add( c->lookup, mhash( symbol->head ), value );
+	context_add( c, symbol->head, value );
 	}
 
 void* exec( context* c, term* func, term* args ) {
 	assert( func );
 	assert( isType( func, typeList ) || isType( func, typeIntrinsic ));
+	assert( !args || isType( args, typeList ));
 
 	if ( isType( func, typeList )) {
 		assert( head( func ));			// The argument binding
@@ -371,13 +471,14 @@ void* exec( context* c, term* func, term* args ) {
 
 		// Evaluate the function in the local context including the argument bindings
 		term* result = _eval( expr, local );
-		mem_free( local );
+		context_delete( local );
 		return result;
 		}
 
 	if ( isType( func, typeIntrinsic )) {
 		lisp_func f = func->head;
-		return f( c, args );
+		term* ret = f( c, args );
+		return ret;
 		}
 
 	assert( 0 );
@@ -386,63 +487,97 @@ void* exec( context* c, term* func, term* args ) {
 
 void define_function( context* c, const char* name, const char* value ) {
 	term* func = lisp_parse_string( value );
-	map_add( c->lookup, mhash( name ), func );
+	context_add( c, name, func );
 	}
 
 // Intrinsic Maths functions
-term* lisp_func_add( context* c, term* args ) {
-	(void)c;
+term* lisp_func_add( context* c, term* raw_args ) {
+	term* args = fmap_1( _eval, c, raw_args );
+	term_takeRef( args );
 	assert( isType( args, typeList ));
 	assert( isType( head( args ), typeFloat ));
 	assert( isType( head( tail( args )), typeFloat ));
 
 	float a = *(float*)head( args )->head;
 	float b = *(float*)head( tail( args ))->head;
-	float* result = mem_alloc( sizeof( float ));
+	mem_pushStack( kLispValueAllocString );
+	float* result = heap_allocate( lisp_heap, sizeof( float )  );
+	mem_popStack( );
 	*result = a + b;
 	term* ret = term_create( typeFloat, result );
+	term_deref( args );
 	return ret;
 	}
 
-term* lisp_func_sub( context* c, term* args ) {
-	(void)c;
+term* lisp_func_sub( context* c, term* raw_args ) {
+	term* args = fmap_1( _eval, c, raw_args );
+	term_takeRef( args );
 	assert( isType( args, typeList ));
 	assert( isType( head( args ), typeFloat ));
 	assert( isType( head( tail( args )), typeFloat ));
 
 	float a = *(float*)head( args )->head;
 	float b = *(float*)head( tail( args ))->head;
-	float* result = mem_alloc( sizeof( float ));
+	mem_pushStack( kLispValueAllocString );
+	float* result = heap_allocate( lisp_heap, sizeof( float )  );
+	mem_popStack( );
 	*result = a - b;
 	term* ret = term_create( typeFloat, result );
+	term_deref( args );
 	return ret;
 	}
 
-term* lisp_func_mul( context* c, term* args ) {
-	(void)c;
+term* lisp_func_mul( context* c, term* raw_args ) {
+	term* args = fmap_1( _eval, c, raw_args );
+	term_takeRef( args );
 	assert( isType( args, typeList ));
 	assert( isType( head( args ), typeFloat ));
 	assert( isType( head( tail( args )), typeFloat ));
 
 	float a = *(float*)head( args )->head;
 	float b = *(float*)head( tail( args ))->head;
-	float* result = mem_alloc( sizeof( float ));
+	mem_pushStack( kLispValueAllocString );
+	float* result = heap_allocate( lisp_heap, sizeof( float )  );
+	mem_popStack( );
 	*result = a * b;
 	term* ret = term_create( typeFloat, result );
+	term_deref( args );
 	return ret;
 	}
 
-term* lisp_func_div( context* c, term* args ) {
-	(void)c;
+term* lisp_func_div( context* c, term* raw_args ) {
+	term* args = fmap_1( _eval, c, raw_args );
+	term_takeRef( args );
 	assert( isType( args, typeList ));
 	assert( isType( head( args ), typeFloat ));
 	assert( isType( head( tail( args )), typeFloat ));
 
 	float a = *(float*)head( args )->head;
 	float b = *(float*)head( tail( args ))->head;
-	float* result = mem_alloc( sizeof( float ));
+	mem_pushStack( kLispValueAllocString );
+	float* result = heap_allocate( lisp_heap, sizeof( float )  );
+	mem_popStack( );
 	*result = a / b;
 	term* ret = term_create( typeFloat, result );
+	term_deref( args );
+	return ret;
+	}
+
+term* lisp_func_greaterthan( context* c, term* raw_args ) {
+	term* args = fmap_1( _eval, c, raw_args );
+	term_takeRef( args );
+	assert( isType( args, typeList ));
+	assert( isType( head( args ), typeFloat ));
+	assert( isType( head( tail( args )), typeFloat ));
+
+	float a = *(float*)head( args )->head;
+	float b = *(float*)head( tail( args ))->head;
+	term* ret = NULL;
+	if ( a > b )
+		ret = term_create( typeTrue, NULL );
+	else
+		ret = term_create( typeFalse, NULL );
+	term_deref( args );
 	return ret;
 	}
 
@@ -451,7 +586,11 @@ term* lisp_func_div( context* c, term* args ) {
 // Any non-false term should return true?
 bool isTrue( term* t ) {
 	(void)t;
-	return true;
+	return ( !isType( t, typeFalse ));
+	}
+
+term* eval_string( const char* str, context* c ) {
+	return _eval( lisp_parse_string( str ), c );
 	}
 
 // lisp 'if' statement
@@ -466,15 +605,25 @@ term* lisp_func_if( context* c, term* args ) {
 		term* result_else = head( tail( tail( args )));
 
 		if ( isTrue( _eval( cond, c ))) {
-			return result_then;
+			return _eval( result_then, c );
 			}
 		else {
-			return result_else;
+			return _eval( result_else, c );
 			}
 	}
 
+void lisp_init() {
+	lisp_heap = heap_create( kLispHeapSize );
+	assert( lisp_heap->total_allocated == 0 );
+
+	context_heap = passthrough_create( lisp_heap );
+}
+
 void test_lisp() {
+	lisp_init();
+
 	term* script = lisp_parse_string( "(a b)" );
+	term_takeRef( script );
 	// Type tests
 	assert( isType( script, typeList ));
 	assert( isType( head( script ), typeAtom ));
@@ -484,21 +633,26 @@ void test_lisp() {
 	assert( string_equal( value( head( script )) , "a" ));
 	assert( string_equal( value( head( tail( script ))) , "b" ));
 
+	term_deref( script );
+	assert( lisp_heap->allocations == 0 );
+	
 #define NO_PARENT NULL
 	context* c = context_create( NO_PARENT );
 	term* hello = term_create( typeString, "Hello World" );
-	assert( hello->head );
-	map_add( c->lookup, mhash("b"), hello );
-	term* search = map_find( c->lookup, mhash("b"));
-	assert( search->head );
-
 	term* goodbye = term_create( typeString, "Goodbye World" );
-	map_add( c->lookup, mhash("goodbye"), goodbye );
+	context_add( c, "b", hello );
+	context_add( c, "goodbye", goodbye );
+
+	term* search = context_lookup( c, mhash("b"));
+	assert( search->head );
 
 	// Test #1 - Variable binding
 	term* result = _eval( lisp_parse_string( "b" ), c );
-	assert( isType( result, typeString ));
-	assert( string_equal( result->head, "Hello World" ));
+	term_takeRef( result );
+	assert( isType( result, typeString ) && string_equal( result->head, "Hello World" ));
+	term_deref( result );
+
+	assert( lisp_heap->allocations == 3 );
 
 	define_function( c, "value_of_b", "(() b )" );
 
@@ -506,14 +660,20 @@ void test_lisp() {
 	result = _eval( lisp_parse_string( "( value_of_b )" ), c );
 	assert( string_equal( result->head, "Hello World" ));
 
+
 	// Test #3 - Single function argument
 	define_function( c, "value_of_arg", "(( arg ) arg )" );
 	result = _eval( lisp_parse_string( "( value_of_arg b )" ), c );
+	term_takeRef( result );
 	assert( string_equal( result->head, "Hello World" ));
+	term_deref( result );
 	
+	assert( lisp_heap->allocations == 12 );
+
 	// Test #4 - Multiple function argument mapping
 	define_function( c, "value_of_first_arg", "(( arg1 arg2 ) arg1 )" );
 	define_function( c, "value_of_second_arg", "(( arg1 arg2 ) arg2 )" );
+	
 	result = _eval( lisp_parse_string( "( value_of_first_arg b goodbye )" ), c );
 	assert( string_equal( result->head, "Hello World" ));
 	result = _eval( lisp_parse_string( "( value_of_second_arg goodbye b )" ), c );
@@ -525,25 +685,41 @@ void test_lisp() {
 
 	// Test #5 - Numeric types and intrinsic functions
 	float num = 5.f;
-	result = term_create( typeFloat, &num );
-	assert( isType( result, typeFloat ));
-	
-	map_add( c->lookup, mhash( "five" ), result );
+	term* five = term_create( typeFloat, &num );
+	context_add( c,  "five", five );
+
+	float num_2 = 2.f;
+	result = term_create( typeFloat, &num_2 );
+	context_add( c,  "two", result );
+
 	result = _eval( lisp_parse_string( "five" ), c );
 
 	assert( isType( result, typeFloat ));
 	assert( *(float*)result->head == 5.f );
 
+	assert( lisp_heap->allocations == 28 );
+
 	term* func_add = term_create( typeIntrinsic, (lisp_func*)lisp_func_add );
 	term* func_sub = term_create( typeIntrinsic, (lisp_func*)lisp_func_sub );
 	term* func_mul = term_create( typeIntrinsic, (lisp_func*)lisp_func_mul );
 	term* func_div = term_create( typeIntrinsic, (lisp_func*)lisp_func_div );
-	map_add( c->lookup, mhash( "+" ), func_add );
-	map_add( c->lookup, mhash( "-" ), func_sub );
-	map_add( c->lookup, mhash( "*" ), func_mul );
-	map_add( c->lookup, mhash( "/" ), func_div );
+	context_add( c,  "+", func_add );
+	context_add( c,  "-", func_sub );
+	context_add( c,  "*", func_mul );
+	context_add( c,  "/", func_div );
 	result = _eval( lisp_parse_string( "(+ five five)" ), c );
+	term_takeRef( result );
 	assert( *(float*)result->head == 10.f );
+	term_deref( result );
+
+	//context_delete( c );
+	/*
+	printf( "Lisp heap storing %d bytes in %d allocations.\n", lisp_heap->total_allocated, lisp_heap->allocations );
+	printf( "Context heap storing %d bytes in %d allocations.\n", context_heap->total_allocated, context_heap->allocations );
+	heap_dumpUsedBlocks( lisp_heap );
+	assert( lisp_heap->allocations == 0 );
+	assert( 0 );
+	*/
 
 	// Test #6 - function definitions using intrinsics
 	define_function( c, "double", "(( a ) (+ a a))" );
@@ -556,9 +732,55 @@ void test_lisp() {
 	// TODO - parse numeric types from a lisp string
 	// eg. (+ 5.f 7.f)
 
-	// TODO - If (intrinsic)
+	// If (intrinsic)
+	term* func_if = term_create( typeIntrinsic, (lisp_func*)lisp_func_if );
+	context_add( c,  "if", func_if );
+	result = eval_string( "(if b b a)", c );
+	assert( result == eval_string( "b", c ) );
 
+	// False
+	// TRUE and FALSE are static lisp terms, we don't use context_add as we can't (and don't) add a ref
+	map_add( c->lookup, mhash("false"), (term**)&lisp_false_ptr ); // Casting away const (cleaner way of doing this?)
+	map_add( c->lookup, mhash("true"), (term**)&lisp_true_ptr ); // Casting away const (cleaner way of doing this?)
+	result = eval_string( "(if false a (if false a b))", c );
+	assert( result == eval_string( "b", c ) );
+	result = eval_string( "(if false a (if false b goodbye))", c );
+	assert( result != eval_string( "b", c ) );
 
+	// Greater-than
+	term* func_gt = term_create( typeIntrinsic, (lisp_func*)lisp_func_greaterthan);
+	context_add( c, ">", func_gt );
+	result = eval_string( "(> five two )", c );
+	assert( result->type == typeTrue );
+	result = eval_string( "(> two five )", c );
+	assert( result->type == typeFalse );
+
+	define_function( c, "<=", "(( a b ) (if (> b a) true false))" );
+	result = eval_string( "(<= two five)", c );
+	assert( result->type == typeTrue );
+
+	// And / Or
+	define_function( c, "and", "(( a b ) (if a (if b true false) false))");
+	define_function( c, "or", "(( a b ) (if a true (if b true false)))");
+	result = eval_string( "(or true false)", c );
+	assert( result->type == typeTrue );
+	result = eval_string( "(or false false)", c );
+	assert( result->type == typeFalse );
+	result = eval_string( "(and true false)", c );
+	assert( result->type == typeFalse );
+	result = eval_string( "(and true true)", c );
+	assert( result->type == typeTrue );
+
+	// Map 
+	define_function( c, "map", "(( func list ) (cons (func (head list)) (if (tail list) (map func (tail list)) null)))" );
+	define_function( c, "filter", "(( func list ) (if (func (head list)) (cons (head list) (filter func (tail list))) (filter func (tail list))))" );
+	
+	context_delete( c );
+
+	heap_dumpUsedBlocks( lisp_heap );
+
+	printf( "Lisp heap storing %d bytes in %d allocations.\n", lisp_heap->total_allocated, lisp_heap->allocations );
+	printf( "Context heap storing %d bytes in %d allocations.\n", context_heap->total_allocated, context_heap->allocations );
 	assert( 0 );
 
 	// The final test!
@@ -569,3 +791,16 @@ void test_lisp() {
 	assert( vector_equal( object->color, vector( 0.f, 0.f, 1.f, 1.f )));
 	*/
 	}
+
+/*
+	Garbage Collecting:
+
+	Using a refcount. Refcount (RC) is incremented when something acquires a reference to it,
+	then decremented when that reference is lost.
+
+	When refcount is 0, the term is deleted.
+
+	A reference can be held by:
+	a list - holds references to all the sub-items it holds.
+		rc is incremented on creation of the list, decremented on destruction
+   */

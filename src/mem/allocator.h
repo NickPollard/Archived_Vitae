@@ -4,6 +4,15 @@
 //#define MEM_DEBUG_VERBOSE
 #define MEM_GUARD_BLOCK
 #define MEM_FORCE_ALIGNED
+#define MEM_STACK_TRACE
+
+#ifdef MEM_STACK_TRACE
+#define mem_pushStack( string ) mem_pushStackString( string )
+#define mem_popStack( ) mem_popStackString( )
+#else // MEM_STACK_TRACE
+#define mem_pushStack( string )
+#define mem_popStack( )
+#endif // MEM_STACK_TRACE
 
 typedef struct block_s block;
 
@@ -16,6 +25,7 @@ struct heapAllocator_s {
 	unsigned int total_size;		// in bytes, size of the heap
 	unsigned int total_allocated;	// in bytes, currently allocated
 	unsigned int total_free;		// in bytes, currently free
+	unsigned int allocations;
 	block* first;					// doubly-linked list of blocks
 };
 
@@ -29,10 +39,19 @@ struct block_s {
 	block*	next;			// doubly-linked list pointer
 	block*	prev;			// doubly-linked list pointer
 	unsigned int	free;	// true (1) if free, false (0) if used
+#ifdef MEM_STACK_TRACE
+	const char* stack;
+#endif
 #ifdef MEM_GUARD_BLOCK
 	unsigned int	guard;	// Guard block for Canary purposes
 #endif
 };
+
+typedef struct passthroughAllocator_s {
+	heapAllocator* heap;
+	unsigned int total_allocated;	// in bytes, currently allocated
+	unsigned int allocations;
+} passthroughAllocator;
 
 // Default allocate from the static heap
 // Passes straight through to heap_allocate()
@@ -77,6 +96,22 @@ void block_insertAfter( block* before, block* after );
 // Create and initialise a block in a given piece of memory of *size* bytes
 block* block_create( void* data, int size );
 
+// Create a new passthrough allocator using the given HEAP
+passthroughAllocator* passthrough_create( heapAllocator* heap );
+
+// Allocate SIZE memory through the passthroughAllocator P
+// (The allocation is actually in p->heap)
+void* passthrough_allocate( passthroughAllocator* p, size_t size );
+
+// Deallocate allocation MEM from passthroughAllocator P
+// (The allocation is actually in p->heap)
+void passthrough_deallocate( passthroughAllocator* p, void* mem );
+
+void heap_dumpBlocks( heapAllocator* heap );
+void heap_dumpUsedBlocks( heapAllocator* heap );
+
+void mem_pushStackString( const char* string );
+void mem_popStackString( );
 //
 // Tests
 //

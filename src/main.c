@@ -32,6 +32,8 @@ void test() {
 
 	// System Tests
 	test_sfile();
+	
+	test_lisp();
 
 	test_matrix();
 
@@ -43,7 +45,6 @@ void test() {
 
 	test_aabb_calculate();
 	
-	test_lisp();
 }
 
 // ###################################
