@@ -98,17 +98,18 @@ struct term_s {
 	int refcount;
 	};
 	
-static const term lisp_false = { 
+// TODO - what we do about global constants? If they're static const, we can't take or dec refs to them
+static term lisp_false = { 
 	typeFalse, 
 	NULL,	// Head 
 	NULL,	// Tail
-	1		// Refcount
+	0x0fffffff		// Refcount
 	};
-static const term lisp_true = { 
+static term lisp_true = { 
 	typeTrue, 
 	NULL,	// Head 
 	NULL,	// Tail
-	1		// Refcount
+	0x0fffffff		// Refcount
 	};
 
 const term* lisp_true_ptr = &lisp_true;
@@ -135,8 +136,6 @@ void term_takeRef( term* t ) {
 void term_deref( term* t ) {
 	--t->refcount;
 	vAssert( t->refcount >= 0 );
-	if ( isType( t, typeList ) && t->tail )
-		term_deref( t->tail );
 	if ( t->refcount == 0 )
 		term_delete( t );
 	}
@@ -169,6 +168,8 @@ void term_delete( term* t ) {
 		// If, not assert, as it could be the empty list
 		if( t->head )
 			term_deref( t->head );
+		if ( t->tail )
+			term_deref( t->tail );
 		}
 	heap_deallocate( lisp_heap, t );
 	}
@@ -322,12 +323,46 @@ void context_add( context* c, const char* name, term* t ) {
 	term_takeRef( t );
 	}
 
+void term_debugPrint( term* t ) {
+	/*
+	if ( isType( t, typeList ) ) {
+		if ( isType( t->head, typeList ))
+			printf( "(" );
+		term_debugPrint( t->head );
+		if ( isType( t->head, typeList ))
+			printf( ")" );
+	}
+*/
+	if ( !t )
+		return;
+
+	if ( isType( t, typeList )) {
+		printf( "(" );
+		term* tmp = t;
+		while ( tmp ) {
+			assert( isType( tmp, typeList ));
+			if ( tmp->head )
+				term_debugPrint( head( tmp ));
+			tmp = tmp->tail;
+		}
+		printf( ")" );
+		}
+
+	if ( isType( t, typeAtom ) )
+		printf( "%s ", (const char*)t->head );
+	if ( isType( t, typeString ) )
+		printf( "\"%s\" ", (const char*)t->head );
+	if ( isType( t, typeFloat ))
+		printf( "%.2f", *(float*)t->head );
+}
+
 typedef term* (*fmap_func)( term*, void* );
 typedef term* (*lisp_func)( context*, term* );
 
 term* fmap_1( fmap_func f, void* arg, term* expr ) {
 	if ( !expr )
 		return NULL;
+	vAssert( isType( expr, typeList ));
 	return _cons( f( head( expr ), arg ),
 		   			fmap_1( f, arg, tail( expr )));
 	}
@@ -448,6 +483,9 @@ void zip1( term* a_list, term* b_list, zip1_func func, void* arg ) {
 
 void define_arg( term* symbol, term* value, void* _context ) {
 	context* c = _context;
+	printf( "Mapping argument %s to value: ", (const char*)symbol->head );
+	term_debugPrint( value );
+	printf( "\n" );
 	context_add( c, symbol->head, value );
 	}
 
@@ -462,6 +500,16 @@ void* exec( context* c, term* func, term* args ) {
 		term* arg_list = head( func );
 		term* expr = head( tail( func ));
 
+		printf( "Arg list: " );
+		term_debugPrint( arg_list );
+		printf( "\n" );
+		printf( "Args: " );
+		term_debugPrint( args );
+		printf( "\n" );
+		printf( "Function Expression: " );
+		term_debugPrint( expr );
+		printf( "\n" );
+
 		context* local = context_create( c );
 
 		// Map all the arguments to the arglist
@@ -470,14 +518,20 @@ void* exec( context* c, term* func, term* args ) {
 			}
 
 		// Evaluate the function in the local context including the argument bindings
-		term* result = _eval( expr, local );
+		term* ret = _eval( expr, local );
 		context_delete( local );
-		return result;
+		printf( "function returning: " );
+		term_debugPrint( ret );
+		printf( "\n" );
+		return ret;
 		}
 
 	if ( isType( func, typeIntrinsic )) {
 		lisp_func f = func->head;
 		term* ret = f( c, args );
+		printf( "intrinsic returning: " );
+		term_debugPrint( ret );
+		printf( "\n" );
 		return ret;
 		}
 
@@ -492,6 +546,12 @@ void define_function( context* c, const char* name, const char* value ) {
 
 // Intrinsic Maths functions
 term* lisp_func_add( context* c, term* raw_args ) {
+	printf( "lisp_func_add: " );
+	term_debugPrint( raw_args );
+	printf( "\n" );
+	assert( isType( raw_args, typeList ));
+	assert( raw_args->tail );	
+	assert( isType( raw_args->tail, typeList ));	
 	term* args = fmap_1( _eval, c, raw_args );
 	term_takeRef( args );
 	assert( isType( args, typeList ));
@@ -604,12 +664,17 @@ term* lisp_func_if( context* c, term* args ) {
 		term* result_then = head( tail( args ));
 		term* result_else = head( tail( tail( args )));
 
-		if ( isTrue( _eval( cond, c ))) {
-			return _eval( result_then, c );
+		term* first = _eval( cond, c );
+		term_takeRef( first );
+		term* ret;
+		if ( isTrue( first )) {
+			ret = _eval( result_then, c );
 			}
 		else {
-			return _eval( result_else, c );
+			ret = _eval( result_else, c );
 			}
+		term_deref( first );
+		return ret;
 	}
 
 void lisp_init() {
@@ -723,6 +788,15 @@ void test_lisp() {
 
 	// Test #6 - function definitions using intrinsics
 	define_function( c, "double", "(( a ) (+ a a))" );
+	printf( " ----- first double --------\n" );
+	result = _eval( lisp_parse_string( "(double five)" ), c );
+	assert( *(float*)result->head == 10.f );
+	
+	printf( " ----- second double --------\n" );
+	result = _eval( lisp_parse_string( "(double five)" ), c );
+	assert( *(float*)result->head == 10.f );
+	
+	printf( " ----- nested double --------\n " );
 	result = _eval( lisp_parse_string( "(double (double five))" ), c );
 	assert( *(float*)result->head == 20.f );
 	
@@ -763,13 +837,21 @@ void test_lisp() {
 	define_function( c, "and", "(( a b ) (if a (if b true false) false))");
 	define_function( c, "or", "(( a b ) (if a true (if b true false)))");
 	result = eval_string( "(or true false)", c );
+	term_takeRef( result );
 	assert( result->type == typeTrue );
+	term_deref( result );
 	result = eval_string( "(or false false)", c );
+	term_takeRef( result );
 	assert( result->type == typeFalse );
+	term_deref( result );
 	result = eval_string( "(and true false)", c );
+	term_takeRef( result );
 	assert( result->type == typeFalse );
+	term_deref( result );
 	result = eval_string( "(and true true)", c );
+	term_takeRef( result );
 	assert( result->type == typeTrue );
+	term_deref( result );
 
 	// Map 
 	define_function( c, "map", "(( func list ) (cons (func (head list)) (if (tail list) (map func (tail list)) null)))" );
