@@ -64,6 +64,7 @@
    */
 
 #include "common.h"
+#include "maths.h"
 #include "mem/allocator.h"
 #include "system/hash.h"
 #include "system/file.h"
@@ -79,6 +80,7 @@ enum termType {
 	typeAtom,
 	typeString,
 	typeFloat,
+	typeVector,
 	typeIntrinsic,
 	typeFalse,		// Special FALSE datatype
 	typeTrue		// Special TRUE datatype
@@ -181,6 +183,14 @@ int _isListStart( char c ) {
 int _isListEnd( char c ) {
 	return c == ')';
 }
+
+void* value_create( size_t size ) {
+	mem_pushStack( kLispValueAllocString );
+	void* mem = heap_allocate( lisp_heap, size );
+	mem_popStack();
+	return mem;
+	}
+
 // Read a token at a time from the inputstream, advancing the read head,
 // and build it into an slist of atoms
 term* lisp_parse( inputStream* stream ) {
@@ -213,6 +223,15 @@ term* lisp_parse( inputStream* stream ) {
 				return list;
 				}
 			}
+		}
+	if ( token_isString( token )) {
+		const char* string = sstring_create( token );
+		return term_create( typeString, (char*)string );
+		}
+	if ( token_isFloat( token )) {
+		float* f = value_create( sizeof( float ));
+		*f = strtof( token, NULL );
+		return term_create( typeFloat, f );
 		}
 	// When it's an atom, we keep the token, don't free it
 	return term_create( typeAtom, (void*)token );
@@ -288,6 +307,15 @@ void list_deref( term* t ) {
 	term_deref( t );
 	}
 
+int list_length( term* t ) {
+	if ( t ) {
+		assert( isType( t, typeList ));
+		return 1 + list_length( t->tail );
+	}
+	else {
+		return 0;
+		}
+	}
 /*
    term accessors
    */
@@ -544,6 +572,11 @@ void define_function( context* c, const char* name, const char* value ) {
 	context_add( c, name, func );
 	}
 
+void define_cfunction( context* c, const char* name, lisp_func implementation ) {
+	term* func = term_create( typeIntrinsic, implementation );
+	context_add( c, name, func );
+	}
+
 // Intrinsic Maths functions
 term* lisp_func_add( context* c, term* raw_args ) {
 	printf( "lisp_func_add: " );
@@ -629,7 +662,6 @@ term* lisp_func_greaterthan( context* c, term* raw_args ) {
 	assert( isType( args, typeList ));
 	assert( isType( head( args ), typeFloat ));
 	assert( isType( head( tail( args )), typeFloat ));
-
 	float a = *(float*)head( args )->head;
 	float b = *(float*)head( tail( args ))->head;
 	term* ret = NULL;
@@ -639,6 +671,44 @@ term* lisp_func_greaterthan( context* c, term* raw_args ) {
 		ret = term_create( typeFalse, NULL );
 	term_deref( args );
 	return ret;
+	}
+
+term* lisp_func_vector( context* c, term* raw_args ) {
+	term* args = fmap_1( _eval, c, raw_args );
+	term_takeRef( args );
+	
+	vector* v = value_create( sizeof( vector ));
+	*v = Vector( 0.0f, 0.0f, 0.0f, 0.0f );
+	float* floats = (float*)&(*v);
+	int i = 0;
+	term* t = args;
+	while ( i < 4 && t ) {
+		assert( isType( head( t ), typeFloat ));
+		floats[i] = *(float*)head( t )->head;
+		t = t->tail;
+	}
+	
+	term* vec = term_create( typeVector, v );;
+	term_deref( args );
+	return vec;
+	}
+
+term* lisp_func_color( context* c, term* raw_args ) {
+	term* args = fmap_1( _eval, c, raw_args );
+	term_takeRef( args );
+	// This should be called with a valid argument, which is one of the following:
+	//	> A Vector ( the rgba values from 0->1, eg. [1.0 0.0 0.0 1.0] )
+	//	> A list of floats ( the rgba values from 0->1, eg. (1.0 0.0 0.0 1.0) )
+	//	> A string ( name of the color, eg. "red" )
+	assert( isType( args, typeList ) && list_length( args ) == 1 );
+	assert( isType( head( args ), typeVector ) || isType( head( args ), typeList ) || isType( head( args ), typeString ) );
+	term* color = term_create( typeVector, NULL );
+	color->head = value_create( sizeof( vector ));
+	vector v;
+	*(vector*)color->head = v;
+
+	term_deref( args );
+	return color;
 	}
 
 // Need to work out what returns true
@@ -764,27 +834,15 @@ void test_lisp() {
 
 	assert( lisp_heap->allocations == 28 );
 
-	term* func_add = term_create( typeIntrinsic, (lisp_func*)lisp_func_add );
-	term* func_sub = term_create( typeIntrinsic, (lisp_func*)lisp_func_sub );
-	term* func_mul = term_create( typeIntrinsic, (lisp_func*)lisp_func_mul );
-	term* func_div = term_create( typeIntrinsic, (lisp_func*)lisp_func_div );
-	context_add( c,  "+", func_add );
-	context_add( c,  "-", func_sub );
-	context_add( c,  "*", func_mul );
-	context_add( c,  "/", func_div );
+	define_cfunction( c, "+", lisp_func_add );
+	define_cfunction( c, "-", lisp_func_sub );
+	define_cfunction( c, "*", lisp_func_mul );
+	define_cfunction( c, "/", lisp_func_div );
+
 	result = _eval( lisp_parse_string( "(+ five five)" ), c );
 	term_takeRef( result );
 	assert( *(float*)result->head == 10.f );
 	term_deref( result );
-
-	//context_delete( c );
-	/*
-	printf( "Lisp heap storing %d bytes in %d allocations.\n", lisp_heap->total_allocated, lisp_heap->allocations );
-	printf( "Context heap storing %d bytes in %d allocations.\n", context_heap->total_allocated, context_heap->allocations );
-	heap_dumpUsedBlocks( lisp_heap );
-	assert( lisp_heap->allocations == 0 );
-	assert( 0 );
-	*/
 
 	// Test #6 - function definitions using intrinsics
 	define_function( c, "double", "(( a ) (+ a a))" );
@@ -803,12 +861,8 @@ void test_lisp() {
 	result = _eval( lisp_parse_string( "(* five five))" ), c );
 	assert( *(float*)result->head == 25.f );
 
-	// TODO - parse numeric types from a lisp string
-	// eg. (+ 5.f 7.f)
-
 	// If (intrinsic)
-	term* func_if = term_create( typeIntrinsic, (lisp_func*)lisp_func_if );
-	context_add( c,  "if", func_if );
+	define_cfunction( c, "if", lisp_func_if );
 	result = eval_string( "(if b b a)", c );
 	assert( result == eval_string( "b", c ) );
 
@@ -822,8 +876,7 @@ void test_lisp() {
 	assert( result != eval_string( "b", c ) );
 
 	// Greater-than
-	term* func_gt = term_create( typeIntrinsic, (lisp_func*)lisp_func_greaterthan);
-	context_add( c, ">", func_gt );
+	define_cfunction( c, ">", lisp_func_greaterthan );
 	result = eval_string( "(> five two )", c );
 	assert( result->type == typeTrue );
 	result = eval_string( "(> two five )", c );
@@ -832,6 +885,10 @@ void test_lisp() {
 	define_function( c, "<=", "(( a b ) (if (> b a) true false))" );
 	result = eval_string( "(<= two five)", c );
 	assert( result->type == typeTrue );
+
+	// Numeric types
+	assert( eval_string( "( > 5.0 3.0 )", c )->type == typeTrue );
+	assert( eval_string( "( > 2.0 4.0 )", c )->type == typeFalse );
 
 	// And / Or
 	define_function( c, "and", "(( a b ) (if a (if b true false) false))");
@@ -857,13 +914,17 @@ void test_lisp() {
 	define_function( c, "map", "(( func list ) (cons (func (head list)) (if (tail list) (map func (tail list)) null)))" );
 	define_function( c, "filter", "(( func list ) (if (func (head list)) (cons (head list) (filter func (tail list))) (filter func (tail list))))" );
 	
-	context_delete( c );
+	define_cfunction( c, "vector", lisp_func_vector );
+	define_cfunction( c, "color", lisp_func_color );
 
-	heap_dumpUsedBlocks( lisp_heap );
+	term* vector = _eval( lisp_parse_string( "(vector 0.0 0.0 1.0)" ), c );
+	(void)vector;
+	term_takeRef( vector );
+	assert( isType( vector, typeVector ));
+	term_deref( vector );
 
-	printf( "Lisp heap storing %d bytes in %d allocations.\n", lisp_heap->total_allocated, lisp_heap->allocations );
-	printf( "Context heap storing %d bytes in %d allocations.\n", context_heap->total_allocated, context_heap->allocations );
-	assert( 0 );
+	term* property_color = _eval( lisp_parse_string( "(color (vector 0.0 0.0 1.0))" ), c );
+	(void)property_color;
 
 	// The final test!
 	/*
@@ -872,6 +933,14 @@ void test_lisp() {
 	assert( object->lifetime == 2.f );
 	assert( vector_equal( object->color, vector( 0.f, 0.f, 1.f, 1.f )));
 	*/
+
+	context_delete( c );
+
+	heap_dumpUsedBlocks( lisp_heap );
+
+	printf( "Lisp heap storing %d bytes in %d allocations.\n", lisp_heap->total_allocated, lisp_heap->allocations );
+	printf( "Context heap storing %d bytes in %d allocations.\n", context_heap->total_allocated, context_heap->allocations );
+	assert( 0 );
 	}
 
 /*

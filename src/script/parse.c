@@ -154,11 +154,13 @@ bool isVector( sterm* s ) {
 	return ( s->type == typeVector );
 }
 
+/*
 bool token_isString( const char* token ) {
 	size_t len = strlen( token );
 	vAssert( len < 256 );	// Sanity check
 	return (( token[0] == '"' ) && ( token[len-1] == '"' ));
 }
+*/
 
 sterm* sterm_create( int tag, void* ptr ) {
 	sterm* term = mem_alloc( sizeof( sterm ) );
@@ -168,6 +170,7 @@ sterm* sterm_create( int tag, void* ptr ) {
 	return term;
 }
 
+/*
 // Create a string from a string-form token
 // Allocated in the string memory pool
 const char* sstring_create( const char* token ) {
@@ -177,6 +180,7 @@ const char* sstring_create( const char* token ) {
 	buffer[len-2] = '\0';
 	return buffer;
 };
+*/
 
 void* property_value( sterm* property ) {
 	return property->tail->head;

@@ -169,3 +169,33 @@ void vfile_writeContents( const char* path, void* buffer, int length ) {
 	fwrite( buffer, 1, length, f );
 	fclose( f );
 }
+
+// *** inputstream funcs
+bool token_isString( const char* token ) {
+	size_t len = strlen( token );
+	vAssert( len < 256 );	// Sanity check
+	return (( token[0] == '"' ) && ( token[len-1] == '"' ));
+}
+
+bool token_isFloat( const char* token ) {
+	// check every character is a digit, - or .
+	int length = strlen( token );
+	for ( int i = 0; i < length; i++ ) {
+		if ( !charset_contains( "0123456789-.", token[i] )) {
+			return false;
+			}
+		}
+	errno = 0;
+	strtof( token, NULL );
+	return ( errno == 0 );
+	}
+
+// Create a string from a string-form token
+// Allocated in the string memory pool
+const char* sstring_create( const char* token ) {
+	size_t len = strlen( token );
+	char* buffer = heap_allocate( global_string_heap, sizeof( char ) * (len-1) );
+	memcpy( buffer, &token[1], len-2 );
+	buffer[len-2] = '\0';
+	return buffer;
+};
