@@ -82,6 +82,7 @@ enum termType {
 	typeFloat,
 	typeVector,
 	typeIntrinsic,
+	typeObject,
 	typeFalse,		// Special FALSE datatype
 	typeTrue		// Special TRUE datatype
 	};
@@ -95,7 +96,10 @@ struct term_s;
 typedef struct term_s term;
 struct term_s {
 	enum termType type;
-	void* head;
+	union {
+		void* head;
+		char* string;
+	};
 	term* tail;
 	int refcount;
 	};
@@ -103,14 +107,14 @@ struct term_s {
 // TODO - what we do about global constants? If they're static const, we can't take or dec refs to them
 static term lisp_false = { 
 	typeFalse, 
-	NULL,	// Head 
-	NULL,	// Tail
+	{ NULL },		// Head 
+	NULL,			// Tail
 	0x0fffffff		// Refcount
 	};
 static term lisp_true = { 
 	typeTrue, 
-	NULL,	// Head 
-	NULL,	// Tail
+	{ NULL },		// Head 
+	NULL,			// Tail
 	0x0fffffff		// Refcount
 	};
 
@@ -747,6 +751,39 @@ term* lisp_func_if( context* c, term* args ) {
 		return ret;
 	}
 
+typedef struct test_struct_s {
+	vector v;
+	float a;
+	float b;
+} test_struct;
+
+void* object_createType( const char* string ) {
+	void* data = NULL;
+	if ( string_equal( string, "test_struct" ))
+	{
+		data = mem_alloc( sizeof( test_struct ));
+	}
+	else
+		data = NULL;
+	return data;
+	}
+
+term* lisp_func_new( context* c, term* raw_args ) {
+	term* args = fmap_1( _eval, c, raw_args );
+	term_takeRef( args );
+	term* type = head( args );
+	vAssert( type && isType( type, typeAtom ));
+	void* object = object_createType( type->string );
+	term* ret = term_create( typeObject, object );
+	term_deref( args );
+	return ret;
+	}
+
+term* lisp_func_quote( context* c, term* raw_args ) {
+	(void)c;
+	return head( raw_args );
+	}
+
 void lisp_init() {
 	lisp_heap = heap_create( kLispHeapSize );
 	assert( lisp_heap->total_allocated == 0 );
@@ -911,20 +948,34 @@ void test_lisp() {
 	term_deref( result );
 
 	// Map 
-	define_function( c, "map", "(( func list ) (cons (func (head list)) (if (tail list) (map func (tail list)) null)))" );
-	define_function( c, "filter", "(( func list ) (if (func (head list)) (cons (head list) (filter func (tail list))) (filter func (tail list))))" );
+	define_function( c, "map",		"(( func list ) (cons (func (head list)) (if (tail list) (map func (tail list)) null)))" );
+	define_function( c, "filter",	"(( func list ) (if (func (head list)) (cons (head list) (filter func (tail list))) (filter func (tail list))))" );
+	define_function( c, "foldl",	"(( func item list ) (if (tail list) (foldl func (func item (head list)) (tail list)) (func item (head list))))" );
 	
 	define_cfunction( c, "vector", lisp_func_vector );
 	define_cfunction( c, "color", lisp_func_color );
+	define_cfunction( c, "quote", lisp_func_quote );
 
-	term* vector = _eval( lisp_parse_string( "(vector 0.0 0.0 1.0)" ), c );
-	(void)vector;
-	term_takeRef( vector );
-	assert( isType( vector, typeVector ));
-	term_deref( vector );
+	term* vec = _eval( lisp_parse_string( "(vector 0.0 0.0 1.0)" ), c );
+	term_takeRef( vec );
+	assert( isType( vec, typeVector ));
+	term_deref( vec );
 
 	term* property_color = _eval( lisp_parse_string( "(color (vector 0.0 0.0 1.0))" ), c );
 	(void)property_color;
+
+	define_cfunction( c, "new", lisp_func_new );
+	term* test = _eval( lisp_parse_string( "(new (quote test_struct))" ), c );
+	vAssert( isType( test, typeObject ));
+
+	//term* test = _eval( lisp_parse_string( "(test_struct (a 1.0) (b -2.0) (v (vector 1.0 2.0 3.0)))" ), c );
+	//(void)test;
+
+	// Need to translate this into:
+	/* 
+	   (foldl object_process (new test_struct)
+	   		((a 1.0) (b -2.0) (v (vector 1.0 2.0 3.0))))
+	*/
 
 	// The final test!
 	/*
@@ -940,7 +991,7 @@ void test_lisp() {
 
 	printf( "Lisp heap storing %d bytes in %d allocations.\n", lisp_heap->total_allocated, lisp_heap->allocations );
 	printf( "Context heap storing %d bytes in %d allocations.\n", context_heap->total_allocated, context_heap->allocations );
-	//assert( 0 );
+	assert( 0 );
 	}
 
 /*
