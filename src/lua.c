@@ -388,20 +388,20 @@ int LUA_transform_setWorldSpaceByTransform( lua_State* l ) {
 int LUA_particle_create( lua_State* l ) {
 	engine* e = lua_toptr( l, 1 );
 	transform* t = lua_toptr( l, 2 );
-/*	
+	
 	particleEmitter* p = particleEmitter_create();
 	p->definition->lifetime = 2.f;
 	p->definition->spawn_box = Vector( 0.3f, 0.3f, 0.3f, 0.f );
 
 	// size
 	p->definition->size = property_create( 2 );
-	property_addf( p->definition->size, 0.f, 3.f );
+	property_addf( p->definition->size, 0.f, 1.f );
 	property_addf( p->definition->size, 0.3f, 1.f );
 	property_addf( p->definition->size, 2.f, 5.f );
 
 	// color
 	p->definition->color = property_create( 5 );
-	property_addv( p->definition->color, 0.f, Vector( 1.f, 0.f, 0.f, 1.f ));
+	property_addv( p->definition->color, 0.f, Vector( 1.f, 0.f, 0.f, 0.f ));
 	property_addv( p->definition->color, 0.3f, Vector( 1.f, 0.5f, 0.f, 1.f ));
 	property_addv( p->definition->color, 0.8f, Vector( 1.f, 1.f, 1.f, 0.8f ));
 	property_addv( p->definition->color, 1.0f, Vector( 0.5f, 0.5f, 0.5f, 0.8f ));
@@ -410,10 +410,13 @@ int LUA_particle_create( lua_State* l ) {
 	p->definition->velocity = Vector( 0.f, 0.1f, 0.f, 0.f );
 	p->definition->spawn_interval = 0.03f;
 	p->trans = t;
-	p->definition->flags = p->definition->flags | kParticleWorldSpace;
+	p->definition->flags = p->definition->flags | kParticleWorldSpace
+												| kParticleRandomRotation;
+
+	texture_request( &p->definition->texture_diffuse, "assets/img/cloud_rgba128.tga" );
+
 	engine_addRender( e, p, particleEmitter_render );
 	startTick( e, p, particleEmitter_tick );
-*/
 	//
 	//
 	//

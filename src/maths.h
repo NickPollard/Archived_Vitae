@@ -134,6 +134,10 @@ void matrix_normalize( matrix m );
 // Build a rotation quaternion from Euler Angle values
 quaternion quaternion_fromEuler( vector* euler_angles );
 
+void matrix_rotX( matrix dst, float angle );
+void matrix_rotY( matrix dst, float angle );
+void matrix_rotZ( matrix dst, float angle );
+
 // *** Test
 void test_matrix();
 

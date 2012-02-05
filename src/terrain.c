@@ -353,7 +353,7 @@ void terrain_updateBlocks( terrain* t ) {
 }
 
 void terrainBlock_render( terrainBlock* b ) {
-	drawCall* draw = drawCall_create( resources.shader_terrain, b->index_count, b->element_buffer, b->vertex_buffer, terrain_texture, modelview );
+	drawCall* draw = drawCall_create( &renderPass_main, resources.shader_terrain, b->index_count, b->element_buffer, b->vertex_buffer, terrain_texture, modelview );
 //	vAssert( *b->vertex_VBO != 0 );
 //	vAssert( *b->element_VBO != 0 );
 	if ( *b->vertex_VBO != 0 ) {

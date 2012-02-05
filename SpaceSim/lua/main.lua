@@ -63,7 +63,7 @@ function player_fire( p )
 	-- Position it at the correct muzzle position and rotation
 	vtransform_setWorldSpaceByTransform( g.transform, p.transform )
 
-	--[[
+	---[[
 	-- Attach a particle effect to the object
 	vparticle_create( engine, g.transform )
 	--]]
@@ -74,9 +74,7 @@ function player_fire( p )
 	world_v = vtransformVector( p.transform, ship_v )
 	vphysic_setVelocity( g.physic, world_v );
 
---	inTime( 2, function () vprint("timertest") end );
---	inTime( 2, function () gameobject_delete( g ) end );
-	inTime( 0.3, function () spawn_explosion( g.transform ) end );
+	--inTime( 0.3, function () spawn_explosion( g.transform ) end );
 
 	--[[
 	gun_transform = vitae_attach_transform( g.model, "bullet_spawn" )

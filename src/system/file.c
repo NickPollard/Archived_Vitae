@@ -186,7 +186,8 @@ bool token_isFloat( const char* token ) {
 			}
 		}
 	errno = 0;
-	strtof( token, NULL );
+	float f = strtof( token, NULL );
+	(void)f;
 	return ( errno == 0 );
 	}
 

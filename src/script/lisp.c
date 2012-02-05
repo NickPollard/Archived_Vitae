@@ -940,7 +940,7 @@ void test_lisp() {
 
 	printf( "Lisp heap storing %d bytes in %d allocations.\n", lisp_heap->total_allocated, lisp_heap->allocations );
 	printf( "Context heap storing %d bytes in %d allocations.\n", context_heap->total_allocated, context_heap->allocations );
-	assert( 0 );
+	//assert( 0 );
 	}
 
 /*

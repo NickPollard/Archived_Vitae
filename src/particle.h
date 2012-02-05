@@ -8,12 +8,14 @@
 #define kmax_property_values 16
 
 enum particleEmitter_flags {
-	kParticleWorldSpace = 0x1
+	kParticleWorldSpace = 0x1,
+	kParticleRandomRotation = 0x2
 };
 
 typedef struct particle_s {
 	float age;
 	vector position;
+	float rotation;
 } particle;
 
 typedef struct property_s {

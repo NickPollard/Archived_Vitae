@@ -5,6 +5,8 @@
 
 #define kVboCount 1
 
+typedef struct renderPass_s renderPass;
+
 #define SHADER_UNIFORMS( f ) \
 	f( projection ) \
 	f( modelview ) \
@@ -86,6 +88,8 @@ extern matrix camera_inverse;
 extern matrix perspective;
 extern bool	render_initialised;
 extern vmutex	gl_mutex;
+extern renderPass renderPass_main;
+extern renderPass renderPass_alpha;
 
 void render_setBuffers( float* vertex_buffer, int vertex_buffer_size, int* element_buffer, int element_buffer_size );
 
@@ -159,7 +163,7 @@ typedef struct drawCall_s {
 	GLenum		depth_mask;
 } drawCall;
 
-drawCall* drawCall_create( shader* vshader, int count, GLushort* elements, vertex* verts, GLint tex, matrix mv );
+drawCall* drawCall_create( renderPass* pass, shader* vshader, int count, GLushort* elements, vertex* verts, GLint tex, matrix mv );
 void render_drawCall( drawCall* draw );
 void* render_bufferAlloc( size_t size );
 
