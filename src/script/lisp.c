@@ -97,8 +97,10 @@ typedef struct term_s term;
 struct term_s {
 	enum termType type;
 	union {
-		void* head;
+		term* head;
+		void* data;
 		char* string;
+		float* number;
 	};
 	term* tail;
 	int refcount;
@@ -150,6 +152,38 @@ void term_deref( term* t ) {
 static const char* kLispTermAllocString = "lisp.c:term_create()";
 static const char* kLispValueAllocString = "lisp.c:value_create()";
 #endif // MEM_STACK_TRACE
+
+#define kDebugLispStackDepth 128
+const char* debug_lisp_stack[kDebugLispStackDepth];
+int debug_lisp_stack_ptr = 0;
+
+void debug_lisp_stack_dump() {
+	printf( "######################################################\n" );
+	for ( int i = 0; i < debug_lisp_stack_ptr; i++ ) {
+		printf( "%d ## %s\n", i, debug_lisp_stack[i] );
+	}
+	printf( "######################################################\n" );
+}
+
+void debug_lisp_stack_push( const char* str ) {
+	vAssert( debug_lisp_stack_ptr < kDebugLispStackDepth );
+	debug_lisp_stack[debug_lisp_stack_ptr] = string_createCopy( str );
+	++debug_lisp_stack_ptr;
+}
+
+void debug_lisp_stack_pop( ) {
+	vAssert( debug_lisp_stack_ptr > 0 );
+	--debug_lisp_stack_ptr;
+	// Cast away constness
+	mem_free( (char*)debug_lisp_stack[debug_lisp_stack_ptr] );
+}
+
+void lisp_assert( bool b ) {
+	if ( !b ) {
+		debug_lisp_stack_dump();
+	}
+	vAssert( b );
+}
 
 term* term_create( enum termType type, void* value ) {
 	mem_pushStack( kLispTermAllocString );
@@ -295,6 +329,13 @@ term* _cons( void* head, term* tail ) {
 	return t;
 	}
 
+term* _append( term* list, term* appendee ) {
+	if ( tail( list ))
+		return _cons( head( list ), _append( tail( list ), appendee ));
+	else
+		return _cons( head( list ), _cons( appendee, NULL ));	
+}
+
 void list_delete( term* t ) {
 	assert( isType( t, typeList ));
 	if ( t->tail ) {
@@ -356,15 +397,6 @@ void context_add( context* c, const char* name, term* t ) {
 	}
 
 void term_debugPrint( term* t ) {
-	/*
-	if ( isType( t, typeList ) ) {
-		if ( isType( t->head, typeList ))
-			printf( "(" );
-		term_debugPrint( t->head );
-		if ( isType( t->head, typeList ))
-			printf( ")" );
-	}
-*/
 	if ( !t )
 		return;
 
@@ -385,7 +417,36 @@ void term_debugPrint( term* t ) {
 	if ( isType( t, typeString ) )
 		printf( "\"%s\" ", (const char*)t->head );
 	if ( isType( t, typeFloat ))
-		printf( "%.2f", *(float*)t->head );
+		printf( "%.2f ", *(float*)t->head );
+	if ( isType( t, typeObject ))
+		printf( "[Object] " );
+}
+void term_debugStreamPrint( streamWriter* s, term* t ) {
+	if ( !t )
+		return;
+
+	if ( isType( t, typeList )) {
+		stream_printf( s, "(" );
+		term* tmp = t;
+		while ( tmp ) {
+			assert( isType( tmp, typeList ));
+			if ( tmp->head )
+				term_debugStreamPrint( s, head( tmp ));
+			tmp = tmp->tail;
+		}
+		stream_printf( s, ")" );
+		}
+
+	if ( isType( t, typeAtom ) )
+		stream_printf( s, "%s ", (const char*)t->head );
+	if ( isType( t, typeString ) )
+		stream_printf( s, "\"%s\" ", (const char*)t->head );
+	if ( isType( t, typeFloat ))
+		stream_printf( s, "%.2f ", *(float*)t->head );
+	if ( isType( t, typeObject ))
+		stream_printf( s, "[Object] " );
+	if ( isType( t, typeIntrinsic ))
+		stream_printf( s, "[Intrinsic] " );
 }
 
 typedef term* (*fmap_func)( term*, void* );
@@ -419,6 +480,16 @@ void* exec( context* c, term* func, term* args);
    */
 
 term* _eval( term* expr, void* _context ) {
+#ifdef DEBUG
+	char debug_expr[128];
+	streamWriter stackStream;
+	stackStream.write_head = stackStream.string = debug_expr;
+	stackStream.end = stackStream.string + 128;
+	sprintf( debug_expr, "Test" );
+	term_debugStreamPrint( &stackStream, expr );
+	debug_lisp_stack_push( debug_expr );
+#endif
+
 	term_takeRef( expr );
 	term* result = NULL;
 	// Eval arguments, then pass arguments to the binding of the first element and run
@@ -436,6 +507,7 @@ term* _eval( term* expr, void* _context ) {
 		// as if it's a special form, we might not want to eval all (eg. if)
 		term* h = _eval( head( expr ), _context );
 		if ( !isType( h, typeIntrinsic )) {
+			//debug_lisp_stack_push( "function" );
 			term* e = fmap_1( _eval, _context, tail( expr ));
 			if ( e )
 				term_takeRef( e );
@@ -444,10 +516,13 @@ term* _eval( term* expr, void* _context ) {
 				term_deref( e );
 			}
 		else {
+			//debug_lisp_stack_push( "intrinsic" );
 			result = exec( _context, h, tail( expr ));
 			}
+		//debug_lisp_stack_pop();
 		}
 	term_deref( expr );
+	debug_lisp_stack_pop();
 	return result;
 	}
 
@@ -515,32 +590,23 @@ void zip1( term* a_list, term* b_list, zip1_func func, void* arg ) {
 
 void define_arg( term* symbol, term* value, void* _context ) {
 	context* c = _context;
+	/*
 	printf( "Mapping argument %s to value: ", (const char*)symbol->head );
 	term_debugPrint( value );
 	printf( "\n" );
-	context_add( c, symbol->head, value );
+	*/
+	context_add( c, symbol->string, value );
 	}
 
 void* exec( context* c, term* func, term* args ) {
-	assert( func );
-	assert( isType( func, typeList ) || isType( func, typeIntrinsic ));
-	assert( !args || isType( args, typeList ));
+	lisp_assert( func );
+	lisp_assert( isType( func, typeList ) || isType( func, typeIntrinsic ));
+	lisp_assert( !args || isType( args, typeList ));
 
 	if ( isType( func, typeList )) {
-		assert( head( func ));			// The argument binding
-		assert( head( tail( func )));	// The function definition
+		lisp_assert( head( func ));			// The argument binding
 		term* arg_list = head( func );
 		term* expr = head( tail( func ));
-
-		printf( "Arg list: " );
-		term_debugPrint( arg_list );
-		printf( "\n" );
-		printf( "Args: " );
-		term_debugPrint( args );
-		printf( "\n" );
-		printf( "Function Expression: " );
-		term_debugPrint( expr );
-		printf( "\n" );
 
 		context* local = context_create( c );
 
@@ -552,18 +618,12 @@ void* exec( context* c, term* func, term* args ) {
 		// Evaluate the function in the local context including the argument bindings
 		term* ret = _eval( expr, local );
 		context_delete( local );
-		printf( "function returning: " );
-		term_debugPrint( ret );
-		printf( "\n" );
 		return ret;
 		}
 
 	if ( isType( func, typeIntrinsic )) {
-		lisp_func f = func->head;
+		lisp_func f = func->data;
 		term* ret = f( c, args );
-		printf( "intrinsic returning: " );
-		term_debugPrint( ret );
-		printf( "\n" );
 		return ret;
 		}
 
@@ -583,9 +643,6 @@ void define_cfunction( context* c, const char* name, lisp_func implementation ) 
 
 // Intrinsic Maths functions
 term* lisp_func_add( context* c, term* raw_args ) {
-	printf( "lisp_func_add: " );
-	term_debugPrint( raw_args );
-	printf( "\n" );
 	assert( isType( raw_args, typeList ));
 	assert( raw_args->tail );	
 	assert( isType( raw_args->tail, typeList ));	
@@ -757,11 +814,25 @@ typedef struct test_struct_s {
 	float b;
 } test_struct;
 
+term* lisp_func_test_a( context* c, term* raw_args ) {
+	term* args = fmap_1( _eval, c, raw_args );
+	term_takeRef( args );
+	lisp_assert( list_length( args ) == 2 );
+	term* value = head( args );
+	term* object = head( tail( args ));
+	test_struct* s = object->data;
+	lisp_assert( isType( value, typeFloat ));
+	s->a = *value->number;
+	term_deref( args );
+	return object;
+}
+
 void* object_createType( const char* string ) {
 	void* data = NULL;
 	if ( string_equal( string, "test_struct" ))
 	{
 		data = mem_alloc( sizeof( test_struct ));
+		memset( data, 0, sizeof( test_struct ));
 	}
 	else
 		data = NULL;
@@ -779,16 +850,80 @@ term* lisp_func_new( context* c, term* raw_args ) {
 	return ret;
 	}
 
+// (object_process object function)
+term* lisp_func_object_process( context *c, term* raw_args ) {
+	term* args = fmap_1( _eval, c, raw_args );
+	term_takeRef( args );
+	vAssert( list_length( args ) == 2 );
+	term* ret = head( args );
+	term* func = head( tail( args ));
+	term* list = _append( func, ret );
+	term_debugPrint( list );
+	printf( "\n" );	
+	_eval( list, c);
+	term_deref( args );
+	return ret;
+}
+
 term* lisp_func_quote( context* c, term* raw_args ) {
 	(void)c;
 	return head( raw_args );
 	}
+
+term* list_copy( term* list ) {
+	if ( tail( list ))
+		return _cons( list->head, list_copy( list->tail ));
+	else
+		return _cons( list->head, NULL );
+}
+
+term* lisp_func_tail( context* c, term* raw_args ) {
+	term* args = fmap_1( _eval, c, raw_args );
+	printf( "lisp_func_tail: " );
+	term_debugPrint( args );
+	printf( "\n" );
+	term_takeRef( args );
+	term* list = head( args );
+	printf( "list: " );
+	term_debugPrint( list );
+	printf( " (0x%x)\n", (unsigned int)list );
+	vAssert( isType( list, typeList ));
+	term* t = tail( list );
+	if ( !t )
+		t = &lisp_false;
+	else {
+		t = list_copy( t );
+	}
+	term_deref( args );
+	return t;
+}
+
+term* lisp_func_head( context* c, term* raw_args ) {
+	term* args = fmap_1( _eval, c, raw_args );
+	term_takeRef( args );
+	term* list = head( args );
+	term* h = head( list );
+	term* ret = NULL;
+	if ( isType( h, typeList )) {
+		ret = list_copy( h );
+	}
+	else {
+		ret = term_create( h->type, h->data );
+	}
+	term_deref( args );
+	return ret;
+}
+
+void lisp_debug_stack_init() {
+	memset( debug_lisp_stack, 0, sizeof( const char*) * kDebugLispStackDepth );
+}
 
 void lisp_init() {
 	lisp_heap = heap_create( kLispHeapSize );
 	assert( lisp_heap->total_allocated == 0 );
 
 	context_heap = passthrough_create( lisp_heap );
+	lisp_debug_stack_init();
 }
 
 void test_lisp() {
@@ -821,7 +956,7 @@ void test_lisp() {
 	// Test #1 - Variable binding
 	term* result = _eval( lisp_parse_string( "b" ), c );
 	term_takeRef( result );
-	assert( isType( result, typeString ) && string_equal( result->head, "Hello World" ));
+	assert( isType( result, typeString ) && string_equal( result->string, "Hello World" ));
 	term_deref( result );
 
 	assert( lisp_heap->allocations == 3 );
@@ -830,14 +965,14 @@ void test_lisp() {
 
 	// Test #2 - Function calling
 	result = _eval( lisp_parse_string( "( value_of_b )" ), c );
-	assert( string_equal( result->head, "Hello World" ));
+	assert( string_equal( result->string, "Hello World" ));
 
 
 	// Test #3 - Single function argument
 	define_function( c, "value_of_arg", "(( arg ) arg )" );
 	result = _eval( lisp_parse_string( "( value_of_arg b )" ), c );
 	term_takeRef( result );
-	assert( string_equal( result->head, "Hello World" ));
+	assert( string_equal( result->string, "Hello World" ));
 	term_deref( result );
 	
 	assert( lisp_heap->allocations == 12 );
@@ -847,13 +982,13 @@ void test_lisp() {
 	define_function( c, "value_of_second_arg", "(( arg1 arg2 ) arg2 )" );
 	
 	result = _eval( lisp_parse_string( "( value_of_first_arg b goodbye )" ), c );
-	assert( string_equal( result->head, "Hello World" ));
+	assert( string_equal( result->string, "Hello World" ));
 	result = _eval( lisp_parse_string( "( value_of_second_arg goodbye b )" ), c );
-	assert( string_equal( result->head, "Hello World" ));
+	assert( string_equal( result->string, "Hello World" ));
 	result = _eval( lisp_parse_string( "( value_of_first_arg goodbye b )" ), c );
-	assert( !string_equal( result->head, "Hello World" ));
+	assert( !string_equal( result->string, "Hello World" ));
 	result = _eval( lisp_parse_string( "( value_of_second_arg b goodbye )" ), c );
-	assert( !string_equal( result->head, "Hello World" ));
+	assert( !string_equal( result->string, "Hello World" ));
 
 	// Test #5 - Numeric types and intrinsic functions
 	float num = 5.f;
@@ -867,7 +1002,7 @@ void test_lisp() {
 	result = _eval( lisp_parse_string( "five" ), c );
 
 	assert( isType( result, typeFloat ));
-	assert( *(float*)result->head == 5.f );
+	assert( *result->number == 5.f );
 
 	assert( lisp_heap->allocations == 28 );
 
@@ -878,25 +1013,22 @@ void test_lisp() {
 
 	result = _eval( lisp_parse_string( "(+ five five)" ), c );
 	term_takeRef( result );
-	assert( *(float*)result->head == 10.f );
+	assert( *result->number == 10.f );
 	term_deref( result );
 
 	// Test #6 - function definitions using intrinsics
 	define_function( c, "double", "(( a ) (+ a a))" );
-	printf( " ----- first double --------\n" );
 	result = _eval( lisp_parse_string( "(double five)" ), c );
-	assert( *(float*)result->head == 10.f );
+	assert( *result->number == 10.f );
 	
-	printf( " ----- second double --------\n" );
 	result = _eval( lisp_parse_string( "(double five)" ), c );
-	assert( *(float*)result->head == 10.f );
+	assert( *result->number == 10.f );
 	
-	printf( " ----- nested double --------\n " );
 	result = _eval( lisp_parse_string( "(double (double five))" ), c );
-	assert( *(float*)result->head == 20.f );
+	assert( *result->number == 20.f );
 	
 	result = _eval( lisp_parse_string( "(* five five))" ), c );
-	assert( *(float*)result->head == 25.f );
+	assert( *result->number == 25.f );
 
 	// If (intrinsic)
 	define_cfunction( c, "if", lisp_func_if );
@@ -965,8 +1097,36 @@ void test_lisp() {
 	(void)property_color;
 
 	define_cfunction( c, "new", lisp_func_new );
+	define_cfunction( c, "object_process", lisp_func_object_process );
+	define_cfunction( c, "a", lisp_func_test_a );
+	define_cfunction( c, "tail", lisp_func_tail );
+	define_cfunction( c, "head", lisp_func_head );
+
+	// Test Head and Tail
+	term* h = _eval( lisp_parse_string( "(head (quote (1.0 2.0)))" ), c );
+	term_takeRef( h );
+	vAssert( *h->number == 1.f );
+	term_deref( h );
+
+	h = _eval( lisp_parse_string( "(head (tail (quote (1.0 2.0))))" ), c );
+	term_takeRef( h );
+	vAssert( *h->number == 2.f );
+	term_deref( h );
+
 	term* test = _eval( lisp_parse_string( "(new (quote test_struct))" ), c );
 	vAssert( isType( test, typeObject ));
+	test_struct* object = test->data;
+	printf( "object: v ( %.2f %.2f %.2f ), a %.2f, b %.2f\n", object->v.coord.x, object->v.coord.y, object->v.coord.z, object->a, object->b );
+
+	term* test_b = _eval( lisp_parse_string( "(object_process (new (quote test_struct)) (quote (a 1.0)))" ), c );
+	object = test_b->data;
+	printf( "object: v ( %.2f %.2f %.2f ), a %.2f, b %.2f\n", object->v.coord.x, object->v.coord.y, object->v.coord.z, object->a, object->b );
+
+	term* test_c = _eval( lisp_parse_string( "(foldl object_process (new (quote test_struct)) (quote ((a 2.0))))" ), c );
+	object = test_c->data;
+	printf( "object: v ( %.2f %.2f %.2f ), a %.2f, b %.2f\n", object->v.coord.x, object->v.coord.y, object->v.coord.z, object->a, object->b );
+
+	vAssert( 0 );
 
 	//term* test = _eval( lisp_parse_string( "(test_struct (a 1.0) (b -2.0) (v (vector 1.0 2.0 3.0)))" ), c );
 	//(void)test;
