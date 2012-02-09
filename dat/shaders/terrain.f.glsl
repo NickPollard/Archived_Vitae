@@ -10,7 +10,7 @@ varying vec4 frag_position;
 varying vec4 frag_normal;
 varying vec2 texcoord;
 varying vec4 vert_color;
-//varying float fog;
+varying float fog;
 
 const int LIGHT_COUNT = 2;
 
@@ -92,8 +92,8 @@ void main() {
 
 	// Temporary Terrain Fog
 //	float fog = 0.0;
-//	gl_FragColor = mix( fragColor, vec4( 0.0, 0.0, 0.0, 1.0 ), fog );
-	gl_FragColor = fragColor;
+	gl_FragColor = mix( fragColor, vec4( 0.0, 0.0, 0.0, 1.0 ), fog );
+	//gl_FragColor = fragColor;
 	gl_FragColor.w = 1.0;
 
 #else

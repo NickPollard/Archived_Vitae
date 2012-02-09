@@ -172,12 +172,26 @@ camera = "chase"
 flycam = nil
 chasecam = nil
 
-function ship_spawner()
-	local ship = gameobject_create( "dat/model/ship_hd.s" )
-	local speed = 10.0
-	ship_v = Vector( 0.0, 0.0, speed, 0.0 )
+function ship_tick( ship )
+	vprint( "ship_tick" )
+	ship_v = Vector( 0.0, 0.0, ship.speed, 0.0 )
 	world_v = vtransformVector( ship.transform, ship_v )
 	vphysic_setVelocity( ship.physic, world_v )
+end
+
+function vrand( lower, upper )
+	return math.random() * ( upper - lower ) + lower
+end
+
+function ship_spawner()
+	local ship = gameobject_create( "dat/model/ship_hd.s" )
+	ship.speed = 30.0
+	vtransform_yaw( ship.transform, 3.14 )
+	x = vrand( -50.0, 50.0 )
+	y = vrand( 0.0, 100.0 )
+	position = Vector( x, y, 100.0, 1.0 )
+	vtransform_setWorldPosition( ship.transform, position )
+	inTime( 0.1, function () ship_tick( ship ) end )
 	inTime( 3, ship_spawner )
 end
 

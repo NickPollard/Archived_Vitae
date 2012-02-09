@@ -14,7 +14,7 @@ varying vec4 frag_position;
 varying vec4 frag_normal;
 varying vec2 texcoord;
 varying vec4 vert_color;
-//varying float fog;
+varying float fog;
 
 // Uniform
 uniform	mat4 projection;
@@ -33,10 +33,8 @@ void main() {
 	float b = clamp( height / 20.0, 0.2, 0.3 );
 	vert_color = vec4(r, g, b, 1.0 );
 
-/*	
 	float fog_far = 150.0;
 	float fog_near = 50.0;
-	float fog = ( frag_position.z - fog_near ) / ( fog_far - fog_near );
-	*/
+	fog = ( frag_position.z - fog_near ) / ( fog_far - fog_near );
 #endif
 }

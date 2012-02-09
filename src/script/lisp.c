@@ -814,6 +814,18 @@ typedef struct test_struct_s {
 	float b;
 } test_struct;
 
+term* lisp_func_test_b( context* c, term* raw_args ) {
+	term* args = fmap_1( _eval, c, raw_args );
+	term_takeRef( args );
+	lisp_assert( list_length( args ) == 2 );
+	term* value = head( args );
+	term* object = head( tail( args ));
+	test_struct* s = object->data;
+	lisp_assert( isType( value, typeFloat ));
+	s->b = *value->number;
+	term_deref( args );
+	return object;
+}
 term* lisp_func_test_a( context* c, term* raw_args ) {
 	term* args = fmap_1( _eval, c, raw_args );
 	term_takeRef( args );
@@ -1098,7 +1110,8 @@ void test_lisp() {
 
 	define_cfunction( c, "new", lisp_func_new );
 	define_cfunction( c, "object_process", lisp_func_object_process );
-	define_cfunction( c, "a", lisp_func_test_a );
+	define_cfunction( c, "test_a", lisp_func_test_a );
+	define_cfunction( c, "test_b", lisp_func_test_b );
 	define_cfunction( c, "tail", lisp_func_tail );
 	define_cfunction( c, "head", lisp_func_head );
 
@@ -1118,15 +1131,13 @@ void test_lisp() {
 	test_struct* object = test->data;
 	printf( "object: v ( %.2f %.2f %.2f ), a %.2f, b %.2f\n", object->v.coord.x, object->v.coord.y, object->v.coord.z, object->a, object->b );
 
-	term* test_b = _eval( lisp_parse_string( "(object_process (new (quote test_struct)) (quote (a 1.0)))" ), c );
+	term* test_b = _eval( lisp_parse_string( "(object_process (new (quote test_struct)) (quote (test_a 1.0)))" ), c );
 	object = test_b->data;
 	printf( "object: v ( %.2f %.2f %.2f ), a %.2f, b %.2f\n", object->v.coord.x, object->v.coord.y, object->v.coord.z, object->a, object->b );
 
-	term* test_c = _eval( lisp_parse_string( "(foldl object_process (new (quote test_struct)) (quote ((a 2.0))))" ), c );
+	term* test_c = _eval( lisp_parse_string( "(foldl object_process (new (quote test_struct)) (quote ((test_a 2.0) (test_b 3.0))))" ), c );
 	object = test_c->data;
 	printf( "object: v ( %.2f %.2f %.2f ), a %.2f, b %.2f\n", object->v.coord.x, object->v.coord.y, object->v.coord.z, object->a, object->b );
-
-	vAssert( 0 );
 
 	//term* test = _eval( lisp_parse_string( "(test_struct (a 1.0) (b -2.0) (v (vector 1.0 2.0 3.0)))" ), c );
 	//(void)test;
@@ -1151,7 +1162,7 @@ void test_lisp() {
 
 	printf( "Lisp heap storing %d bytes in %d allocations.\n", lisp_heap->total_allocated, lisp_heap->allocations );
 	printf( "Context heap storing %d bytes in %d allocations.\n", context_heap->total_allocated, context_heap->allocations );
-	assert( 0 );
+	//assert( 0 );
 	}
 
 /*

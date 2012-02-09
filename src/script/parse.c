@@ -780,18 +780,21 @@ void* s_particle_emitter( sterm* raw_args ) {
 
 	// size
 	p->definition->size = property_create( 2 );
-	property_addf( p->definition->size, 0.f, 0.6f );
+	property_addf( p->definition->size, 0.f, 0.1f );
+	property_addf( p->definition->size, 0.2f, 0.6f );
 	property_addf( p->definition->size, 1.0f, 0.1f );
 
 	// color
 	p->definition->color = property_create( 5 );
 	property_addv( p->definition->color, 0.f, Vector( 1.f, 1.f, 1.f, 0.f ));
-	property_addv( p->definition->color, 0.1f, Vector( 0.f, 1.f, 1.f, 1.f ));
+	property_addv( p->definition->color, 0.3f, Vector( 0.f, 1.f, 1.f, 0.5f ));
+	property_addv( p->definition->color, 0.5f, Vector( 0.f, 1.f, 1.f, 0.1f ));
 	property_addv( p->definition->color, 1.f, Vector( 0.f, 0.f, 1.f, 0.f ));
 
 	p->definition->velocity = Vector( 0.f, 0.0f, -3.f, 0.f );
 	p->definition->spawn_interval = 0.01f;
 	//p->definition->flags = p->definition->flags | kParticleWorldSpace;
+	p->definition->flags = p->definition->flags | kParticleRandomRotation;
 	//p->trans = t;
 	texture_request( &p->definition->texture_diffuse, "assets/img/star_rgba64.tga" );
 
