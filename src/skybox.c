@@ -15,7 +15,8 @@ GLint			skybox_texture = -1;
 
 // Initialise static data for the skybox system
 void skybox_init( ) {
-	skybox_texture = texture_loadTGA( "assets/3rdparty/img/grimmnight_medium.tga" );
+	//skybox_texture = texture_loadTGA( "assets/3rdparty/img/grimmnight_medium_alpha.tga" );
+	skybox_texture = texture_loadTGA( "assets/3rdparty/img/vitae_sky_rgba.tga" );
 
 	skybox_model = model_load( "dat/model/inverse_cube.s" );
 	skybox_model->meshes[0]->texture_diffuse = skybox_texture;

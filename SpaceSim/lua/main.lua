@@ -99,7 +99,7 @@ function addTimer( timer )
 	timers[timers.count] = timer
 end
 
---[-[
+---[[
 function timer_create( time, action )
 	timer = {
 		time = time,

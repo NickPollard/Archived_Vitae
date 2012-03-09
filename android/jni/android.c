@@ -146,6 +146,13 @@ static void egl_term( egl_renderer* egl ) {
     egl->surface = EGL_NO_SURFACE;
 }
 
+void android_exit() {
+	// Cleanup the profiling library
+	//moncleanup();
+
+	exit( EXIT_SUCCESS );
+}
+
 // Process the next main command.
 static void handle_cmd( struct android_app* app, int32_t cmd ) {
     switch (cmd) {
@@ -215,18 +222,11 @@ static int32_t handle_input(struct android_app* app, AInputEvent* event) {
     return 0;
 }
 
-void android_exit() {
-	// Cleanup the profiling library
-	moncleanup();
-
-	exit( EXIT_SUCCESS );
-}
-
 void android_init( struct android_app* app ) {
 	printf("Loading Vitae.\n");
 
 	// Initialise the profiling library
-	monstartup("libvitae.so");
+	//monstartup("libvitae.so");
 
 	// *** Initialise Engine
 	// already created

@@ -166,7 +166,9 @@ extern "C" {
 #include <GLES2/gl2.h>
 #include <GLES2/gl2ext.h>
  // OpenGL ES does not have GLchar
-typedef char GLchar;
+ // OR DOES IT???
+ // On my laptop it now seems to be defined for andreoid
+//typedef char GLchar;
 #else
 
 #if defined(__APPLE_CC__)

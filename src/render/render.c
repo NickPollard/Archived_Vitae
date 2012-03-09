@@ -133,10 +133,10 @@ int			next_call_index[kCallBufferCount];
 map* callbatch_map = NULL;
 int callbatch_count = 0;
 
-typedef struct renderPass_s {
+struct renderPass_s {
 	drawCall	call_buffer[kCallBufferCount][kMaxDrawCalls];
 	int			next_call_index[kCallBufferCount];
-} renderPass;
+};
 
 #define kMaxRenderPasses 16
 renderPass	render_pass[kMaxRenderPasses];

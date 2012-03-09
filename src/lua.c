@@ -403,13 +403,14 @@ int LUA_particle_create( lua_State* l ) {
 	// size
 	p->definition->size = property_create( 2 );
 	property_addf( p->definition->size, 0.f, 1.f );
-	property_addf( p->definition->size, 0.3f, 1.f );
-	property_addf( p->definition->size, 2.f, 5.f );
+	property_addf( p->definition->size, 0.3f, 5.f );
+	property_addf( p->definition->size, 0.6f, 2.f );
+	property_addf( p->definition->size, 2.f, 1.f );
 
 	// color
 	p->definition->color = property_create( 5 );
 	property_addv( p->definition->color, 0.f, Vector( 1.f, 0.f, 0.f, 0.f ));
-	property_addv( p->definition->color, 0.3f, Vector( 1.f, 0.5f, 0.f, 1.f ));
+	property_addv( p->definition->color, 0.3f, Vector( 1.f, 0.5f, 0.f, 0.7f ));
 	property_addv( p->definition->color, 0.8f, Vector( 1.f, 1.f, 1.f, 0.8f ));
 	property_addv( p->definition->color, 1.0f, Vector( 0.5f, 0.5f, 0.5f, 0.8f ));
 	property_addv( p->definition->color, 2.f, Vector( 0.5f, 0.5f, 0.5f, 0.f ));

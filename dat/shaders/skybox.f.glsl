@@ -8,6 +8,7 @@ precision mediump float;
 // Varying
 varying vec4 frag_position;
 varying vec2 texcoord;
+varying float height;
 const int LIGHT_COUNT = 2;
 
 // Uniform
@@ -35,15 +36,36 @@ void main() {
 					total_diffuse_color * material_diffuse;
 	gl_FragColor.w = 1.0;
 
-	const float distance = 100.0;
-	float height = ( frag_position.y + distance ) / ( 2.0 * distance );
+	vec4 color_top = vec4( 0.3, 0.6, 1.0, 1.0 );
+	vec4 color_mid = vec4( 1.0, 0.4, 0.2, 1.0 );
+	vec4 color_bottom = vec4( 1.0, 0.4, 0.0, 1.0 );
 
-	gl_FragColor = vec4(	clamp( 4.0 - (height * 6.0) , 0.0, 1.0 ),
-		   					clamp( (4.0 - (height * 6.0)) * 0.5, 0.0, 1.0 ), 
-//							clamp( 0.6 - (height/1.4), 0.0, 0.1 ), 
-							clamp( min( height*2.0 - 1.0, 1.0 - height ), 0.0, 1.0 ),
-							1.0 );
-//	gl_FragColor = frag_position;
-	gl_FragColor = material_diffuse;
+	float midpoint = 0.4;
+
+	float top = clamp( ((height - midpoint) / (1.0 - midpoint)), 0.0, 1.0 );
+	float bottom = clamp( 1.0 - ((height) / (midpoint)), 0.0, 1.0 );
+	//float mid = 1.0 - (top + bottom);
+
+	vec4 sky_color = mix( mix( color_mid, color_bottom, bottom ), 
+						mix( color_mid, color_top, top ), 
+						height );
+
+	float cloud_blend = material_diffuse.w;
+	gl_FragColor = mix( sky_color, material_diffuse, cloud_blend );
+
+	vec4 fragColor = color_top * material_diffuse.z + color_bottom * material_diffuse.x;
+	fragColor.w = 1.f;
+	
+	float fog_far = 350.0;
+	float fog_near = 100.0;
+	float fog_height = 160.0;
+	float height_factor = clamp( ( fog_height - (height * 500.0)) / fog_height, 0.0, 1.0 );
+	float fog = clamp( ( frag_position.z - fog_near ) / ( fog_far - fog_near ), 0.f, 1.f ) * height_factor;
+	vec4 fog_color = vec4( 1.0, 0.6, 0.2, 1.0 );
+	gl_FragColor = mix( fragColor, fog_color, fog );
+//	gl_FragColor = vec4( top, bottom, 0.0, 1.0 );
+	//gl_FragColor = mix( color_bottom, color_top, height );
+//	gl_FragColor = material_diffuse;
 
 }
+

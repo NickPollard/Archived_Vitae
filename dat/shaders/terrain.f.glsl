@@ -11,6 +11,7 @@ varying vec4 frag_normal;
 varying vec2 texcoord;
 varying vec4 vert_color;
 varying float fog;
+varying float steepness;
 
 const int LIGHT_COUNT = 2;
 
@@ -50,15 +51,14 @@ void main() {
 		float diffuse = max( 0.0, dot( -light_direction, frag_normal ));
 		vec4 diffuse_color = directional_light_diffuse * diffuse;
 		total_diffuse_color += diffuse_color;
-/*
+		
 		// Specular
 		vec4 spec_bounce = reflect( light_direction, frag_normal );
 		float spec = max( 0.0, dot( spec_bounce, -view_direction ));
-		float shininess = 10.0;
+		float shininess = 1.0;
 		float specular = pow( spec, shininess );
 		vec4 specular_color = directional_light_specular * specular;
 		total_specular_color += specular_color;
-		*/
 	}
 #endif
 #if 0	
@@ -84,7 +84,7 @@ void main() {
 #endif
 
 	vec4 tex_color = texture2D( tex, texcoord );
-	vec4 material_diffuse = vert_color * tex_color;
+	vec4 material_diffuse = vert_color * mix( vec4( 1.0, 1.0, 1.0, 1.0 ), tex_color, steepness );
 //	vec4 material_specular = vert_color * tex_color;
 //	vec4 fragColor =	total_specular_color * material_specular + 
 //					total_diffuse_color * material_diffuse;
@@ -92,7 +92,8 @@ void main() {
 
 	// Temporary Terrain Fog
 //	float fog = 0.0;
-	gl_FragColor = mix( fragColor, vec4( 0.0, 0.0, 0.0, 1.0 ), fog );
+	vec4 fog_color = vec4( 1.0, 0.6, 0.2, 1.0 );
+	gl_FragColor = mix( fragColor, fog_color, fog );
 	//gl_FragColor = fragColor;
 	gl_FragColor.w = 1.0;
 

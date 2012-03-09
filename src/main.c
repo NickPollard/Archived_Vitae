@@ -8,6 +8,7 @@
 #ifndef ANDROID
 
 #include "common.h"
+#include "collision.h"
 #include "engine.h"
 #include "maths.h"
 #include "particle.h"
@@ -44,7 +45,8 @@ void test() {
 	test_terrain();
 
 	test_aabb_calculate();
-	
+
+	test_collision();
 }
 
 // ###################################

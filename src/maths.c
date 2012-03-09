@@ -5,6 +5,14 @@
 //----------------------
 #include <assert.h>
 
+matrix matrix_identity =
+{
+	{ 1.f, 0.f, 0.f, 0.f },
+	{ 0.f, 1.f, 0.f, 0.f },
+	{ 0.f, 0.f, 1.f, 0.f },
+	{ 0.f, 0.f, 0.f, 1.f }
+};
+
 static const float epsilon = 0.0001f;
 
 bool f_eq( float a, float b ) {
@@ -158,6 +166,12 @@ vector vector_min( vector* a, vector* b ) {
 	m.coord.z = fminf( a->coord.z, b->coord.z );
 	m.coord.w = fminf( a->coord.w, b->coord.w );
 	return m;
+}
+
+float vector_distance( const vector* a, const vector* b ) {
+	vector displacement;
+	Sub( &displacement, a, b );
+	return vector_length( &displacement );
 }
 
 // Matrix Vector multiply

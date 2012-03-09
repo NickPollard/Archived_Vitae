@@ -814,30 +814,22 @@ typedef struct test_struct_s {
 	float b;
 } test_struct;
 
-term* lisp_func_test_b( context* c, term* raw_args ) {
-	term* args = fmap_1( _eval, c, raw_args );
-	term_takeRef( args );
-	lisp_assert( list_length( args ) == 2 );
-	term* value = head( args );
-	term* object = head( tail( args ));
-	test_struct* s = object->data;
-	lisp_assert( isType( value, typeFloat ));
-	s->b = *value->number;
-	term_deref( args );
-	return object;
+#define LISP_OBJECT_FUNC( CLASS, ATTR ) \
+term* lisp_func_##CLASS##_##ATTR( context* c, term* raw_args ) { \
+	term* args = fmap_1( _eval, c, raw_args ); \
+	term_takeRef( args ); \
+	lisp_assert( list_length( args ) == 2 ); \
+	term* value = head( args ); \
+	term* object = head( tail( args )); \
+	lisp_assert( isType( value, typeFloat )); \
+	CLASS* ob = object->data; \
+	ob->ATTR = *value->number; \
+	term_deref( args ); \
+	return object; \
 }
-term* lisp_func_test_a( context* c, term* raw_args ) {
-	term* args = fmap_1( _eval, c, raw_args );
-	term_takeRef( args );
-	lisp_assert( list_length( args ) == 2 );
-	term* value = head( args );
-	term* object = head( tail( args ));
-	test_struct* s = object->data;
-	lisp_assert( isType( value, typeFloat ));
-	s->a = *value->number;
-	term_deref( args );
-	return object;
-}
+
+LISP_OBJECT_FUNC( test_struct, a );
+LISP_OBJECT_FUNC( test_struct, b );
 
 void* object_createType( const char* string ) {
 	void* data = NULL;
@@ -1110,8 +1102,8 @@ void test_lisp() {
 
 	define_cfunction( c, "new", lisp_func_new );
 	define_cfunction( c, "object_process", lisp_func_object_process );
-	define_cfunction( c, "test_a", lisp_func_test_a );
-	define_cfunction( c, "test_b", lisp_func_test_b );
+	define_cfunction( c, "test_a", lisp_func_test_struct_a );
+	define_cfunction( c, "test_b", lisp_func_test_struct_b );
 	define_cfunction( c, "tail", lisp_func_tail );
 	define_cfunction( c, "head", lisp_func_head );
 
@@ -1138,6 +1130,17 @@ void test_lisp() {
 	term* test_c = _eval( lisp_parse_string( "(foldl object_process (new (quote test_struct)) (quote ((test_a 2.0) (test_b 3.0))))" ), c );
 	object = test_c->data;
 	printf( "object: v ( %.2f %.2f %.2f ), a %.2f, b %.2f\n", object->v.coord.x, object->v.coord.y, object->v.coord.z, object->a, object->b );
+
+	// Model
+	// (model (mesh (filename "dat/model/cityscape.obj" ))	)
+	//
+	// Create a mesh with that filename
+	// ( args ) (if (list-contains (filename)) (mesh_loadObj (find filename args)) (false))
+	// create a model with that mesh
+	// ( meshes ) (foldl add_mesh (model_create (count meshes )) meshes )
+
+	// Scene?
+
 
 	//term* test = _eval( lisp_parse_string( "(test_struct (a 1.0) (b -2.0) (v (vector 1.0 2.0 3.0)))" ), c );
 	//(void)test;
