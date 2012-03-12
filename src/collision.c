@@ -25,6 +25,7 @@ void collision_event( body* a, body* b ) {
 	collisionEvent* event = &collision_events[event_count++];
 	event->a = a;
 	event->b = b;
+	printf( "Collision! %x %x\n", (uint32_t)a, (uint32_t)b );
 }
 
 void collision_init() {
@@ -36,16 +37,48 @@ void collision_addBody( body* b ) {
 	bodies[body_count++] = b;
 }
 
-// Check for any collisions this frame
-void collision_tick( float dt ) {
-	(void)dt;
-	// clear collision events
-	collision_clearEvents();
+int array_find( void** array, int count, void* ptr ) {
+	for ( int i = 0; i < count; ++i ) {
+		if ( array[i] == ptr )
+			return i;
+	}
+	return -1;
+}
+
+void collision_removeBody( body*  b ) {
+	int i = array_find( (void**)bodies, body_count, b );
+	bodies[i] = bodies[--body_count];
+}
+
+void collision_callback( body* a, body* b ) {
+	if ( a->callback )
+		a->callback( a, b, a->callback_data );
+}
+
+void collision_runCallbacks() {
+	for ( int i = 0; i < event_count; ++i ) {
+		collision_callback( collision_events[i].a, collision_events[i].b );
+		collision_callback( collision_events[i].b, collision_events[i].a );
+	}
+}
+
+void collision_generateEvents() {
 	// for every body, check every other body
 	for ( int i = 0; i < body_count; ++i )
 		for ( int j = i + 1; j < body_count; j++ )
 			if ( body_colliding( bodies[i], bodies[j] ))
 				collision_event( bodies[i], bodies[j] );
+}
+
+// Check for any collisions this frame
+void collision_tick( float dt ) {
+	(void)dt;
+	// clear collision events
+	collision_clearEvents();
+
+	collision_generateEvents();
+
+	collision_runCallbacks();
 }
 
 bool collisionFunc_SphereSphere( shape* a, shape* b, matrix matrix_a, matrix matrix_b ) {
@@ -95,6 +128,7 @@ shape* sphere_create( float radius ) {
 
 body* body_create( shape* s, transform* t ) {
 	body* b = mem_alloc( sizeof( body ));
+	memset( b, 0, sizeof( body ));
 	b->shape = s;
 	b->trans = t;
 	return b;
@@ -145,6 +179,10 @@ void test_collision() {
 			body_collided( body_c ));
 	vAssert( 0 );
 	*/
+
+	collision_removeBody( body_a );
+	collision_removeBody( body_b );
+	collision_removeBody( body_c );
 
 	mem_free( body_a );
 	mem_free( body_b );

@@ -7,6 +7,7 @@
 // temp
 #include "camera/chasecam.h"
 #include "camera/flycam.h"
+#include "collision.h"
 #include "model.h"
 #include "scene.h"
 #include "engine.h"
@@ -111,6 +112,15 @@ void lua_pushptr( lua_State* l, void* ptr ) {
 	lua_pushnumber( l, (double)pointer );
 }
 
+void lua_retrieve( lua_State* l, int ref ) {
+	lua_rawgeti( l, LUA_REGISTRYINDEX, ref );
+}
+
+void lua_runFunc( lua_State* l, int ref, int args ) {
+	lua_retrieve( l, ref );
+	lua_pcall( l, args, 0, 0 );
+}
+
 int LUA_createModelInstance( lua_State* l ) {
 	if ( lua_isstring( l, 1 ) ) {
 		const char* filename = lua_tostring( l, 1 );
@@ -125,8 +135,43 @@ int LUA_createModelInstance( lua_State* l ) {
 	}
 }
 
+void testcallback( body* this, body* other, void* data ) {
+	(void)this;
+	(void)other;
+	(void)data;
+}
+
+void lua_collisionCallback( body* this, body* other, void* data ) {
+	lua_State* l = ((void**)data)[0];
+	int ref = ((int*)data)[1];
+	printf( "Lua registry indices: %d %d\n", this->intdata, other->intdata );
+
+	lua_retrieve( l, ref );
+	lua_retrieve( l, this->intdata );
+	lua_retrieve( l, other->intdata );
+	lua_pcall( l, 2, 0, 0 );
+//	lua_runFunc( l, ref, 2 );
+}
+
+int lua_store( lua_State* l ) {
+	return luaL_ref( l, LUA_REGISTRYINDEX );
+}
+
+int LUA_createbodySphere( lua_State* l ) {
+	int ref = lua_store( l );	// Store top of the stack ( the object )
+
+	body* b = body_create( sphere_create( 3.f ), NULL );
+	b->callback = NULL;
+	b->intdata = ref;
+	collision_addBody( b );
+	lua_pushptr( l, b );
+	return 1;
+}
+
 int LUA_deleteModelInstance( lua_State* l ) {
+	printf( "Delete Model Instance.\n" );
 	modelInstance* m = lua_toptr( l, 1 );
+	scene_removeModel( theScene, m );
 	mem_free( m );
 	return 0;
 }
@@ -179,6 +224,33 @@ int LUA_physic_setTransform( lua_State* l ) {
 	physic* p = lua_toptr( l, 1 );
 	transform* t = lua_toptr( l, 2 );
 	p->trans = t;
+	return 0;
+}
+
+int LUA_body_setTransform( lua_State* l ) {
+	LUA_DEBUG_PRINT( "lua body set transform\n" );
+	body* b = lua_toptr( l, 1 );
+	transform* t = lua_toptr( l, 2 );
+	b->trans = t;
+	return 0;
+}
+
+int LUA_body_registerCollisionCallback( lua_State* l ) {
+	printf( "Registering lua collision handler.\n" );
+	body* b = lua_toptr( l, 1 );
+	// Store the lua func callback in the Lua registry
+	// and keep a reference to it so we can resolve it later
+	int ref = lua_store( l ); // Must be top of the stack
+	b->callback = lua_collisionCallback;
+	// Store the Lua ref (which resolves to the function)
+	// in the callback_data for the body
+	// This allows us to call the correct lua func (or closure)
+	// for this body
+	// TODO: fix this temp hack
+	int* data = mem_alloc( sizeof( void* ) * 2 );
+	data[0] = (int)l;
+	data[1] = ref;
+	b->callback_data = data;
 	return 0;
 }
 
@@ -495,10 +567,13 @@ lua_State* vlua_create( engine* e, const char* filename ) {
 	lua_registerFunction( l, LUA_createModelInstance, "vcreateModelInstance" );
 	lua_registerFunction( l, LUA_deleteModelInstance, "vdeleteModelInstance" );
 	lua_registerFunction( l, LUA_createphysic, "vcreatePhysic" );
+	lua_registerFunction( l, LUA_createbodySphere, "vcreateBodySphere" );
 	lua_registerFunction( l, LUA_createtransform, "vcreateTransform" );
 	lua_registerFunction( l, LUA_setWorldSpacePosition, "vsetWorldSpacePosition" );
 	lua_registerFunction( l, LUA_model_setTransform, "vmodel_setTransform" );
 	lua_registerFunction( l, LUA_physic_setTransform, "vphysic_setTransform" );
+	lua_registerFunction( l, LUA_body_setTransform, "vbody_setTransform" );
+	lua_registerFunction( l, LUA_body_registerCollisionCallback, "vbody_registerCollisionCallback" );
 	lua_registerFunction( l, LUA_scene_addModel, "vscene_addModel" );
 	lua_registerFunction( l, LUA_scene_removeModel, "vscene_removeModel" );
 	lua_registerFunction( l, LUA_physic_activate, "vphysic_activate" );

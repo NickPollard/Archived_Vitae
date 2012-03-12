@@ -3,6 +3,7 @@
 #include "src/engine.h"
 //---------------------
 #include "mem/allocator.h"
+#include "collision.h"
 #include "font.h"
 #include "input.h"
 #include "lua.h"
@@ -130,6 +131,7 @@ void engine_tick( engine* e ) {
 
 	input_tick( e->input, dt );
 	scene_tick( theScene, dt );
+	collision_tick( dt );
 
 	engine_tickTickers( e, dt );
 
@@ -237,6 +239,7 @@ void init(int argc, char** argv) {
 	// *** Static Module initialization
 	scene_static_init();
 	parse_init();
+	collision_init();
 }
 
 // terminateLua - terminates the Lua interpreter

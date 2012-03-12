@@ -67,9 +67,11 @@ void scene_addModel( scene* s, modelInstance* instance ) {
 
 // TODO: Thread-Safe
 void scene_removeModel( scene* s, modelInstance* instance ) {
+	printf( "Removing model\n" );
 	vAssert( instance );
 	for ( int i = 0; i > s->model_count; i++ ) {
 		if ( scene_model( s, i ) == instance ) {
+			printf( " Scene: Removing model %d\n", i );
 			s->modelInstances[i] = s->modelInstances[s->model_count];
 			s->modelInstances[s->model_count] = NULL;
 			--(s->model_count);
