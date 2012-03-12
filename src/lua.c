@@ -172,7 +172,7 @@ int LUA_deleteModelInstance( lua_State* l ) {
 	printf( "Delete Model Instance.\n" );
 	modelInstance* m = lua_toptr( l, 1 );
 	scene_removeModel( theScene, m );
-	mem_free( m );
+	// TODO: remove from pool (not mem-free)
 	return 0;
 }
 

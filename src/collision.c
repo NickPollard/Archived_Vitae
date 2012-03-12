@@ -3,6 +3,7 @@
 #include "src/common.h"
 #include "src/collision.h"
 //---------------------
+#include "engine.h"
 #include "transform.h"
 
 collideFunc collide_funcs[kMaxShapeTypes][kMaxShapeTypes];
@@ -35,14 +36,6 @@ void collision_init() {
 
 void collision_addBody( body* b ) {
 	bodies[body_count++] = b;
-}
-
-int array_find( void** array, int count, void* ptr ) {
-	for ( int i = 0; i < count; ++i ) {
-		if ( array[i] == ptr )
-			return i;
-	}
-	return -1;
 }
 
 void collision_removeBody( body*  b ) {

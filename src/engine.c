@@ -473,3 +473,28 @@ void engine_addRender( engine* e, void* entity, renderfunc render ) {
 		d = engine_addRenderDelegate( e, render );
 	delegate_add( d, entity );
 }
+
+void engine_removeRender( engine* e, void* entity, renderfunc render ) {
+	delegate* d = engine_findRenderDelegate( e, render );
+	vAssert( d );
+	delegate_remove( d, entity );
+}
+
+int array_find( void** array, int count, void* ptr ) {
+	for ( int i = 0; i < count; ++i ) {
+		if ( array[i] == ptr )
+			return i;
+	}
+	return -1;
+}
+
+void array_remove( void** array, int* count, void* ptr ) {
+	int i = array_find( array, *count, ptr );
+	if ( i != -1 ) {
+		--(*count);
+		array[i] = array[*count];
+		array[*count] = NULL;
+	}
+}
+
+// TODO - move array funcs out and unit-test (0, negative, out of bounds, end of array)
