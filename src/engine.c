@@ -476,8 +476,11 @@ void engine_addRender( engine* e, void* entity, renderfunc render ) {
 
 void engine_removeRender( engine* e, void* entity, renderfunc render ) {
 	delegate* d = engine_findRenderDelegate( e, render );
-	vAssert( d );
-	delegate_remove( d, entity );
+	// TODO - need to change findDelegate to look through multiple delegates,
+	// and full ones. Once done, reinstate this assert and remove the if
+	//vAssert( d );
+	if ( d )
+		delegate_remove( d, entity );
 }
 
 int array_find( void** array, int count, void* ptr ) {

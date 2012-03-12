@@ -51,7 +51,7 @@ end
 function spawn_explosion( position )
 	-- Attach a particle effect to the object
 	local t = vcreateTransform()
-	vparticle_create( engine, t )
+	vexplosion( engine, t )
 	-- Position it at the correct muzzle position and rotation
 	vtransform_setWorldSpaceByTransform( t, position )
 end
@@ -65,10 +65,8 @@ function player_fire( p )
 	-- Position it at the correct muzzle position and rotation
 	vtransform_setWorldSpaceByTransform( g.transform, p.transform )
 
-	---[[
 	-- Attach a particle effect to the object
-	vparticle_create( engine, g.transform )
-	--]]
+	inTime( 0.2, function () vparticle_create( engine, g.transform ) end )
 
 	-- Apply initial velocity
 	bullet_speed = 150.0;
@@ -210,11 +208,7 @@ function collision( this, other )
 end
 
 function ship_collisionHandler( ship, collider )
-	vprint( "destroy ship" )
-	vprint( string.format( "Test num: %d", ship.test ))
-	vprint( string.format( "Test num: %d", collider.test ))
-	-- Can't do this right now; we have the body not the gameobject
-	-- need to store that as data for the callback
+	spawn_explosion( ship.transform );
 	ship_destroy( ship )
 
 	--[[

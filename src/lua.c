@@ -527,6 +527,41 @@ int LUA_particle_create( lua_State* l ) {
 	return 0;
 }
 
+int LUA_explosion( lua_State* l ) {
+	engine* e = lua_toptr( l, 1 );
+	transform* t = lua_toptr( l, 2 );
+	
+	particleEmitter* p = particleEmitter_create();
+	p->definition->lifetime = 2.f;
+	p->definition->spawn_box = Vector( 0.3f, 0.3f, 0.3f, 0.f );
+
+	// size
+	p->definition->size = property_create( 2 );
+	property_addf( p->definition->size, 0.f, 1.f );
+	property_addf( p->definition->size, 0.3f, 15.f );
+	property_addf( p->definition->size, 1.f, 20.f );
+
+	// color
+	p->definition->color = property_create( 5 );
+	property_addv( p->definition->color, 0.f, Vector( 1.f, 1.f, 0.3f, 0.f ));
+	property_addv( p->definition->color, 0.3f, Vector( 1.f, 0.7f, 0.3f, 1.f ));
+	property_addv( p->definition->color, 0.8f, Vector( 1.f, 0.5f, 0.f, 0.5f ));
+	property_addv( p->definition->color, 1.0f, Vector( 1.f, 0.0f, 0.f, 0.f ));
+
+	p->definition->velocity = Vector( 0.f, 0.f, 0.f, 0.f );
+	p->definition->spawn_interval = 0.03f;
+	p->trans = t;
+	p->definition->flags = p->definition->flags | kParticleWorldSpace
+												| kParticleRandomRotation;
+
+	texture_request( &p->definition->texture_diffuse, "assets/img/cloud_rgba128.tga" );
+
+	engine_addRender( e, p, particleEmitter_render );
+	startTick( e, p, particleEmitter_tick );
+
+	return 0;
+}
+
 void lua_makeConstantPtr( lua_State* l, const char* name, void* ptr ) {
 	lua_pushptr( l, ptr );
 	lua_setglobal( l, name ); // Store in the global variable named <name>
@@ -585,6 +620,7 @@ lua_State* vlua_create( engine* e, const char* filename ) {
 	lua_registerFunction( l, LUA_transform_setWorldPosition, "vtransform_setWorldPosition" );
 	lua_registerFunction( l, LUA_transform_setWorldSpaceByTransform, "vtransform_setWorldSpaceByTransform" );
 	lua_registerFunction( l, LUA_particle_create, "vparticle_create" );
+	lua_registerFunction( l, LUA_explosion, "vexplosion" );
 	// *** Camera
 	lua_registerFunction( l, LUA_chasecam_follow, "vchasecam_follow" );
 	lua_registerFunction( l, LUA_flycam, "vflycam" );
