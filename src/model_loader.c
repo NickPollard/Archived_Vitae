@@ -37,7 +37,6 @@ mesh* mesh_loadObj( const char* filename ) {
 
 	while ( !inputStream_endOfFile( stream )) {
 		char* token = inputStream_nextToken( stream );
-		printf( "Model token \"%s\"\n", token );
 		if ( string_equal( token, "v" )) {
 			assert( vert_count < kObjMaxVertices );
 			// Vertex
