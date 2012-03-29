@@ -23,6 +23,8 @@ bool token_isFloat( const char* token );
 bool token_isString( const char* token );
 const char* sstring_create( const char* token );
 
+int isNewLine( char c );
+
 // *** File Operations
 
 FILE* vfile_open( const char* path, const char* mode );

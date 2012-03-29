@@ -1,6 +1,16 @@
 // lisp.h
 #pragma once
 
+#define DEBUG_PARSE 0
+
+#if DEBUG_PARSE
+#define PARSE_PRINT( ... ) printf( __VA_ARGS__ )
+#else
+#define PARSE_PRINT( ... ) 
+#endif
+
+
+
 /*
    types of list term
    all terms aside from LIST and ATOM are considered to be value terms

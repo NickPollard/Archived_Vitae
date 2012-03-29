@@ -201,6 +201,67 @@ void* value_create( size_t size ) {
 	return mem;
 	}
 
+/*  
+   List accessors
+
+   Only valid on lists
+   list must not be NULL
+
+   Head - returns the head pointer of a list, which must be another term
+   Tail - returns the tail pointer of a list, which must be another term of _typeList, or NULL;
+   */
+
+term* head( term* list ) {
+	assert( list );
+	assert( isType( list, _typeList ));
+	assert( list->head );
+	return (term*)list->head;
+	}
+
+term* tail( term* list ) {
+	assert( list );
+	assert( isType( list, _typeList ));
+	// If there is a tail, it must be a list
+	assert( !list->tail || isType( list->tail, _typeList ));
+	return list->tail;
+	}
+
+/*
+   List Constructors
+   */
+term* _cons( void* head, term* tail ) {
+	term* t = term_create( _typeList, head );
+	t->tail = tail;
+	if ( tail )
+		term_takeRef( tail );
+	return t;
+	}
+
+term* _append( term* list, term* appendee ) {
+	if ( tail( list ))
+		return _cons( head( list ), _append( tail( list ), appendee ));
+	else
+		return _cons( head( list ), _cons( appendee, NULL ));	
+}
+
+// Get the next interesting lisp token
+// skips past comments and newlines
+char* lisp_nextToken( inputStream* stream ) {
+	char* token = inputStream_nextToken( stream );
+	while ( _isLineComment( token ) || isNewLine( *token )) {
+		// skip the line
+		if ( _isLineComment( token )) {
+			//printf( " # Comment found; skipping line.\n" );
+			inputStream_skipPast( stream, "\n" );
+		}
+		else
+			//printf( " newline\n" );
+		mem_free( token );
+		token = inputStream_nextToken( stream );
+		}
+	return token;
+}
+
 // Read a token at a time from the inputstream, advancing the read head,
 // and build it into an slist of atoms
 term* lisp_parse( inputStream* stream ) {
@@ -209,13 +270,10 @@ term* lisp_parse( inputStream* stream ) {
 		vAssert( 0 );
 		return NULL;
 		}
-	char* token = inputStream_nextToken( stream );
-	while ( _isLineComment( token )) {
-		// skip the line
-		printf( " # Comment found; skipping line.\n" );
-		inputStream_skipPast( stream, "\n" );
-		token = inputStream_nextToken( stream );
-		}
+
+	char* token = lisp_nextToken( stream );
+	//printf( "lisp token \"%s\"\n", token );
+
 	if ( _isListEnd( *token ) ) {
 		mem_free( token ); // It's a bracket, discard it
 		return NULL;
@@ -260,63 +318,46 @@ term* lisp_parse_string( const char* string ) {
 	return s;
 }
 
+term* lisp_parse_exprList( inputStream* stream ) {
+	PARSE_PRINT( "lisp_parse_exprList: \"%s\"\n", stream->stream );
+	inputStream* peeker = inputStream_create( stream->stream );
+	lisp_nextToken( peeker );
+	//printf( "Next lisp token: \"%s\"\n", token );
+	bool eof = inputStream_endOfFile( peeker );
+	mem_free( peeker );
+	if ( eof )
+		return NULL;
+
+	term* t = lisp_parse( stream );
+	term* list = _cons( t, lisp_parse_exprList( stream ) );
+	return list;
+}
+
 term* lisp_parse_file( const char* filename ) {
 	printf( "FILE: Loading File \"%s\" for parsing.\n", filename );
 	size_t length = 0;
 	char* contents = vfile_contents( filename, &length );
 	vAssert( (contents) );
 	vAssert( (length != 0) );
-	term* t = lisp_parse_string( contents );
+	
+	inputStream* stream = inputStream_create( contents );
+	term* t = lisp_parse_exprList( stream );
+
 	mem_free( contents );
 	return t;
 }
 
-term* lisp_eval_file( context* c, const char* filename ) {
-	term* t = lisp_parse_file( filename );
-	return _eval( t, c );
+term* _eval_list( term* list, context* c ) {
+	lisp_assert( isType( list, _typeList ));
+	term* s = _eval( head( list ), c );
+	if ( tail( list ))
+		return _eval_list( tail( list ), c );
+	return s;
 }
 
-/*  
-   List accessors
-
-   Only valid on lists
-   list must not be NULL
-
-   Head - returns the head pointer of a list, which must be another term
-   Tail - returns the tail pointer of a list, which must be another term of _typeList, or NULL;
-   */
-
-term* head( term* list ) {
-	assert( list );
-	assert( isType( list, _typeList ));
-	assert( list->head );
-	return (term*)list->head;
-	}
-
-term* tail( term* list ) {
-	assert( list );
-	assert( isType( list, _typeList ));
-	// If there is a tail, it must be a list
-	assert( !list->tail || isType( list->tail, _typeList ));
-	return list->tail;
-	}
-
-/*
-   List Constructors
-   */
-term* _cons( void* head, term* tail ) {
-	term* t = term_create( _typeList, head );
-	t->tail = tail;
-	if ( tail )
-		term_takeRef( tail );
-	return t;
-	}
-
-term* _append( term* list, term* appendee ) {
-	if ( tail( list ))
-		return _cons( head( list ), _append( tail( list ), appendee ));
-	else
-		return _cons( head( list ), _cons( appendee, NULL ));	
+term* lisp_eval_file( context* c, const char* filename ) {
+	term* t = lisp_parse_file( filename );
+	return _eval_list( t, c );
 }
 
 void list_delete( term* t ) {
@@ -1266,6 +1307,11 @@ void test_lisp() {
 	assert( object->lifetime == 2.f );
 	assert( vector_equal( object->color, vector( 0.f, 0.f, 1.f, 1.f )));
 	*/
+	
+	term* t = lisp_parse_file( "src/script/lisp/particle.s" );
+	term* e = _eval_list( t, c );
+	(void)e;
+	vAssert( 0 );
 
 	context_delete( c );
 
@@ -1274,13 +1320,6 @@ void test_lisp() {
 	printf( "Lisp heap storing %d bytes in %d allocations.\n", lisp_heap->total_allocated, lisp_heap->allocations );
 	printf( "Context heap storing %d bytes in %d allocations.\n", context_heap->total_allocated, context_heap->allocations );
 	//assert( 0 );
-/*
-	term* t = lisp_parse_file( "src/script/lisp/particle.s" );
-	term* e = _eval( t, c );
-	(void)e;
-	vAssert( 0 );
-	*/
-
 	}
 
 /*
