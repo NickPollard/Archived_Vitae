@@ -21,6 +21,7 @@
 #include "render/texture.h"
 #include "debug/debug.h"
 #include "debug/debugtext.h"
+#include "script/lisp.h"
 #include "script/parse.h"
 #include "system/thread.h"
 #include "ui/panel.h"
@@ -238,6 +239,7 @@ void init(int argc, char** argv) {
 
 	// *** Static Module initialization
 	scene_static_init();
+	lisp_init();
 	parse_init();
 	collision_init();
 }

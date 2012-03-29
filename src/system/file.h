@@ -17,6 +17,7 @@ char*	inputStream_nextToken( inputStream* stream );
 void	inputStream_skipToken( inputStream* stream );
 bool	inputStream_endOfFile( inputStream* in );
 void	inputStream_nextLine( inputStream* in );
+void	inputStream_skipPast( inputStream* stream, const char* string );
 
 bool token_isFloat( const char* token );
 bool token_isString( const char* token );
