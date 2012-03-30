@@ -1,3 +1,7 @@
+// TODO
+
+// lisp_assertType (with stringified type output)
+
 /*
 	What we want to do:
 
@@ -70,6 +74,7 @@
 #include "mem/allocator.h"
 #include "model.h"
 #include "model_loader.h"
+#include "particle.h"
 #include "system/hash.h"
 #include "system/file.h"
 #include "system/string.h"
@@ -1044,6 +1049,54 @@ term* lisp_func_transform( context* c, term* raw_args ) {
 	return &lisp_false;
 }
 
+term* lisp_func_property_create( context* c, term* raw_args ) {
+	(void)c;
+	(void)raw_args;
+	/*
+	lisp_assert( isType( raw_args, _typeList ));
+	term* args = fmap_1( _eval, c, raw_args );
+	term_takeRef( args );
+	lisp_assert( isType( args, _typeList ));
+
+	// get first key for now
+	term* key = head( args );
+	lisp_assert( isType( key, _typeList ));
+	// get the two floats out;
+	float k = *head( key )->number;
+	float v = *head( tail( key ))->number;
+*/
+	int stride = 2; // key + data 
+	property* p = property_create( stride );
+	term* tp = term_create( _typeObject, p );
+
+	//term_deref( args );	
+	return tp;
+}
+
+term* lisp_func_property_addkey( context* c, term* raw_args ) {
+	(void)c;
+	lisp_assert( isType( raw_args, _typeList ));
+	term* args = fmap_1( _eval, c, raw_args );
+	term_takeRef( args );
+	lisp_assert( isType( args, _typeList ));
+
+	term* tp = head( args );
+	property* p = tp->data;
+	// get first key for now
+	term* key = head( tail( args ));
+	lisp_assert( isType( key, _typeList ));
+	// get the two floats out;
+	float k = *head( key )->number;
+	float v = *head( tail( key ))->number;
+
+	printf( "Adding key: %.2f %.2f\n", k, v );
+	property_addf( p, k, v );
+
+	term_deref( args );	
+	return tp;
+}
+
+
 // Define a new lisp function and bind it to the context; in lisp
 /*
    (defun myFunc (some args) 
@@ -1082,6 +1135,8 @@ void lisp_initContext( context* c ) {
 	define_cfunction( c, "transform", lisp_func_transform );
 	define_cfunction( c, "mesh_create", lisp_func_mesh_create );
 	define_cfunction( c, "filename", lisp_func_filename );
+	define_cfunction( c, "property_create", lisp_func_property_create );
+	define_cfunction( c, "property_addKey", lisp_func_property_addkey );
 
 	define_function( c, "mesh", "( args ) (foldl object_process (mesh_create) args)" );
 	//define_function( c, "filename", "(() b )" );
@@ -1309,8 +1364,16 @@ void test_lisp() {
 	*/
 	
 	term* t = lisp_parse_file( "src/script/lisp/particle.s" );
-	term* e = _eval_list( t, c );
-	(void)e;
+	// just load the definitions in the file
+	_eval_list( t, c );
+
+	// now use them
+	term* tp = _eval( lisp_parse_string( "(property (quote ((0.1 1.1) ( 0.2 2.0) (3.0 5.0)) ))" ), c );
+
+	property* p = tp->data;
+	(void)p;
+	vAssert( p->stride == 2 );
+
 	vAssert( 0 );
 
 	context_delete( c );
