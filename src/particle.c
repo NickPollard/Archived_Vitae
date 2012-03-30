@@ -173,6 +173,7 @@ property* property_create( int stride ) {
 }
 
 void property_addf( property* p, float time, float value ) {
+	vAssert( p->stride == 2 );
 	assert( p->count < kmax_property_values );
 	p->data[p->count * p->stride] = time;
 	p->data[p->count * p->stride + 1] = value;

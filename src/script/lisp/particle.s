@@ -16,4 +16,6 @@
 
 (defun property (keys)
 	(foldl property_addKey
-		(property_create) keys))
+		(property_create 
+			(length (head keys)))
+		 keys))

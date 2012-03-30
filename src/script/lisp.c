@@ -1,6 +1,7 @@
 // TODO
 
 // lisp_assertType (with stringified type output)
+// lisp argument validation (arg count, arg types)
 
 /*
 	What we want to do:
@@ -562,7 +563,7 @@ context* context_create( context* parent ) {
 
 void context_delete( context* c ) {
 	// Deref all the contents
-	printf( "Deleting context with %d keys.\n", c->lookup->count );
+	CONTEXT_PRINT( "Deleting context with %d keys.\n", c->lookup->count );
 	for ( int i = 0; i < c->lookup->count; ++i ) {
 		term* t = *(term**)(c->lookup->values + (i * c->lookup->stride));
 		if ( t )
@@ -764,6 +765,22 @@ term* lisp_func_greaterthan( context* c, term* raw_args ) {
 	return ret;
 	}
 
+term* lisp_func_length( context* c, term* raw_args ) {
+	term* args = fmap_1( _eval, c, raw_args );
+	term_takeRef( args );
+
+	int len = list_length( head( args ));
+
+	mem_pushStack( kLispValueAllocString );
+	float* result = heap_allocate( lisp_heap, sizeof( float )  );
+	mem_popStack( );
+	*result = (float)len;
+
+	term* tf = term_create( typeFloat, result );
+	term_deref( args );
+	return tf;
+	}
+
 term* lisp_func_vector( context* c, term* raw_args ) {
 	term* args = fmap_1( _eval, c, raw_args );
 	term_takeRef( args );
@@ -913,14 +930,8 @@ term* list_copy( term* list ) {
 
 term* lisp_func_tail( context* c, term* raw_args ) {
 	term* args = fmap_1( _eval, c, raw_args );
-	printf( "lisp_func_tail: " );
-	term_debugPrint( args );
-	printf( "\n" );
 	term_takeRef( args );
 	term* list = head( args );
-	printf( "list: " );
-	term_debugPrint( list );
-	printf( " (0x%x)\n", (unsigned int)list );
 	vAssert( isType( list, _typeList ));
 	term* t = tail( list );
 	if ( !t )
@@ -1049,27 +1060,30 @@ term* lisp_func_transform( context* c, term* raw_args ) {
 	return &lisp_false;
 }
 
+void lisp_assertArgs_1( term* t, enum termType type ) {
+	lisp_assert( isType( t, _typeList ));
+	lisp_assert( list_length( t ) == 1 );
+	lisp_assert( isType( head( t ), type ));
+}
+
+// (property_create stride)
 term* lisp_func_property_create( context* c, term* raw_args ) {
 	(void)c;
 	(void)raw_args;
-	/*
+	
 	lisp_assert( isType( raw_args, _typeList ));
 	term* args = fmap_1( _eval, c, raw_args );
 	term_takeRef( args );
-	lisp_assert( isType( args, _typeList ));
+	
+	lisp_assertArgs_1( args, typeFloat );
 
-	// get first key for now
-	term* key = head( args );
-	lisp_assert( isType( key, _typeList ));
-	// get the two floats out;
-	float k = *head( key )->number;
-	float v = *head( tail( key ))->number;
-*/
-	int stride = 2; // key + data 
+	// get the stride
+	term* s = head( args );
+	int stride = (int)(*s->number);
 	property* p = property_create( stride );
 	term* tp = term_create( _typeObject, p );
 
-	//term_deref( args );	
+	term_deref( args );	
 	return tp;
 }
 
@@ -1123,6 +1137,8 @@ void lisp_initContext( context* c ) {
 	define_cfunction( c, "vector", lisp_func_vector );
 	define_cfunction( c, "color", lisp_func_color );
 	define_cfunction( c, "quote", lisp_func_quote );
+
+	define_cfunction( c, "length", lisp_func_length );
 
 	define_cfunction( c, "+", lisp_func_add );
 	define_cfunction( c, "-", lisp_func_sub );
@@ -1325,15 +1341,16 @@ void test_lisp() {
 	term* test = _eval( lisp_parse_string( "(new (quote test_struct))" ), c );
 	vAssert( isType( test, _typeObject ));
 	test_struct* object = test->data;
-	printf( "object: v ( %.2f %.2f %.2f ), a %.2f, b %.2f\n", object->v.coord.x, object->v.coord.y, object->v.coord.z, object->a, object->b );
+	//printf( "object: v ( %.2f %.2f %.2f ), a %.2f, b %.2f\n", object->v.coord.x, object->v.coord.y, object->v.coord.z, object->a, object->b );
 
 	term* test_b = _eval( lisp_parse_string( "(object_process (new (quote test_struct)) (quote (test_a 1.0)))" ), c );
 	object = test_b->data;
-	printf( "object: v ( %.2f %.2f %.2f ), a %.2f, b %.2f\n", object->v.coord.x, object->v.coord.y, object->v.coord.z, object->a, object->b );
+	//printf( "object: v ( %.2f %.2f %.2f ), a %.2f, b %.2f\n", object->v.coord.x, object->v.coord.y, object->v.coord.z, object->a, object->b );
 
 	term* test_c = _eval( lisp_parse_string( "(foldl object_process (new (quote test_struct)) (quote ((test_a 2.0) (test_b 3.0))))" ), c );
 	object = test_c->data;
-	printf( "object: v ( %.2f %.2f %.2f ), a %.2f, b %.2f\n", object->v.coord.x, object->v.coord.y, object->v.coord.z, object->a, object->b );
+	//printf( "object: v ( %.2f %.2f %.2f ), a %.2f, b %.2f\n", object->v.coord.x, object->v.coord.y, object->v.coord.z, object->a, object->b );
+	(void)object;
 
 	// Model
 	// (model (mesh (filename "dat/model/cityscape.obj" ))	)
@@ -1368,11 +1385,11 @@ void test_lisp() {
 	_eval_list( t, c );
 
 	// now use them
-	term* tp = _eval( lisp_parse_string( "(property (quote ((0.1 1.1) ( 0.2 2.0) (3.0 5.0)) ))" ), c );
+	term* tp = _eval( lisp_parse_string( "(property (quote ((0.1 1.1 1.0 1.0) ( 0.2 2.0 1.0 1.0) (3.0 5.0 1.0 1.0)) ))" ), c );
 
 	property* p = tp->data;
 	(void)p;
-	vAssert( p->stride == 2 );
+	vAssert( p->stride == 4 );
 
 	vAssert( 0 );
 

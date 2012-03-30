@@ -2,11 +2,18 @@
 #pragma once
 
 #define DEBUG_PARSE 0
+#define DEBUG_CONTEXT 0
 
 #if DEBUG_PARSE
 #define PARSE_PRINT( ... ) printf( __VA_ARGS__ )
 #else
 #define PARSE_PRINT( ... ) 
+#endif
+
+#if DEBUG_CONTEXT
+#define CONTEXT_PRINT( ... ) printf( __VA_ARGS__ )
+#else
+#define CONTEXT_PRINT( ... ) 
 #endif
 
 
