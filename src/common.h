@@ -45,7 +45,12 @@
 #endif
 
 #define vAssert( a )	if ( !(a) ) { \
-							printf( "Assert Failed: " #a "(%s:%d)\n", __FILE__, __LINE__ ); \
+							printf( "Assert Failed: " #a " (%s:%d)\n", __FILE__, __LINE__ ); \
+							assert( (a) ); \
+						}
+#define vAssertMsg( a, msg )	if ( !(a) ) { \
+							printf( "Assert Failed: " #a " (%s:%d)\n", __FILE__, __LINE__ ); \
+							printf( "Assert Msg: %s\n", msg ); \
 							assert( (a) ); \
 						}
 
