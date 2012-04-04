@@ -1101,11 +1101,20 @@ term* lisp_func_property_addkey( context* c, term* raw_args ) {
 	lisp_assert( isType( key, _typeList ));
 	// get the two floats out;
 	float k = *head( key )->number;
-	float v = *head( tail( key ))->number;
-
-	printf( "Adding key: %.2f %.2f\n", k, v );
-	property_addf( p, k, v );
-
+	int stride = list_length( key );
+#define kMaxStride 4
+	vAssertMsg( stride == p->stride, "Error adding keyframe to property: the stride of the keyframe does not equal that of the property." );
+	vAssertMsg( stride <= kMaxStride, "Error arrding keyframe to property: stride is greater than the maximum." );
+	float values[kMaxStride];
+	term* float_term = tail( key );
+	printf( "Adding key: %.2f ", k );
+	for ( int i = 0; i < (stride - 1 ); ++i ) {
+		values[i] = *head( float_term )->number;
+		printf( "%.2f ", values[i] );
+		float_term = tail( float_term );
+	}	
+	printf( "\n" );
+	property_addfv( p, k, values );
 	term_deref( args );	
 	return tp;
 }
@@ -1128,6 +1137,11 @@ term* lisp_func_defun( context* c, term* raw_args ) {
 void lisp_initContext( context* c ) {
 	// Every lisp context needs this in order to pull in other functions, including the libraries
 	define_cfunction( c, "defun", lisp_func_defun );
+
+	define_cfunction( c, "tail", lisp_func_tail );
+	define_cfunction( c, "head", lisp_func_head );
+
+	define_cfunction( c, "if", lisp_func_if );
 
 	// General lisp funcs
 	define_function( c, "map",		"(( func list ) (cons (func (head list)) (if (tail list) (map func (tail list)) null)))" );
@@ -1159,6 +1173,8 @@ void lisp_initContext( context* c ) {
 
 	// load the default vlisp library
 	lisp_eval_file( c, "src/script/lisp/vliblisp.s" );
+	lisp_eval_file( c, "src/script/lisp/particle.s" );
+	// just load the definitions in the file
 }
 
 context* lisp_newContext() {
@@ -1251,12 +1267,6 @@ void test_lisp() {
 
 	// Test #6 - function definitions using intrinsics
 	define_function( c, "double", "(( a ) (+ a a))" );
-	result = _eval( lisp_parse_string( "(double five)" ), c );
-	assert( *result->number == 10.f );
-	
-	result = _eval( lisp_parse_string( "(double five)" ), c );
-	assert( *result->number == 10.f );
-	
 	result = _eval( lisp_parse_string( "(double (double five))" ), c );
 	assert( *result->number == 20.f );
 	
@@ -1264,7 +1274,6 @@ void test_lisp() {
 	assert( *result->number == 25.f );
 
 	// If (intrinsic)
-	define_cfunction( c, "if", lisp_func_if );
 	result = eval_string( "(if b b a)", c );
 	assert( result == eval_string( "b", c ) );
 
@@ -1317,15 +1326,10 @@ void test_lisp() {
 	assert( isType( vec, _typeVector ));
 	term_deref( vec );
 
-	term* property_color = _eval( lisp_parse_string( "(color (vector 0.0 0.0 1.0))" ), c );
-	(void)property_color;
-
 	define_cfunction( c, "new", lisp_func_new );
 	define_cfunction( c, "object_process", lisp_func_object_process );
 	define_cfunction( c, "test_a", lisp_func_test_struct_a );
 	define_cfunction( c, "test_b", lisp_func_test_struct_b );
-	define_cfunction( c, "tail", lisp_func_tail );
-	define_cfunction( c, "head", lisp_func_head );
 
 	// Test Head and Tail
 	term* h = _eval( lisp_parse_string( "(head (quote (1.0 2.0)))" ), c );
@@ -1352,46 +1356,13 @@ void test_lisp() {
 	//printf( "object: v ( %.2f %.2f %.2f ), a %.2f, b %.2f\n", object->v.coord.x, object->v.coord.y, object->v.coord.z, object->a, object->b );
 	(void)object;
 
-	// Model
-	// (model (mesh (filename "dat/model/cityscape.obj" ))	)
-	//
-	// Create a mesh with that filename
-	// ( args ) (if (list-contains (filename)) (mesh_loadObj (find filename args)) (false))
-	// create a model with that mesh
-	// ( meshes ) (foldl add_mesh (model_create (count meshes )) meshes )
-
-	// Scene?
-
-
-	//term* test = _eval( lisp_parse_string( "(test_struct (a 1.0) (b -2.0) (v (vector 1.0 2.0 3.0)))" ), c );
-	//(void)test;
-
-	// Need to translate this into:
-	/* 
-	   (foldl object_process (new test_struct)
-	   		((a 1.0) (b -2.0) (v (vector 1.0 2.0 3.0))))
-	*/
-
-	// The final test!
-	/*
-	test_struct* object = _eval( lisp_parse_string( "(test_struct ((color (vector 0.0 0.0 1.0)) (size 1.0) (lifetime 2.0)))" ));
-	assert( object->size == 1.f );
-	assert( object->lifetime == 2.f );
-	assert( vector_equal( object->color, vector( 0.f, 0.f, 1.f, 1.f )));
-	*/
-	
-	term* t = lisp_parse_file( "src/script/lisp/particle.s" );
-	// just load the definitions in the file
-	_eval_list( t, c );
-
-	// now use them
 	term* tp = _eval( lisp_parse_string( "(property (quote ((0.1 1.1 1.0 1.0) ( 0.2 2.0 1.0 1.0) (3.0 5.0 1.0 1.0)) ))" ), c );
 
 	property* p = tp->data;
 	(void)p;
 	vAssert( p->stride == 4 );
 
-	vAssert( 0 );
+	//vAssert( 0 );
 
 	context_delete( c );
 

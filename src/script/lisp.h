@@ -66,9 +66,11 @@ term* _eval( term* expr, void* _context );
 
 // Return a new lisp execution context
 context* lisp_newContext();
+void context_delete( context* c );
 
 // Parse the contents of [filename] as lisp code
 term* lisp_parse_file( const char* filename );
+term* lisp_eval_file( context* c, const char* filename );
 
 // Init the lisp subsystem
 void lisp_init();

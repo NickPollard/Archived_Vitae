@@ -17,6 +17,7 @@
 #include "physic.h"
 #include "render/modelinstance.h"
 #include "render/texture.h"
+#include "script/lisp.h"
 #include "system/file.h"
 
 #define MAX_LUA_VECTORS 64
@@ -473,11 +474,17 @@ int LUA_particle_create( lua_State* l ) {
 	p->definition->spawn_box = Vector( 0.3f, 0.3f, 0.3f, 0.f );
 
 	// size
+	/*
 	p->definition->size = property_create( 2 );
 	property_addf( p->definition->size, 0.f, 1.f );
 	property_addf( p->definition->size, 0.3f, 5.f );
 	property_addf( p->definition->size, 0.6f, 2.f );
 	property_addf( p->definition->size, 2.f, 1.f );
+	*/
+	context* c = lisp_newContext();
+	term* size_term = lisp_eval_file( c, "src/script/lisp/property.s" );
+	p->definition->size = size_term->data;
+	context_delete( c );
 
 	// color
 	p->definition->color = property_create( 5 );

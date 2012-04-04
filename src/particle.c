@@ -172,12 +172,24 @@ property* property_create( int stride ) {
 	return p;
 }
 
+// add [p->stride] number of float [values], at [time]
 void property_addf( property* p, float time, float value ) {
-	vAssert( p->stride == 2 );
 	assert( p->count < kmax_property_values );
-	p->data[p->count * p->stride] = time;
-	p->data[p->count * p->stride + 1] = value;
-	p->count++;
+	assert( p->stride == 2 );
+	int frame = p->count * p->stride;
+	p->data[frame] = time;
+	p->data[frame + 1] = value;
+	++p->count;
+}
+
+// add [p->stride] number of float [values], at [time]
+void property_addfv( property* p, float time, float* values ) {
+	assert( p->count < kmax_property_values );
+	int frame = p->count * p->stride;
+	p->data[frame] = time;
+	for ( int i = 0; i < p->stride - 1; ++i )
+		p->data[frame + 1 + i] = values[i];
+	++p->count;
 }
 
 void property_addv( property* p, float time, vector value ) {
@@ -224,10 +236,11 @@ vector property_samplev( property* p, float time ) {
 
 void test_property() {
 	property* p = property_create( 2 );
-	property_addf( p, 0.f, 0.f );
-	property_addf( p, 1.f, 3.f );
-	property_addf( p, 2.f, 2.f );
-	property_addf( p, 3.f, 3.f );
+	float f[] = { 0.f, 3.f, 2.f, 3.f };
+	property_addfv( p, 0.f, &f[0] );
+	property_addfv( p, 1.f, &f[1] );
+	property_addfv( p, 2.f, &f[2] );
+	property_addfv( p, 3.f, &f[3] );
 	property_samplef( p, 0.75f );
 	property_samplef( p, 1.5f );
 	property_samplef( p, 3.0f );
