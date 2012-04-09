@@ -3,6 +3,7 @@
 #include "src/engine.h"
 //---------------------
 #include "mem/allocator.h"
+#include "collision.h"
 #include "font.h"
 #include "input.h"
 #include "lua.h"
@@ -20,6 +21,7 @@
 #include "render/texture.h"
 #include "debug/debug.h"
 #include "debug/debugtext.h"
+#include "script/lisp.h"
 #include "script/parse.h"
 #include "system/thread.h"
 #include "ui/panel.h"
@@ -75,8 +77,8 @@ void test_engine_init( engine* e ) {
 		terrain* t = terrain_create();
 		theTerrain = t;
 		t->trans = transform_createAndAdd( theScene );
-		terrain_setSize( t, 50.f, 150.f );
-		terrain_setResolution( t, 10, 10 );
+		terrain_setSize( t, 400.f, 800.f );
+		terrain_setResolution( t, 40, 40 );
 
 		engine_addRender( e, (void*)t, terrain_render );
 		startTick( e, (void*)t, terrain_tick );
@@ -130,6 +132,7 @@ void engine_tick( engine* e ) {
 
 	input_tick( e->input, dt );
 	scene_tick( theScene, dt );
+	collision_tick( dt );
 
 	engine_tickTickers( e, dt );
 
@@ -236,7 +239,9 @@ void init(int argc, char** argv) {
 
 	// *** Static Module initialization
 	scene_static_init();
+	lisp_init();
 	parse_init();
+	collision_init();
 }
 
 // terminateLua - terminates the Lua interpreter
@@ -470,3 +475,31 @@ void engine_addRender( engine* e, void* entity, renderfunc render ) {
 		d = engine_addRenderDelegate( e, render );
 	delegate_add( d, entity );
 }
+
+void engine_removeRender( engine* e, void* entity, renderfunc render ) {
+	delegate* d = engine_findRenderDelegate( e, render );
+	// TODO - need to change findDelegate to look through multiple delegates,
+	// and full ones. Once done, reinstate this assert and remove the if
+	//vAssert( d );
+	if ( d )
+		delegate_remove( d, entity );
+}
+
+int array_find( void** array, int count, void* ptr ) {
+	for ( int i = 0; i < count; ++i ) {
+		if ( array[i] == ptr )
+			return i;
+	}
+	return -1;
+}
+
+void array_remove( void** array, int* count, void* ptr ) {
+	int i = array_find( array, *count, ptr );
+	if ( i != -1 ) {
+		--(*count);
+		array[i] = array[*count];
+		array[*count] = NULL;
+	}
+}
+
+// TODO - move array funcs out and unit-test (0, negative, out of bounds, end of array)

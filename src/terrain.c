@@ -89,6 +89,11 @@ void terrain_createBlocks( terrain* t ) {
 
 // The procedural function
 float terrain_sample( float u, float v ) {
+	float scale_m_u = 40.0;
+	float scale_m_v = 40.0;
+	float height_m = 40.0;
+	float mountains = (1.0f + sin( u / scale_m_u ) * sin( v / scale_m_v )) * 0.5f * height_m;
+
 	float detail =
 	(
 			0.5 * sin( u ) * sin( v ) +
@@ -99,12 +104,23 @@ float terrain_sample( float u, float v ) {
 	float scale = 5.f;
 	u /= scale;
 	u += sin( v / (scale * 5.f) );
-	float height = 5.f;
+	float height = 20.f;
+	float width = 2.f;
+	float base_radius = 1.f;
+	float new_u = u;
+	if ( u < 0.f )
+	{
+		new_u = fminf( u + base_radius, 0.f );
+	}
+	else
+	{
+		new_u = fmaxf( u - base_radius, 0.f );
+	}
 
 	float mask = cos( fclamp( u / 4.f, -PI/2.f, PI/2.f ));
-	float canyon = fclamp( powf( u, 4.f ), 0.f, 1.f );
+	float canyon = 1.f - fclamp( powf( new_u / width, 4.f ), 0.f, 1.f );
 
-	return ( mask * canyon ) * height + detail;
+	return mountains + detail - ( mask * canyon ) * height;
 }
 
 // Could be called during runtime, in which case reinit render variables
@@ -353,7 +369,7 @@ void terrain_updateBlocks( terrain* t ) {
 }
 
 void terrainBlock_render( terrainBlock* b ) {
-	drawCall* draw = drawCall_create( resources.shader_terrain, b->index_count, b->element_buffer, b->vertex_buffer, terrain_texture, modelview );
+	drawCall* draw = drawCall_create( &renderPass_main, resources.shader_terrain, b->index_count, b->element_buffer, b->vertex_buffer, terrain_texture, modelview );
 //	vAssert( *b->vertex_VBO != 0 );
 //	vAssert( *b->element_VBO != 0 );
 	if ( *b->vertex_VBO != 0 ) {

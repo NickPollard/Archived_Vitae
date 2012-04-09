@@ -46,6 +46,9 @@ delegate* delegate_create(void* func, int size);
 // add an entry to a delegate
 int delegate_add(delegate* t, void* entry);
 
+// remove an entry from a delegate
+void delegate_remove(delegate* t, void* entry);
+
 int delegate_isFull( delegate* t );
 
 //////////////

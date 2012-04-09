@@ -7,6 +7,7 @@
 // temp
 #include "camera/chasecam.h"
 #include "camera/flycam.h"
+#include "collision.h"
 #include "model.h"
 #include "scene.h"
 #include "engine.h"
@@ -16,6 +17,7 @@
 #include "physic.h"
 #include "render/modelinstance.h"
 #include "render/texture.h"
+#include "script/lisp.h"
 #include "system/file.h"
 
 #define MAX_LUA_VECTORS 64
@@ -111,6 +113,15 @@ void lua_pushptr( lua_State* l, void* ptr ) {
 	lua_pushnumber( l, (double)pointer );
 }
 
+void lua_retrieve( lua_State* l, int ref ) {
+	lua_rawgeti( l, LUA_REGISTRYINDEX, ref );
+}
+
+void lua_runFunc( lua_State* l, int ref, int args ) {
+	lua_retrieve( l, ref );
+	lua_pcall( l, args, 0, 0 );
+}
+
 int LUA_createModelInstance( lua_State* l ) {
 	if ( lua_isstring( l, 1 ) ) {
 		const char* filename = lua_tostring( l, 1 );
@@ -125,9 +136,44 @@ int LUA_createModelInstance( lua_State* l ) {
 	}
 }
 
+void testcallback( body* this, body* other, void* data ) {
+	(void)this;
+	(void)other;
+	(void)data;
+}
+
+void lua_collisionCallback( body* this, body* other, void* data ) {
+	lua_State* l = ((void**)data)[0];
+	int ref = ((int*)data)[1];
+	printf( "Lua registry indices: %d %d\n", this->intdata, other->intdata );
+
+	lua_retrieve( l, ref );
+	lua_retrieve( l, this->intdata );
+	lua_retrieve( l, other->intdata );
+	lua_pcall( l, 2, 0, 0 );
+//	lua_runFunc( l, ref, 2 );
+}
+
+int lua_store( lua_State* l ) {
+	return luaL_ref( l, LUA_REGISTRYINDEX );
+}
+
+int LUA_createbodySphere( lua_State* l ) {
+	int ref = lua_store( l );	// Store top of the stack ( the object )
+
+	body* b = body_create( sphere_create( 3.f ), NULL );
+	b->callback = NULL;
+	b->intdata = ref;
+	collision_addBody( b );
+	lua_pushptr( l, b );
+	return 1;
+}
+
 int LUA_deleteModelInstance( lua_State* l ) {
+	printf( "Delete Model Instance.\n" );
 	modelInstance* m = lua_toptr( l, 1 );
-	mem_free( m );
+	scene_removeModel( theScene, m );
+	// TODO: remove from pool (not mem-free)
 	return 0;
 }
 
@@ -179,6 +225,33 @@ int LUA_physic_setTransform( lua_State* l ) {
 	physic* p = lua_toptr( l, 1 );
 	transform* t = lua_toptr( l, 2 );
 	p->trans = t;
+	return 0;
+}
+
+int LUA_body_setTransform( lua_State* l ) {
+	LUA_DEBUG_PRINT( "lua body set transform\n" );
+	body* b = lua_toptr( l, 1 );
+	transform* t = lua_toptr( l, 2 );
+	b->trans = t;
+	return 0;
+}
+
+int LUA_body_registerCollisionCallback( lua_State* l ) {
+	printf( "Registering lua collision handler.\n" );
+	body* b = lua_toptr( l, 1 );
+	// Store the lua func callback in the Lua registry
+	// and keep a reference to it so we can resolve it later
+	int ref = lua_store( l ); // Must be top of the stack
+	b->callback = lua_collisionCallback;
+	// Store the Lua ref (which resolves to the function)
+	// in the callback_data for the body
+	// This allows us to call the correct lua func (or closure)
+	// for this body
+	// TODO: fix this temp hack
+	int* data = mem_alloc( sizeof( void* ) * 2 );
+	data[0] = (int)l;
+	data[1] = ref;
+	b->callback_data = data;
 	return 0;
 }
 
@@ -348,6 +421,13 @@ int LUA_transformVector( lua_State* l ) {
 	return 1;
 }
 
+int LUA_transform_setWorldPosition( lua_State* l ) {
+	transform* t = lua_toptr( l, 1 );
+	vector* v = lua_toptr( l, 2 );
+	transform_setWorldSpacePosition( t, v );
+	return 0;
+}
+
 int LUA_chasecam_follow( lua_State* l ) {
 	LUA_DEBUG_PRINT( "LUA chasecam_follow\n" );
 	engine* e = lua_toptr( l, 1 );
@@ -388,21 +468,35 @@ int LUA_transform_setWorldSpaceByTransform( lua_State* l ) {
 int LUA_particle_create( lua_State* l ) {
 	engine* e = lua_toptr( l, 1 );
 	transform* t = lua_toptr( l, 2 );
-/*	
+
+#if 0	
 	particleEmitter* p = particleEmitter_create();
 	p->definition->lifetime = 2.f;
 	p->definition->spawn_box = Vector( 0.3f, 0.3f, 0.3f, 0.f );
 
 	// size
+	/*
 	p->definition->size = property_create( 2 );
-	property_addf( p->definition->size, 0.f, 3.f );
-	property_addf( p->definition->size, 0.3f, 1.f );
-	property_addf( p->definition->size, 2.f, 5.f );
+	property_addf( p->definition->size, 0.f, 1.f );
+	property_addf( p->definition->size, 0.3f, 5.f );
+	property_addf( p->definition->size, 0.6f, 2.f );
+	property_addf( p->definition->size, 2.f, 1.f );
+	*/
+
+	context* c = lisp_newContext();
+	term* size_term = lisp_eval_file( c, "src/script/lisp/property.s" );
+	p->definition->size = size_term->data;
+	context_delete( c );
+
+#endif
+	
+	term* particle_term = lisp_eval_file( lisp_global_context, "src/script/lisp/missile_particle.s" );
+	particleEmitter* p = particle_term->data;
 
 	// color
 	p->definition->color = property_create( 5 );
-	property_addv( p->definition->color, 0.f, Vector( 1.f, 0.f, 0.f, 1.f ));
-	property_addv( p->definition->color, 0.3f, Vector( 1.f, 0.5f, 0.f, 1.f ));
+	property_addv( p->definition->color, 0.f, Vector( 1.f, 0.f, 0.f, 0.f ));
+	property_addv( p->definition->color, 0.3f, Vector( 1.f, 0.5f, 0.f, 0.7f ));
 	property_addv( p->definition->color, 0.8f, Vector( 1.f, 1.f, 1.f, 0.8f ));
 	property_addv( p->definition->color, 1.0f, Vector( 0.5f, 0.5f, 0.5f, 0.8f ));
 	property_addv( p->definition->color, 2.f, Vector( 0.5f, 0.5f, 0.5f, 0.f ));
@@ -410,10 +504,13 @@ int LUA_particle_create( lua_State* l ) {
 	p->definition->velocity = Vector( 0.f, 0.1f, 0.f, 0.f );
 	p->definition->spawn_interval = 0.03f;
 	p->trans = t;
-	p->definition->flags = p->definition->flags | kParticleWorldSpace;
+	p->definition->flags = p->definition->flags | kParticleWorldSpace
+												| kParticleRandomRotation;
+
+	texture_request( &p->definition->texture_diffuse, "assets/img/cloud_rgba128.tga" );
+
 	engine_addRender( e, p, particleEmitter_render );
 	startTick( e, p, particleEmitter_tick );
-*/
 	//
 	//
 	//
@@ -440,6 +537,41 @@ int LUA_particle_create( lua_State* l ) {
 
 
 
+
+	return 0;
+}
+
+int LUA_explosion( lua_State* l ) {
+	engine* e = lua_toptr( l, 1 );
+	transform* t = lua_toptr( l, 2 );
+	
+	particleEmitter* p = particleEmitter_create();
+	p->definition->lifetime = 2.f;
+	p->definition->spawn_box = Vector( 0.3f, 0.3f, 0.3f, 0.f );
+
+	// size
+	p->definition->size = property_create( 2 );
+	property_addf( p->definition->size, 0.f, 1.f );
+	property_addf( p->definition->size, 0.3f, 15.f );
+	property_addf( p->definition->size, 1.f, 20.f );
+
+	// color
+	p->definition->color = property_create( 5 );
+	property_addv( p->definition->color, 0.f, Vector( 1.f, 1.f, 0.3f, 0.f ));
+	property_addv( p->definition->color, 0.3f, Vector( 1.f, 0.7f, 0.3f, 1.f ));
+	property_addv( p->definition->color, 0.8f, Vector( 1.f, 0.5f, 0.f, 0.5f ));
+	property_addv( p->definition->color, 1.0f, Vector( 1.f, 0.0f, 0.f, 0.f ));
+
+	p->definition->velocity = Vector( 0.f, 0.f, 0.f, 0.f );
+	p->definition->spawn_interval = 0.03f;
+	p->trans = t;
+	p->definition->flags = p->definition->flags | kParticleWorldSpace
+												| kParticleRandomRotation;
+
+	texture_request( &p->definition->texture_diffuse, "assets/img/cloud_rgba128.tga" );
+
+	engine_addRender( e, p, particleEmitter_render );
+	startTick( e, p, particleEmitter_tick );
 
 	return 0;
 }
@@ -484,10 +616,13 @@ lua_State* vlua_create( engine* e, const char* filename ) {
 	lua_registerFunction( l, LUA_createModelInstance, "vcreateModelInstance" );
 	lua_registerFunction( l, LUA_deleteModelInstance, "vdeleteModelInstance" );
 	lua_registerFunction( l, LUA_createphysic, "vcreatePhysic" );
+	lua_registerFunction( l, LUA_createbodySphere, "vcreateBodySphere" );
 	lua_registerFunction( l, LUA_createtransform, "vcreateTransform" );
 	lua_registerFunction( l, LUA_setWorldSpacePosition, "vsetWorldSpacePosition" );
 	lua_registerFunction( l, LUA_model_setTransform, "vmodel_setTransform" );
 	lua_registerFunction( l, LUA_physic_setTransform, "vphysic_setTransform" );
+	lua_registerFunction( l, LUA_body_setTransform, "vbody_setTransform" );
+	lua_registerFunction( l, LUA_body_registerCollisionCallback, "vbody_registerCollisionCallback" );
 	lua_registerFunction( l, LUA_scene_addModel, "vscene_addModel" );
 	lua_registerFunction( l, LUA_scene_removeModel, "vscene_removeModel" );
 	lua_registerFunction( l, LUA_physic_activate, "vphysic_activate" );
@@ -496,8 +631,10 @@ lua_State* vlua_create( engine* e, const char* filename ) {
 	lua_registerFunction( l, LUA_transform_pitch, "vtransform_pitch" );
 	lua_registerFunction( l, LUA_transform_roll, "vtransform_roll" );
 	lua_registerFunction( l, LUA_transformVector, "vtransformVector" );
+	lua_registerFunction( l, LUA_transform_setWorldPosition, "vtransform_setWorldPosition" );
 	lua_registerFunction( l, LUA_transform_setWorldSpaceByTransform, "vtransform_setWorldSpaceByTransform" );
 	lua_registerFunction( l, LUA_particle_create, "vparticle_create" );
+	lua_registerFunction( l, LUA_explosion, "vexplosion" );
 	// *** Camera
 	lua_registerFunction( l, LUA_chasecam_follow, "vchasecam_follow" );
 	lua_registerFunction( l, LUA_flycam, "vflycam" );

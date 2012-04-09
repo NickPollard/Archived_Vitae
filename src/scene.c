@@ -23,6 +23,9 @@
 void scene_saveFile( scene* s, const char* filename );
 scene* scene_loadFile( const char* filename );
 
+void scene_removeTransform( scene* s, transform* e );
+void scene_removeEmitter( scene* s, particleEmitter* e );
+
 // *** Constants
 
 static const size_t modelArraySize = sizeof( modelInstance* ) * MAX_MODELS;
@@ -68,14 +71,24 @@ void scene_addModel( scene* s, modelInstance* instance ) {
 // TODO: Thread-Safe
 void scene_removeModel( scene* s, modelInstance* instance ) {
 	vAssert( instance );
-	for ( int i = 0; i > s->model_count; i++ ) {
-		if ( scene_model( s, i ) == instance ) {
-			s->modelInstances[i] = s->modelInstances[s->model_count];
-			s->modelInstances[s->model_count] = NULL;
-			--(s->model_count);
+	array_remove( (void**)s->modelInstances, &s->model_count, instance );
+
+	for ( int i = 0; i < instance->transform_count; i++ ) {
+		scene_removeTransform( s, instance->transforms[i] );
+	}
+	for ( int i = 0; i < instance->emitter_count; i++ ) {
+		scene_removeEmitter( s, instance->emitters[i] );
+		// If the scene is active, deactivate components immediately
+		if ( s->eng ) {
+			engine_removeRender( s->eng, instance->emitters[i], particleEmitter_render );
+			// TODO
+			//stopTick( s->eng, instance->emitters[i], particleEmitter_tick );
 		}
 	}
-	
+}
+
+void scene_removeEmitter( scene* s, particleEmitter* e ) {
+	array_remove( (void**)s->emitters, &s->emitter_count, e );
 }
 
 void scene_addEmitter( scene* s, particleEmitter* e ) {
@@ -93,6 +106,10 @@ void scene_addTransform( scene* s, transform* t ) {
 	assert( s->transform_count < MAX_TRANSFORMS );
 //	memcpy(	&s->transforms[s->transform_count++], t, sizeof( transform ));
 	s->transforms[s->transform_count++] = t;
+}
+
+void scene_removeTransform( scene* s, transform* e ) {
+	array_remove( (void**)s->transforms, &s->transform_count, e );
 }
 
 int scene_transformIndex( scene* s, transform* t ) {

@@ -8,7 +8,7 @@
 #include "mem/allocator.h"
 
 static const float default_z_near = 1.f;
-static const float default_z_far = 500.f;
+static const float default_z_far = 1000.f;
 static const float default_fov = 0.8f; // In Radians
 
 camera* camera_create() {

@@ -1,12 +1,13 @@
 // Standard C libraries
 #pragma once
 
-#include <stddef.h>
-#include <stdlib.h>
-#include <stdio.h>
-#include <stdbool.h>
-#include <string.h>
 #include <assert.h>
+#include <errno.h>
+#include <stdbool.h>
+#include <stddef.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
 
 #include "common.fwd.h"
 
@@ -44,7 +45,12 @@
 #endif
 
 #define vAssert( a )	if ( !(a) ) { \
-							printf( "Assert Failed: " #a "(%s:%d)\n", __FILE__, __LINE__ ); \
+							printf( "Assert Failed: " #a " (%s:%d)\n", __FILE__, __LINE__ ); \
+							assert( (a) ); \
+						}
+#define vAssertMsg( a, msg )	if ( !(a) ) { \
+							printf( "Assert Failed: " #a " (%s:%d)\n", __FILE__, __LINE__ ); \
+							printf( "Assert Msg: %s\n", msg ); \
 							assert( (a) ); \
 						}
 

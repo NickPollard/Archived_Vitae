@@ -32,8 +32,15 @@ heapAllocator* global_string_heap = NULL;
 // Is the character a whitespace character?
 // eg. space, tab
 int isWhiteSpace( char c ) {
-	return ( c == ' ' || c == '\n' || c == '\t' );
+	return ( c == ' ' || 
+			// c == '\n' || 
+			 c == '\t' );
 }
+
+// Is the character a newline?
+int isNewLine( char c ) {
+	return ( c == '\n' );
+	}
 
 // Is the character a terminator character
 // Eg. NULL-terminator or end of line
@@ -73,13 +80,20 @@ char* inputStream_nextToken( inputStream* stream ) {
 			stream->stream++;
 	// measure the length of the token - ptr should become one-past-the-end
 	const char* ptr = stream->stream;
-	while ( !isWhiteSpace( *ptr ) && !isTerminator( *ptr )) {
-		if ( isListStart( *ptr ) || isListEnd( *ptr ) ) {
-			if ( ( ptr - stream->stream ) == 0 ) // if parenthesis is first char, push pas it
-				ptr++;	
-			break;
+	// Special case for newlines
+	if ( isNewLine( *ptr ))
+	{
+		++ptr;
+	}
+	else {
+		while ( !isWhiteSpace( *ptr ) && !isNewLine( *ptr ) && !isTerminator( *ptr )) {
+			if ( isListStart( *ptr ) || isListEnd( *ptr ) ) {
+				if ( ( ptr - stream->stream ) == 0 ) // if parenthesis is first char, push pas it
+					++ptr;	
+				break;
+			}
+			++ptr;
 		}
-		ptr++;
 	}
 	// make a copy of it
 	int length = ptr - stream->stream;
@@ -88,6 +102,19 @@ char* inputStream_nextToken( inputStream* stream ) {
 	token[length] = '\0';
 	stream->stream = ptr; // Advance past the end of the token
 	return token;
+}
+
+// Advance the stream forward just passed the first instance of [string]
+void inputStream_skipPast( inputStream* stream, const char* string ) {
+	char* token = NULL;
+	while ( !inputStream_endOfFile( stream ) && 
+			(!token || !string_equal( token, string ))) {
+		if ( token )
+			mem_free( token );
+		token = inputStream_nextToken( stream );
+		}
+	if ( token )
+		mem_free( token );
 }
 
 // Returns the next token as a c string, advances the inputstream to the token's end
@@ -115,7 +142,8 @@ bool inputStream_endOfFile( inputStream* in ) {
 
 void inputStream_advancePast( inputStream* in, char c ) {
 	while ( *in->stream != c && !inputStream_endOfFile( in ))
-		in->stream++;
+		++in->stream;
+	++in->stream;
 }
 // Advance to just past the next end-of-line
 void inputStream_nextLine( inputStream* in ) {
@@ -154,11 +182,13 @@ bool isVector( sterm* s ) {
 	return ( s->type == typeVector );
 }
 
+/*
 bool token_isString( const char* token ) {
 	size_t len = strlen( token );
 	vAssert( len < 256 );	// Sanity check
 	return (( token[0] == '"' ) && ( token[len-1] == '"' ));
 }
+*/
 
 sterm* sterm_create( int tag, void* ptr ) {
 	sterm* term = mem_alloc( sizeof( sterm ) );
@@ -168,6 +198,7 @@ sterm* sterm_create( int tag, void* ptr ) {
 	return term;
 }
 
+/*
 // Create a string from a string-form token
 // Allocated in the string memory pool
 const char* sstring_create( const char* token ) {
@@ -177,6 +208,7 @@ const char* sstring_create( const char* token ) {
 	buffer[len-2] = '\0';
 	return buffer;
 };
+*/
 
 void* property_value( sterm* property ) {
 	return property->tail->head;
@@ -217,6 +249,11 @@ sterm* parse( inputStream* stream ) {
 		return NULL;
 	}
 	char* token = inputStream_nextToken( stream );
+	// Just ignore newlines
+	while ( isNewLine( *token )) {
+		mem_free( token );
+		token = inputStream_nextToken( stream );
+	}
 	if ( isListEnd( *token ) ) {
 		mem_free( token ); // It's a bracket, discard it
 		return NULL;
@@ -776,18 +813,21 @@ void* s_particle_emitter( sterm* raw_args ) {
 
 	// size
 	p->definition->size = property_create( 2 );
-	property_addf( p->definition->size, 0.f, 0.6f );
+	property_addf( p->definition->size, 0.f, 0.1f );
+	property_addf( p->definition->size, 0.2f, 0.6f );
 	property_addf( p->definition->size, 1.0f, 0.1f );
 
 	// color
 	p->definition->color = property_create( 5 );
 	property_addv( p->definition->color, 0.f, Vector( 1.f, 1.f, 1.f, 0.f ));
-	property_addv( p->definition->color, 0.1f, Vector( 0.f, 1.f, 1.f, 1.f ));
+	property_addv( p->definition->color, 0.3f, Vector( 0.f, 1.f, 1.f, 0.5f ));
+	property_addv( p->definition->color, 0.5f, Vector( 0.f, 1.f, 1.f, 0.1f ));
 	property_addv( p->definition->color, 1.f, Vector( 0.f, 0.f, 1.f, 0.f ));
 
 	p->definition->velocity = Vector( 0.f, 0.0f, -3.f, 0.f );
 	p->definition->spawn_interval = 0.01f;
 	//p->definition->flags = p->definition->flags | kParticleWorldSpace;
+	p->definition->flags = p->definition->flags | kParticleRandomRotation;
 	//p->trans = t;
 	texture_request( &p->definition->texture_diffuse, "assets/img/star_rgba64.tga" );
 

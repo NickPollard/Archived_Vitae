@@ -3,6 +3,7 @@
 //--------------------------------------------------------
 #include "scene.h"
 #include "model.h"
+#include "script/lisp.h"
 #include "script/parse.h"
 #include "system/file.h"
 #include "system/string.h"
@@ -138,5 +139,14 @@ mesh* mesh_loadObj( const char* filename ) {
 model* model_load( const char* filename ) {
 	sterm* s = parse_file( filename );
 	model* mdl = eval( s );
+
+	/*
+	context* c = lisp_newContext();
+	term* t = lisp_parse_file( filename );
+	term* m = _eval( t, c );
+	term_takeRef( m );
+	model* mdl = m->data;
+	term_deref( m );
+*/
 	return mdl;
 }

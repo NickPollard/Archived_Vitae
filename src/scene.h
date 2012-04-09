@@ -16,10 +16,10 @@
 
 #include <GL/glfw.h>
 
-#define MAX_TRANSFORMS 128
-#define MAX_MODELS 128
-#define MAX_LIGHTS 128
-#define MAX_EMITTERS 128
+#define MAX_TRANSFORMS 512
+#define MAX_MODELS 512
+#define MAX_LIGHTS 512
+#define MAX_EMITTERS 512
 
 #define kSceneDebugTransforms	0x00000001
 #define kSceneLightsTransforms	0x00000002

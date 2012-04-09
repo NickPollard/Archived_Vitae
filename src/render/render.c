@@ -124,18 +124,37 @@ void render_buildShaders() {
 
 #define kMaxDrawCalls 256
 #define kCallBufferCount 8		// Needs to be at least as many as we have shaders
+// Each shader has it's own buffer for drawcalls
+// This means drawcalls get batched by shader
 drawCall	call_buffer[kCallBufferCount][kMaxDrawCalls];
+// We store a list of the nextfree index for each buffer, so we can append new calls to the correct place
+// This gets zeroed on each frame
 int			next_call_index[kCallBufferCount];
 
 map* callbatch_map = NULL;
 int callbatch_count = 0;
 
+struct renderPass_s {
+	drawCall	call_buffer[kCallBufferCount][kMaxDrawCalls];
+	int			next_call_index[kCallBufferCount];
+};
+
+#define kMaxRenderPasses 16
+renderPass	render_pass[kMaxRenderPasses];
+
+renderPass renderPass_main;
+renderPass renderPass_alpha;
+
+void renderPass_clearBuffers( renderPass* pass ) {
+	memset( pass->next_call_index, 0, sizeof( int ) * kCallBufferCount );
+#if debug
+	memset( pass->call_buffer, 0, sizeof( drawCall ) * kMaxDrawCalls * kCallBufferCount );
+#endif
+}
 
 void render_clearCallBuffer( ) {
-	memset( next_call_index, 0, sizeof( int ) * kCallBufferCount );
-#if debug
-	memset( call_buffer, 0, sizeof( drawCall ) * kMaxDrawCalls * kCallBufferCount );
-#endif
+	renderPass_clearBuffers( &renderPass_main );
+	renderPass_clearBuffers( &renderPass_alpha );
 }
 
 #define		kRenderDrawBufferSize 1 * 1024 * 1024
@@ -385,11 +404,12 @@ int render_findDrawCallBuffer( shader* vshader ) {
 	return i;
 }
 
-drawCall* drawCall_create( shader* vshader, int count, GLushort* elements, vertex* verts, GLint tex, matrix mv ) {
+drawCall* drawCall_create( renderPass* pass, shader* vshader, int count, GLushort* elements, vertex* verts, GLint tex, matrix mv ) {
 	// Lookup drawcall buffer from shader
-	int call_buffer_index = render_findDrawCallBuffer( vshader );
-	vAssert( next_call_index[call_buffer_index] < kMaxDrawCalls );
-	drawCall* draw = &call_buffer[call_buffer_index][next_call_index[call_buffer_index]++];
+	int buffer = render_findDrawCallBuffer( vshader );
+	int call = pass->next_call_index[buffer]++;
+	vAssert( call < kMaxDrawCalls );
+	drawCall* draw = &pass->call_buffer[buffer][call];
 	
 	draw->vitae_shader = vshader;
 	draw->element_buffer = elements;
@@ -430,20 +450,26 @@ void render_drawBatch( drawCall* draw ) {
 	render_drawCall_draw( draw );
 }
 
-void render_drawCallBatch( int index ) {
-	int count = next_call_index[index];
-	if ( count > 0 ) {
-		// For now, *always* write to depth buffer
-		glDepthMask( call_buffer[index][0].depth_mask );
-		shader_activate( call_buffer[index][0].vitae_shader );
-		render_lighting( theScene );
-		// Set up uniform matrices
-		render_setUniform_matrix( *resources.uniforms.projection,	perspective );
-		render_setUniform_matrix( *resources.uniforms.worldspace,	modelview );
+void render_drawCallBatch( int count, drawCall* calls ) {
+	glDepthMask( calls[0].depth_mask );
+	shader_activate( calls[0].vitae_shader );
+	render_lighting( theScene );
+	// Set up uniform matrices
+	render_setUniform_matrix( *resources.uniforms.projection,	perspective );
+	render_setUniform_matrix( *resources.uniforms.worldspace,	modelview );
 
-		for ( int i = 0; i < count; i++ ) {
-			render_drawBatch( &call_buffer[index][i] );
-		}
+	for ( int i = 0; i < count; i++ ) {
+		render_drawBatch( &calls[i] );
+	}
+}
+
+void render_drawPass( renderPass* pass ) {
+	// Draw each batch of drawcalls
+	for ( int i = 0; i < kCallBufferCount; i++ ) {
+		drawCall* batch = pass->call_buffer[i];
+		int count = pass->next_call_index[i];
+		if ( count > 0 )
+			render_drawCallBatch( count, batch );	
 	}
 }
 
@@ -462,45 +488,8 @@ void render_draw( window* w, engine* e ) {
 	w->height = 480;
 #endif
 
-	glClearColor( 0.f, 0.f, 1.f, 0.f );
-	glClear( GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT );
-
-	// Attach the framebuffer
-	render_attachFrameBuffer();
-	{
-		render_set3D( w->width, w->height );
-		render_clear();
-
-		// Draw each batch of drawcalls
-		for ( int i = 0; i < kCallBufferCount; i++ ) {
-			render_drawCallBatch( i );	
-		}
-	}
-	render_unattachFrameBuffer();
-
-	// render the framebuffer to the main window
-	// Activate a blank shader
-	shader_activate( resources.shader_filter );
-	render_setUniform_texture( *resources.uniforms.tex, render_texture );
-	// Draw a screen-quad
-	vertex quad[4];
-	quad[0].position = Vector( -1.f, -1.f, 0.f, 1.f );
-	quad[1].position = Vector(  1.f, -1.f, 0.f, 1.f );
-	quad[2].position = Vector(  1.f,  1.f, 0.f, 1.f );
-	quad[3].position = Vector( -1.f,  1.f, 0.f, 1.f );
-	GLushort elements[6] = { 0, 2, 1, 0, 3, 2 };
-
-	GLsizei vertex_buffer_size	= 4 * sizeof( vertex );
-	GLsizei element_buffer_size	= 6 * sizeof( GLushort );
-	glBindBuffer( GL_ARRAY_BUFFER, resources.vertex_buffer[0] );
-	glBindBuffer( GL_ELEMENT_ARRAY_BUFFER, resources.element_buffer[0] );
-	glBufferData( GL_ARRAY_BUFFER, vertex_buffer_size, quad, GL_DYNAMIC_DRAW );// OpenGL ES only supports DYNAMIC_DRAW or STATIC_DRAW
-	glBufferData( GL_ELEMENT_ARRAY_BUFFER, element_buffer_size, elements, GL_DYNAMIC_DRAW ); // OpenGL ES only supports DYNAMIC_DRAW or STATIC_DRAW
-
-	// Now Draw!
-	VERTEX_ATTRIBS( VERTEX_ATTRIB_POINTER );
-	glDrawElements( GL_TRIANGLES, 6, GL_UNSIGNED_SHORT, (void*)0 );
-	VERTEX_ATTRIBS( VERTEX_ATTRIB_DISABLE_ARRAY );
+	render_drawPass( &renderPass_main );
+	render_drawPass( &renderPass_alpha );
 
 #if ANDROID
 	render_swapBuffers( e->egl );

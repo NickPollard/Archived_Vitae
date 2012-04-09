@@ -142,7 +142,7 @@ void mesh_buildBuffers( mesh* m ) {
 
 // Draw the verts of a mesh to the openGL buffer
 void mesh_render( mesh* m ) {
-	drawCall* draw = drawCall_create( m->shader, m->index_count, m->element_buffer, m->vertex_buffer, m->texture_diffuse, modelview );
+	drawCall* draw = drawCall_create( &renderPass_main, m->shader, m->index_count, m->element_buffer, m->vertex_buffer, m->texture_diffuse, modelview );
 //	printf( "Vertex vbo: %u\n", m->vertex_VBO );
 //	printf( "Element vbo: %u\n", m->element_VBO );
 	vAssert( *m->vertex_VBO != 0 );

@@ -13,7 +13,9 @@
 heapAllocator* static_heap = NULL;
 vmutex allocator_mutex = kMutexInitialiser;
 
-void heap_dumpBlocks( heapAllocator* heap );
+static const char* mem_stack_string = NULL;
+
+void block_recordAlloc( block* b, const char* stack );
 
 // Default allocate from the static heap
 // Passes straight through to heap_allocate()
@@ -100,12 +102,46 @@ void* heap_allocate_aligned( heapAllocator* heap, unsigned int size, unsigned in
 #endif
 
 	vmutex_unlock( &allocator_mutex );
+	++heap->allocations;
+
+#ifdef MEM_STACK_TRACE
+	block_recordAlloc( b, mem_stack_string );
+#endif // MEM_STACK_TRACE
+
 	return b->data;
 }
+
+#ifdef MEM_STACK_TRACE
+void block_recordAlloc( block* b, const char* stack ) {
+	b->stack = stack;
+	}
+#endif // MEM_STACK_TRACE
+
 void heap_dumpBlocks( heapAllocator* heap ) {
 	block* b = heap->first;
 	while ( b ) {
+#ifdef MEM_STACK_TRACE
+		if ( b->stack && !b->free )
+			printf( "Block: ptr 0x%x, data: 0x%x, size %d, free %d\t\tStack: %s\n", (unsigned int)b, (unsigned int)b->data, b->size, b->free, b->stack );
+		else
+			printf( "Block: ptr 0x%x, data: 0x%x, size %d, free %d\n", (unsigned int)b, (unsigned int)b->data, b->size, b->free );
+#else // MEM_STACK_TRACE
 		printf( "Block: ptr 0x%x, data: 0x%x, size %d, free %d\n", (unsigned int)b, (unsigned int)b->data, b->size, b->free );
+#endif // MEM_STACK_TRACE
+		b = b->next;
+	}
+}
+
+void heap_dumpUsedBlocks( heapAllocator* heap ) {
+	block* b = heap->first;
+	while ( b ) {
+#ifdef MEM_STACK_TRACE
+		if ( b->stack && !b->free )
+			printf( "Block: ptr 0x%x, data: 0x%x, size %d, free %d\t\tStack: %s\n", (unsigned int)b, (unsigned int)b->data, b->size, b->free, b->stack );
+#else // MEM_STACK_TRACE
+		if ( !b->free )
+			printf( "Block: ptr 0x%x, data: 0x%x, size %d, free %d\n", (unsigned int)b, (unsigned int)b->data, b->size, b->free );
+#endif // MEM_STACK_TRACE
 		b = b->next;
 	}
 }
@@ -161,6 +197,8 @@ void heap_deallocate( heapAllocator* heap, void* data ) {
 	if ( b->prev && b->prev->free )
 		block_merge( heap, b->prev, b );
 	vmutex_unlock( &allocator_mutex );
+
+	--heap->allocations;
 }
 
 // Merge two continous blocks, *first* and *second*
@@ -301,3 +339,40 @@ void test_allocator() {
 	memset( b, 0, 512 );
 	printf( "[ %sPassed%s ]\tAllocated 512 bytes succesfully.\n", TERM_GREEN, TERM_WHITE );
 }
+
+passthroughAllocator* passthrough_create( heapAllocator* heap ) {
+	passthroughAllocator* p = mem_alloc( sizeof( passthroughAllocator ));
+	p->heap = heap;
+	p->total_allocated = 0;
+	p->allocations = 0;
+	return p;
+	}
+
+void* passthrough_allocate( passthroughAllocator* p, size_t size ) {
+	int before = p->heap->total_allocated;
+	void* mem = heap_allocate( p->heap, size );
+	int after = p->heap->total_allocated;
+	int delta = after - before;
+	p->total_allocated = (unsigned int)((int)p->total_allocated + delta);	
+	++p->allocations;
+	return mem;
+	}
+	
+void passthrough_deallocate( passthroughAllocator* p, void* mem ) {
+	int before = p->heap->total_allocated;
+	heap_deallocate( p->heap, mem );
+	int after = p->heap->total_allocated;
+	int delta = after - before;
+	p->total_allocated = (unsigned int)((int)p->total_allocated + delta);	
+	--p->allocations;
+	}
+	
+void mem_pushStackString( const char* string ) {
+	vAssert( mem_stack_string == NULL );
+	mem_stack_string = string;
+	}
+
+void mem_popStackString() {
+	vAssert( mem_stack_string != NULL );
+	mem_stack_string = NULL;
+	}

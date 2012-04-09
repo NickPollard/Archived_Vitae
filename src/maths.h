@@ -8,6 +8,10 @@
 
 #define PI 3.1415926535897932
 
+typedef float matrix[4][4];
+
+extern matrix matrix_identity;
+
 union vector_u {
    	struct {
 		float x;
@@ -53,8 +57,6 @@ float map_range( float point, float begin, float end );
 
 bool isPowerOf2( unsigned int n );
 
-typedef float matrix[4][4];
-
 // *** Vectors
 
 vector Vector(float x, float y, float z, float w);
@@ -82,6 +84,9 @@ vector vector_lerp( vector* from, vector* to, float amount );
 vector vector_mul( vector* a, vector* b );
 vector vector_max( vector* a, vector* b );
 vector vector_min( vector* a, vector* b );
+
+float vector_length( const vector* v );
+float vector_distance( const vector* a, const vector* b );
 
 // Matrix Vector multiply
 vector matrixVecMul(matrix m, const vector* v);
@@ -133,6 +138,10 @@ void matrix_normalize( matrix m );
 
 // Build a rotation quaternion from Euler Angle values
 quaternion quaternion_fromEuler( vector* euler_angles );
+
+void matrix_rotX( matrix dst, float angle );
+void matrix_rotY( matrix dst, float angle );
+void matrix_rotZ( matrix dst, float angle );
 
 // *** Test
 void test_matrix();

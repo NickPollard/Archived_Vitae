@@ -2,6 +2,7 @@
 #include "src/common.h"
 #include "src/ticker.h"
 //---------------------
+#include "engine.h"
 #include "mem/allocator.h"
 #include <assert.h>
 
@@ -42,6 +43,10 @@ int delegate_add(delegate* d, void* entry) {
 		return true;
 	}
 	return false;
+}
+
+void delegate_remove( delegate* d, void* entry ) {
+	array_remove( d->data, &d->count, entry );
 }
 
 int delegate_isFull( delegate* d ) {

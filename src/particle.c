@@ -23,7 +23,6 @@ particleEmitter* particleEmitter_create() {
 	memset( p, 0, sizeof( particleEmitter ));
 	p->definition = particleEmitterDef_create();
 	p->definition->spawn_box = Vector( 0.f, 0.f, 0.f, 0.f );
-	//texture_request( &p->definition->texture_diffuse, "assets/img/cloud_rgba128.tga" );
 
 	p->vertex_buffer = mem_alloc( sizeof( vertex ) * kMaxParticleVerts );
 	p->element_buffer = mem_alloc( sizeof( vertex ) * kMaxParticleVerts );
@@ -55,6 +54,10 @@ void particleEmitter_spawnParticle( particleEmitter* e ) {
 	else
 		p->position = matrixVecMul( e->trans->world, &offset );
 	p->age = 0.f;
+	if ( e->definition->flags & kParticleRandomRotation )
+		p->rotation = frand( 0.f, 2*PI );
+	else
+		p->rotation = 0.f;
 }
 
 void particleEmitter_tick( void* data, float dt ) {
@@ -86,7 +89,7 @@ void particleEmitter_tick( void* data, float dt ) {
 
 // Output the 4 verts of the quad to the target vertex array
 // both position and normals
-void particle_quad( particleEmitter* e, vertex* dst, vector* point, float size, vector color ) {
+void particle_quad( particleEmitter* e, vertex* dst, vector* point, float rotation, float size, vector color ) {
 	vector offset = Vector( size, size, 0.f, 0.f );
 
 	vector p;
@@ -94,6 +97,11 @@ void particle_quad( particleEmitter* e, vertex* dst, vector* point, float size, 
 		p = matrixVecMul( modelview, point );
 	else
 		p = matrixVecMul( camera_inverse, point );
+
+	// Particle Rotation
+	matrix m;
+	matrix_rotZ( m, rotation );
+	offset = matrixVecMul( m, &offset );
 
 	Add( &dst[0].position, &p, &offset );
 	dst[0].normal = Vector( 0.f, 0.f, 1.f, 0.f );
@@ -105,7 +113,8 @@ void particle_quad( particleEmitter* e, vertex* dst, vector* point, float size, 
 	dst[1].uv = Vector( 0.f, 0.f, 0.f, 0.f );
 	dst[1].color = color;
 
-	offset.coord.y = -offset.coord.y;
+	offset = Vector( size, -size, 0.f, 0.f );
+	offset = matrixVecMul( m, &offset );
 
 	Add( &dst[2].position, &p, &offset );
 	dst[2].normal = Vector( 0.f, 0.f, 1.f, 0.f );
@@ -128,13 +137,13 @@ void particleEmitter_render( void* data ) {
 	matrix_mul( modelview, modelview, p->trans->world );
 
 	for ( int i = 0; i < p->count; i++ ) {
-		int particle_index = (p->start + i) % kMaxParticles;
+		int index = (p->start + i) % kMaxParticles;
 
 		// Sample properties
-		float	size	= property_samplef( p->definition->size, p->particles[particle_index].age );
-		vector	color	= property_samplev( p->definition->color, p->particles[particle_index].age );
+		float	size	= property_samplef( p->definition->size, p->particles[index].age );
+		vector	color	= property_samplev( p->definition->color, p->particles[index].age );
 
-		particle_quad( p, &p->vertex_buffer[i*4], &p->particles[particle_index].position, size, color );
+		particle_quad( p, &p->vertex_buffer[i*4], &p->particles[index].position, p->particles[index].rotation, size, color );
 
 		vAssert( ( i*6 + 5 ) < kMaxParticleVerts );
 
@@ -151,7 +160,7 @@ void particleEmitter_render( void* data ) {
 	// The transformation has been applied already for particle positions
 	matrix_setIdentity( modelview );
 	int index_count = 6 * p->count;
-	drawCall* draw = drawCall_create( resources.shader_particle, index_count, p->element_buffer, p->vertex_buffer, p->definition->texture_diffuse, modelview );
+	drawCall* draw = drawCall_create( &renderPass_alpha, resources.shader_particle, index_count, p->element_buffer, p->vertex_buffer, p->definition->texture_diffuse, modelview );
 	draw->depth_mask = GL_FALSE;
 }
 
@@ -163,11 +172,31 @@ property* property_create( int stride ) {
 	return p;
 }
 
+property* property_copy( property* p ) {
+	property* p_copy = property_create( p->stride );
+	p_copy->stride = p->stride;
+	memcpy( p_copy->data, p->data, sizeof( float ) * p->stride * kmax_property_values );
+	return p_copy;
+}
+
+// add [p->stride] number of float [values], at [time]
 void property_addf( property* p, float time, float value ) {
 	assert( p->count < kmax_property_values );
-	p->data[p->count * p->stride] = time;
-	p->data[p->count * p->stride + 1] = value;
-	p->count++;
+	assert( p->stride == 2 );
+	int frame = p->count * p->stride;
+	p->data[frame] = time;
+	p->data[frame + 1] = value;
+	++p->count;
+}
+
+// add [p->stride] number of float [values], at [time]
+void property_addfv( property* p, float time, float* values ) {
+	assert( p->count < kmax_property_values );
+	int frame = p->count * p->stride;
+	p->data[frame] = time;
+	for ( int i = 0; i < p->stride - 1; ++i )
+		p->data[frame + 1 + i] = values[i];
+	++p->count;
 }
 
 void property_addv( property* p, float time, vector value ) {
@@ -214,10 +243,11 @@ vector property_samplev( property* p, float time ) {
 
 void test_property() {
 	property* p = property_create( 2 );
-	property_addf( p, 0.f, 0.f );
-	property_addf( p, 1.f, 3.f );
-	property_addf( p, 2.f, 2.f );
-	property_addf( p, 3.f, 3.f );
+	float f[] = { 0.f, 3.f, 2.f, 3.f };
+	property_addfv( p, 0.f, &f[0] );
+	property_addfv( p, 1.f, &f[1] );
+	property_addfv( p, 2.f, &f[2] );
+	property_addfv( p, 3.f, &f[3] );
 	property_samplef( p, 0.75f );
 	property_samplef( p, 1.5f );
 	property_samplef( p, 3.0f );

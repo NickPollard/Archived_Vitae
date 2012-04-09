@@ -22,12 +22,15 @@ player_ship = nil
 function gameobject_create( model )
 	vprint( "gameobject_create" )
 	vprint( model )
-	local g = {}
+	g = {}
+	g.test = 256
 	g.model = vcreateModelInstance( model )
 	g.physic = vcreatePhysic()
 	g.transform = vcreateTransform()
+	g.body = vcreateBodySphere( g )
 	vmodel_setTransform( g.model, g.transform )
 	vphysic_setTransform( g.physic, g.transform )
+	vbody_setTransform( g.body, g.transform )
 	vscene_addModel( scene, g.model )
 	vphysic_activate( engine, g.physic )
 	v = Vector( 0.0, 0.0, 0.0, 0.0 )
@@ -36,20 +39,19 @@ function gameobject_create( model )
 	return g
 end
 
-function gameobject_delete( obj )
-	vprint( "gameobject_delete" )
-	vscene_removeModel( scene, g.model )
+function gameobject_destroy( g )
+	vprint( "gameobject_destroy" )
+	vprint( string.format( "Test num: %d", g.test ))
 	vdeleteModelInstance( g.model )
-	--[[
-	vdeletePhysic( g.physic )
-	vdeleteTransform( g.transform )
-	--]]
+	--vdestroyPhysic( g.physic )
+	--vdestroyTransform( g.transform )
+	--vdestroyBody( g.body )
 end
 
 function spawn_explosion( position )
 	-- Attach a particle effect to the object
 	local t = vcreateTransform()
-	vparticle_create( engine, t )
+	vexplosion( engine, t )
 	-- Position it at the correct muzzle position and rotation
 	vtransform_setWorldSpaceByTransform( t, position )
 end
@@ -63,10 +65,8 @@ function player_fire( p )
 	-- Position it at the correct muzzle position and rotation
 	vtransform_setWorldSpaceByTransform( g.transform, p.transform )
 
-	--[[
 	-- Attach a particle effect to the object
-	vparticle_create( engine, g.transform )
-	--]]
+	inTime( 0.2, function () vparticle_create( engine, g.transform ) end )
 
 	-- Apply initial velocity
 	bullet_speed = 150.0;
@@ -74,9 +74,7 @@ function player_fire( p )
 	world_v = vtransformVector( p.transform, ship_v )
 	vphysic_setVelocity( g.physic, world_v );
 
---	inTime( 2, function () vprint("timertest") end );
---	inTime( 2, function () gameobject_delete( g ) end );
-	inTime( 0.3, function () spawn_explosion( g.transform ) end );
+	--inTime( 0.3, function () spawn_explosion( g.transform ) end );
 
 	--[[
 	gun_transform = vitae_attach_transform( g.model, "bullet_spawn" )
@@ -101,7 +99,7 @@ function addTimer( timer )
 	timers[timers.count] = timer
 end
 
---[-[
+---[[
 function timer_create( time, action )
 	timer = {
 		time = time,
@@ -174,13 +172,55 @@ camera = "chase"
 flycam = nil
 chasecam = nil
 
-function ship_spawner()
-	local ship = gameobject_create( "dat/model/ship_hd.s" )
-	local speed = 10.0
-	ship_v = Vector( 0.0, 0.0, speed, 0.0 )
+function ship_tick( ship )
+	vprint( "ship_tick" )
+	ship_v = Vector( 0.0, 0.0, ship.speed, 0.0 )
 	world_v = vtransformVector( ship.transform, ship_v )
 	vphysic_setVelocity( ship.physic, world_v )
+end
+
+function vrand( lower, upper )
+	return math.random() * ( upper - lower ) + lower
+end
+
+ships = {}
+ship_count = 0
+
+function ship_spawner()
+	local ship = gameobject_create( "dat/model/ship_hd.s" )
+	vbody_registerCollisionCallback( ship.body, ship_collisionHandler )
+	ship.speed = 30.0
+	vtransform_yaw( ship.transform, 3.14 )
+	x = vrand( -50.0, 50.0 )
+	y = vrand( 0.0, 100.0 )
+	position = Vector( x, y, 100.0, 1.0 )
+	vtransform_setWorldPosition( ship.transform, position )
+
+	ships[ ship_count ] = ship
+	ship_count = ship_count + 1
+
+	inTime( 0.1, function () ship_tick( ship ) end )
 	inTime( 3, ship_spawner )
+end
+
+function collision( this, other )
+		
+end
+
+function ship_collisionHandler( ship, collider )
+	spawn_explosion( ship.transform );
+	ship_destroy( ship )
+
+	--[[
+	if collider == bullet then
+		ship_destroy( ship )
+	end
+	--]]
+end
+
+function ship_destroy( ship )
+	gameobject_destroy( ship )
+	-- spawn explosion
 end
 
 function start()
