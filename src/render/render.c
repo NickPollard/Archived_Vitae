@@ -167,6 +167,9 @@ void render_set2D() {
 	vAssert( 0 ); // NYI	
 }
 
+void render_handleResize() {
+}
+
 #ifdef ANDROID
 void render_swapBuffers( egl_renderer* egl ) {
     eglSwapBuffers( egl->display, egl->surface );
@@ -452,13 +455,12 @@ void render_unattachFrameBuffer() {
 	glBindFramebuffer( GL_FRAMEBUFFER, 0 );
 }
 
-void render_draw( engine* e ) {
+void render_draw( window* w, engine* e ) {
 	(void)e;
 #ifdef ANDROID
 	w->width = 800;
 	w->height = 480;
 #endif
-	int h = 480;
 
 	glClearColor( 0.f, 0.f, 1.f, 0.f );
 	glClear( GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT );
@@ -466,7 +468,7 @@ void render_draw( engine* e ) {
 	// Attach the framebuffer
 	render_attachFrameBuffer();
 	{
-		render_set3D( w, h );
+		render_set3D( w->width, w->height );
 		render_clear();
 
 		// Draw each batch of drawcalls
