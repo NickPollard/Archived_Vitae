@@ -468,7 +468,8 @@ int LUA_transform_setWorldSpaceByTransform( lua_State* l ) {
 int LUA_particle_create( lua_State* l ) {
 	engine* e = lua_toptr( l, 1 );
 	transform* t = lua_toptr( l, 2 );
-	
+
+#if 0	
 	particleEmitter* p = particleEmitter_create();
 	p->definition->lifetime = 2.f;
 	p->definition->spawn_box = Vector( 0.3f, 0.3f, 0.3f, 0.f );
@@ -481,10 +482,16 @@ int LUA_particle_create( lua_State* l ) {
 	property_addf( p->definition->size, 0.6f, 2.f );
 	property_addf( p->definition->size, 2.f, 1.f );
 	*/
+
 	context* c = lisp_newContext();
 	term* size_term = lisp_eval_file( c, "src/script/lisp/property.s" );
 	p->definition->size = size_term->data;
 	context_delete( c );
+
+#endif
+	
+	term* particle_term = lisp_eval_file( lisp_global_context, "src/script/lisp/missile_particle.s" );
+	particleEmitter* p = particle_term->data;
 
 	// color
 	p->definition->color = property_create( 5 );

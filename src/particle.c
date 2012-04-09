@@ -172,6 +172,13 @@ property* property_create( int stride ) {
 	return p;
 }
 
+property* property_copy( property* p ) {
+	property* p_copy = property_create( p->stride );
+	p_copy->stride = p->stride;
+	memcpy( p_copy->data, p->data, sizeof( float ) * p->stride * kmax_property_values );
+	return p_copy;
+}
+
 // add [p->stride] number of float [values], at [time]
 void property_addf( property* p, float time, float value ) {
 	assert( p->count < kmax_property_values );

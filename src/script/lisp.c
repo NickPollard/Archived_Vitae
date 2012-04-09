@@ -96,10 +96,18 @@ static term lisp_true = {
 
 const term* lisp_true_ptr = &lisp_true;
 const term* lisp_false_ptr = &lisp_false;
+context* lisp_global_context;
 
 static const size_t kLispHeapSize = 1 << 20;
 static heapAllocator* lisp_heap = NULL;
 static passthroughAllocator* context_heap = NULL;
+
+typedef void (*attributeSetter)( void* ob, term* value );
+map* attrFuncMap = NULL;
+
+//// Attribute functions /////////////////////////////////////////
+void attr_particle_setSize( void* particle, term* size_attr );
+//// Attribute functions /////////////////////////////////////////
 
 bool isType( term* t, enum termType type ) {
 	return t->type == type;
@@ -218,9 +226,9 @@ void* value_create( size_t size ) {
    */
 
 term* head( term* list ) {
-	assert( list );
-	assert( isType( list, _typeList ));
-	assert( list->head );
+	lisp_assert( list );
+	lisp_assert( isType( list, _typeList ));
+	lisp_assert( list->head );
 	return (term*)list->head;
 	}
 
@@ -903,6 +911,7 @@ term* lisp_func_new( context* c, term* raw_args ) {
 
 // (object_process object function)
 term* lisp_func_object_process( context *c, term* raw_args ) {
+	printf( "object_process\n" );
 	term* args = fmap_1( _eval, c, raw_args );
 	term_takeRef( args );
 	vAssert( list_length( args ) == 2 );
@@ -969,6 +978,13 @@ void lisp_init() {
 
 	context_heap = passthrough_create( lisp_heap );
 	lisp_debug_stack_init();
+
+#define kMaxAttributeFunctions 128
+	attrFuncMap = map_create( kMaxAttributeFunctions, sizeof( attributeSetter ));
+	attributeSetter f = attr_particle_setSize;
+	map_add( attrFuncMap, mhash("size"), &f );
+
+	lisp_global_context = lisp_newContext();
 }
 
 #define NO_PARENT NULL
@@ -1066,11 +1082,52 @@ void lisp_assertArgs_1( term* t, enum termType type ) {
 	lisp_assert( isType( head( t ), type ));
 }
 
-// (property_create stride)
-term* lisp_func_property_create( context* c, term* raw_args ) {
+attributeSetter attributeFunction( const char* name ) {
+	return *(void**)map_find( attrFuncMap, mhash(name));
+}
+
+// (attribute name value)
+term* lisp_func_attribute( context* c, term* raw_args ) {
 	(void)c;
 	(void)raw_args;
 	
+	lisp_assert( isType( raw_args, _typeList ));
+	term* args = fmap_1( _eval, c, raw_args );
+	term_takeRef( args );
+
+	const char* name = head( args )->string;
+	term* value = head( tail( args ));
+	term* ob = head( tail( tail( args )));
+
+	printf( "LISP: Processing attribute \"%s\"\n", name );
+	attributeSetter attr = attributeFunction( /* object, */ name );
+	attr( ob, value );
+
+	// TODO: Fix this, we can't deref the thing we've appended properly? (In object-process)
+	//term_deref( args );	
+	return &lisp_false;
+}
+
+void attr_particle_setSize( void* particle, term* size_attr ) {
+	// TODO - we need to copy and preserve this correctly
+	property* size = property_copy( size_attr->data );
+	particleEmitter* p = particle;
+	p->definition->size = size;
+}
+
+// (particle_create)
+term* lisp_func_particle_create( context* c, term* raw_args ) {
+	(void)c;
+	(void)raw_args;
+
+	particleEmitter* p = particleEmitter_create();
+	term* tp = term_create( _typeObject, p );	
+
+	return tp;
+}
+
+// (property_create stride)
+term* lisp_func_property_create( context* c, term* raw_args ) {
 	lisp_assert( isType( raw_args, _typeList ));
 	term* args = fmap_1( _eval, c, raw_args );
 	term_takeRef( args );
@@ -1159,6 +1216,8 @@ void lisp_initContext( context* c ) {
 	define_cfunction( c, "*", lisp_func_mul );
 	define_cfunction( c, "/", lisp_func_div );
 
+	define_cfunction( c, "object_process", lisp_func_object_process );
+
 	// Model loading functions
 	define_cfunction( c, "model", lisp_func_model );
 	//define_cfunction( c, "mesh", lisp_func_mesh );
@@ -1167,6 +1226,9 @@ void lisp_initContext( context* c ) {
 	define_cfunction( c, "filename", lisp_func_filename );
 	define_cfunction( c, "property_create", lisp_func_property_create );
 	define_cfunction( c, "property_addKey", lisp_func_property_addkey );
+	
+	define_cfunction( c, "attribute", lisp_func_attribute );
+	define_cfunction( c, "particle_create", lisp_func_particle_create );
 
 	define_function( c, "mesh", "( args ) (foldl object_process (mesh_create) args)" );
 	//define_function( c, "filename", "(() b )" );
@@ -1196,7 +1258,8 @@ void test_lisp() {
 	assert( string_equal( value( head( tail( script ))) , "b" ));
 
 	term_deref( script );
-	assert( lisp_heap->allocations == 0 );
+	// no longer true due to lisp global context
+	//assert( lisp_heap->allocations == 0 );
 	
 	context* c = lisp_newContext();
 	term* hello = term_create( _typeString, "Hello World" );
@@ -1327,7 +1390,6 @@ void test_lisp() {
 	term_deref( vec );
 
 	define_cfunction( c, "new", lisp_func_new );
-	define_cfunction( c, "object_process", lisp_func_object_process );
 	define_cfunction( c, "test_a", lisp_func_test_struct_a );
 	define_cfunction( c, "test_b", lisp_func_test_struct_b );
 

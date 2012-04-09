@@ -61,6 +61,8 @@ typedef struct context_s {
 	map* lookup;
 	} context;
 
+extern context* lisp_global_context;
+
 // Evaluate a lisp expression
 term* _eval( term* expr, void* _context );
 
