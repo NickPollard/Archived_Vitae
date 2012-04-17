@@ -5,9 +5,7 @@
 
    It contains the scene heirarchy graph, specifying models, lights, transforms, etc.
    */
-
-#ifndef __SCENE_H__
-#define __SCENE_H__
+#pragma once
 
 #include "common.fwd.h"
 #include "engine.h"
@@ -41,6 +39,7 @@ struct scene_s {
 	particleEmitter**	emitters;
 	//
 	GLfloat		ambient[4];
+	vector		fog_color;
 	camera*		cam;
 
 	// Debug
@@ -88,8 +87,10 @@ void	scene_render(scene* s);
 //
 // *** Accessors
 //
-void		scene_setAmbient(scene* s, float r, float g, float b, float a);
-void		scene_setCamera(scene* s, float x, float y, float z, float w);
+void		scene_setAmbient( scene* s, float r, float g, float b, float a );
+void		scene_setCamera( scene* s, float x, float y, float z, float w );
+vector		scene_fogColor( scene* s, const vector* position );
+void		scene_setFogColor( scene* s, const vector* color );
 
 // Transform Access
 transform*	scene_transform( scene* s, int i );
@@ -117,5 +118,3 @@ void sceneData_free( sceneData* data );
 // Initialise a scene with some test data
 scene* test_scene_init( engine* e );
 void test_scene_tick(scene* s, float dt);
-
-#endif // __SCENE_H__

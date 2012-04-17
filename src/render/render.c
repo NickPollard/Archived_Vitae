@@ -35,7 +35,8 @@ gl_resources resources;
 const int kInitialWidth = 640;
 const int kInitialHeight = 480;
 #ifdef ANDROID
-window window_main = { 800, 480 };
+//window window_main = { 800, 480 };
+window window_main = { 1280, 720 };
 #else
 window window_main = { 640, 480 };
 #endif
@@ -80,15 +81,17 @@ GLuint* render_requestBuffer( GLenum target, const void* data, GLsizei size ) {
 	vmutex_lock( &buffer_mutex );
 	{
 		b = getBufferRequest();
+		vAssert( b );
 		b->target	= target;
 		b->data		= data;
 		b->size		= size;
+		// Needs to allocate a GLuint somewhere
+		// and return a pointer to that
+		b->ptr = mem_alloc( sizeof( GLuint ));
+		// Initialise this to 0, so we can ignore ones that haven't been set up yet
+		*(b->ptr) = kInvalidBuffer;
 	}
 	vmutex_unlock( &buffer_mutex );
-	vAssert( b );
-	// Needs to allocate a GLuint somewhere
-	// and return a pointer to that
-	b->ptr = mem_alloc( sizeof( GLuint ));
 	return b->ptr;
 }
 
@@ -100,6 +103,7 @@ void render_bufferTick() {
 		for ( int i = 0; i < buffer_request_count; i++ ) {
 			bufferRequest* b = &buffer_requests[i];
 			*b->ptr = render_glBufferCreate( b->target, b->data, b->size );
+			printf( "Created buffer %d for request for %d bytes.\n", *b->ptr, b->size );
 		}
 		buffer_request_count = 0;
 	}
@@ -139,11 +143,18 @@ struct renderPass_s {
 	int			next_call_index[kCallBufferCount];
 };
 
+// Parameters for the whole render operation
+struct sceneParams_s {
+	vector	fog_color;
+};
+
 #define kMaxRenderPasses 16
 renderPass	render_pass[kMaxRenderPasses];
 
 renderPass renderPass_main;
 renderPass renderPass_alpha;
+
+sceneParams sceneParams_main;
 
 void renderPass_clearBuffers( renderPass* pass ) {
 	memset( pass->next_call_index, 0, sizeof( int ) * kCallBufferCount );
@@ -207,6 +218,7 @@ void render_scene(scene* s) {
 	for (int i = 0; i < s->model_count; i++) {
 		modelInstance_draw( scene_model( s, i ), s->cam );
 	}
+	sceneParams_main.fog_color = scene_fogColor( s, transform_getWorldPosition( s->cam->trans ));
 }
 
 void render_lighting( scene* s ) {
@@ -360,9 +372,11 @@ void render_setUniform_texture( GLuint uniform, GLuint texture ) {
 	// Bind the texture to that texture unit
 	glBindTexture( GL_TEXTURE_2D, texture );
 	glUniform1i( uniform, 0 );
-
 }
 
+void render_setUniform_vector( GLuint uniform, vector* v ) {
+	glUniform4fv( uniform, 1, (GLfloat*)v );
+}
 
 // Shader version
 void render( scene* s ) {
@@ -388,6 +402,13 @@ void render( scene* s ) {
 	render_scene( s );
 }
 
+void render_sceneParams( sceneParams* params ) {
+	//vector fog_color = Vector( 0.f, 0.f, 1.f, 1.f );
+	render_setUniform_vector( *resources.uniforms.fog_color, &params->fog_color );
+	(void)params;
+	//render_setUniform_vector( *resources.uniforms.fog_color, &fog_color );
+}
+
 int render_findDrawCallBuffer( shader* vshader ) {
 	unsigned int key = (unsigned int)vshader;
 	int* i_ptr = map_find( callbatch_map, key );
@@ -404,7 +425,7 @@ int render_findDrawCallBuffer( shader* vshader ) {
 	return i;
 }
 
-drawCall* drawCall_create( renderPass* pass, shader* vshader, int count, GLushort* elements, vertex* verts, GLint tex, matrix mv ) {
+drawCall* drawCall_create( renderPass* pass, shader* vshader, int count, GLushort* elements, vertex* verts, GLint tex, matrix mv /*, vector* fog_color*/ ) {
 	// Lookup drawcall buffer from shader
 	int buffer = render_findDrawCallBuffer( vshader );
 	int call = pass->next_call_index[buffer]++;
@@ -416,6 +437,7 @@ drawCall* drawCall_create( renderPass* pass, shader* vshader, int count, GLushor
 	draw->vertex_buffer = verts;
 	draw->element_count = count;
 	draw->texture = tex;
+	//draw->fog_color = *fog_color;
 	draw->element_buffer_offset = 0;
 	draw->vertex_VBO	= resources.vertex_buffer[0];
 	draw->element_VBO	= resources.element_buffer[0];
@@ -437,14 +459,17 @@ void render_drawCall_draw( drawCall* draw ) {
 		glBufferData( GL_ARRAY_BUFFER, vertex_buffer_size, draw->vertex_buffer, GL_DYNAMIC_DRAW );// OpenGL ES only supports DYNAMIC_DRAW or STATIC_DRAW
 		glBufferData( GL_ELEMENT_ARRAY_BUFFER, element_buffer_size, draw->element_buffer, GL_DYNAMIC_DRAW ); // OpenGL ES only supports DYNAMIC_DRAW or STATIC_DRAW
 	}
+	//printf( "drawCall_draw 3: drawcall %x, element count %d, element buffer offset %d\n", draw, draw->element_count, draw->element_buffer_offset );
 
 	// Now Draw!
 	VERTEX_ATTRIBS( VERTEX_ATTRIB_POINTER );
 	glDrawElements( GL_TRIANGLES, draw->element_count, GL_UNSIGNED_SHORT, (void*)draw->element_buffer_offset );
 	VERTEX_ATTRIBS( VERTEX_ATTRIB_DISABLE_ARRAY );
+	//printf( "drawCall_draw 4\n" );
 }
 
 void render_drawBatch( drawCall* draw ) {
+	//render_setUniform_vector( *resources.uniforms.fog_color,	&draw->fog_color );
 	render_setUniform_texture( *resources.uniforms.tex,			draw->texture );
 	render_setUniform_matrix( *resources.uniforms.modelview,	draw->modelview );
 	render_drawCall_draw( draw );
@@ -457,6 +482,8 @@ void render_drawCallBatch( int count, drawCall* calls ) {
 	// Set up uniform matrices
 	render_setUniform_matrix( *resources.uniforms.projection,	perspective );
 	render_setUniform_matrix( *resources.uniforms.worldspace,	modelview );
+
+	render_sceneParams( &sceneParams_main );
 
 	for ( int i = 0; i < count; i++ ) {
 		render_drawBatch( &calls[i] );
@@ -483,10 +510,8 @@ void render_unattachFrameBuffer() {
 
 void render_draw( window* w, engine* e ) {
 	(void)e;
-#ifdef ANDROID
-	w->width = 800;
-	w->height = 480;
-#endif
+	render_set3D( w->width, w->height );
+	render_clear();
 
 	render_drawPass( &renderPass_main );
 	render_drawPass( &renderPass_alpha );

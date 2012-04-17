@@ -1,6 +1,5 @@
 // camera.h
-#ifndef __CAMERA_H__
-#define __CAMERA_H__
+#pragma once
 
 struct camera_s {
 	transform* trans;
@@ -25,5 +24,3 @@ void camera_setTranslation(camera* c, const vector* v);
 
 // Calculate the planes of the view frustum defined by the camera *c*
 void camera_calculateFrustum( camera* c, vector* frustum );
-
-#endif // __CAMERA_H__

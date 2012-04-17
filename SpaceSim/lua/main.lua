@@ -233,7 +233,7 @@ function start()
 	flycam = vflycam( engine )
 	vscene_setCamera( chasecam )
 
-	ship_spawner()
+	--ship_spawner()
 end
 
 wave_interval_time = 10.0

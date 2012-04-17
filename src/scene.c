@@ -179,6 +179,15 @@ void scene_setAmbient(scene* s, float r, float g, float b, float a) {
 	s->ambient[3] = a;
 }
 
+vector scene_fogColor( scene* s, const vector* position ) {
+	(void)position;	
+	return s->fog_color;
+}
+
+void scene_setFogColor( scene* s, const vector* color ) {
+	s->fog_color = *color;
+}
+
 // Make a scene
 scene* scene_create() {
 	scene* s = mem_alloc( sizeof( scene ));
@@ -189,6 +198,7 @@ scene* scene_create() {
 	s->transforms =		mem_alloc( sizeof( transform* ) * MAX_TRANSFORMS );
 	memset( s->transforms, 0, sizeof( transform* ) * MAX_TRANSFORMS );
 	s->emitters =		mem_alloc( sizeof( particleEmitter* ) * MAX_EMITTERS );
+	s->fog_color = Vector( 0.f, 1.f, 0.f, 1.f );
 	return s;
 }
 

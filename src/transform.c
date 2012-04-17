@@ -188,3 +188,7 @@ void transform_roll( transform* t, float roll ) {
 	matrix_mul( t->local, t->local, m );
 //	matrix_normalize( t->local );
 }
+
+const vector* transform_getWorldPosition( transform* t ) {
+	return matrix_getTranslation( t->world );
+}

@@ -4,8 +4,10 @@
 #include "system/thread.h"
 
 #define kVboCount 1
+#define kInvalidBuffer 0
 
 typedef struct renderPass_s renderPass;
+typedef struct sceneParams_s sceneParams;
 
 #define SHADER_UNIFORMS( f ) \
 	f( projection ) \
@@ -14,8 +16,8 @@ typedef struct renderPass_s renderPass;
 	f( light_position ) \
 	f( light_diffuse ) \
 	f( light_specular ) \
-	f( tex )
-
+	f( tex ) \
+	f( fog_color )
 
 #define DECLARE_AS_GLINT_P( var ) \
 	GLint* var;
@@ -91,6 +93,7 @@ extern bool	render_initialised;
 extern vmutex	gl_mutex;
 extern renderPass renderPass_main;
 extern renderPass renderPass_alpha;
+extern sceneParams sceneParams_main;
 
 void render_setBuffers( float* vertex_buffer, int vertex_buffer_size, int* element_buffer, int element_buffer_size );
 
@@ -134,6 +137,7 @@ void render( scene* s );
 void render_resetModelView( );
 void render_setUniform_matrix( GLuint uniform, matrix m );
 void render_setUniform_texture( GLuint uniform, GLuint texture );
+void render_setUniform_vector( GLuint uniform, vector* v );
 
 void render_validateMatrix( matrix m );
 
@@ -152,6 +156,7 @@ typedef struct drawCall_s {
 	// Uniforms
 	matrix		modelview;
 	GLint		texture;
+	vector		fog_color;
 
 	// Buffer data
 	GLushort*	element_buffer;

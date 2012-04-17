@@ -4,6 +4,7 @@
 //---------------------
 #include "mem/allocator.h"
 #include "collision.h"
+#include "dynamicfog.h"
 #include "font.h"
 #include "input.h"
 #include "lua.h"
@@ -82,6 +83,14 @@ void test_engine_init( engine* e ) {
 
 		engine_addRender( e, (void*)t, terrain_render );
 		startTick( e, (void*)t, terrain_tick );
+	}
+
+
+	// Dynamic fog
+	{
+		dynamicFog* f = dynamicFog_create();
+		f->scene = theScene;
+		startTick( e, (void*)f, dynamicFog_tick );
 	}
 
 	// UI

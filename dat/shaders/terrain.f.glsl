@@ -1,9 +1,7 @@
-//#version 110
-// Phong Fragment Shader
-
 #ifdef GL_ES
 precision mediump float;
 #endif
+//#version 110
 
 // Varying
 varying vec4 frag_position;
@@ -11,7 +9,7 @@ varying vec4 frag_normal;
 varying vec2 texcoord;
 varying vec4 vert_color;
 varying float fog;
-varying float steepness;
+//varying float steepness;
 
 const int LIGHT_COUNT = 2;
 
@@ -21,6 +19,7 @@ uniform vec4 light_position[LIGHT_COUNT];
 uniform vec4 light_diffuse[LIGHT_COUNT];
 uniform vec4 light_specular[LIGHT_COUNT];
 uniform sampler2D tex;
+uniform vec4 fog_color;
 
 // Test Light values
 const vec4 light_ambient = vec4( 0.2, 0.2, 0.2, 1.0 );
@@ -84,15 +83,14 @@ void main() {
 #endif
 
 	vec4 tex_color = texture2D( tex, texcoord );
-	vec4 material_diffuse = vert_color * mix( vec4( 1.0, 1.0, 1.0, 1.0 ), tex_color, steepness );
+	vec4 material_diffuse = vert_color * mix( vec4( 1.0, 1.0, 1.0, 1.0 ), tex_color, 1.0 /*steepness */ );
 //	vec4 material_specular = vert_color * tex_color;
 //	vec4 fragColor =	total_specular_color * material_specular + 
 //					total_diffuse_color * material_diffuse;
 	vec4 fragColor = (total_specular_color + total_diffuse_color) * material_diffuse;
 
 	// Temporary Terrain Fog
-//	float fog = 0.0;
-	vec4 fog_color = vec4( 1.0, 0.6, 0.2, 1.0 );
+	//vec4 fog_color = vec4( 1.0, 0.6, 0.2, 1.0 );
 	gl_FragColor = mix( fragColor, fog_color, fog );
 	//gl_FragColor = fragColor;
 	gl_FragColor.w = 1.0;

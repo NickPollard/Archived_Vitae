@@ -111,6 +111,7 @@ model* model_createModel(int meshCount) {
 // If fully smooth-shaded, can just use a single copy of each vertex
 // If not all smooth-shaded, will have to duplicate vertices
 void mesh_buildBuffers( mesh* m ) {
+	vAssert( m );
 	vAssert( !m->vertex_buffer );
 	vAssert( !m->element_buffer );
 	unsigned int size_vertex	= sizeof( vertex ) * m->index_count;
@@ -136,20 +137,22 @@ void mesh_buildBuffers( mesh* m ) {
 	// Now also build the OpenGL VBOs for the static data
 	m->vertex_VBO = render_requestBuffer( GL_ARRAY_BUFFER, m->vertex_buffer, size_vertex );
 	m->element_VBO = render_requestBuffer( GL_ELEMENT_ARRAY_BUFFER, m->element_buffer, size_element );
-//	printf( "build buffers - Vertex vbo: %u\n", m->vertex_VBO );
-//	printf( "build buffers - Element vbo: %u\n", m->element_VBO );
+	printf( "build buffers - Vertex vbo: %u\n", *m->vertex_VBO );
+	printf( "build buffers - Element vbo: %u\n", *m->element_VBO );
 }
 
 // Draw the verts of a mesh to the openGL buffer
 void mesh_render( mesh* m ) {
-	drawCall* draw = drawCall_create( &renderPass_main, m->shader, m->index_count, m->element_buffer, m->vertex_buffer, m->texture_diffuse, modelview );
-//	printf( "Vertex vbo: %u\n", m->vertex_VBO );
-//	printf( "Element vbo: %u\n", m->element_VBO );
-	vAssert( *m->vertex_VBO != 0 );
-	vAssert( *m->element_VBO != 0 );
-	draw->vertex_VBO = *m->vertex_VBO;
-	draw->element_VBO = *m->element_VBO;
-	(void)draw;
+	//printf( "Vertex vbo: %u\n", *m->vertex_VBO );
+	//printf( "Element vbo: %u\n", *m->element_VBO );
+	if (( *m->vertex_VBO != kInvalidBuffer ) && ( *m->element_VBO != kInvalidBuffer )) {
+		vAssert( *m->vertex_VBO != 0 );
+		vAssert( *m->element_VBO != 0 );
+		drawCall* draw = drawCall_create( &renderPass_main, m->shader, m->index_count, m->element_buffer, m->vertex_buffer, m->texture_diffuse, modelview );
+		draw->vertex_VBO = *m->vertex_VBO;
+		draw->element_VBO = *m->element_VBO;
+		(void)draw;
+	}
 }
 
 // Get the i-th submesh of a given model

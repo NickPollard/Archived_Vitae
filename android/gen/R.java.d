@@ -4,7 +4,4 @@
 /home/nick/Projects/Vitae/android/res/values/strings.xml \
 /home/nick/Projects/Vitae/android/res/drawable-mdpi/icon.png \
 /home/nick/Projects/Vitae/android/res/layout/main.xml \
-/home/nick/Projects/Vitae/android/bin/res/drawable-hdpi/icon.png \
-/home/nick/Projects/Vitae/android/bin/res/drawable-ldpi/icon.png \
-/home/nick/Projects/Vitae/android/bin/res/drawable-mdpi/icon.png \
 /home/nick/Projects/Vitae/android/AndroidManifest.xml \

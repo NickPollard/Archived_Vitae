@@ -542,7 +542,6 @@ term* _eval( term* expr, void* _context ) {
 		// as if it's a special form, we might not want to eval all (eg. if)
 		term* h = _eval( head( expr ), _context );
 		if ( !isType( h, typeIntrinsic )) {
-			//debug_lisp_stack_push( "function" );
 			term* e = fmap_1( _eval, _context, tail( expr ));
 			if ( e )
 				term_takeRef( e );
@@ -551,13 +550,13 @@ term* _eval( term* expr, void* _context ) {
 				term_deref( e );
 			}
 		else {
-			//debug_lisp_stack_push( "intrinsic" );
 			result = exec( _context, h, tail( expr ));
 			}
-		//debug_lisp_stack_pop();
 		}
 	term_deref( expr );
+#ifdef DEBUG
 	debug_lisp_stack_pop();
+#endif
 	return result;
 	}
 
@@ -1234,8 +1233,8 @@ void lisp_initContext( context* c ) {
 	//define_function( c, "filename", "(() b )" );
 
 	// load the default vlisp library
-	lisp_eval_file( c, "src/script/lisp/vliblisp.s" );
-	lisp_eval_file( c, "src/script/lisp/particle.s" );
+	lisp_eval_file( c, "dat/script/lisp/vliblisp.s" );
+	lisp_eval_file( c, "dat/script/lisp/particle.s" );
 	// just load the definitions in the file
 }
 
