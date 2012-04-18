@@ -5,13 +5,16 @@ precision mediump float;
 #endif
 
 // Varying
-varying vec4 frag_position;
 varying vec2 texcoord;
-varying float height;
+varying float fog;
+//varying float height;
+//varying vec4 frag_position;
 
 // Uniform
 uniform sampler2D tex;
 uniform vec4 fog_color;
+uniform vec4 sky_color_top;
+uniform vec4 sky_color_bottom;
 
 void main() {
 #if 0
@@ -20,26 +23,17 @@ void main() {
 	// light-invariant calculations
 	vec4 material_diffuse = texture2D( tex, texcoord );
 	
-	vec4 color_top = vec4( 0.3, 0.6, 1.0, 1.0 );
-	vec4 color_bottom = vec4( 1.0, 0.4, 0.0, 1.0 );
-
-	vec4 fragColor = ( color_top * material_diffuse.z )
-					+ ( color_bottom * material_diffuse.x );
+	vec4 fragColor = ( sky_color_top * material_diffuse.z )
+					+ ( sky_color_bottom * material_diffuse.x );
 	fragColor.w = 1.0;
 	//gl_FragColor = vec4( fragColor.xyz, 1.0 );
 
-	//vec4 fog_color = vec4( 1.0, 0.6, 0.2, 1.0 );
-	float fog_far = 350.0;
-	float fog_near = 100.0;
-	float fog_height = 160.0;
-	float height_factor = clamp( ( fog_height - (height * 500.0)) / fog_height, 0.0, 1.0 );
-	float fog = clamp( ( frag_position.z - fog_near ) / ( fog_far - fog_near ), 0.0, 1.0 ) * height_factor;
-
 	gl_FragColor = mix( fragColor, fog_color, fog );
 
-//	gl_FragColor = vec4( top, bottom, 0.0, 1.0 );
-	//gl_FragColor = mix( color_bottom, color_top, height );
-//	gl_FragColor = material_diffuse;
+	//vec4 sky_color_top = vec4( 0.3, 0.6, 1.0, 1.0 );
+	//vec4 sky_color_bottom = vec4( 1.0, 0.4, 0.0, 1.0 );
+	//gl_FragColor = vec4( top, bottom, 0.0, 1.0 );
+	//gl_FragColor = mix( sky_color_bottom, sky_color_top, height );
 #endif
 }
 
