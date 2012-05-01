@@ -22,12 +22,22 @@ void main() {
 #else
 	// light-invariant calculations
 	vec4 material_diffuse = texture2D( tex, texcoord );
-	
+
+/*	
 	vec4 fragColor = ( sky_color_top * material_diffuse.z )
 					+ ( sky_color_bottom * material_diffuse.x );
 	fragColor.w = 1.0;
+	*/
 	//gl_FragColor = vec4( fragColor.xyz, 1.0 );
 
+	vec4 cloud_color = vec4( 1.0, 1.0, 1.0, 1.0 );
+
+	// color = top * blue
+	// then blend in cloud (white * green, blend alpha )
+	vec4 fragColor = mix( sky_color_top * material_diffuse.z, cloud_color * material_diffuse.y, material_diffuse.w );
+	// then add bottom * red
+	fragColor = fragColor + sky_color_bottom * material_diffuse.x;
+	fragColor.w = 1.0;
 	gl_FragColor = mix( fragColor, fog_color, fog );
 
 	//vec4 sky_color_top = vec4( 0.3, 0.6, 1.0, 1.0 );

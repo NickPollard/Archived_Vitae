@@ -17,7 +17,9 @@ typedef struct sceneParams_s sceneParams;
 	f( light_diffuse ) \
 	f( light_specular ) \
 	f( tex ) \
-	f( fog_color )
+	f( fog_color ) \
+	f( sky_color_top ) \
+	f( sky_color_bottom )
 
 #define DECLARE_AS_GLINT_P( var ) \
 	GLint* var;

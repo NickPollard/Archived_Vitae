@@ -403,10 +403,13 @@ void render( scene* s ) {
 }
 
 void render_sceneParams( sceneParams* params ) {
-	//vector fog_color = Vector( 0.f, 0.f, 1.f, 1.f );
+	vector sky_color_top;
+	vector v = Vector( 1.f, 1.f, 1.f, 2.f );
+	Sub( &sky_color_top, &v, &params->fog_color );
+
 	render_setUniform_vector( *resources.uniforms.fog_color, &params->fog_color );
-	(void)params;
-	//render_setUniform_vector( *resources.uniforms.fog_color, &fog_color );
+	render_setUniform_vector( *resources.uniforms.sky_color_bottom, &params->fog_color );
+	render_setUniform_vector( *resources.uniforms.sky_color_top, &sky_color_top );
 }
 
 int render_findDrawCallBuffer( shader* vshader ) {
