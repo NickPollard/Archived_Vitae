@@ -480,20 +480,9 @@ int LUA_particle_create( lua_State* l ) {
 	
 	term* particle_term = lisp_eval_file( lisp_global_context, "dat/script/lisp/missile_particle.s" );
 	particleEmitter* p = particle_term->data;
-	p->definition->lifetime = 2.f;
-
-	// color
-	/*
-	p->definition->color = property_create( 5 );
-	property_addv( p->definition->color, 0.f, Vector( 1.f, 0.f, 0.f, 0.f ));
-	property_addv( p->definition->color, 0.3f, Vector( 1.f, 0.5f, 0.f, 0.7f ));
-	property_addv( p->definition->color, 0.8f, Vector( 1.f, 1.f, 1.f, 0.8f ));
-	property_addv( p->definition->color, 1.0f, Vector( 0.5f, 0.5f, 0.5f, 0.8f ));
-	property_addv( p->definition->color, 2.f, Vector( 0.5f, 0.5f, 0.5f, 0.f ));
-	*/
 
 	p->definition->velocity = Vector( 0.f, 0.1f, 0.f, 0.f );
-	p->definition->spawn_interval = 0.03f;
+	//p->definition->spawn_interval = 0.03f;
 	p->trans = t;
 	p->definition->flags = p->definition->flags | kParticleWorldSpace
 												| kParticleRandomRotation;
