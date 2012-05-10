@@ -4,8 +4,7 @@
 #	(color (property ((0.0 1.0 1.0 1.0 0.0)
 #					(1.0 0.0 1.0 0.0 1.0))))))
 (defun particle ( properties )
-	(foldl object_process (particle_create) properties)
-	)
+	(foldl object_process (particle_create) properties))
 
 # ( property ((0.0 1.0)
 #			(1.0 0.0)))

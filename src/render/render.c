@@ -103,7 +103,7 @@ void render_bufferTick() {
 		for ( int i = 0; i < buffer_request_count; i++ ) {
 			bufferRequest* b = &buffer_requests[i];
 			*b->ptr = render_glBufferCreate( b->target, b->data, b->size );
-			printf( "Created buffer %d for request for %d bytes.\n", *b->ptr, b->size );
+			//printf( "Created buffer %d for request for %d bytes.\n", *b->ptr, b->size );
 		}
 		buffer_request_count = 0;
 	}
