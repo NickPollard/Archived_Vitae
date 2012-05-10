@@ -1,5 +1,5 @@
 C = gcc
-CFLAGS = -Wall -Wextra -Werror -m32 -std=c99 -I . `pkg-config --cflags libglfw` -I/usr/include/lua5.1  -Isrc -pg
+CFLAGS = -Wall -Wextra -Werror -m32 -std=gnu99 -I . `pkg-config --cflags libglfw` -I/usr/include/lua5.1  -Isrc -pg
 LFLAGS = -m32 -Wl,--no-warn-search-mismatch -pg
 LIBS = -lGLU -L/usr/lib -L/usr/local/lib -llua `pkg-config --libs libglfw`
 EXECUTABLE = vitae

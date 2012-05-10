@@ -101,12 +101,14 @@ float terrain_sample( float u, float v ) {
 			5 * sin( u / 10.f ) * sin( v / 10.f ) * sin( u / 10.f ) * sin( v / 10.f )
 	);
 
+	float canyon_length_scale = 250.f;
 	float scale = 5.f;
 	u /= scale;
-	u += sin( v / (scale * 5.f) );
-	float height = 20.f;
-	float width = 2.f;
-	float base_radius = 1.f;
+	float canyon_width_scale = 100.f;
+	u += sin( v / (canyon_length_scale) ) * canyon_width_scale;
+	float height = 40.f;
+	float width = 4.f;
+	float base_radius = 4.f;
 	float new_u = u;
 	if ( u < 0.f )
 	{
@@ -117,7 +119,7 @@ float terrain_sample( float u, float v ) {
 		new_u = fmaxf( u - base_radius, 0.f );
 	}
 
-	float mask = cos( fclamp( u / 4.f, -PI/2.f, PI/2.f ));
+	float mask = cos( fclamp( new_u / 4.f, -PI/2.f, PI/2.f ));
 	float canyon = 1.f - fclamp( powf( new_u / width, 4.f ), 0.f, 1.f );
 
 	return mountains + detail - ( mask * canyon ) * height;

@@ -28,7 +28,15 @@ const vec4 directional_light_direction = vec4( 1.0, -0.5, 1.0, 0.0 );
 const vec4 directional_light_diffuse = vec4( 1.0, 1.0, 0.4, 1.0 );
 const vec4 directional_light_specular = vec4( 0.5, 0.5, 0.5, 1.0 );
 
+const vec4 sun_color = vec4( 1.0, 0.5, 0.0, 0.0 );
+const vec4 sun_dir = vec4( 0.0, 0.0, 1.0, 0.0 );
+
 const float light_radius = 20.0;
+
+float sun_fog( vec4 sun_direction, vec4 fragment_position, mat4 modelview_mat ) {
+	vec4 local_sun_dir = modelview_mat * sun_direction;
+	return max( 0.0, dot( local_sun_dir, normalize( fragment_position )));
+}
 
 void main() {
 #if 1
@@ -91,7 +99,13 @@ void main() {
 
 	// Temporary Terrain Fog
 	//vec4 fog_color = vec4( 1.0, 0.6, 0.2, 1.0 );
-	gl_FragColor = mix( fragColor, fog_color, fog );
+	
+	// sunlight on fog
+	float fog_sun_factor = sun_fog( sun_dir, frag_position, modelview );
+	//vec4 local_fog_color = mix( fog_color, sun_color, fog_sun_factor );
+	vec4 local_fog_color = fog_color + (sun_color * fog_sun_factor);
+
+	gl_FragColor = mix( fragColor, local_fog_color, fog );
 	//gl_FragColor = fragColor;
 	gl_FragColor.w = 1.0;
 

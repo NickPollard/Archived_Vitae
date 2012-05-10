@@ -40,6 +40,7 @@ struct scene_s {
 	//
 	GLfloat		ambient[4];
 	vector		fog_color;
+	vector		sky_color;
 	camera*		cam;
 
 	// Debug
@@ -89,6 +90,8 @@ void	scene_render(scene* s);
 //
 void		scene_setAmbient( scene* s, float r, float g, float b, float a );
 void		scene_setCamera( scene* s, float x, float y, float z, float w );
+vector		scene_skyColor( scene* s, const vector* position );
+void		scene_setSkyColor( scene* s, const vector* color );
 vector		scene_fogColor( scene* s, const vector* position );
 void		scene_setFogColor( scene* s, const vector* color );
 

@@ -179,6 +179,14 @@ void scene_setAmbient(scene* s, float r, float g, float b, float a) {
 	s->ambient[3] = a;
 }
 
+vector scene_skyColor( scene* s, const vector* position ) {
+	(void)position;	
+	return s->sky_color;
+}
+
+void scene_setSkyColor( scene* s, const vector* color ) {
+	s->sky_color = *color;
+}
 vector scene_fogColor( scene* s, const vector* position ) {
 	(void)position;	
 	return s->fog_color;

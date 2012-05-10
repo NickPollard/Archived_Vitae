@@ -12,7 +12,7 @@ attribute vec4 color;
 // Varying
 varying vec2 texcoord;
 varying float fog;
-//varying vec4 frag_position;
+varying vec4 frag_position;
 //varying float height;
 
 // Uniform
@@ -21,6 +21,7 @@ uniform	mat4 modelview;
 
 void main() {
 	gl_Position = projection * modelview * position;
+	frag_position = modelview * position;
 	texcoord = uv.xy;
 
 	// height is relative to the world, not to the camera
@@ -29,9 +30,9 @@ void main() {
 	vec4 frag_position = modelview * position;
 
 	//vec4 fog_color = vec4( 1.0, 0.6, 0.2, 1.0 );
-	float fog_far = 350.0;
-	float fog_near = 100.0;
-	float fog_height = 160.0;
+	//float fog_far = 350.0;
+	//float fog_near = 100.0;
+	float fog_height = 260.0;
 	//float max_distance = 250.0;
 	//float distance = min( max_distance, frag_position.z );
 	float distance = 500.f;

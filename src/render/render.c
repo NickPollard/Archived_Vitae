@@ -146,6 +146,7 @@ struct renderPass_s {
 // Parameters for the whole render operation
 struct sceneParams_s {
 	vector	fog_color;
+	vector	sky_color;
 };
 
 #define kMaxRenderPasses 16
@@ -219,6 +220,7 @@ void render_scene(scene* s) {
 		modelInstance_draw( scene_model( s, i ), s->cam );
 	}
 	sceneParams_main.fog_color = scene_fogColor( s, transform_getWorldPosition( s->cam->trans ));
+	sceneParams_main.sky_color = scene_skyColor( s, transform_getWorldPosition( s->cam->trans ));
 }
 
 void render_lighting( scene* s ) {
@@ -403,13 +405,15 @@ void render( scene* s ) {
 }
 
 void render_sceneParams( sceneParams* params ) {
+	/*
 	vector sky_color_top;
 	vector v = Vector( 1.f, 1.f, 1.f, 2.f );
 	Sub( &sky_color_top, &v, &params->fog_color );
+*/
 
 	render_setUniform_vector( *resources.uniforms.fog_color, &params->fog_color );
 	render_setUniform_vector( *resources.uniforms.sky_color_bottom, &params->fog_color );
-	render_setUniform_vector( *resources.uniforms.sky_color_top, &sky_color_top );
+	render_setUniform_vector( *resources.uniforms.sky_color_top, &params->sky_color );
 }
 
 int render_findDrawCallBuffer( shader* vshader ) {
