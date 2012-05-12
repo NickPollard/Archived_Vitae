@@ -174,7 +174,7 @@ property* property_create( int stride ) {
 
 property* property_copy( property* p ) {
 	property* p_copy = property_create( p->stride );
-	p_copy->stride = p->stride;
+	p_copy->count = p->count;
 	memcpy( p_copy->data, p->data, sizeof( float ) * p->stride * kmax_property_values );
 	return p_copy;
 }

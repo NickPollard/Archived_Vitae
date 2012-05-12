@@ -506,6 +506,30 @@ void matrix_fromRotTrans( matrix dst, quaternion* rotation, vector* translation 
 	// TODO: implement
 	printf( "Not Yet Implemented: matrix_fromRotTrans \n");
 	assert( 0 );
+
+	// From the Quat we get:
+	// The axis of rotation
+	// the angle of rotation
+	vector axis;
+	float angle;
+
+	// Then we can compute this into a matrix
+	matrix m = matrix_fromAxisAngle();
+}
+*/
+
+		/*
+matrix matrix_fromAxisAngle( vector* axis, float angle ) {
+	
+}
+*/
+
+		/*
+quaternion slerp( quaternion p0, quaternion p1, float t ) {
+	float o = ; // Omega - total angle between p0 and p1
+	sin_o = sinf( o );	// Cache this
+	quaternion r = (sinf( (1 - t) / o ) / sin_o) * p0 + (sinf( t / o ) / sin_o) * p1;
+	return r;
 }
 */
 
@@ -543,13 +567,6 @@ quaternion quat_fromMatrix( matrix m ) {
 	(void)t;
 	return q;
 }
-
-/*
-matrix matrix_build( quaternion rot, vec trans ) {
-	matrix m;
-	return m;
-}
-*/
 
 // Create a rotation matrix representing a rotation about the Y-axis (Yaw)
 // of *angle* radians

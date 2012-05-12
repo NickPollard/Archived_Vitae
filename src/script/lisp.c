@@ -102,11 +102,14 @@ static const size_t kLispHeapSize = 1 << 20;
 static heapAllocator* lisp_heap = NULL;
 static passthroughAllocator* context_heap = NULL;
 
-typedef void (*attributeSetter)( void* ob, term* value );
+typedef void (*attributeSetter)( term* ob, term* value );
 map* attrFuncMap = NULL;
 
 //// Attribute functions /////////////////////////////////////////
-void attr_particle_setSize( void* particle, term* size_attr );
+void attr_particle_setSize( term* particle_term, term* size_attr );
+void attr_particle_setColor( term* particle_term, term* color_attr );
+void attr_particle_setLifetime( term* particle, term* lifetime );
+void attr_particle_setSpawnInterval( term* particle, term* spawn_interval );
 //// Attribute functions /////////////////////////////////////////
 
 bool isType( term* t, enum termType type ) {
@@ -624,11 +627,6 @@ void zip1( term* a_list, term* b_list, zip1_func func, void* arg ) {
 
 void define_arg( term* symbol, term* value, void* _context ) {
 	context* c = _context;
-	/*
-	printf( "Mapping argument %s to value: ", (const char*)symbol->head );
-	term_debugPrint( value );
-	printf( "\n" );
-	*/
 	context_add( c, symbol->string, value );
 	}
 
@@ -909,17 +907,30 @@ term* lisp_func_new( context* c, term* raw_args ) {
 	}
 
 // (object_process object function)
+// TODO this could be in lisp
 term* lisp_func_object_process( context *c, term* raw_args ) {
-	printf( "object_process\n" );
+	// Eval and validate args
 	term* args = fmap_1( _eval, c, raw_args );
 	term_takeRef( args );
 	vAssert( list_length( args ) == 2 );
+
+	// Alias args
 	term* ret = head( args );
 	term* func = head( tail( args ));
+
+	// Apply the particular object processing function to the object we're folding
 	term* list = _append( func, ret );
+
+	// Debug print the list to ensure we've built it correctly
+#if DEBUG_PARSE
 	term_debugPrint( list );
 	printf( "\n" );	
+#endif // DEBUG_PARSE
+
+	// Eval the function
 	_eval( list, c);
+
+	// Cleanup
 	term_deref( args );
 	return ret;
 }
@@ -971,6 +982,11 @@ void lisp_debug_stack_init() {
 	memset( debug_lisp_stack, 0, sizeof( const char*) * kDebugLispStackDepth );
 }
 
+void attributeFunction_set( const char* name, attributeSetter f ) {
+	attributeSetter f_ = f;
+	map_add( attrFuncMap, mhash( name ), &f_ );
+}
+
 void lisp_init() {
 	lisp_heap = heap_create( kLispHeapSize );
 	assert( lisp_heap->total_allocated == 0 );
@@ -980,8 +996,10 @@ void lisp_init() {
 
 #define kMaxAttributeFunctions 128
 	attrFuncMap = map_create( kMaxAttributeFunctions, sizeof( attributeSetter ));
-	attributeSetter f = attr_particle_setSize;
-	map_add( attrFuncMap, mhash("size"), &f );
+	attributeFunction_set( "size", attr_particle_setSize );
+	attributeFunction_set( "color", attr_particle_setColor );
+	attributeFunction_set( "lifetime", attr_particle_setLifetime );
+	attributeFunction_set( "spawn_interval", attr_particle_setSpawnInterval );
 
 	lisp_global_context = lisp_newContext();
 }
@@ -1098,7 +1116,7 @@ term* lisp_func_attribute( context* c, term* raw_args ) {
 	term* value = head( tail( args ));
 	term* ob = head( tail( tail( args )));
 
-	printf( "LISP: Processing attribute \"%s\"\n", name );
+	PARSE_PRINT( "LISP: Processing attribute \"%s\"\n", name );
 	attributeSetter attr = attributeFunction( /* object, */ name );
 	attr( ob, value );
 
@@ -1107,10 +1125,33 @@ term* lisp_func_attribute( context* c, term* raw_args ) {
 	return &lisp_false;
 }
 
-void attr_particle_setSize( void* particle, term* size_attr ) {
+void attr_particle_setSpawnInterval( term* particle, term* spawn_interval ) {
 	// TODO - we need to copy and preserve this correctly
+	particleEmitter* p = particle->data;
+	lisp_assert( p->definition != 0x0 );
+	p->definition->spawn_interval = *(spawn_interval->number);
+}
+
+void attr_particle_setLifetime( term* particle, term* lifetime ) {
+	// TODO - we need to copy and preserve this correctly
+	particleEmitter* p = particle->data;
+	lisp_assert( p->definition != 0x0 );
+	p->definition->lifetime = *(lifetime->number);
+}
+
+void attr_particle_setColor( term* particle_term, term* color_attr ) {
+	// TODO - we need to copy and preserve this correctly
+	particleEmitter* p = particle_term->data;
+	property* color = property_copy( color_attr->data );
+	lisp_assert( p->definition != 0x0 );
+	p->definition->color = color;
+}
+
+void attr_particle_setSize( term* particle_term, term* size_attr ) {
+	// TODO - we need to copy and preserve this correctly
+	particleEmitter* p = particle_term->data;
 	property* size = property_copy( size_attr->data );
-	particleEmitter* p = particle;
+	lisp_assert( p->definition != 0x0 );
 	p->definition->size = size;
 }
 
@@ -1120,6 +1161,7 @@ term* lisp_func_particle_create( context* c, term* raw_args ) {
 	(void)raw_args;
 
 	particleEmitter* p = particleEmitter_create();
+	vAssert( p->definition != 0 );
 	term* tp = term_create( _typeObject, p );	
 
 	return tp;
@@ -1158,18 +1200,18 @@ term* lisp_func_property_addkey( context* c, term* raw_args ) {
 	// get the two floats out;
 	float k = *head( key )->number;
 	int stride = list_length( key );
-#define kMaxStride 4
+#define kMaxStride 8
 	vAssertMsg( stride == p->stride, "Error adding keyframe to property: the stride of the keyframe does not equal that of the property." );
-	vAssertMsg( stride <= kMaxStride, "Error arrding keyframe to property: stride is greater than the maximum." );
+	vAssertMsg( stride <= kMaxStride, "Error adding keyframe to property: stride is greater than the maximum." );
 	float values[kMaxStride];
 	term* float_term = tail( key );
-	printf( "Adding key: %.2f ", k );
+	PARSE_PRINT( "Adding key: %.2f ", k );
 	for ( int i = 0; i < (stride - 1 ); ++i ) {
 		values[i] = *head( float_term )->number;
-		printf( "%.2f ", values[i] );
+		PARSE_PRINT( "%.2f ", values[i] );
 		float_term = tail( float_term );
 	}	
-	printf( "\n" );
+	PARSE_PRINT( "\n" );
 	property_addfv( p, k, values );
 	term_deref( args );	
 	return tp;
@@ -1185,7 +1227,7 @@ term* lisp_func_defun( context* c, term* raw_args ) {
 	lisp_assert( isType( head( raw_args ), _typeAtom ));
 	const char* name = head( raw_args )->string;
 	term* value = tail( raw_args );
-	printf( "LISP: DEFUN \"%s\"\n", name );
+	PARSE_PRINT( "LISP: DEFUN \"%s\"\n", name );
 	define_lispfunction( c, name, value );
 	return &lisp_true;
 }
@@ -1406,15 +1448,12 @@ void test_lisp() {
 	term* test = _eval( lisp_parse_string( "(new (quote test_struct))" ), c );
 	vAssert( isType( test, _typeObject ));
 	test_struct* object = test->data;
-	//printf( "object: v ( %.2f %.2f %.2f ), a %.2f, b %.2f\n", object->v.coord.x, object->v.coord.y, object->v.coord.z, object->a, object->b );
 
 	term* test_b = _eval( lisp_parse_string( "(object_process (new (quote test_struct)) (quote (test_a 1.0)))" ), c );
 	object = test_b->data;
-	//printf( "object: v ( %.2f %.2f %.2f ), a %.2f, b %.2f\n", object->v.coord.x, object->v.coord.y, object->v.coord.z, object->a, object->b );
 
 	term* test_c = _eval( lisp_parse_string( "(foldl object_process (new (quote test_struct)) (quote ((test_a 2.0) (test_b 3.0))))" ), c );
 	object = test_c->data;
-	//printf( "object: v ( %.2f %.2f %.2f ), a %.2f, b %.2f\n", object->v.coord.x, object->v.coord.y, object->v.coord.z, object->a, object->b );
 	(void)object;
 
 	term* tp = _eval( lisp_parse_string( "(property (quote ((0.1 1.1 1.0 1.0) ( 0.2 2.0 1.0 1.0) (3.0 5.0 1.0 1.0)) ))" ), c );
