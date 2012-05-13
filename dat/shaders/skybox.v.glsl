@@ -35,7 +35,7 @@ void main() {
 	float fog_height = 260.0;
 	//float max_distance = 250.0;
 	//float distance = min( max_distance, frag_position.z );
-	float distance = 500.f;
+	float distance = 500.0;
 
 	float height_factor = clamp( ( fog_height - (height * 500.0)) / fog_height, 0.0, 1.0 );
 	// sky is always maximum distance away
