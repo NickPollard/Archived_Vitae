@@ -100,7 +100,7 @@ void test_engine_init( engine* e ) {
 		p->y = 0.f;
 		p->width = 240.f;
 		p->height = 240.f;
-		p->texture = texture_loadTGA( "assets/img/circle.tga" );
+		p->texture = texture_loadTGA( "dat/img/circle.tga" );
 		static_test_panel = p;
 	}
 

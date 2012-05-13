@@ -46,7 +46,7 @@ terrain* terrain_create() {
 	t->v_block_count = 5;
 
 	if ( terrain_texture == 0 ) {
-		texture_request( &terrain_texture, "assets/3rdparty/img/rock02_tile_small.tga" );
+		texture_request( &terrain_texture, "dat/3rdparty/img/rock02_tile_small.tga" );
 	}
 
 	return t;

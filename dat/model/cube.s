@@ -1,2 +1,2 @@
 (model (mesh	(filename "dat/model/textured_cube.obj") 
-				(diffuse_texture "assets/img/test64rgba.tga")))
+				(diffuse_texture "dat/img/test64rgba.tga")))

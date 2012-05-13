@@ -487,7 +487,7 @@ int LUA_particle_create( lua_State* l ) {
 	p->definition->flags = p->definition->flags | kParticleWorldSpace
 												| kParticleRandomRotation;
 
-	texture_request( &p->definition->texture_diffuse, "assets/img/cloud_rgba128.tga" );
+	texture_request( &p->definition->texture_diffuse, "dat/img/cloud_rgba128.tga" );
 
 	engine_addRender( e, p, particleEmitter_render );
 	startTick( e, p, particleEmitter_tick );
@@ -511,8 +511,7 @@ int LUA_particle_create( lua_State* l ) {
 	p_->definition->spawn_interval = 0.3f;
 	p_->definition->spawn_box = Vector( 0.3f, 0.f, 0.3f, 0.f );
 	p_->trans = t;
-//	p_->definition->texture_diffuse = texture_loadTGA( "assets/img/star_rgba64.tga" );
-	texture_request( &p_->definition->texture_diffuse, "assets/img/star_rgba64.tga" );
+	texture_request( &p_->definition->texture_diffuse, "dat/img/star_rgba64.tga" );
 
 	engine_addRender( e, p_, particleEmitter_render );
 	startTick( e, p_, particleEmitter_tick );
@@ -550,7 +549,7 @@ int LUA_explosion( lua_State* l ) {
 	p->definition->flags = p->definition->flags | kParticleWorldSpace
 												| kParticleRandomRotation;
 
-	texture_request( &p->definition->texture_diffuse, "assets/img/cloud_rgba128.tga" );
+	texture_request( &p->definition->texture_diffuse, "dat/img/cloud_rgba128.tga" );
 
 	engine_addRender( e, p, particleEmitter_render );
 	startTick( e, p, particleEmitter_tick );

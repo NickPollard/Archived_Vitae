@@ -65,7 +65,7 @@ mesh* mesh_createMesh( int vertCount, int index_count, int normal_count, int uv_
 	m->vertex_buffer = NULL;
 	m->element_buffer = NULL;
 
-	texture_request( &m->texture_diffuse, "assets/img/ship_hd_2.tga" );
+	texture_request( &m->texture_diffuse, "dat/img/ship_hd_2.tga" );
 	m->shader = resources.shader_default;
 
 	m->vertex_VBO = 0;

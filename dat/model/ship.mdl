@@ -1,2 +1,2 @@
 (model (mesh dat/model/ship_hd_2.mdl)
-	(diffuse-texture assets/img/ship_hd_2.tga))
+	(diffuse-texture dat/img/ship_hd_2.tga))

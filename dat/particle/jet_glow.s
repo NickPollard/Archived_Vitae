@@ -2,7 +2,7 @@
 					(spawn_interval 0.1)
 					(spawn_box (vector -1.0 -1.0 1.0 1.0))
 					(velocity (vector 0.0 1.0 0.0 0.0))
-					(texture "assets/img/jet_glow.tga")
+					(texture "dat/img/jet_glow.tga")
 					(flags	kWorldSpace kNoRotate kSomeOtherFlag)
 					(size (property (0.0 3.0)
 									(1.0 0.0)))

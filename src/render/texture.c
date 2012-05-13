@@ -18,7 +18,7 @@ GLuint g_texture_default = 0;
 vmutex	texture_mutex = kMutexInitialiser;
 
 void texture_init() {
-	g_texture_default = texture_loadTGA( "assets/img/test64rgba.tga" );
+	g_texture_default = texture_loadTGA( "dat/img/test64rgba.tga" );
 }
 
 typedef struct textureRequest_s {

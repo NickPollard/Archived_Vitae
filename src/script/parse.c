@@ -829,7 +829,7 @@ void* s_particle_emitter( sterm* raw_args ) {
 	//p->definition->flags = p->definition->flags | kParticleWorldSpace;
 	p->definition->flags = p->definition->flags;// | kParticleRandomRotation;
 	//p->trans = t;
-	texture_request( &p->definition->texture_diffuse, "assets/img/star_rgba64.tga" );
+	texture_request( &p->definition->texture_diffuse, "dat/img/star_rgba64.tga" );
 
 	return sterm_createProperty( "particle_emitter", typeObject, p );
 }

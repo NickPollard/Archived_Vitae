@@ -26,8 +26,7 @@ float xmargin;
 
 stbtt_fontinfo font;
 
-#define FONT_PATH "assets/font/DroidSans.ttf"
-//#define FONT_PATH "assets/font/arial.ttf"
+#define FONT_PATH "dat/font/DroidSans.ttf"
 
 // Test init function, based on the main func in the complete program implementation of stb TrueType ((C) Sean Barrett 2009)
 void font_init() {
