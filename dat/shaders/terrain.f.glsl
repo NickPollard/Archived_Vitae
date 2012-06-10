@@ -68,7 +68,8 @@ void main() {
 		total_specular_color += specular_color;
 	}
 #endif
-#if 0	
+#define ENABLE_POINT_LIGHTS 0
+#if ENABLE_POINT_LIGHTS	
 	for ( int i = 0; i < LIGHT_COUNT; i++ ) 
 		// Per-light calculations
 		vec4 cs_light_position = modelview * light_position[i];
@@ -88,7 +89,7 @@ void main() {
 		vec4 specular_color = light_specular[i] * specular;
 		total_specular_color += specular_color;
 	}
-#endif
+#endif // ENABLE_POINT_LIGHTS
 
 	vec4 tex_color = texture2D( tex, texcoord );
 	vec4 material_diffuse = vert_color * mix( vec4( 1.0, 1.0, 1.0, 1.0 ), tex_color, 1.0 /*steepness */ );

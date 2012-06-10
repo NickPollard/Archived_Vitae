@@ -44,7 +44,6 @@ IMPLEMENT_LIST(delegate)
 // *** Static Hacks
 scene* theScene = NULL;
 terrain* theTerrain = NULL;
-int w = 640, h = 480;
 
 // Function Declarations
 void engine_tickTickers( engine* e, float dt );
@@ -96,11 +95,12 @@ void test_engine_init( engine* e ) {
 	// UI
 	{
 		panel* p = panel_create();
-		p->x = 560.f;
+		p->x = 1040.f;
 		p->y = 0.f;
 		p->width = 240.f;
 		p->height = 240.f;
-		p->texture = texture_loadTGA( "dat/img/circle.tga" );
+		//p->texture = texture_loadTGA( "dat/img/circle.tga" );
+		texture_request( &p->texture, "dat/img/circle.tga" );
 		static_test_panel = p;
 	}
 
@@ -135,7 +135,7 @@ void engine_tick( engine* e ) {
 	time += dt;
 	time = time / 10.f;
 
-	//printf( "TICK: frametime %.4fms (%.2f fps)\n", time, 1.f/time );
+	printf( "TICK: frametime %.4fms (%.2f fps)\n", time, 1.f/time );
 
 	lua_preTick( dt );
 

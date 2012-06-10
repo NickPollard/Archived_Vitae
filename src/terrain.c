@@ -8,6 +8,8 @@
 #include "render/texture.h"
 #include "system/hash.h"
 
+#define TERRAIN_USE_VBO 1
+
 // Forward declarations
 void terrain_calculateBounds( int bounds[2][2], terrain* t, vector* sample_point );
 void terrainBlock_calculateBuffers( terrain* t, terrainBlock* b );
@@ -255,8 +257,11 @@ void terrainBlock_calculateBuffers( terrain* t, terrainBlock* b ) {
 	mem_free( normals );
 
 	// Create GPU 
+#if TERRAIN_USE_VBO
 	b->vertex_VBO = render_requestBuffer( GL_ARRAY_BUFFER, b->vertex_buffer, sizeof( vertex ) * b->index_count );
 	b->element_VBO = render_requestBuffer( GL_ELEMENT_ARRAY_BUFFER, b->element_buffer, sizeof( GLushort ) * b->index_count );
+	//printf( "Terrain: Allocated new GPU Buffer Objects: Vertex %x Element %x.\n", b->vertex_VBO, b->element_VBO );
+#endif
 }
 
 // Calculate the intersection of the two block bounds specified
@@ -372,12 +377,15 @@ void terrain_updateBlocks( terrain* t ) {
 
 void terrainBlock_render( terrainBlock* b ) {
 	drawCall* draw = drawCall_create( &renderPass_main, resources.shader_terrain, b->index_count, b->element_buffer, b->vertex_buffer, terrain_texture, modelview );
-//	vAssert( *b->vertex_VBO != 0 );
-//	vAssert( *b->element_VBO != 0 );
+	(void)draw;
+#if TERRAIN_USE_VBO
+	//vAssert( *b->vertex_VBO != 0 );
+	//vAssert( *b->element_VBO != 0 );
 	if ( *b->vertex_VBO != 0 ) {
 		draw->vertex_VBO = *b->vertex_VBO;
 		draw->element_VBO = *b->element_VBO;
 	}
+#endif
 }
 
 void terrain_tick( void* data, float dt ) {

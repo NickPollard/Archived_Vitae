@@ -28,7 +28,7 @@ struct panel_s {
 	unsigned int remote_anchor;
 
 	// Temp
-	GLint	texture;
+	GLuint	texture;
 };
 
 // Create a Panel

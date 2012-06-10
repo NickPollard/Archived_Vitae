@@ -27,7 +27,7 @@ float sun_fog( vec4 sun_direction, vec4 fragment_position, mat4 modelview_mat ) 
 
 void main() {
 #if 0
-	gl_FragColor = vec4( 1.0, 0.0, 0.0, 1.0 );
+	gl_FragColor = vec4( 0.0, 0.0, 1.0, 1.0 );
 #else
 	// light-invariant calculations
 	vec4 material_diffuse = texture2D( tex, texcoord );

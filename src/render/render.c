@@ -32,16 +32,15 @@ matrix perspective;
 
 gl_resources resources;
 
-const int kInitialWidth = 640;
-const int kInitialHeight = 480;
 #ifdef ANDROID
 //window window_main = { 800, 480 };
 window window_main = { 1280, 720 };
 #else
-window window_main = { 640, 480 };
+window window_main = { 1280, 720 };
 #endif
 
 GLuint render_glBufferCreate( GLenum target, const void* data, GLsizei size ) {
+	printf( "Allocating oGL buffer.\n" );
 	GLuint buffer; // The OpenGL object handle we generate
 	glGenBuffers( 1, &buffer );				// Generate a buffer name - effectively just a declaration
 	glBindBuffer( target, buffer );			// Bind the buffer name to a target, creating the vertex buffer object
@@ -103,7 +102,7 @@ void render_bufferTick() {
 		for ( int i = 0; i < buffer_request_count; i++ ) {
 			bufferRequest* b = &buffer_requests[i];
 			*b->ptr = render_glBufferCreate( b->target, b->data, b->size );
-			//printf( "Created buffer %d for request for %d bytes.\n", *b->ptr, b->size );
+			printf( "Created buffer %x for request for %d bytes.\n", *b->ptr, b->size );
 		}
 		buffer_request_count = 0;
 	}
@@ -240,7 +239,7 @@ void render_clear() {
 	GLuint render_texture;
 	GLuint render_depth_buffer;
 
-void render_initFrameBuffer() {
+void render_initFrameBuffer( window w ) {
 	glGenFramebuffers( 1, &render_frame_buffer );
 	glGenTextures( 1, &render_texture );
 	glGenRenderbuffers( 1, &render_depth_buffer );
@@ -257,13 +256,13 @@ void render_initFrameBuffer() {
     glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_WRAP_S,     GL_CLAMP_TO_EDGE );
     glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_WRAP_T,     GL_CLAMP_TO_EDGE );
 
-	int w = 640;
-	int h = 480;
+	int width = w.width;
+	int height = w.height;
 
 	glTexImage2D( GL_TEXTURE_2D,
 		   			0,			// No Mipmaps for now
 					GL_RGBA,	// 3-channel, 8-bits per channel (32-bit stride)
-					(GLsizei)w, (GLsizei)h,
+					width, height,
 					0,			// Border, unused
 					GL_RGBA,		// TGA uses BGR order internally
 					GL_UNSIGNED_BYTE,	// 8-bits per channel
@@ -274,7 +273,7 @@ void render_initFrameBuffer() {
 	glFramebufferTexture2D( GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, render_texture, 0 );
 	// Generate and Attach Depth Buffer to framebuffer
 	glBindRenderbuffer( GL_RENDERBUFFER, render_depth_buffer );
-	glRenderbufferStorage( GL_RENDERBUFFER, GL_DEPTH_COMPONENT, w, h );
+	glRenderbufferStorage( GL_RENDERBUFFER, GL_DEPTH_COMPONENT, width, height );
 	glFramebufferRenderbuffer( GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, render_depth_buffer );
 	glBindFramebuffer( GL_FRAMEBUFFER, 0 );
 	glBindTexture( GL_TEXTURE_2D, 0 );
@@ -285,7 +284,7 @@ void render_initWindow() {
 	if (!glfwInit())
 		printf("ERROR - failed to init glfw.\n");
 
-	glfwOpenWindow(640, 480, 
+	glfwOpenWindow(window_main.width, window_main.height, 
 			8, 8, 8,		// RGB bits
 			8, 				// Alpha bits
 			8, 				// Depth bits
@@ -327,7 +326,7 @@ void render_init() {
 	render_draw_buffer = mem_alloc( kRenderDrawBufferSize );
 	callbatch_map = map_create( kCallBufferCount, sizeof( unsigned int ));
 
-	render_initFrameBuffer();
+	render_initFrameBuffer( window_main );
 }
 
 // Terminate the 3D rendering
@@ -456,17 +455,35 @@ drawCall* drawCall_create( renderPass* pass, shader* vshader, int count, GLushor
 
 void render_drawCall_draw( drawCall* draw ) {
 	// Bind Correct buffers
+	//printf( "drawCall_draw 1\n" );
 	glBindBuffer( GL_ARRAY_BUFFER, draw->vertex_VBO );
 	glBindBuffer( GL_ELEMENT_ARRAY_BUFFER, draw->element_VBO );
 	
+	//printf( "drawCall_draw 2\n" );
 	// If required, copy our data to the GPU
 	if ( draw->vertex_VBO == resources.vertex_buffer[0] ) {
+		printf( "Using main VBO.\n" );
 		GLsizei vertex_buffer_size	= draw->element_count * sizeof( vertex );
 		GLsizei element_buffer_size	= draw->element_count * sizeof( GLushort );
+#if 1
 		glBufferData( GL_ARRAY_BUFFER, vertex_buffer_size, draw->vertex_buffer, GL_DYNAMIC_DRAW );// OpenGL ES only supports DYNAMIC_DRAW or STATIC_DRAW
 		glBufferData( GL_ELEMENT_ARRAY_BUFFER, element_buffer_size, draw->element_buffer, GL_DYNAMIC_DRAW ); // OpenGL ES only supports DYNAMIC_DRAW or STATIC_DRAW
+#else
+		glBufferData( GL_ARRAY_BUFFER, vertex_buffer_size, NULL, GL_DYNAMIC_DRAW );// OpenGL ES only supports DYNAMIC_DRAW or STATIC_DRAW
+		glBufferData( GL_ELEMENT_ARRAY_BUFFER, element_buffer_size, NULL, GL_DYNAMIC_DRAW ); // OpenGL ES only supports DYNAMIC_DRAW or STATIC_DRAW
+
+		void* buffer = glMapBuffer( GL_ARRAY_BUFFER, GL_WRITE_ONLY );
+		vAssert( buffer != NULL );
+		memcpy( buffer, draw->vertex_buffer, vertex_buffer_size );
+		glUnmapBuffer( GL_ARRAY_BUFFER );
+		
+		buffer = glMapBuffer( GL_ELEMENT_ARRAY_BUFFER, GL_WRITE_ONLY );
+		vAssert( buffer != NULL );
+		memcpy( buffer, draw->element_buffer, element_buffer_size );
+		glUnmapBuffer( GL_ELEMENT_ARRAY_BUFFER );
+#endif
 	}
-	//printf( "drawCall_draw 3: drawcall %x, element count %d, element buffer offset %d\n", draw, draw->element_count, draw->element_buffer_offset );
+	//printf( "drawCall_draw 3: drawcall %x, vbo: %x, element count %d, element buffer offset %d\n", (unsigned int)draw, draw->vertex_VBO, draw->element_count, draw->element_buffer_offset );
 
 	// Now Draw!
 	VERTEX_ATTRIBS( VERTEX_ATTRIB_POINTER );

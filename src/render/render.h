@@ -78,6 +78,7 @@ struct vertex_s {
 	vector	normal;
 	vector	uv;
 	vector	color;
+	float	padding;
 };
 
 typedef struct vertex_s particle_vertex;
