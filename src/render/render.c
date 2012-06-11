@@ -413,6 +413,11 @@ void render_sceneParams( sceneParams* params ) {
 	render_setUniform_vector( *resources.uniforms.fog_color, &params->fog_color );
 	render_setUniform_vector( *resources.uniforms.sky_color_bottom, &params->fog_color );
 	render_setUniform_vector( *resources.uniforms.sky_color_top, &params->sky_color );
+
+	vector sun_dir;
+	const vector world_space_sun_dir = {{ 1.f, 0.f, 0.f, 0.f }};
+	sun_dir = matrixVecMul( modelview, &world_space_sun_dir );
+	render_setUniform_vector( *resources.uniforms.camera_space_sun_direction, &sun_dir );
 }
 
 int render_findDrawCallBuffer( shader* vshader ) {

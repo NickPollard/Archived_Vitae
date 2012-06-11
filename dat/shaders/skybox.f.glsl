@@ -16,12 +16,12 @@ uniform vec4 fog_color;
 uniform vec4 sky_color_top;
 uniform vec4 sky_color_bottom;
 uniform mat4 modelview;
+uniform vec4 camera_space_sun_direction;
 
 const vec4 sun_color = vec4( 1.0, 0.5, 0.0, 1.0 );
 const vec4 sun_dir = vec4( 0.0, 0.0, 1.0, 0.0 );
 
-float sun_fog( vec4 sun_direction, vec4 fragment_position, mat4 modelview_mat ) {
-	vec4 local_sun_dir = modelview_mat * sun_direction;
+float sun_fog( vec4 local_sun_dir, vec4 fragment_position ) {
 	return max( 0.0, dot( local_sun_dir, normalize( fragment_position )));
 }
 
@@ -54,7 +54,7 @@ void main() {
 	fragColor.w = 1.0;
 
 	// sunlight on fog
-	float fog_sun_factor = sun_fog( sun_dir, frag_position, modelview );
+	float fog_sun_factor = sun_fog( camera_space_sun_direction, frag_position );
 	vec4 local_fog_color = mix( fog_color, sun_color, fog_sun_factor );
 
 	gl_FragColor = mix( fragColor, local_fog_color, fog );
