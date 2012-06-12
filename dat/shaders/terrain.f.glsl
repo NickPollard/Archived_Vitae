@@ -9,7 +9,6 @@ varying vec4 frag_normal;
 varying vec2 texcoord;
 varying vec4 vert_color;
 varying float fog;
-//varying float steepness;
 
 const int LIGHT_COUNT = 2;
 
@@ -30,7 +29,6 @@ const vec4 directional_light_diffuse = vec4( 1.0, 1.0, 0.4, 1.0 );
 const vec4 directional_light_specular = vec4( 0.5, 0.5, 0.5, 1.0 );
 
 const vec4 sun_color = vec4( 1.0, 0.5, 0.0, 0.0 );
-const vec4 sun_dir = vec4( 0.0, 0.0, 1.0, 0.0 );
 
 const float light_radius = 20.0;
 
@@ -92,15 +90,12 @@ void main() {
 #endif // ENABLE_POINT_LIGHTS
 
 	vec4 tex_color = texture2D( tex, texcoord );
-	vec4 material_diffuse = vert_color * mix( vec4( 1.0, 1.0, 1.0, 1.0 ), tex_color, 1.0 /*steepness */ );
+	vec4 material_diffuse = vert_color * tex_color;
 //	vec4 material_specular = vert_color * tex_color;
 //	vec4 fragColor =	total_specular_color * material_specular + 
 //					total_diffuse_color * material_diffuse;
 	vec4 fragColor = (total_specular_color + total_diffuse_color) * material_diffuse;
 
-	// Temporary Terrain Fog
-	//vec4 fog_color = vec4( 1.0, 0.6, 0.2, 1.0 );
-	
 	// sunlight on fog
 	float fog_sun_factor = sun_fog( camera_space_sun_direction, frag_position );
 	//vec4 local_fog_color = mix( fog_color, sun_color, fog_sun_factor );

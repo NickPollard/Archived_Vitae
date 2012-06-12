@@ -40,7 +40,7 @@ window window_main = { 1280, 720 };
 #endif
 
 GLuint render_glBufferCreate( GLenum target, const void* data, GLsizei size ) {
-	printf( "Allocating oGL buffer.\n" );
+	//printf( "Allocating oGL buffer.\n" );
 	GLuint buffer; // The OpenGL object handle we generate
 	glGenBuffers( 1, &buffer );				// Generate a buffer name - effectively just a declaration
 	glBindBuffer( target, buffer );			// Bind the buffer name to a target, creating the vertex buffer object
@@ -102,7 +102,7 @@ void render_bufferTick() {
 		for ( int i = 0; i < buffer_request_count; i++ ) {
 			bufferRequest* b = &buffer_requests[i];
 			*b->ptr = render_glBufferCreate( b->target, b->data, b->size );
-			printf( "Created buffer %x for request for %d bytes.\n", *b->ptr, b->size );
+			//printf( "Created buffer %x for request for %d bytes.\n", *b->ptr, b->size );
 		}
 		buffer_request_count = 0;
 	}
@@ -376,7 +376,10 @@ void render_setUniform_texture( GLuint uniform, GLuint texture ) {
 }
 
 void render_setUniform_vector( GLuint uniform, vector* v ) {
-	glUniform4fv( uniform, 1, (GLfloat*)v );
+	// Only set uniforms if we definitely have them - otherwise we might override aliased constants
+	// in the current shader
+	if ( uniform != SHADER_CONSTANT_UNBOUND_LOCATION )
+		glUniform4fv( uniform, 1, (GLfloat*)v );
 }
 
 // Shader version
@@ -414,9 +417,8 @@ void render_sceneParams( sceneParams* params ) {
 	render_setUniform_vector( *resources.uniforms.sky_color_bottom, &params->fog_color );
 	render_setUniform_vector( *resources.uniforms.sky_color_top, &params->sky_color );
 
-	vector sun_dir;
-	const vector world_space_sun_dir = {{ 1.f, 0.f, 0.f, 0.f }};
-	sun_dir = matrixVecMul( modelview, &world_space_sun_dir );
+	const vector world_space_sun_dir = {{ 0.f, 0.f, 1.f, 0.f }};
+	vector sun_dir = matrixVecMul( modelview, &world_space_sun_dir );
 	render_setUniform_vector( *resources.uniforms.camera_space_sun_direction, &sun_dir );
 }
 

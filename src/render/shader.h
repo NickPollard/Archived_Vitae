@@ -7,6 +7,9 @@
 // The maximum number of constants that a single shader can use
 #define kMaxShaderConstantBindings 32
 
+// Value signifying shader constant is unbound (and hence should not be set for this shader)
+#define SHADER_CONSTANT_UNBOUND_LOCATION 0x0
+
 enum uniform_type {
 	uniform_unknown,
 	uniform_matrix,

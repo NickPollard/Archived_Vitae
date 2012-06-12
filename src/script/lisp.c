@@ -1466,7 +1466,7 @@ void test_lisp() {
 
 	context_delete( c );
 
-	heap_dumpUsedBlocks( lisp_heap );
+	//heap_dumpUsedBlocks( lisp_heap );
 
 	printf( "Lisp heap storing %d bytes in %d allocations.\n", lisp_heap->total_allocated, lisp_heap->allocations );
 	printf( "Context heap storing %d bytes in %d allocations.\n", context_heap->total_allocated, context_heap->allocations );

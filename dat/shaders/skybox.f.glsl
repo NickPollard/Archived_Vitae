@@ -19,7 +19,6 @@ uniform mat4 modelview;
 uniform vec4 camera_space_sun_direction;
 
 const vec4 sun_color = vec4( 1.0, 0.5, 0.0, 1.0 );
-const vec4 sun_dir = vec4( 0.0, 0.0, 1.0, 0.0 );
 
 float sun_fog( vec4 local_sun_dir, vec4 fragment_position ) {
 	return max( 0.0, dot( local_sun_dir, normalize( fragment_position )));
