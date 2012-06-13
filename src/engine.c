@@ -78,7 +78,7 @@ void test_engine_init( engine* e ) {
 		theTerrain = t;
 		t->trans = transform_createAndAdd( theScene );
 		terrain_setSize( t, 400.f, 800.f );
-		terrain_setResolution( t, 40, 40 );
+		terrain_setResolution( t, 20, 20 );
 
 		engine_addRender( e, (void*)t, terrain_render );
 		startTick( e, (void*)t, terrain_tick );
@@ -135,7 +135,7 @@ void engine_tick( engine* e ) {
 	time += dt;
 	time = time / 10.f;
 
-	printf( "TICK: frametime %.4fms (%.2f fps)\n", time, 1.f/time );
+	//printf( "TICK: frametime %.4fms (%.2f fps)\n", time, 1.f/time );
 
 	lua_preTick( dt );
 
@@ -283,14 +283,14 @@ void engine_render( engine* e ) {
 		skybox_render( NULL );
 		engine_renderRenders( e );
 		//temp
-		//panel_draw( static_test_panel, 0.f, 0.f );
+		panel_draw( static_test_panel, 0.f, 0.f );
 	}
 #else
 	render( theScene );
 	skybox_render( NULL );
 	engine_renderRenders( e );
 	// temp
-	//panel_draw( static_test_panel, 0.f, 0.f );
+	panel_draw( static_test_panel, 0.f, 0.f );
 #endif // ANDROID
 	// Allow the render thread to start
 	vthread_signalCondition( start_render );

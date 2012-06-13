@@ -60,9 +60,20 @@ typedef struct bufferRequest_s {
 	GLuint*		ptr;
 } bufferRequest;
 
+typedef struct bufferCopyRequest_s {
+	GLuint		buffer;
+	GLenum		target;
+	const void*	data;
+	GLsizei		size;
+} bufferCopyRequest;
+
 #define	kMaxBufferRequests	128
 bufferRequest	buffer_requests[kMaxBufferRequests];
 int				buffer_request_count = 0;
+
+#define	kMaxBufferCopyRequests	128
+bufferCopyRequest	buffer_copy_requests[kMaxBufferCopyRequests];
+int				buffer_copy_request_count = 0;
 
 // Mutex for buffer requests
 vmutex buffer_mutex = kMutexInitialiser;
@@ -71,6 +82,27 @@ bufferRequest* getBufferRequest() {
 	vAssert( buffer_request_count < kMaxBufferRequests );
 	bufferRequest* r = &buffer_requests[buffer_request_count++];
 	return r;
+}
+
+bufferCopyRequest* getBufferCopyRequest() {
+	vAssert( buffer_copy_request_count < kMaxBufferCopyRequests );
+	bufferCopyRequest* r = &buffer_copy_requests[buffer_copy_request_count++];
+	return r;
+}
+
+// Asynchronously copy data to a VertexBufferObject
+void render_bufferCopy( GLenum target, GLuint buffer, const void* data, GLsizei size ) {
+	bufferCopyRequest* b = NULL;
+	vmutex_lock( &buffer_mutex );
+	{
+		b = getBufferCopyRequest();
+		vAssert( b );
+		b->buffer	= buffer;
+		b->target	= target;
+		b->data		= data;
+		b->size		= size;
+	}
+	vmutex_unlock( &buffer_mutex );
 }
 
 // Asynchronously create a VertexBufferObject
@@ -105,6 +137,15 @@ void render_bufferTick() {
 			//printf( "Created buffer %x for request for %d bytes.\n", *b->ptr, b->size );
 		}
 		buffer_request_count = 0;
+		
+		for ( int i = 0; i < buffer_copy_request_count; i++ ) {
+			bufferCopyRequest* b = &buffer_copy_requests[i];
+			glBindBuffer( b->target, b->buffer );
+			int origin = 0; // We're copyping the whole buffer
+			glBufferSubData( b->target, origin, b->size, b->data );
+			//printf( "Created buffer %x for request for %d bytes.\n", *b->ptr, b->size );
+		}
+		buffer_copy_request_count = 0;
 	}
 	vmutex_unlock( &buffer_mutex );
 }
@@ -231,8 +272,8 @@ void render_lighting( scene* s ) {
 
 // Clear information from last draw
 void render_clear() {
-	glClearColor( 1.f, 0.f, 0.f, 0.f );
-	glClear(/* GL_COLOR_BUFFER_BIT |*/ GL_DEPTH_BUFFER_BIT );
+	glClearColor( 0.f, 0.f, 0.f, 0.f );
+	glClear( GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT );
 }
 
 	GLuint render_frame_buffer;
@@ -469,7 +510,7 @@ void render_drawCall_draw( drawCall* draw ) {
 	//printf( "drawCall_draw 2\n" );
 	// If required, copy our data to the GPU
 	if ( draw->vertex_VBO == resources.vertex_buffer[0] ) {
-		printf( "Using main VBO.\n" );
+		//printf( "Using main VBO.\n" );
 		GLsizei vertex_buffer_size	= draw->element_count * sizeof( vertex );
 		GLsizei element_buffer_size	= draw->element_count * sizeof( GLushort );
 #if 1
@@ -544,7 +585,11 @@ void render_draw( window* w, engine* e ) {
 	render_set3D( w->width, w->height );
 	render_clear();
 
+	glDisable( GL_BLEND );
+	//glBlendFunc( GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA );	// Standard Alpha Blending
 	render_drawPass( &renderPass_main );
+	glEnable( GL_BLEND );
+	//glBlendFunc( GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA );	// Standard Alpha Blending
 	render_drawPass( &renderPass_alpha );
 
 #if ANDROID

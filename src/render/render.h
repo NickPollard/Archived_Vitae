@@ -150,7 +150,12 @@ typedef void (*func_getInfoLog)( GLuint, GLint, GLint*, GLchar* );
 
 void gl_dumpInfoLog( GLuint object, func_getIV getIV, func_getInfoLog getInfoLog );
 GLuint render_glBufferCreate( GLenum target, const void* data, GLsizei size );
+
+// Asynchronosuly create a GPU buffer
 GLuint* render_requestBuffer( GLenum target, const void* data, GLsizei size );
+
+// Asynchronously copy data to a GPU  buffer
+void render_bufferCopy( GLenum target, GLuint buffer, const void* data, GLsizei size );
 
 // Draw Calls
 
