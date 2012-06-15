@@ -229,6 +229,8 @@ function start()
 	-- We create a player object which is a game-specific Lua lclass
 	-- The player class itself creates several native C classes in the engine
 	player_ship = playership_create()
+	pi = 3.1415
+	vtransform_yaw( player_ship.transform, -pi/2 * 0.7 );
 	chasecam = vchasecam_follow( engine, player_ship.transform )
 	flycam = vflycam( engine )
 	vscene_setCamera( chasecam )
