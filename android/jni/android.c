@@ -212,11 +212,29 @@ static int32_t handle_input(struct android_app* app, AInputEvent* event) {
     engine* e = app->userData;
 	vAssert( e );
 	vAssert( e->input );
+	// AInputEvent_getSource() == AINPUT_SOURCE_TOUCHSCREEN
     if ( AInputEvent_getType(event) == AINPUT_EVENT_TYPE_MOTION ) {
+		int32_t motion_action = AMotionEvent_getAction( event );
 		int x = AMotionEvent_getX( event, 0 );
 		int y = AMotionEvent_getY( event, 0 );
-		//printf( "Touch input. %d %d\n", x, y );
-		input_registerTouch( e->input, x, y );
+		printf( "Touch input. %d %d (action: %d)\n", x, y, motion_action );
+		enum touchAction action;
+		switch( motion_action )
+		{
+			case AMOTION_EVENT_ACTION_UP:
+				action = kTouchUp;
+				break;
+			case AMOTION_EVENT_ACTION_DOWN:
+				action = kTouchDown;
+				break;
+			case AMOTION_EVENT_ACTION_MOVE:
+				action = kTouchMove;		
+				break;
+			default:
+				action = kTouchUp;
+				break;
+		}
+		input_registerTouch( e->input, x, y, action );
         return 1;
     }
     return 0;

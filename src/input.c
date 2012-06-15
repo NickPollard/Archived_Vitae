@@ -120,10 +120,13 @@ void input_getMouseDrag( input* in, int button, int* x, int* y ) {
 }
 
 #ifdef TOUCH
-void input_registerTouch( input* in, int x, int y ) {
+void input_registerTouch( input* in, int x, int y, enum touchAction action ) {
 	in->touchX = x;
 	in->touchY = y;
-	in->touched = true;
+	if ( action == kTouchDown || action == kTouchMove )
+		in->touched = true;
+	else if ( action == kTouchUp )
+		in->touched = false;
 }
 
 void input_getTouchDrag( input* in, int* x, int* y ) {
@@ -198,7 +201,7 @@ void input_tick( input* in, float dt ) {
 	in->data[in->active].touched = in->touched;
 	in->data[in->active].touchX = in->touchX;
 	in->data[in->active].touchY = in->touchY;
-	in->touched = false;
+	// keep last touched state - we only revert to false if we receive a release event
 	in->touchX = 0;
 	in->touchY = 0;
 /*
