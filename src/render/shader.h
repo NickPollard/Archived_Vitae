@@ -1,8 +1,7 @@
 // shader.h
 #pragma once
 
-// GLFW Libraries
-#include <GL/glfw.h>
+#include "render/render.h"
 
 // The maximum number of constants that a single shader can use
 #define kMaxShaderConstantBindings 32

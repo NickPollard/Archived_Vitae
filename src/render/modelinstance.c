@@ -45,8 +45,8 @@ void modelInstance_createSubEmitters( modelInstance* instance ) {
 
 		// Take parent transform if in model
 		// This is stored as an index rather than a pointer
-		int transform_index = (int)m->emitters[i]->trans;
-#define NULL_INDEX -1
+		uintptr_t transform_index = (uintptr_t)m->emitters[i]->trans;
+#define NULL_INDEX UINTPTR_MAX
 		if ( transform_index == NULL_INDEX )
 			instance->emitters[i]->trans = NULL;
 		else

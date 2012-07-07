@@ -5,9 +5,6 @@
 //-----------------------
 #include <assert.h>
 
-// GLFW Libraries
-#include <GL/glfw.h>
-
 // Build a new texture from the given bitmap buffer
 // Plus properties
 vglTexture vgl_buildTexture( const ubyte* img, int w, int h, int type, int format ) {

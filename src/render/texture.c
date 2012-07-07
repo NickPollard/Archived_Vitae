@@ -10,8 +10,7 @@
 #include "system/string.h"
 #include "system/thread.h"
 
-// GLFW Libraries
-#include <GL/glfw.h>
+#include "render/vgl.h"
 
 // Globals
 GLuint g_texture_default = 0;

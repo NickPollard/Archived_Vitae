@@ -5,11 +5,6 @@
 #define GLFW
 
 #ifdef GLFW
-// GLFW Libraries
-#ifndef ANDROID
-#include <GL/glfw.h>
-#else
-
 // Ripped from GLFW.h
 
 /* Keyboard key definitions: 8-bit ISO-8859-1 (Latin 1) encoding is used
@@ -89,7 +84,6 @@
 #define GLFW_KEY_RSUPER       (GLFW_KEY_SPECIAL+68)
 #define GLFW_KEY_MENU         (GLFW_KEY_SPECIAL+69)
 #define GLFW_KEY_LAST         GLFW_KEY_MENU
-#endif
 
 // Arrow Keys
 #define KEY_UP		GLFW_KEY_UP

@@ -3,6 +3,9 @@
 #include "scene.h"
 #include "system/thread.h"
 
+// External
+#include "EGL/egl.h"
+
 #define kVboCount 1
 #define kInvalidBuffer 0
 
@@ -86,6 +89,10 @@ typedef struct vertex_s particle_vertex;
 typedef struct window_s {
 	int width;
 	int height;
+	EGLDisplay display;
+	EGLSurface surface;
+	EGLContext context;
+	bool open;
 } window;
 
 extern gl_resources resources;
@@ -97,6 +104,7 @@ extern vmutex	gl_mutex;
 extern renderPass renderPass_main;
 extern renderPass renderPass_alpha;
 extern sceneParams sceneParams_main;
+extern window window_main;
 
 void render_setBuffers( float* vertex_buffer, int vertex_buffer_size, int* element_buffer, int element_buffer_size );
 
@@ -112,11 +120,7 @@ void render_set3D( int w, int h );
 
 void render_clear();
 
-#ifdef ANDROID
-void render_swapBuffers( egl_renderer* egl );
-#else
 void render_swapBuffers();
-#endif
 
 // Iterate through each model in the scene
 // Translate by their transform
@@ -128,7 +132,7 @@ void render_lighting(scene* s);
 void render_applyCamera(camera* cam);
 
 // Initialise the 3D rendering
-void render_init();
+void render_init( void* app );
 
 // Terminate the 3D rendering
 void render_terminate();
@@ -180,3 +184,7 @@ void* render_bufferAlloc( size_t size );
 // *** The Rendering Thread itself
 //
 void* render_renderThreadFunc( void* args );
+
+// Manage render windows
+void render_destroyWindow( window* w );
+

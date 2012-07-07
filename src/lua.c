@@ -33,7 +33,7 @@ void lua_assertnumber( lua_State* l, int index ) {
 }
 void* lua_toptr( lua_State* l, int index ) {
 	lua_assertnumber( l, index );
-	int ptr = lua_tonumber( l, index );
+	uintptr_t ptr = lua_tonumber( l, index );
 	return (void*)ptr;
 }
 
@@ -109,7 +109,7 @@ int LUA_print( lua_State* l ) {
 }
 
 void lua_pushptr( lua_State* l, void* ptr ) {
-	int pointer = (int)ptr;
+	uintptr_t pointer = (uintptr_t)ptr;
 	lua_pushnumber( l, (double)pointer );
 }
 
@@ -241,15 +241,15 @@ int LUA_body_registerCollisionCallback( lua_State* l ) {
 	body* b = lua_toptr( l, 1 );
 	// Store the lua func callback in the Lua registry
 	// and keep a reference to it so we can resolve it later
-	int ref = lua_store( l ); // Must be top of the stack
+	uintptr_t ref = lua_store( l ); // Must be top of the stack
 	b->callback = lua_collisionCallback;
 	// Store the Lua ref (which resolves to the function)
 	// in the callback_data for the body
 	// This allows us to call the correct lua func (or closure)
 	// for this body
 	// TODO: fix this temp hack
-	int* data = mem_alloc( sizeof( void* ) * 2 );
-	data[0] = (int)l;
+	uintptr_t* data = mem_alloc( sizeof( void* ) * 2 );
+	data[0] = (uintptr_t)l;
 	data[1] = ref;
 	b->callback_data = data;
 	return 0;
@@ -292,7 +292,7 @@ int LUA_setWorldSpacePosition( lua_State* l ) {
 		matrix m;
 		matrix_cpy( m, t->world );
 		matrix_setTranslation( m, &v );
-		printf( "Transform pointer: %d.\n", (int)t );
+		printf( "Transform pointer: " dPTRf ".\n", (uintptr_t)t );
 		transform_setWorldSpace( t, m );
 	}
 	return 0;

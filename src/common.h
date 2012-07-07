@@ -28,8 +28,21 @@
 #define TERM_GREEN "[1;32;40m"
 #define TERM_WHITE "[0;37;40m"
 
+#define ARCH_64BIT
+#ifdef ARCH_64BIT
+#define dPTRf "%ld"
+#define xPTRf "%lx"
+#else
+#define dPTRf "%d"
+#define xPTRf "%x"
+#endif
+
 #define then ?
 #define otherwise :
+
+#ifndef ANDROID
+#define LINUX_X // At the moment we only support linux apart from Android
+#endif
 
 #ifdef ANDROID
 

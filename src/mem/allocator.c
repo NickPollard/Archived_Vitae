@@ -49,18 +49,18 @@ void* heap_allocate( heapAllocator* heap, int size ) {
 // Allocates *size* bytes from the given heapAllocator *heap*
 // Will crash if out of memory
 // NEEDS TO BE THREADSAFE
-void* heap_allocate_aligned( heapAllocator* heap, unsigned int size, unsigned int alignment ) {
+void* heap_allocate_aligned( heapAllocator* heap, size_t size, size_t alignment ) {
 	vmutex_lock( &allocator_mutex );
 #ifdef MEM_DEBUG_VERBOSE
-	printf( "HeapAllocator request for %d bytes, %d byte aligned.\n", size, alignment );
+	printf( "HeapAllocator request for " dPTRf " bytes, " dPTRf " byte aligned.\n", size, alignment );
 #endif
-	unsigned int size_original = size;
+	size_t size_original = size;
 	size += alignment;	// Make sure we have enough space to align
 	block* b = heap_findEmptyBlock( heap, size );
 
 	if ( !b ) {
 		heap_dumpBlocks( heap );
-		printError( "HeapAllocator out of memory on request for %d bytes. Total size: %d bytes, Used size: %d bytes\n", size, heap->total_size, heap->total_allocated );
+		printError( "HeapAllocator out of memory on request for " dPTRf " bytes. Total size: " dPTRf " bytes, Used size: " dPTRf " bytes\n", size, heap->total_size, heap->total_allocated );
 		assert( 0 );
 	}
 	
@@ -83,7 +83,7 @@ void* heap_allocate_aligned( heapAllocator* heap, unsigned int size, unsigned in
 	vAssert( b->next == b->data + b->size );
 
 	// Move the data pointer on enough to force alignment
-	unsigned int offset = alignment - ((unsigned int)b->data % alignment);
+	uintptr_t offset = alignment - ((uintptr_t)b->data % alignment);
 	b->data = ((uint8_t*)b->data) + offset;
 	b->size -= offset;
 
@@ -93,12 +93,12 @@ void* heap_allocate_aligned( heapAllocator* heap, unsigned int size, unsigned in
 	heap->total_free -= size;
 
 	// Ensure we have met our requirements
-	unsigned int align_offset = ((unsigned int)b->data) % alignment;
+	uintptr_t align_offset = ((uintptr_t)b->data) % alignment;
 	vAssert( align_offset == 0 );	// Correctly Aligned
 	vAssert( b->size >= size_original );	// Large enough
 
 #ifdef MEM_DEBUG_VERBOSE
-	printf("Allocator returned address: %x.\n", (unsigned int)b->data );
+	printf("Allocator returned address: " xPTRf ".\n", (uintptr_t)b->data );
 #endif
 
 	vmutex_unlock( &allocator_mutex );
@@ -122,11 +122,11 @@ void heap_dumpBlocks( heapAllocator* heap ) {
 	while ( b ) {
 #ifdef MEM_STACK_TRACE
 		if ( b->stack && !b->free )
-			printf( "Block: ptr 0x%x, data: 0x%x, size %d, free %d\t\tStack: %s\n", (unsigned int)b, (unsigned int)b->data, b->size, b->free, b->stack );
+			printf( "Block: ptr 0x" xPTRf ", data: 0x" xPTRf ", size " dPTRf ", free " dPTRf "\t\tStack: %s\n", (uintptr_t)b, (uintptr_t)b->data, b->size, b->free, b->stack );
 		else
-			printf( "Block: ptr 0x%x, data: 0x%x, size %d, free %d\n", (unsigned int)b, (unsigned int)b->data, b->size, b->free );
+			printf( "Block: ptr 0x" xPTRf ", data: 0x" xPTRf ", size " dPTRf ", free " dPTRf "\n", (uintptr_t)b, (uintptr_t)b->data, b->size, b->free );
 #else // MEM_STACK_TRACE
-		printf( "Block: ptr 0x%x, data: 0x%x, size %d, free %d\n", (unsigned int)b, (unsigned int)b->data, b->size, b->free );
+		printf( "Block: ptr 0x" xPTRf ", data: 0x" xPTRf ", size " dPTRf ", free " dPTRf "\n", (uintptr_t)b, (uintptr_t)b->data, b->size, b->free );
 #endif // MEM_STACK_TRACE
 		b = b->next;
 	}
@@ -137,10 +137,10 @@ void heap_dumpUsedBlocks( heapAllocator* heap ) {
 	while ( b ) {
 #ifdef MEM_STACK_TRACE
 		if ( b->stack && !b->free )
-			printf( "Block: ptr 0x%x, data: 0x%x, size %d, free %d\t\tStack: %s\n", (unsigned int)b, (unsigned int)b->data, b->size, b->free, b->stack );
+			printf( "Block: ptr 0x" xPTRf ", data: 0x" xPTRf ", size " dPTRf ", free " dPTRf "\t\tStack: %s\n", (uintptr_t)b, (uintptr_t)b->data, b->size, b->free, b->stack );
 #else // MEM_STACK_TRACE
 		if ( !b->free )
-			printf( "Block: ptr 0x%x, data: 0x%x, size %d, free %d\n", (unsigned int)b, (unsigned int)b->data, b->size, b->free );
+			printf( "Block: ptr 0x" xPTRf ", data: 0x" xPTRf ", size " dPTRf ", free " dPTRf "\n", (uintptr_t)b, (uintptr_t)b->data, b->size, b->free );
 #endif // MEM_STACK_TRACE
 		b = b->next;
 	}
@@ -148,7 +148,7 @@ void heap_dumpUsedBlocks( heapAllocator* heap ) {
 
 // Find a block of at least *min_size* bytes
 // First version will naively use first found block meeting the criteria
-block* heap_findEmptyBlock( heapAllocator* heap, unsigned int min_size ) {
+block* heap_findEmptyBlock( heapAllocator* heap, size_t min_size ) {
 //	heap_dumpBlocks( heap );
 	block* b = heap->first;
 	while ((( b->size < min_size ) || !b->free ) && b->next ) {
@@ -184,7 +184,7 @@ void heap_deallocate( heapAllocator* heap, void* data ) {
 	block* b = heap_findBlock( heap, data );
 	vAssert( b );
 #ifdef MEM_DEBUG_VERBOSE
-	printf("Allocator freed address: %x.\n", (unsigned int)b->data );
+	printf("Allocator freed address: " xPTRf ".\n", (uintptr_t)b->data );
 #endif
 	b->free = true;
 
@@ -228,11 +228,11 @@ void block_merge( heapAllocator* heap, block* first, block* second ) {
 	// We can't just add sizes, as there may be alignment padding.
 //	first->size += second->size + sizeof( block );
 
-//	printf( "first: 0x%x, Second: 0x%x, Second->next 0x%x, Second->data 0x%x, Second->size 0x%x",		first, second, second->next, second->data, second->size );
+//	printf( "first: 0x" xPTRf ", Second: 0x" xPTRf ", Second->next 0x" xPTRf ", Second->data 0x" xPTRf ", Second->size 0x" xPTRf "",		first, second, second->next, second->data, second->size );
 
-//	unsigned int true_size = (uint8_t*)second->next - (uint8_t*)second;
-	unsigned int true_size = second->size + ( (unsigned int)second->data - (unsigned int)second );
-//	printf( "first->size: %d true_size: %d\n", first->size, true_size );
+//	size_t true_size = (uint8_t*)second->next - (uint8_t*)second;
+	size_t true_size = second->size + ( (size_t)second->data - (size_t)second );
+//	printf( "first->size: " dPTRf " true_size: " dPTRf "\n", first->size, true_size );
 	first->size = first->size + true_size;
 	first->next = second->next;
 	if ( second->next )
@@ -264,9 +264,9 @@ heapAllocator* heap_create( int heap_size ) {
 
 	// Test write the data to check we have a valid block of mem
 #if 0
-	for ( unsigned int i = 0; i < allocator->total_size; i+=1024 ) {
-		printf( "ptr: 0x%x\n", ((unsigned int)first->data + i) );
-		*(uint8_t*)((unsigned int)first->data + i) = 0xde;
+	for ( uintptr_t i = 0; i < allocator->total_size; i+=1024 ) {
+		printf( "ptr: 0x" xPTRf "\n", ((uintptr_t)first->data + i) );
+		*(uint8_t*)((uintptr_t)first->data + i) = 0xde;
 	}
 #endif
 
@@ -353,7 +353,7 @@ void* passthrough_allocate( passthroughAllocator* p, size_t size ) {
 	void* mem = heap_allocate( p->heap, size );
 	int after = p->heap->total_allocated;
 	int delta = after - before;
-	p->total_allocated = (unsigned int)((int)p->total_allocated + delta);	
+	p->total_allocated = (size_t)((int)p->total_allocated + delta);	
 	++p->allocations;
 	return mem;
 	}
@@ -363,7 +363,7 @@ void passthrough_deallocate( passthroughAllocator* p, void* mem ) {
 	heap_deallocate( p->heap, mem );
 	int after = p->heap->total_allocated;
 	int delta = after - before;
-	p->total_allocated = (unsigned int)((int)p->total_allocated + delta);	
+	p->total_allocated = (size_t)((int)p->total_allocated + delta);	
 	--p->allocations;
 	}
 	

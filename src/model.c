@@ -22,12 +22,12 @@ model*		models[kMaxModels];
 const char*	modelFiles[kMaxModels];
 int 		modelIDs[kMaxModels];
 
-unsigned int aligned_size( unsigned int size, unsigned int alignment ) {
+uintptr_t aligned_size( uintptr_t size, uintptr_t alignment ) {
 	return ( (size / alignment) + (( size % alignment > 0 ) ? 1 : 0) ) * alignment;
 }
 
-void*	advance_align( void* ptr, unsigned int alignment ) {
-	return (void*)aligned_size( (unsigned int)ptr, alignment );
+void*	advance_align( void* ptr, uintptr_t alignment ) {
+	return (void*)aligned_size( (uintptr_t)ptr, alignment );
 }
 
 // Create an empty mesh with vertCount distinct vertices and index_count vertex indices
@@ -67,6 +67,8 @@ mesh* mesh_createMesh( int vertCount, int index_count, int normal_count, int uv_
 
 	texture_request( &m->texture_diffuse, "dat/img/ship_hd_2.tga" );
 	m->shader = resources.shader_default;
+	printf( "shader_default: 0x%x\n", resources.shader_default );
+	vAssert( m->shader );
 
 	m->vertex_VBO = 0;
 	m->element_VBO = 0;

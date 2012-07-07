@@ -40,83 +40,10 @@ void test() {
 	test_string();
 }
 
-egl_renderer* egl_init( struct android_app* app ) {
-    // initialize OpenGL ES and EGL
-
-    /*
-     * Here specify the attributes of the desired configuration.
-     * Below, we select an EGLConfig with at least 8 bits per color
-     * component compatible with on-screen windows
-     */
-    const EGLint attribs[] = {
-            EGL_SURFACE_TYPE, EGL_WINDOW_BIT,
-            EGL_BLUE_SIZE, 8,
-            EGL_GREEN_SIZE, 8,
-            EGL_RED_SIZE, 8,
-			EGL_DEPTH_SIZE, 8,
-			EGL_RENDERABLE_TYPE, EGL_OPENGL_ES2_BIT,
-            EGL_NONE
-    };
-    EGLint w, h, dummy, format;
-    EGLint numConfigs;
-    EGLConfig config;
-    EGLSurface surface;
-    EGLContext context;
-
-    EGLDisplay display = eglGetDisplay( EGL_DEFAULT_DISPLAY );
-
-    eglInitialize( display, 0, 0 );
-
-    /* Here, the application chooses the configuration it desires. In this
-     * sample, we have a very simplified selection process, where we pick
-     * the first EGLConfig that matches our criteria */
-	printf( "EGL Choosing Config." );
-    eglChooseConfig( display, attribs, &config, 1, &numConfigs );
-
-    /* EGL_NATIVE_VISUAL_ID is an attribute of the EGLConfig that is
-     * guaranteed to be accepted by ANativeWindow_setBuffersGeometry().
-     * As soon as we picked a EGLConfig, we can safely reconfigure the
-     * ANativeWindow buffers to match, using EGL_NATIVE_VISUAL_ID. */
-    eglGetConfigAttrib( display, config, EGL_NATIVE_VISUAL_ID, &format );
-    
-	printf( "EGL Setting Window Buffers." );
-    ANativeWindow_setBuffersGeometry( app->window, 0, 0, format );
-
-	printf( "EGL Creating Surface." );
-    surface = eglCreateWindowSurface( display, config, app->window, NULL );
-   
-	// Ask for a GLES2 context	
-	const EGLint context_attribs[] = {
-		EGL_CONTEXT_CLIENT_VERSION, 2, 
-		EGL_NONE
-	};
-
-	printf( "EGL Creating Context." );
-    context = eglCreateContext(display, config, NULL, context_attribs );
-
-    if ( eglMakeCurrent(display, surface, surface, context) == EGL_FALSE ) {
-        LOGW( "Unable to eglMakeCurrent" );
-        return NULL;
-    }
-
-    eglQuerySurface(display, surface, EGL_WIDTH, &w);
-    eglQuerySurface(display, surface, EGL_HEIGHT, &h);
-
-	egl_renderer* egl = mem_alloc( sizeof( egl_renderer ));
-
-    egl->display = display;
-    egl->context = context;
-    egl->surface = surface;
-    egl->width = w;
-    egl->height = h;
-
-    return egl;
-}
-
 // Just the current frame in the display.
-static void draw_frame( egl_renderer* egl ) {
+static void draw_frame( window* w ) {
 	printf( "ANDROID: beginning drawing frame." );
-    if (egl->display == NULL) {
+    if ( w->display == NULL ) {
         // No display.
         return;
     }
@@ -126,24 +53,7 @@ static void draw_frame( egl_renderer* egl ) {
     glClearColor( 0.5f, 1.f, 0.5f, 1.f);
     glClear(GL_COLOR_BUFFER_BIT);
 
-    eglSwapBuffers( egl->display, egl->surface );
-}
-
-// Tear down the EGL context currently associated with the display.
-static void egl_term( egl_renderer* egl ) {
-    if ( egl->display != EGL_NO_DISPLAY ) {
-        eglMakeCurrent( egl->display, EGL_NO_SURFACE, EGL_NO_SURFACE, EGL_NO_CONTEXT );
-        if ( egl->context != EGL_NO_CONTEXT ) {
-            eglDestroyContext( egl->display, egl->context );
-        }
-        if (egl->surface != EGL_NO_SURFACE) {
-            eglDestroySurface( egl->display, egl->surface );
-        }
-        eglTerminate( egl->display );
-    }
-    egl->display = EGL_NO_DISPLAY;
-    egl->context = EGL_NO_CONTEXT;
-    egl->surface = EGL_NO_SURFACE;
+    eglSwapBuffers( w->display, w->surface );
 }
 
 void android_exit() {
@@ -176,12 +86,11 @@ static void handle_cmd( struct android_app* app, int32_t cmd ) {
 				}
 				printf( "MAIN THREAD: Renderer has been initialised.\n" );
 
-//				e->egl = egl_init( app );
 				// Set the touch window boundaries in the input
-				input_setWindowSize( e->input, e->egl->width, e->egl->height );
+				input_setWindowSize( e->input, window_main.width, window_main.height );
 				e->active = true;
 				//render_init();
-                draw_frame( ((engine*)app->userData)->egl );
+                draw_frame( &window_main );
             }
             break;
         case APP_CMD_TERM_WINDOW:
@@ -189,7 +98,7 @@ static void handle_cmd( struct android_app* app, int32_t cmd ) {
 				printf( "ANDROID: term window." );
 				// The window is being hidden or closed, clean it up.
 				engine* e = app->userData;
-				egl_term( e->egl );
+				render_destroyWindow( &window_main );
 				e->active = false;
 				android_exit();
 				break;
@@ -231,11 +140,9 @@ void android_init( struct android_app* app ) {
 	// *** Initialise Engine
 	// already created
 	engine* e = engine_create();
-	e->egl = NULL;
 	e->app = app;
 	e->active = false;
 	app->userData = e;
-
 }
 
 /**
@@ -260,7 +167,7 @@ void android_main( struct android_app* app ) {
 
 	// We want to wait until we have an EGL context before we kick off
 	// This is so that OpenGL can init correctly
-	while ( !((engine*)app->userData)->egl ) {
+	while ( window_main.context == 0 ) {
 		//		sleep( 1 );
 		int ident;
 		int events;
@@ -280,7 +187,6 @@ void android_main( struct android_app* app ) {
 	int argc = 0;
 	char** argv = NULL;
 	// Can't init engine until EGL is initialised
-	vAssert( ((engine*)app->userData)->egl );
 	engine_init( app->userData, argc, argv );
 
 #if TEST

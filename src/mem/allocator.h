@@ -22,10 +22,10 @@ typedef struct block_s block;
 // Insertion time is O(n)
 // Deallocation is O(n)
 struct heapAllocator_s {
-	unsigned int total_size;		// in bytes, size of the heap
-	unsigned int total_allocated;	// in bytes, currently allocated
-	unsigned int total_free;		// in bytes, currently free
-	unsigned int allocations;
+	size_t total_size;		// in bytes, size of the heap
+	size_t total_allocated;	// in bytes, currently allocated
+	size_t total_free;		// in bytes, currently free
+	size_t allocations;
 	block* first;					// doubly-linked list of blocks
 };
 
@@ -35,10 +35,10 @@ struct heapAllocator_s {
 // TODO - can optimise the space here?
 struct block_s {
 	void*	data;			// the memory location of the actual block
-	unsigned int	size;	// in bytes, the block size
+	size_t	size;	// in bytes, the block size
 	block*	next;			// doubly-linked list pointer
 	block*	prev;			// doubly-linked list pointer
-	unsigned int	free;	// true (1) if free, false (0) if used
+	size_t	free;	// true (1) if free, false (0) if used
 #ifdef MEM_STACK_TRACE
 	const char* stack;
 #endif
@@ -49,8 +49,8 @@ struct block_s {
 
 typedef struct passthroughAllocator_s {
 	heapAllocator* heap;
-	unsigned int total_allocated;	// in bytes, currently allocated
-	unsigned int allocations;
+	size_t total_allocated;	// in bytes, currently allocated
+	size_t allocations;
 } passthroughAllocator;
 
 // Default allocate from the static heap
@@ -67,11 +67,11 @@ void mem_init(int argc, char** argv);
 // Allocates *size* bytes from the given heapAllocator *heap*
 // Will crash if out of memory
 void* heap_allocate( heapAllocator* heap, int size );
-void* heap_allocate_aligned( heapAllocator* heap, unsigned int size, unsigned int alignment );
+void* heap_allocate_aligned( heapAllocator* heap, size_t size, size_t alignment );
 
 // Find a block of at least *min_size* bytes
 // First version will naively use first found block meeting the criteria
-block* heap_findEmptyBlock( heapAllocator* heap, unsigned int min_size );
+block* heap_findEmptyBlock( heapAllocator* heap, size_t min_size );
 
 // Find a block with a given data pointer to *mem_addr*
 // Returns NULL if no such block is found

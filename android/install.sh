@@ -1,2 +1,3 @@
+#!/bin/zsh
 adb uninstall com.vitruvianinteractive.vitae
-adb install $vitae/android/bin/vitae-debug.apk
+adb install /home/nick/Projects/Vitae/android/bin/vitae-debug.apk

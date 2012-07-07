@@ -26,7 +26,7 @@ void collision_event( body* a, body* b ) {
 	collisionEvent* event = &collision_events[event_count++];
 	event->a = a;
 	event->b = b;
-	printf( "Collision! %x %x\n", (uint32_t)a, (uint32_t)b );
+	printf( "Collision! 0x" xPTRf " 0x" xPTRf "\n", (uintptr_t)a, (uintptr_t)b );
 }
 
 void collision_init() {

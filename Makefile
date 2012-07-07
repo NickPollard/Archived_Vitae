@@ -1,7 +1,11 @@
 C = gcc
-CFLAGS = -Wall -Wextra -Werror -m32 -std=gnu99 -I . `pkg-config --cflags libglfw` -I/usr/include/lua5.1  -Isrc -pg
-LFLAGS = -m32 -Wl,--no-warn-search-mismatch -pg
-LIBS = -lGLU -L/usr/lib -L/usr/local/lib -llua `pkg-config --libs libglfw`
+#ARCH = -m32
+ARCH = -m64
+CFLAGS = -Wall -Wextra -Werror $(ARCH) -std=gnu99 -I . `pkg-config --cflags libglfw` -I/usr/include/lua5.1  -Isrc -pg
+LFLAGS = $(ARCH) -pg
+#PLATFORM_LIBS = -L/usr/lib/i386-linux-gnu -L/usr/local/lib/i386-linux-gnu
+PLATFORM_LIBS = -L/usr/lib/x86_64-linux-gnu -L/usr/local/lib/x86_64-linux-gnu
+LIBS = -L/usr/lib -L/usr/local/lib $(PLATFORM_LIBS) -lGL -lGLU -lEGL -llua -lm
 EXECUTABLE = vitae
 include Makelist
 OBJS = $(SRCS:src/%.c=bin/release/%.o)
@@ -39,6 +43,7 @@ android :
 
 cleanandroid :
 	@echo "--- Cleaning Android ---"
+	@find /home/nick/Projects/Vitae/android/obj/local/armeabi/objs-debug -name '*.o' -exec rm {} \;
 	@ant clean -f android/build.xml
 
 $(EXECUTABLE) : $(SRCS) $(OBJS)

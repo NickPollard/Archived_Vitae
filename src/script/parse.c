@@ -768,7 +768,7 @@ void model_processObject( void* arg, void* model_, void* transform_ ) {
 		particleEmitter* p = property_value( arg );
 
 		// Convert pointer to index
-		p->trans = (transform*)model_transformIndex( mdl, transform_ );
+		p->trans = (transform*)(uintptr_t)model_transformIndex( mdl, transform_ );
 /*
 //		p->definition->flags = p->definition->flags | kParticleWorldSpace;
 */

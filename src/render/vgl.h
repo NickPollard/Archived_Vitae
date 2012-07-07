@@ -1,6 +1,9 @@
 // vgl.h
 #pragma once
 
+//#include <GL/gl.h>
+//#include <GL/glu.h>
+
 //
 // Vitae Graphics Library - a wrapper around a lower level graphics library (OpenGL)
 // Used by the Vitae game engine to avoid binding too tightly to a platform

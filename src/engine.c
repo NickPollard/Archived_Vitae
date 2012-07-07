@@ -31,9 +31,6 @@
 #include <lauxlib.h>
 #include <lualib.h>
 
-// GLFW Libraries
-#include <GL/glfw.h>
-
 // System Libraries
 #include <stdlib.h>
 
@@ -44,6 +41,9 @@ IMPLEMENT_LIST(delegate)
 // *** Static Hacks
 scene* theScene = NULL;
 terrain* theTerrain = NULL;
+#ifdef LINUX_X
+xwindow xwindow_main = { NULL, 0x0, false };
+#endif
 
 // Function Declarations
 void engine_tickTickers( engine* e, float dt );
@@ -135,7 +135,7 @@ void engine_tick( engine* e ) {
 	time += dt;
 	time = time / 10.f;
 
-	printf( "TICK: frametime %.4fms (%.2f fps)\n", time, 1.f/time );
+	//printf( "TICK: frametime %.4fms (%.2f fps)\n", time, 1.f/time );
 
 	lua_preTick( dt );
 
@@ -278,7 +278,7 @@ void engine_waitForRenderThread() {
 void engine_render( engine* e ) {
 	PROFILE_BEGIN( PROFILE_ENGINE_RENDER );
 #ifdef ANDROID
-	if ( e->egl ) {
+	if ( window_main.context != 0 ) {
 		render( theScene );
 		skybox_render( NULL );
 		engine_renderRenders( e );
@@ -297,6 +297,25 @@ void engine_render( engine* e ) {
 	PROFILE_END( PROFILE_ENGINE_RENDER );
 }
 
+#ifdef LINUX_X
+void engine_xwindowPollEvents( engine* e ) {
+	XEvent event;
+	if ( XPending( xwindow_main.display ) > 0 ) {
+		XNextEvent( xwindow_main.display, &event );
+		if ( event.type == DestroyNotify ) {
+			// This message means we received our own message to destroy the window, so we clean up
+			xwindow_main.open = false;
+		}
+		if ( event.type == ClientMessage ) {
+			// This message means the user has asked to close the window, so we send the message
+			XDestroyWindow( xwindow_main.display, xwindow_main.window );
+		}
+	}
+
+	(void)e;
+}
+#endif // LINUX_X
+
 #ifdef ANDROID
 void engine_androidPollEvents( engine* e ) {       
 //	printf( "Polling for android events." );
@@ -313,20 +332,7 @@ void engine_androidPollEvents( engine* e ) {
 		if (source != NULL) {
 			source->process( e->app, source );
 		}
-/*
-		// If a sensor has data, process it now.
-		if (ident == LOOPER_ID_USER) {
-			if (engine.accelerometerSensor != NULL) {
-				ASensorEvent event;
-				while (ASensorEventQueue_getEvents(engine.sensorEventQueue,
-							&event, 1) > 0) {
-					LOGI("accelerometer: x=%f y=%f z=%f",
-							event.acceleration.x, event.acceleration.y,
-							event.acceleration.z);
-				}
-			}
-		}
-*/
+
 		// Check if we are exiting.
 		if ( e->app->destroyRequested != 0 ) {
 			e->running = false;
@@ -350,25 +356,33 @@ void engine_run(engine* e) {
 	while ( e->running ) {
 #ifdef ANDROID
 		engine_androidPollEvents( e );
-		if ( e->active ) {
-#endif // ANDROID
-		engine_input( e );
-		engine_tick( e );
-		engine_waitForRenderThread();
-		engine_render( e );
-		e->running = e->running && !input_keyPressed( e->input, KEY_ESC );
-#ifdef ANDROID
-		}
+		bool active = e->active;
 #else
-		e->running = e->running && glfwGetWindowParam( GLFW_OPENED );
+#ifdef LINUX_X
+		engine_xwindowPollEvents( e );
+#endif
+		bool active = true;
 #endif // ANDROID
+		if ( active ) {
+			engine_input( e );
+			engine_tick( e );
+			engine_waitForRenderThread();
+			engine_render( e );
+			e->running = e->running && !input_keyPressed( e->input, KEY_ESC );
+		}
+		bool window_open = true;
+#ifdef LINUX_X
+		window_open = xwindow_main.open;
+#endif // LINUX_X
+		e->running = e->running && window_open;
+
 #if PROFILE_ENABLE
 		profile_newFrame();
 #endif
 	}
 	PROFILE_END( PROFILE_MAIN );
 #if PROFILE_ENABLE
-		profile_newFrame();
+	profile_newFrame();
 	profile_dumpProfileTimes();
 #endif
 }

@@ -170,6 +170,24 @@ void input_setWindowSize( input* in, int w, int h ) {
 }
 #endif
 
+int getKey( int key ) {
+//	return glfwGetKey( key ) ) << j;
+	(void)key;
+	return 0x0;
+}
+
+int getMouseButton( int button ) {
+	//return glfwGetMouseButton( button );
+	(void)button;
+	return 0x0;
+}
+
+void getMousePos( int* x, int* y ) {
+	//glfwGetMousePos( x, y );
+	*x = 0;
+	*y = 0;
+}
+
 // tick the input, recording this frames input data from devices
 void input_tick( input* in, float dt ) {
 	(void)dt;
@@ -180,16 +198,16 @@ void input_tick( input* in, float dt ) {
 	for ( int i = 0; i < ( KEY_COUNT / 8 ); i++ ) {
 		in->data[in->active].keys[i] = 0x0;
 		for ( int j = 0; j < 8 ; j++ ) {
-			in->data[in->active].keys[i] |= ( 0x1 & glfwGetKey( i * 8 + j ) ) << j;
+			in->data[in->active].keys[i] |= ( 0x1 & getKey( i * 8 + j ) ) << j;
 		}
 	}
 
 	// Store current state of mouse
 	in->data[in->active].mouse = 0x0;
 	for ( int i = 0; i < 2; i++ )
-		in->data[in->active].mouse |= ( 0x1 & glfwGetMouseButton( i )) << i;
+		in->data[in->active].mouse |= ( 0x1 & getMouseButton( i )) << i;
 
-	glfwGetMousePos( &in->data[in->active].mouseX, &in->data[in->active].mouseY );
+	getMousePos( &in->data[in->active].mouseX, &in->data[in->active].mouseY );
 #endif
 
 #ifdef TOUCH

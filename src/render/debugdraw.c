@@ -1,12 +1,12 @@
 // debugdraw.c
 
-#include "src/common.h"
-#include "src/render/debugdraw.h"
+#include "common.h"
+#include "render/debugdraw.h"
 //-----------------------
-#include "src/maths.h"
-#include "src/render/render.h"
-// GLFW Libraries
-#include <GL/glfw.h>
+#include "maths.h"
+#include "render/render.h"
+
+#include "render/vgl.h"
 
 // Draw a debug cross at the point *center*
 void debugdraw_cross( const vector* center, float radius ) {

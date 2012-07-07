@@ -18,6 +18,8 @@
 #include "font.h"
 #include "debug/debugtext.h"
 
+#define INVALID_TRANSFORM_INDEX UINT_MAX
+
 // *** Private Declarations
 
 void scene_saveFile( scene* s, const char* filename );
@@ -117,7 +119,7 @@ int scene_transformIndex( scene* s, transform* t ) {
 		if ( scene_transform( s, i ) == t )
 			return i;
 	}
-	return -1;
+	return INVALID_TRANSFORM_INDEX;
 }
 
 modelInstance* scene_model(scene* s, int i) {
@@ -333,7 +335,7 @@ sceneData* scene_save( scene* s ) {
 	for ( int i = 0; i < s->transform_count; i++ ) {
 		data->transforms[i] = *scene_transform( s, i );
 		assert( data->transforms[i].parent != scene_transform( s, i ));
-		data->transforms[i].parent = (void*)scene_transformIndex( s, data->transforms[i].parent );
+		data->transforms[i].parent = (void*)(uintptr_t)scene_transformIndex( s, data->transforms[i].parent );
 	}
 	
 	// modelInstances
@@ -343,7 +345,7 @@ sceneData* scene_save( scene* s ) {
 
 	for ( int i = 0; i < s->model_count; i++ ) {
 		data->modelInstances[i] = *scene_model( s, i );
-		data->modelInstances[i].trans = (void*)scene_transformIndex( s, data->modelInstances[i].trans );
+		data->modelInstances[i].trans = (void*)(uintptr_t)scene_transformIndex( s, data->modelInstances[i].trans );
 	}
 
 	// lights
@@ -353,20 +355,20 @@ sceneData* scene_save( scene* s ) {
 
 	for ( int i = 0; i < s->light_count; i++ ) {
 		data->lights[i] = *scene_light( s, i );
-		data->lights[i].trans = (void*)scene_transformIndex( s, data->lights[i].trans );
+		data->lights[i].trans = (void*)(uintptr_t)scene_transformIndex( s, data->lights[i].trans );
 	}
 
 	data->cam = (void*)data->lights + lights_size;
 	assert( (void*)data->cam < blob_end );
 
 	memcpy( data->cam, s->cam, sizeof( camera ));
-	data->cam->trans = (transform*)scene_transformIndex( s, data->cam->trans );
+	data->cam->trans = (transform*)(uintptr_t)scene_transformIndex( s, data->cam->trans );
 
 	return data;
 }
 
-transform* scene_resolveTransform( scene* s, int i ) {
-	if ( i == -1 )
+transform* scene_resolveTransform( scene* s, uintptr_t i ) {
+	if ( i == INVALID_TRANSFORM_INDEX )
 		return NULL;
 	else
 		return scene_transform( s, i );
@@ -384,7 +386,7 @@ scene* scene_loadFile( const char* filename ) {
 	size_t buffer_length;
 	void* buffer = vfile_contents( filename, &buffer_length );
 	sceneData* data = (sceneData*)buffer;
-	printf( "Loading scene from file %s. File Size: %d, Data size: %d.\n", filename, buffer_length, data->size );
+	printf( "Loading scene from file %s. File Size: " dPTRf ", Data size: " dPTRf ".\n", filename, buffer_length, data->size );
 	assert( data->size == buffer_length );
 	return scene_load( buffer );
 }
@@ -410,20 +412,20 @@ scene* scene_load( sceneData* data ) {
 		transform* t = transform_create( s );
 		memcpy( t, &data->transforms[i], sizeof( transform ));
 		scene_addTransform( s, t );
-		printf(" Loading transform %d. Parent index = %d.\n", i, (int)t->parent );
-		t->parent = scene_resolveTransform( s, (int)t->parent );
+		printf(" Loading transform %d. Parent index = " dPTRf ".\n", i, (uintptr_t)t->parent );
+		t->parent = scene_resolveTransform( s, (uintptr_t)t->parent );
 		assert( t != t->parent );
 	}
 
 	s->cam = camera_create( s );
 	memcpy( s->cam, data->cam, sizeof( camera ));
-	s->cam->trans = scene_resolveTransform( s, (int)s->cam->trans );
+	s->cam->trans = scene_resolveTransform( s, (uintptr_t)s->cam->trans );
 
 	// create modelInstances
 	for ( int i = 0; i < data->model_count; i++ ) {
 		modelInstance* m = modelInstance_createEmpty( );
 		memcpy( m, &data->modelInstances[i], sizeof( modelInstance ));
-		m->trans = scene_resolveTransform( s, (int)m->trans );
+		m->trans = scene_resolveTransform( s, (uintptr_t)m->trans );
 		scene_addModel( s, m );
 	}
 
@@ -432,7 +434,7 @@ scene* scene_load( sceneData* data ) {
 		light* l = light_create( );
 		memcpy( l, &data->lights[i], sizeof( light ));
 		scene_addLight( s, l );
-		l->trans = scene_resolveTransform( s, (int)l->trans );
+		l->trans = scene_resolveTransform( s, (uintptr_t)l->trans );
 	}
 
 	return s;

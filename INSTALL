@@ -1,0 +1,6 @@
+# Install GCC development libraries
+# Install Lua
+cd 3rdParty/lua/Lua-5.1.4
+make Linux && sudo make install
+
+# Add device to udev rules

@@ -18,8 +18,21 @@
 // temp
 #include "engine.h"
 
-// GLFW Libraries
-#include <GL/glfw.h>
+#ifdef LINUX_X
+#include <X11/Xlib.h>
+#endif
+
+// Rendering API declaration
+#ifdef ANDROID
+#define RENDER_OPENGL_ES
+#define RENDER_GL_API EGL_OPENGL_ES_API
+#endif
+
+#ifdef LINUX_X
+#define RENDER_OPENGL
+#define RENDER_GL_API EGL_OPENGL_API
+#endif
+
 
 bool	render_initialised = false;
 
@@ -33,10 +46,9 @@ matrix perspective;
 gl_resources resources;
 
 #ifdef ANDROID
-//window window_main = { 800, 480 };
-window window_main = { 1280, 720 };
+window window_main = { 1280, 720, 0, 0, 0, true };
 #else
-window window_main = { 1280, 720 };
+window window_main = { 1280, 720, 0, 0, 0, true };
 #endif
 
 GLuint render_glBufferCreate( GLenum target, const void* data, GLsizei size ) {
@@ -109,6 +121,176 @@ void render_bufferTick() {
 	vmutex_unlock( &buffer_mutex );
 }
 
+EGLNativeWindowType os_createWindow() {
+#ifdef LINUX_X
+	// Get the XServer display
+	Display* display	= XOpenDisplay(NULL);
+
+	int x = 0, y = 0;
+	int border_width = 0;
+
+	int white_color = XWhitePixel( display, 0 );
+	int black_color = XBlackPixel( display, 0 );
+
+	// Create the window
+	Window window = XCreateSimpleWindow( display, DefaultRootWindow( display ), 
+			x, y, 
+			window_main.width, window_main.height,
+		   	border_width, 
+			black_color, black_color );
+
+	// We want to get MapNotify events
+	XSelectInput( display, window, StructureNotifyMask );
+
+	// Setup client messaging to receive a client delete message
+	Atom wm_delete=XInternAtom( display, "WM_DELETE_WINDOW", true );
+	XSetWMProtocols( display, window, &wm_delete, 1 );
+
+	GC gc = XCreateGC( display, window, 0, NULL );
+	XSetForeground( display, gc, white_color );
+
+	XStoreName( display, window, "Vitae");
+	XMapWindow( display, window );
+
+	// Wait for the MapNotify event
+	for(;;) {
+		XEvent e;
+		XNextEvent( display, &e );
+		if ( e.type == MapNotify )
+			break;
+	}
+
+	xwindow_main.display = display;
+	xwindow_main.window = window;
+	xwindow_main.open = true;
+
+	return window;
+#endif
+}
+
+// Tear down the EGL context currently associated with the display.
+void render_destroyWindow( window* w ) {
+    if ( w->display != EGL_NO_DISPLAY ) {
+        eglMakeCurrent( w->display, EGL_NO_SURFACE, EGL_NO_SURFACE, EGL_NO_CONTEXT );
+        if ( w->context != EGL_NO_CONTEXT ) {
+            eglDestroyContext( w->display, w->context );
+        }
+        if ( w->surface != EGL_NO_SURFACE) {
+            eglDestroySurface( w->display, w->surface );
+        }
+        eglTerminate( w->display );
+    }
+    w->display = EGL_NO_DISPLAY;
+    w->context = EGL_NO_CONTEXT;
+    w->surface = EGL_NO_SURFACE;
+}
+
+EGLNativeDisplayType render_getDefaultOSDisplay() {
+#ifdef LINUX_X
+	return XOpenDisplay(NULL);
+#endif // LINUX_X
+#ifdef ANDROID
+	return EGL_DEFAULT_DISPLAY;
+#endif // ANDROID
+}
+
+void render_createWindow( void* app, window* w ) {
+    // initialize OpenGL ES and EGL
+
+    /*
+     * Here specify the attributes of the desired configuration.
+     * Below, we select an EGLConfig with at least 8 bits per color
+     * component compatible with on-screen windows
+     */
+#ifdef RENDER_OPENGL_ES
+    const EGLint attribs[] = {
+            EGL_SURFACE_TYPE, EGL_WINDOW_BIT,
+            EGL_BLUE_SIZE, 8,
+            EGL_GREEN_SIZE, 8,
+            EGL_RED_SIZE, 8,
+			EGL_DEPTH_SIZE, 8,
+			EGL_RENDERABLE_TYPE, EGL_OPENGL_ES2_BIT,
+            EGL_NONE
+    };
+
+	// Ask for a GLES2 context	
+	const EGLint context_attribs[] = {
+		EGL_CONTEXT_CLIENT_VERSION, 2, 
+		EGL_NONE
+	};
+#endif // OPENGL_ES
+#ifdef RENDER_OPENGL
+	const EGLint attribs[] = {
+            EGL_SURFACE_TYPE, EGL_WINDOW_BIT,
+            EGL_BLUE_SIZE, 8,
+            EGL_GREEN_SIZE, 8,
+            EGL_RED_SIZE, 8,
+			EGL_DEPTH_SIZE, 8,
+			EGL_RENDERABLE_TYPE, EGL_OPENGL_BIT, // We want OpenGL, not OpenGL_ES
+            EGL_NONE
+    };
+	// Don't need, as we're not using OpenGL_ES
+	const EGLint context_attribs[] = {
+		EGL_NONE
+	};
+#endif // RENDER_OPENGL
+
+    EGLint numConfigs;
+    EGLConfig config;
+    EGLSurface surface;
+    EGLContext context;
+
+    EGLDisplay display = eglGetDisplay( render_getDefaultOSDisplay() );
+	EGLint minor = 0, major = 0;
+    EGLBoolean result = eglInitialize( display, &major, &minor );
+	vAssert( result == EGL_TRUE );
+
+    /* Here, the application chooses the configuration it desires. In this
+     * sample, we have a very simplified selection process, where we pick
+     * the first EGLConfig that matches our criteria */
+	printf( "EGL Choosing Config." );
+    eglChooseConfig( display, attribs, &config, 1, &numConfigs );
+	vAssert( result == EGL_TRUE );
+
+	// We need to create a window first, outside EGL
+#ifdef ANDROID
+    /* EGL_NATIVE_VISUAL_ID is an attribute of the EGLConfig that is
+     * guaranteed to be accepted by ANativeWindow_setBuffersGeometry().
+     * As soon as we picked a EGLConfig, we can safely reconfigure the
+     * ANativeWindow buffers to match, using EGL_NATIVE_VISUAL_ID. */
+    EGLint egl_visual_id;
+    eglGetConfigAttrib( display, config, EGL_NATIVE_VISUAL_ID, &egl_visual_id );
+    ANativeWindow_setBuffersGeometry( ((struct android_app*)app)->window, 0, 0, egl_visual_id );
+	EGLNativeWindowType native_win = ((struct android_app*)app)->window;
+#endif
+#ifdef LINUX_X
+	(void)app;
+	EGLNativeWindowType native_win = os_createWindow();
+#endif
+
+	printf( "EGL Creating Surface." );
+    surface = eglCreateWindowSurface( display, config, native_win, NULL );
+	if ( surface == EGL_NO_SURFACE ) {
+		printf( "Unable to create EGL surface (eglError: %d)\n", eglGetError() );
+		vAssert( 0 );
+	}
+	result = eglBindAPI( RENDER_GL_API );
+	vAssert( result == EGL_TRUE );
+  
+	printf( "EGL Creating Context." );
+    context = eglCreateContext(display, config, NULL, context_attribs );
+
+    result = eglMakeCurrent(display, surface, surface, context);
+	vAssert( result == EGL_TRUE );
+
+	// Store our EGL params with out render window
+	w->display = display;
+	w->surface = surface;
+	w->context = context;
+    eglQuerySurface(display, surface, EGL_WIDTH, &w->width);
+    eglQuerySurface(display, surface, EGL_HEIGHT, &w->height);
+}
+
 void render_buildShaders() {
 	// Load Shaders								Vertex								Fragment
 	resources.shader_default	= shader_load( "dat/shaders/phong.v.glsl",			"dat/shaders/phong.f.glsl" );
@@ -117,6 +299,9 @@ void render_buildShaders() {
 	resources.shader_skybox		= shader_load( "dat/shaders/skybox.v.glsl",			"dat/shaders/skybox.f.glsl" );
 	resources.shader_ui			= shader_load( "dat/shaders/ui.v.glsl",				"dat/shaders/ui.f.glsl" );
 	resources.shader_filter		= shader_load( "dat/shaders/filter.v.glsl",			"dat/shaders/filter.f.glsl" );
+
+	vAssert( resources.shader_default );
+	printf( "shader_default: 0x%x\n", resources.shader_default );
 
 #define GET_UNIFORM_LOCATION( var ) \
 	resources.uniforms.var = shader_findConstant( mhash( #var )); \
@@ -200,16 +385,10 @@ void render_set2D() {
 void render_handleResize() {
 }
 
-#ifdef ANDROID
-void render_swapBuffers( egl_renderer* egl ) {
-    eglSwapBuffers( egl->display, egl->surface );
-}
-#else
-void render_swapBuffers() {
-	glfwSwapBuffers(); // Send the 3d scene to the screen (flips display buffers)
+void render_swapBuffers( window* w ) {
+	eglSwapBuffers( w->display, w->surface );
 	glFlush();
 }
-#endif // ANDROID
 
 // Iterate through each model in the scene
 // Translate by their transform
@@ -279,26 +458,9 @@ void render_initFrameBuffer( window w ) {
 	glBindTexture( GL_TEXTURE_2D, 0 );
 }
 
-void render_initWindow() {
-#ifndef ANDROID
-	if (!glfwInit())
-		printf("ERROR - failed to init glfw.\n");
-
-	glfwOpenWindow(window_main.width, window_main.height, 
-			8, 8, 8,		// RGB bits
-			8, 				// Alpha bits
-			8, 				// Depth bits
-			0,				// Stencil bits
-		   	GLFW_WINDOW);
-
-	glfwSetWindowTitle("Vitae");
-	glfwSetWindowSizeCallback(render_handleResize);
-#endif
-}
-
 // Initialise the 3D rendering
-void render_init() {
-	render_initWindow();
+void render_init( void* app ) {
+	render_createWindow( app, &window_main );
 
 	printf("RENDERING: Initialising OpenGL rendering settings.\n");
 	glEnable( GL_DEPTH_TEST );
@@ -332,7 +494,7 @@ void render_init() {
 // Terminate the 3D rendering
 void render_terminate() {
 #ifndef ANDROID
-	glfwTerminate();
+	//glfwTerminate();
 #endif
 }
 
@@ -416,7 +578,7 @@ void render_sceneParams( sceneParams* params ) {
 }
 
 int render_findDrawCallBuffer( shader* vshader ) {
-	unsigned int key = (unsigned int)vshader;
+	uintptr_t key = (uintptr_t)vshader;
 	int* i_ptr = map_find( callbatch_map, key );
 	int i;
 	if ( !i_ptr ) {
@@ -431,13 +593,16 @@ int render_findDrawCallBuffer( shader* vshader ) {
 	return i;
 }
 
-drawCall* drawCall_create( renderPass* pass, shader* vshader, int count, GLushort* elements, vertex* verts, GLint tex, matrix mv /*, vector* fog_color*/ ) {
+drawCall* drawCall_create( renderPass* pass, shader* vshader, int count, GLushort* elements, vertex* verts, GLint tex, matrix mv ) {
+	vAssert( pass );
+	vAssert( vshader );
+
 	// Lookup drawcall buffer from shader
 	int buffer = render_findDrawCallBuffer( vshader );
 	int call = pass->next_call_index[buffer]++;
 	vAssert( call < kMaxDrawCalls );
 	drawCall* draw = &pass->call_buffer[buffer][call];
-	
+
 	draw->vitae_shader = vshader;
 	draw->element_buffer = elements;
 	draw->vertex_buffer = verts;
@@ -462,7 +627,7 @@ void render_drawCall_draw( drawCall* draw ) {
 	//printf( "drawCall_draw 2\n" );
 	// If required, copy our data to the GPU
 	if ( draw->vertex_VBO == resources.vertex_buffer[0] ) {
-		printf( "Using main VBO.\n" );
+		//printf( "Using main VBO.\n" );
 		GLsizei vertex_buffer_size	= draw->element_count * sizeof( vertex );
 		GLsizei element_buffer_size	= draw->element_count * sizeof( GLushort );
 #if 1
@@ -487,7 +652,7 @@ void render_drawCall_draw( drawCall* draw ) {
 
 	// Now Draw!
 	VERTEX_ATTRIBS( VERTEX_ATTRIB_POINTER );
-	glDrawElements( GL_TRIANGLES, draw->element_count, GL_UNSIGNED_SHORT, (void*)draw->element_buffer_offset );
+	glDrawElements( GL_TRIANGLES, draw->element_count, GL_UNSIGNED_SHORT, (void*)(uintptr_t)draw->element_buffer_offset );
 	VERTEX_ATTRIBS( VERTEX_ATTRIB_DISABLE_ARRAY );
 	//printf( "drawCall_draw 4\n" );
 }
@@ -540,11 +705,7 @@ void render_draw( window* w, engine* e ) {
 	render_drawPass( &renderPass_main );
 	render_drawPass( &renderPass_alpha );
 
-#if ANDROID
-	render_swapBuffers( e->egl );
-#else
-	render_swapBuffers();
-#endif
+	render_swapBuffers( w );
 }
 
 void render_waitForEngineThread() {
@@ -566,15 +727,16 @@ void render_renderThreadTick( engine* e ) {
 //
 void* render_renderThreadFunc( void* args ) {
 	printf( "RENDER THREAD: Hello from the render thread!\n" );
-
+	engine* e = NULL;
 #ifdef ANDROID
 	struct android_app* app = args;
-	engine* e = app->userData;
-	e->egl = egl_init( app );
+	e = app->userData;
 #else
-	engine* e = args;
+	e = args;
+	void* app = NULL;
 #endif
-	render_init();
+
+	render_init( app );
 	render_initialised = true;
 	printf( "RENDER THREAD: Render system initialised.\n");
 	vthread_signalCondition( finished_render );

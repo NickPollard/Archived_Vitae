@@ -188,6 +188,7 @@ void shader_bindConstants( shader* s ) {
 
 // Activate the shader for use in rendering
 void shader_activate( shader* s ) {
+	vAssert( s );
 	// Bind the shader program for use
 	glUseProgram( s->program );
 
@@ -218,5 +219,6 @@ shader* shader_load( const char* vertex_name, const char* fragment_name ) {
 	mem_free( (void*)vertex_file );			// Cast away const to free, we allocated this ourselves
 	mem_free( (void*)fragment_file	);		// Cast away const to free, "
 
+	vAssert( s );
 	return s;
 }

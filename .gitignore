@@ -12,6 +12,8 @@ android/obj
 android/assets
 android/libs
 android/xxx.map
+android/gen
+*.d
 
 # profile output
 android_profile_results

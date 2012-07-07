@@ -14,6 +14,10 @@
 #include <EGL/egl.h>
 #endif
 
+#ifdef LINUX_X
+#include <X11/Xlib.h>
+#endif // LINUX_X
+
 // Lua Libraries
 #include <lua.h>
 
@@ -38,6 +42,17 @@ typedef struct egl_renderer_s {
 } egl_renderer;
 #endif
 
+#ifdef LINUX_X
+typedef struct xwindow_s {
+	Display* display;
+	Window window;
+	bool open;
+} xwindow;
+
+extern xwindow xwindow_main;
+#endif
+
+
 struct engine_s {
 	// *** General
 	frame_timer* timer;
@@ -57,7 +72,6 @@ struct engine_s {
 	bool running;
 	bool active;
 #ifdef ANDROID
-	egl_renderer* egl;
 	struct android_app* app;
 #endif
 };
