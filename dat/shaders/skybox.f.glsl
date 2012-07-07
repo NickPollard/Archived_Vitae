@@ -15,13 +15,13 @@ uniform sampler2D tex;
 uniform vec4 fog_color;
 uniform vec4 sky_color_top;
 uniform vec4 sky_color_bottom;
-uniform mat4 modelview;
+uniform vec4 camera_space_sun_direction;
+//const vec4 camera_space_sun_direction = vec4( 0.0, 0.0, 1.0, 0.0 );
 
 const vec4 sun_color = vec4( 1.0, 0.5, 0.0, 1.0 );
-const vec4 sun_dir = vec4( 0.0, 0.0, 1.0, 0.0 );
+const vec4 cloud_color = vec4( 1.0, 1.0, 1.0, 1.0 );
 
-float sun_fog( vec4 sun_direction, vec4 fragment_position, mat4 modelview_mat ) {
-	vec4 local_sun_dir = modelview_mat * sun_direction;
+float sun_fog( vec4 local_sun_dir, vec4 fragment_position ) {
 	return max( 0.0, dot( local_sun_dir, normalize( fragment_position )));
 }
 
@@ -32,19 +32,15 @@ void main() {
 	// light-invariant calculations
 	vec4 material_diffuse = texture2D( tex, texcoord );
 
-/*	
-	vec4 fragColor = ( sky_color_top * material_diffuse.z )
-					+ ( sky_color_bottom * material_diffuse.x );
-	fragColor.w = 1.0;
-	*/
-	//gl_FragColor = vec4( fragColor.xyz, 1.0 );
-
+#if 0
 	float brightness = min( sky_color_top.x +
 						sky_color_top.y +
 						sky_color_top.z, 
 						1.0 );
 
 	vec4 cloud_color = vec4( brightness, brightness, brightness, 1.0 );
+#else
+#endif
 
 	// color = top * blue
 	// then blend in cloud (white * green, blend alpha )
@@ -54,15 +50,15 @@ void main() {
 	fragColor.w = 1.0;
 
 	// sunlight on fog
-	float fog_sun_factor = sun_fog( sun_dir, frag_position, modelview );
+#if 0
+	float fog_sun_factor = sun_fog( camera_space_sun_direction, frag_position );
 	vec4 local_fog_color = mix( fog_color, sun_color, fog_sun_factor );
-
+#else
+	vec4 local_fog_color = fog_color;
+#endif
+	
+	//gl_FragColor = vec4( fog, fog, fog, 1.0 );
 	gl_FragColor = mix( fragColor, local_fog_color, fog );
-
-	//vec4 sky_color_top = vec4( 0.3, 0.6, 1.0, 1.0 );
-	//vec4 sky_color_bottom = vec4( 1.0, 0.4, 0.0, 1.0 );
-	//gl_FragColor = vec4( top, bottom, 0.0, 1.0 );
-	//gl_FragColor = mix( sky_color_bottom, sky_color_top, height );
 #endif
 }
 

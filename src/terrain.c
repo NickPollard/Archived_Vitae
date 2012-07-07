@@ -91,9 +91,9 @@ void terrain_createBlocks( terrain* t ) {
 
 // The procedural function
 float terrain_sample( float u, float v ) {
-	float scale_m_u = 40.0;
-	float scale_m_v = 40.0;
-	float height_m = 40.0;
+	float scale_m_u = 40.f;
+	float scale_m_v = 40.f;
+	float height_m = 40.f;
 	float mountains = (1.0f + sin( u / scale_m_u ) * sin( v / scale_m_v )) * 0.5f * height_m;
 
 	float detail =
@@ -258,8 +258,18 @@ void terrainBlock_calculateBuffers( terrain* t, terrainBlock* b ) {
 
 	// Create GPU 
 #if TERRAIN_USE_VBO
-	b->vertex_VBO = render_requestBuffer( GL_ARRAY_BUFFER, b->vertex_buffer, sizeof( vertex ) * b->index_count );
-	b->element_VBO = render_requestBuffer( GL_ELEMENT_ARRAY_BUFFER, b->element_buffer, sizeof( GLushort ) * b->index_count );
+	if ( !b->vertex_VBO ) {
+		b->vertex_VBO = render_requestBuffer( GL_ARRAY_BUFFER, b->vertex_buffer, sizeof( vertex ) * b->index_count );
+	} else {
+		// If we've already allocated a buffer at some point, just re-use it
+		render_bufferCopy( GL_ARRAY_BUFFER, *b->vertex_VBO, b->vertex_buffer, sizeof( vertex ) * b->index_count );
+	}
+	if ( !b->element_VBO ) {
+		b->element_VBO = render_requestBuffer( GL_ELEMENT_ARRAY_BUFFER, b->element_buffer, sizeof( GLushort ) * b->index_count );
+	} else {
+		// If we've already allocated a buffer at some point, just re-use it
+		render_bufferCopy( GL_ELEMENT_ARRAY_BUFFER, *b->element_VBO, b->element_buffer, sizeof( GLushort ) * b->index_count );
+	}
 	//printf( "Terrain: Allocated new GPU Buffer Objects: Vertex %x Element %x.\n", b->vertex_VBO, b->element_VBO );
 #endif
 }

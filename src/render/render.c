@@ -52,7 +52,7 @@ window window_main = { 1280, 720, 0, 0, 0, true };
 #endif
 
 GLuint render_glBufferCreate( GLenum target, const void* data, GLsizei size ) {
-	printf( "Allocating oGL buffer.\n" );
+	//printf( "Allocating oGL buffer.\n" );
 	GLuint buffer; // The OpenGL object handle we generate
 	glGenBuffers( 1, &buffer );				// Generate a buffer name - effectively just a declaration
 	glBindBuffer( target, buffer );			// Bind the buffer name to a target, creating the vertex buffer object
@@ -72,9 +72,20 @@ typedef struct bufferRequest_s {
 	GLuint*		ptr;
 } bufferRequest;
 
+typedef struct bufferCopyRequest_s {
+	GLuint		buffer;
+	GLenum		target;
+	const void*	data;
+	GLsizei		size;
+} bufferCopyRequest;
+
 #define	kMaxBufferRequests	128
 bufferRequest	buffer_requests[kMaxBufferRequests];
 int				buffer_request_count = 0;
+
+#define	kMaxBufferCopyRequests	128
+bufferCopyRequest	buffer_copy_requests[kMaxBufferCopyRequests];
+int				buffer_copy_request_count = 0;
 
 // Mutex for buffer requests
 vmutex buffer_mutex = kMutexInitialiser;
@@ -83,6 +94,27 @@ bufferRequest* getBufferRequest() {
 	vAssert( buffer_request_count < kMaxBufferRequests );
 	bufferRequest* r = &buffer_requests[buffer_request_count++];
 	return r;
+}
+
+bufferCopyRequest* getBufferCopyRequest() {
+	vAssert( buffer_copy_request_count < kMaxBufferCopyRequests );
+	bufferCopyRequest* r = &buffer_copy_requests[buffer_copy_request_count++];
+	return r;
+}
+
+// Asynchronously copy data to a VertexBufferObject
+void render_bufferCopy( GLenum target, GLuint buffer, const void* data, GLsizei size ) {
+	bufferCopyRequest* b = NULL;
+	vmutex_lock( &buffer_mutex );
+	{
+		b = getBufferCopyRequest();
+		vAssert( b );
+		b->buffer	= buffer;
+		b->target	= target;
+		b->data		= data;
+		b->size		= size;
+	}
+	vmutex_unlock( &buffer_mutex );
 }
 
 // Asynchronously create a VertexBufferObject
@@ -114,9 +146,18 @@ void render_bufferTick() {
 		for ( int i = 0; i < buffer_request_count; i++ ) {
 			bufferRequest* b = &buffer_requests[i];
 			*b->ptr = render_glBufferCreate( b->target, b->data, b->size );
-			printf( "Created buffer %x for request for %d bytes.\n", *b->ptr, b->size );
+			//printf( "Created buffer %x for request for %d bytes.\n", *b->ptr, b->size );
 		}
 		buffer_request_count = 0;
+		
+		for ( int i = 0; i < buffer_copy_request_count; i++ ) {
+			bufferCopyRequest* b = &buffer_copy_requests[i];
+			glBindBuffer( b->target, b->buffer );
+			int origin = 0; // We're copyping the whole buffer
+			glBufferSubData( b->target, origin, b->size, b->data );
+			//printf( "Created buffer %x for request for %d bytes.\n", *b->ptr, b->size );
+		}
+		buffer_copy_request_count = 0;
 	}
 	vmutex_unlock( &buffer_mutex );
 }
@@ -410,8 +451,8 @@ void render_lighting( scene* s ) {
 
 // Clear information from last draw
 void render_clear() {
-	glClearColor( 1.f, 0.f, 0.f, 0.f );
-	glClear(/* GL_COLOR_BUFFER_BIT |*/ GL_DEPTH_BUFFER_BIT );
+	glClearColor( 0.f, 0.f, 0.f, 0.f );
+	glClear( GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT );
 }
 
 	GLuint render_frame_buffer;
@@ -538,7 +579,10 @@ void render_setUniform_texture( GLuint uniform, GLuint texture ) {
 }
 
 void render_setUniform_vector( GLuint uniform, vector* v ) {
-	glUniform4fv( uniform, 1, (GLfloat*)v );
+	// Only set uniforms if we definitely have them - otherwise we might override aliased constants
+	// in the current shader
+	if ( uniform != SHADER_CONSTANT_UNBOUND_LOCATION )
+		glUniform4fv( uniform, 1, (GLfloat*)v );
 }
 
 // Shader version
@@ -575,6 +619,10 @@ void render_sceneParams( sceneParams* params ) {
 	render_setUniform_vector( *resources.uniforms.fog_color, &params->fog_color );
 	render_setUniform_vector( *resources.uniforms.sky_color_bottom, &params->fog_color );
 	render_setUniform_vector( *resources.uniforms.sky_color_top, &params->sky_color );
+
+	const vector world_space_sun_dir = {{ 0.f, 0.f, 1.f, 0.f }};
+	vector sun_dir = matrixVecMul( modelview, &world_space_sun_dir );
+	render_setUniform_vector( *resources.uniforms.camera_space_sun_direction, &sun_dir );
 }
 
 int render_findDrawCallBuffer( shader* vshader ) {
@@ -702,7 +750,11 @@ void render_draw( window* w, engine* e ) {
 	render_set3D( w->width, w->height );
 	render_clear();
 
+	glDisable( GL_BLEND );
+	//glBlendFunc( GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA );	// Standard Alpha Blending
 	render_drawPass( &renderPass_main );
+	glEnable( GL_BLEND );
+	//glBlendFunc( GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA );	// Standard Alpha Blending
 	render_drawPass( &renderPass_alpha );
 
 	render_swapBuffers( w );

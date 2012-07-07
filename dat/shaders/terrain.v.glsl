@@ -10,11 +10,10 @@ attribute vec4 color;
 
 // Varying
 varying vec4 frag_position;
-varying vec4 frag_normal;
+varying vec4 cameraSpace_frag_normal;
 varying vec2 texcoord;
 varying vec4 vert_color;
 varying float fog;
-//varying float steepness;
 
 // Uniform
 uniform	mat4 projection;
@@ -24,18 +23,11 @@ void main() {
 	gl_Position = projection * modelview * position;
 #if 1
 	frag_position = modelview * position;
-	frag_normal = modelview * normal;
+	cameraSpace_frag_normal = modelview * normal;
 	texcoord = uv.xy;
 	float height = position.y;
 
 	vert_color = vec4( 0.1, 0.1, 0.1, 1.0 );
-
-	/*
-	float incline = clamp( 1.0 - dot( normal, vec4( 0.0, 1.0, 0.0, 0.0 )), 0.0, 1.0 );
-	const float halfpi = 3.1415926 / 2.0;
-	steepness = clamp((asin( incline ) / halfpi) * 4.0, 0.0, 1.0);
-
-	*/
 
 	// We can calculate fog per vertex as we know polys will be small for terrain
 	float fog_far = 350.0;

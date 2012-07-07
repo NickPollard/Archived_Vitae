@@ -124,6 +124,14 @@ typedef int keybind;
 #define TOUCH
 #endif
 
+#ifdef TOUCH
+enum touchAction {
+	kTouchDown,
+	kTouchMove,
+	kTouchUp
+};
+#endif
+
 // Keys stored as a packed bitmask
 // ie. each byte stores 8 flags for 8 keys respectively
 typedef struct input_data_s {
@@ -195,7 +203,7 @@ void input_getMouseDrag( input* in, int button, int* x, int* y );
 
 // *** Touch
 #ifdef TOUCH
-void input_registerTouch( input* in, int x, int y );
+void input_registerTouch( input* in, int x, int y, enum touchAction action );
 void input_getTouchDrag( input* in, int* x, int* y );
 bool input_touchPressed( input* in, int x_min, int y_min, int x_max, int y_max );
 bool input_touchHeld( input* in, int x_min, int y_min, int x_max, int y_max );
