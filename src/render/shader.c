@@ -51,7 +51,7 @@ shaderConstantBinding shader_createBinding( GLuint shader_program, const char* v
 	if ( string_equal( "sampler2D", variable_type ))
 		binding.type = uniform_tex2D;
 
-	printf( "SHADER: Created Shader binding 0x%x for \"%s\" at location 0x%x, type: %s\n", (unsigned int)binding.value, variable_name, binding.program_location, variable_type );
+	printf( "SHADER: Created Shader binding 0x" xPTRf " for \"%s\" at location 0x%x, type: %s\n", (uintptr_t)binding.value, variable_name, binding.program_location, variable_type );
 	return binding;
 }
 

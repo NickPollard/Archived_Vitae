@@ -16,6 +16,7 @@ struct scene_s;
 struct shader_s;
 struct transform_s;
 struct vertex_s;
+struct xwindow_s;
 union vector_u;
 
 typedef struct camera_s camera;
@@ -33,6 +34,7 @@ typedef struct scene_s scene;
 typedef struct shader_s shader;
 typedef struct transform_s transform;
 typedef struct vertex_s vertex;
+typedef struct xwindow_s xwindow;
 
 typedef union vector_u vector;
 typedef union vector_u color;

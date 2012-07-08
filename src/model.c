@@ -67,7 +67,6 @@ mesh* mesh_createMesh( int vertCount, int index_count, int normal_count, int uv_
 
 	texture_request( &m->texture_diffuse, "dat/img/ship_hd_2.tga" );
 	m->shader = resources.shader_default;
-	printf( "shader_default: 0x%x\n", resources.shader_default );
 	vAssert( m->shader );
 
 	m->vertex_VBO = 0;

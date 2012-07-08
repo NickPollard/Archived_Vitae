@@ -43,11 +43,11 @@ typedef struct egl_renderer_s {
 #endif
 
 #ifdef LINUX_X
-typedef struct xwindow_s {
+struct xwindow_s {
 	Display* display;
 	Window window;
 	bool open;
-} xwindow;
+};
 
 extern xwindow xwindow_main;
 #endif

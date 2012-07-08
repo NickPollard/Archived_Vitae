@@ -6,9 +6,6 @@
 #include "mem/allocator.h"
 #include "font.h"
 
-// GLFW Libraries
-#include <GL/glfw.h>
-
 void PrintDebugText( debugtextframe* frame, const char* string ) {
 	assert( strlen(string) < kDebugTextLineLength );
 	strncpy( frame->lines[frame->lineCount], string, kDebugTextLineLength );

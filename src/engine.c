@@ -247,7 +247,7 @@ void init(int argc, char** argv) {
 	modelInstance_initPool();
 
 	// *** Static Module initialization
-	scene_static_init();
+	scene_initStatic();
 	lisp_init();
 	parse_init();
 	collision_init();
@@ -309,6 +309,12 @@ void engine_xwindowPollEvents( engine* e ) {
 		if ( event.type == ClientMessage ) {
 			// This message means the user has asked to close the window, so we send the message
 			XDestroyWindow( xwindow_main.display, xwindow_main.window );
+		}
+		if ( event.type == KeyPress ) {
+			input_xKeyPress( event.xkey.keycode );
+		}
+		if ( event.type == KeyRelease ) {
+			input_xKeyRelease( event.xkey.keycode );
 		}
 	}
 

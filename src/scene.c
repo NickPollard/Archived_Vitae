@@ -38,7 +38,7 @@ static const size_t lightArraySize = sizeof( light* ) * MAX_LIGHTS;
 keybind scene_debug_transforms_toggle;
 keybind scene_debug_lights_toggle;
 
-void scene_static_init( ) {
+void scene_initStatic( ) {
 	scene_debug_transforms_toggle = input_registerKeybind( );
 	input_setDefaultKeyBind( scene_debug_transforms_toggle, KEY_T );
 

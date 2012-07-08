@@ -12,8 +12,6 @@
 #include "maths.h"
 #include "transform.h"
 
-#include <GL/glfw.h>
-
 #define MAX_TRANSFORMS 512
 #define MAX_MODELS 512
 #define MAX_LIGHTS 512
@@ -65,7 +63,7 @@ typedef struct sceneData_s {
 
 // *** Static functions
 
-void scene_static_init( );
+void scene_initStatic( );
 
 // *** Scene functions
 

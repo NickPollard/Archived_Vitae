@@ -2,114 +2,85 @@
 #ifndef __INPUT_H__
 #define __INPUT_H__
 
-#define GLFW
+/*
+	Keyboard input
 
-#ifdef GLFW
-// Ripped from GLFW.h
+	Keyboard input goes through several stages. We have concepts of:
+	Key - e.g. 'Escape', a conceptual key that is one of the keys we expect to find on the
+		keyboard.
+	KeyCode - e.g. '0x9', the physical signal we get from the keyboard, which happens to be the
+		keycode for Escape on my keyboard under Ubuntu.
+	KeyBinding - e.g. 'Exit Game', a control that we want to be accessible from the keyboard which
+		the user is free to rebind to a different key if they so choose.
 
-/* Keyboard key definitions: 8-bit ISO-8859-1 (Latin 1) encoding is used
- * for printable keys (such as A-Z, 0-9 etc), and values above 256
- * represent special (non-printable) keys (e.g. F1, Page Up etc).
- */
-#define GLFW_KEY_UNKNOWN      -1
-#define GLFW_KEY_SPACE        32
-#define GLFW_KEY_SPECIAL      256
-#define GLFW_KEY_ESC          (GLFW_KEY_SPECIAL+1)
-#define GLFW_KEY_F1           (GLFW_KEY_SPECIAL+2)
-#define GLFW_KEY_F2           (GLFW_KEY_SPECIAL+3)
-#define GLFW_KEY_F3           (GLFW_KEY_SPECIAL+4)
-#define GLFW_KEY_F4           (GLFW_KEY_SPECIAL+5)
-#define GLFW_KEY_F5           (GLFW_KEY_SPECIAL+6)
-#define GLFW_KEY_F6           (GLFW_KEY_SPECIAL+7)
-#define GLFW_KEY_F7           (GLFW_KEY_SPECIAL+8)
-#define GLFW_KEY_F8           (GLFW_KEY_SPECIAL+9)
-#define GLFW_KEY_F9           (GLFW_KEY_SPECIAL+10)
-#define GLFW_KEY_F10          (GLFW_KEY_SPECIAL+11)
-#define GLFW_KEY_F11          (GLFW_KEY_SPECIAL+12)
-#define GLFW_KEY_F12          (GLFW_KEY_SPECIAL+13)
-#define GLFW_KEY_F13          (GLFW_KEY_SPECIAL+14)
-#define GLFW_KEY_F14          (GLFW_KEY_SPECIAL+15)
-#define GLFW_KEY_F15          (GLFW_KEY_SPECIAL+16)
-#define GLFW_KEY_F16          (GLFW_KEY_SPECIAL+17)
-#define GLFW_KEY_F17          (GLFW_KEY_SPECIAL+18)
-#define GLFW_KEY_F18          (GLFW_KEY_SPECIAL+19)
-#define GLFW_KEY_F19          (GLFW_KEY_SPECIAL+20)
-#define GLFW_KEY_F20          (GLFW_KEY_SPECIAL+21)
-#define GLFW_KEY_F21          (GLFW_KEY_SPECIAL+22)
-#define GLFW_KEY_F22          (GLFW_KEY_SPECIAL+23)
-#define GLFW_KEY_F23          (GLFW_KEY_SPECIAL+24)
-#define GLFW_KEY_F24          (GLFW_KEY_SPECIAL+25)
-#define GLFW_KEY_F25          (GLFW_KEY_SPECIAL+26)
-#define GLFW_KEY_UP           (GLFW_KEY_SPECIAL+27)
-#define GLFW_KEY_DOWN         (GLFW_KEY_SPECIAL+28)
-#define GLFW_KEY_LEFT         (GLFW_KEY_SPECIAL+29)
-#define GLFW_KEY_RIGHT        (GLFW_KEY_SPECIAL+30)
-#define GLFW_KEY_LSHIFT       (GLFW_KEY_SPECIAL+31)
-#define GLFW_KEY_RSHIFT       (GLFW_KEY_SPECIAL+32)
-#define GLFW_KEY_LCTRL        (GLFW_KEY_SPECIAL+33)
-#define GLFW_KEY_RCTRL        (GLFW_KEY_SPECIAL+34)
-#define GLFW_KEY_LALT         (GLFW_KEY_SPECIAL+35)
-#define GLFW_KEY_RALT         (GLFW_KEY_SPECIAL+36)
-#define GLFW_KEY_TAB          (GLFW_KEY_SPECIAL+37)
-#define GLFW_KEY_ENTER        (GLFW_KEY_SPECIAL+38)
-#define GLFW_KEY_BACKSPACE    (GLFW_KEY_SPECIAL+39)
-#define GLFW_KEY_INSERT       (GLFW_KEY_SPECIAL+40)
-#define GLFW_KEY_DEL          (GLFW_KEY_SPECIAL+41)
-#define GLFW_KEY_PAGEUP       (GLFW_KEY_SPECIAL+42)
-#define GLFW_KEY_PAGEDOWN     (GLFW_KEY_SPECIAL+43)
-#define GLFW_KEY_HOME         (GLFW_KEY_SPECIAL+44)
-#define GLFW_KEY_END          (GLFW_KEY_SPECIAL+45)
-#define GLFW_KEY_KP_0         (GLFW_KEY_SPECIAL+46)
-#define GLFW_KEY_KP_1         (GLFW_KEY_SPECIAL+47)
-#define GLFW_KEY_KP_2         (GLFW_KEY_SPECIAL+48)
-#define GLFW_KEY_KP_3         (GLFW_KEY_SPECIAL+49)
-#define GLFW_KEY_KP_4         (GLFW_KEY_SPECIAL+50)
-#define GLFW_KEY_KP_5         (GLFW_KEY_SPECIAL+51)
-#define GLFW_KEY_KP_6         (GLFW_KEY_SPECIAL+52)
-#define GLFW_KEY_KP_7         (GLFW_KEY_SPECIAL+53)
-#define GLFW_KEY_KP_8         (GLFW_KEY_SPECIAL+54)
-#define GLFW_KEY_KP_9         (GLFW_KEY_SPECIAL+55)
-#define GLFW_KEY_KP_DIVIDE    (GLFW_KEY_SPECIAL+56)
-#define GLFW_KEY_KP_MULTIPLY  (GLFW_KEY_SPECIAL+57)
-#define GLFW_KEY_KP_SUBTRACT  (GLFW_KEY_SPECIAL+58)
-#define GLFW_KEY_KP_ADD       (GLFW_KEY_SPECIAL+59)
-#define GLFW_KEY_KP_DECIMAL   (GLFW_KEY_SPECIAL+60)
-#define GLFW_KEY_KP_EQUAL     (GLFW_KEY_SPECIAL+61)
-#define GLFW_KEY_KP_ENTER     (GLFW_KEY_SPECIAL+62)
-#define GLFW_KEY_KP_NUM_LOCK  (GLFW_KEY_SPECIAL+63)
-#define GLFW_KEY_CAPS_LOCK    (GLFW_KEY_SPECIAL+64)
-#define GLFW_KEY_SCROLL_LOCK  (GLFW_KEY_SPECIAL+65)
-#define GLFW_KEY_PAUSE        (GLFW_KEY_SPECIAL+66)
-#define GLFW_KEY_LSUPER       (GLFW_KEY_SPECIAL+67)
-#define GLFW_KEY_RSUPER       (GLFW_KEY_SPECIAL+68)
-#define GLFW_KEY_MENU         (GLFW_KEY_SPECIAL+69)
-#define GLFW_KEY_LAST         GLFW_KEY_MENU
+	So, for example if we want to use escape to quit the game, what we actually want is to set up
+	an 'Exit Game' keybind, so that the user can keybind if they so want. 
+	This keybind is then set by default to the 'Escape' key.
+	The input system then interrogates the system to find out what keyCode - e.g. 0x9 - we expect
+	from the keyboard if the escape key is pressed. Due to different layouts, languages etc. this
+	is not guaranteed to be the same key.
 
-// Arrow Keys
-#define KEY_UP		GLFW_KEY_UP
-#define KEY_DOWN	GLFW_KEY_DOWN
-#define KEY_LEFT	GLFW_KEY_LEFT
-#define KEY_RIGHT	GLFW_KEY_RIGHT
+	So From a high level downwards:
 
-// Other
-#define KEY_ESC		GLFW_KEY_ESC
-#define KEY_SHIFT	GLFW_KEY_LSHIFT
-#define KEY_SPACE	GLFW_KEY_SPACE
-
-#define KEY_T		'T'
-#define KEY_L		'L'
-#define KEY_W		'W'
-#define KEY_A		'A'
-#define KEY_S		'S'
-#define KEY_D		'D'
-#define KEY_Q		'Q'
-#define KEY_E		'E'
+	KeyBinding ( 'exit' )
+	  |
+	  |
+	  |
+	 Key ( 'escape' )
+	  |
+	  |
+	  |
+	KeyCode ( 0x9 )
+   */
 
 // Mouse
-#define BUTTON_LEFT		GLFW_MOUSE_BUTTON_LEFT
-#define BUTTON_RIGHT	GLFW_MOUSE_BUTTON_RIGHT
+#define BUTTON_LEFT		0x0
+#define BUTTON_RIGHT	0x0
 
-#endif // GLFW
+#ifdef LINUX_X
+
+// Other
+#define KEY_SHIFT	0x0
+#define KEY_SPACE	0x0
+
+#endif // LINUX_X
+
+enum key {
+	KEY_ESC,
+	KEY_A,
+	KEY_B,
+	KEY_C,
+	KEY_D,
+	KEY_E,
+	KEY_F,
+	KEY_G,
+	KEY_H,
+	KEY_I,
+	KEY_J,
+	KEY_K,
+	KEY_L,
+	KEY_M,
+	KEY_N,
+	KEY_O,
+	KEY_P,
+	KEY_Q,
+	KEY_R,
+	KEY_S,
+	KEY_T,
+	KEY_U,
+	KEY_V,
+	KEY_W,
+	KEY_X,
+	KEY_Y,
+	KEY_Z,
+	KEY_UP,
+	KEY_DOWN,
+	KEY_LEFT,
+	KEY_RIGHT,
+	kMaxKeyCodes
+};
+
+int key_codes[kMaxKeyCodes];
 
 // *** General input defines
 typedef int keybind;
@@ -160,6 +131,10 @@ struct input_s {
 #endif
 };
 
+#ifdef LINUX_X
+input_data x_key_array;
+#endif
+
 // constructor
 input* input_create();
 
@@ -167,16 +142,16 @@ input* input_create();
 void input_tick( input* in, float dt );
 
 // Is the key held down this frame? Regardless of previous state
-int input_keyHeld( input* i, int key );
+int input_keyHeld( input* i, enum key k );
 
 // Was the key held down last frame? Regardless of previous state
-int input_keyWasHeld( input* i, int key );
+int input_keyWasHeld( input* i, enum key k );
 
 // Was the key first pressed this frame? ie. It is depressed now, but was not last frame
-int input_keyPressed( input* i, int key );
+int input_keyPressed( input* i, enum key k );
 
 // Was the key first released this frame? ie. It is not depressed now, but was last frame
-int input_keyReleased( input* i, int key );
+int input_keyReleased( input* i, enum key k );
 
 int input_registerKeybind( );
 
@@ -210,5 +185,19 @@ bool input_touchHeld( input* in, int x_min, int y_min, int x_max, int y_max );
 
 void input_setWindowSize( input* in, int w, int h );
 #endif
+
+#ifdef LINUX_X
+void input_xKeyPress( int key );
+void input_xKeyRelease( int key );
+#endif // LINUX_X
+
+#ifdef LINUX_X
+void input_initKeyCodes( xwindow* xwin );
+#else
+void input_initKeyCodes();
+#endif // LINUX_X
+
+// *** Unit Test
+void test_input();
 
 #endif // __INPUT_H__

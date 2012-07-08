@@ -10,6 +10,7 @@
 #include "common.h"
 #include "collision.h"
 #include "engine.h"
+#include "input.h"
 #include "maths.h"
 #include "particle.h"
 #include "terrain.h"
@@ -41,6 +42,8 @@ void test() {
 	test_property();
 
 	test_string();
+
+	test_input();
 
 	test_terrain();
 

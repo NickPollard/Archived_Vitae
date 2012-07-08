@@ -6,6 +6,7 @@
 #include "camera.h"
 #include "font.h"
 #include "light.h"
+#include "input.h" // TODO - remove
 #include "model.h"
 #include "scene.h"
 #include "skybox.h"
@@ -181,7 +182,7 @@ EGLNativeWindowType os_createWindow() {
 			black_color, black_color );
 
 	// We want to get MapNotify events
-	XSelectInput( display, window, StructureNotifyMask );
+	XSelectInput( display, window, ButtonPressMask|KeyPressMask|KeyReleaseMask|KeymapStateMask|StructureNotifyMask );
 
 	// Setup client messaging to receive a client delete message
 	Atom wm_delete=XInternAtom( display, "WM_DELETE_WINDOW", true );
@@ -204,6 +205,10 @@ EGLNativeWindowType os_createWindow() {
 	xwindow_main.display = display;
 	xwindow_main.window = window;
 	xwindow_main.open = true;
+
+	// TODO - this shouldn't happen here.
+	// Window creation needs to be moved out of Render
+	input_initKeyCodes( &xwindow_main );
 
 	return window;
 #endif
@@ -340,9 +345,6 @@ void render_buildShaders() {
 	resources.shader_skybox		= shader_load( "dat/shaders/skybox.v.glsl",			"dat/shaders/skybox.f.glsl" );
 	resources.shader_ui			= shader_load( "dat/shaders/ui.v.glsl",				"dat/shaders/ui.f.glsl" );
 	resources.shader_filter		= shader_load( "dat/shaders/filter.v.glsl",			"dat/shaders/filter.f.glsl" );
-
-	vAssert( resources.shader_default );
-	printf( "shader_default: 0x%x\n", resources.shader_default );
 
 #define GET_UNIFORM_LOCATION( var ) \
 	resources.uniforms.var = shader_findConstant( mhash( #var )); \
