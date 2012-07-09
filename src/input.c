@@ -11,7 +11,6 @@
 
 #ifdef LINUX_X
 #include <X11/Xlib.h>
-#include <X11/keysym.h>
 #endif // LINUX_X
 
 // *** Static data
@@ -57,46 +56,6 @@ int input_keybindReleased( input* in, keybind bind ) {
 }
 int input_keybindWasHeld( input* in, keybind bind ) {
 	return input_keyWasHeld( in, in->keybinds[bind] );
-}
-
-//
-// *** Mouse
-//
-
-bool input_mouseHeld( input* in, int button ) {
-	return in->data[in->active].mouse & (0x1 << button);
-}
-
-bool input_mouseWasHeld( input* in, int button ) {
-	return in->data[in->active].mouse & (0x1 << button);
-}
-
-bool input_mousePressed( input* in, int button ) {
-	return input_mouseHeld( in, button ) && !input_mouseWasHeld( in, button );
-}
-
-bool input_mouseReleased( input* in, int button ) {
-	return !input_mouseHeld( in, button ) && input_mouseWasHeld( in, button );
-}
-
-void input_getMousePos( input* in, int* x, int* y ) {
-	*x = in->data[in->active].mouseX;
-	*y = in->data[in->active].mouseY;
-}
-
-void input_getMouseMove( input* in, int* x, int* y ) {
-	*x = in->data[in->active].mouseX - in->data[1 - in->active].mouseX;
-	*y = in->data[in->active].mouseY - in->data[1 - in->active].mouseY;
-}
-
-void input_getMouseDrag( input* in, int button, int* x, int* y ) {
-	if ( input_mouseHeld( in, button )) {
-		input_getMouseMove( in, x, y );
-	}
-	else {
-		*x = 0;
-		*y = 0;
-	}
 }
 
 #ifdef TOUCH
@@ -158,45 +117,13 @@ int getKeyInternal( int key ) {
 	return 0x0;
 }
 
-int getMouseButton( int button ) {
-	//return glfwGetMouseButton( button );
-	(void)button;
-	return 0x0;
-}
-
-void getMousePos( int* x, int* y ) {
-	//glfwGetMousePos( x, y );
-	*x = 0;
-	*y = 0;
-}
-
 // tick the input, recording this frames input data from devices
 void input_tick( input* in, float dt ) {
 	(void)dt;
 	in->active = in->active ^ 0x1;		// flip the key buffers (we effectively double buffer the key state)
 
-#ifdef LINUX_X
-	memcpy( &in->data[in->active].keys, &x_key_array, sizeof( key_array ));
-#endif // LINUX_X
-
-#ifndef ANDROID	
-	// Store current state of keys
-	/*
-	for ( int i = 0; i < ( KEY_COUNT / 8 ); i++ ) {
-		in->data[in->active].keys[i] = 0x0;
-		for ( int j = 0; j < 8 ; j++ ) {
-			in->data[in->active].keys[i] |= ( 0x1 & getKeyInternal( i * 8 + j ) ) << j;
-		}
-	}
-	*/
-
-	// Store current state of mouse
-	in->data[in->active].mouse = 0x0;
-	for ( int i = 0; i < 2; i++ )
-		in->data[in->active].mouse |= ( 0x1 & getMouseButton( i )) << i;
-
-	getMousePos( &in->data[in->active].mouseX, &in->data[in->active].mouseY );
-#endif
+	input_keyboardTick( in, dt );
+	input_mouseTick( in, dt );
 
 #ifdef TOUCH
 	// TODO - probably need to sync this properly with Android input thread?
@@ -214,22 +141,6 @@ void input_tick( input* in, float dt ) {
 	*/
 #endif
 }
-
-#ifdef LINUX_X
-void input_initKeyCodes( xwindow* xwin ) {
-	key_codes[KEY_ESC] = XKeysymToKeycode( xwin->display, XK_Escape);
-	key_codes[KEY_UP] = XKeysymToKeycode( xwin->display, XK_Up);
-	key_codes[KEY_DOWN] = XKeysymToKeycode( xwin->display, XK_Down);
-	key_codes[KEY_LEFT] = XKeysymToKeycode( xwin->display, XK_Left);
-	key_codes[KEY_RIGHT] = XKeysymToKeycode( xwin->display, XK_Right);
-	
-	key_codes[KEY_W] = XKeysymToKeycode( xwin->display, XK_W);
-	key_codes[KEY_S] = XKeysymToKeycode( xwin->display, XK_S);
-}
-#else
-void input_initKeyCodes() {
-}
-#endif // LINUX_X
 
 #if UNIT_TEST
 void test_input() {

@@ -2,8 +2,14 @@
 #include "common.h"
 #include "keyboard.h"
 //---------------------
+#include "engine.h"
 #include "input.h"
 #include "test.h"
+
+#ifdef LINUX_X
+#include <X11/Xlib.h>
+#include <X11/keysym.h>
+#endif // LINUX_X
 
 //
 // *** keyboard
@@ -65,6 +71,30 @@ void input_xKeyPress( int key ) {
 }
 void input_xKeyRelease( int key ) {
 	keyArray_set( &x_key_array, key, 0);
+}
+#endif // LINUX_X
+
+void input_keyboardTick( input* in, float dt ) {
+#ifdef LINUX_X
+	memcpy( &in->data[in->active].keys, &x_key_array, sizeof( key_array ));
+#endif // LINUX_X
+	(void)in;
+	(void)dt;
+}
+
+#ifdef LINUX_X
+void input_initKeyCodes( xwindow* xwin ) {
+	key_codes[KEY_ESC] = XKeysymToKeycode( xwin->display, XK_Escape);
+	key_codes[KEY_UP] = XKeysymToKeycode( xwin->display, XK_Up);
+	key_codes[KEY_DOWN] = XKeysymToKeycode( xwin->display, XK_Down);
+	key_codes[KEY_LEFT] = XKeysymToKeycode( xwin->display, XK_Left);
+	key_codes[KEY_RIGHT] = XKeysymToKeycode( xwin->display, XK_Right);
+	
+	key_codes[KEY_W] = XKeysymToKeycode( xwin->display, XK_W);
+	key_codes[KEY_S] = XKeysymToKeycode( xwin->display, XK_S);
+}
+#else
+void input_initKeyCodes() {
 }
 #endif // LINUX_X
 

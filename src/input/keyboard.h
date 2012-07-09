@@ -123,6 +123,8 @@ void input_xKeyPress( int key );
 void input_xKeyRelease( int key );
 #endif // LINUX_X
 
+void input_keyboardTick( input* in, float dt );
+
 #if UNIT_TEST
 void test_keyboard();
 #endif // UNIT_TEST

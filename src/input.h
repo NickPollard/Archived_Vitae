@@ -2,10 +2,7 @@
 #pragma once
 
 #include "input/keyboard.h"
-
-// Mouse
-#define BUTTON_LEFT		0x0
-#define BUTTON_RIGHT	0x0
+#include "input/mouse.h"
 
 // *** General input defines
 #define INPUT_DATA_FRAMES 2
@@ -26,9 +23,7 @@ enum touchAction {
 // ie. each byte stores 8 flags for 8 keys respectively
 typedef struct input_data_s {
 	key_array keys;
-	char mouse;
-	int mouseX;
-	int mouseY;
+	mouse mouse;
 #ifdef TOUCH
 	bool	touched;
 	int32_t touchX;
@@ -55,15 +50,6 @@ input* input_create();
 
 // tick the input, recording this frames input data from devices
 void input_tick( input* in, float dt );
-
-// *** Mouse
-
-bool input_mouseHeld( input* in, int button );
-bool input_mouseWasHeld( input* in, int button );
-bool input_mousePressed( input* in, int button );
-bool input_mouseReleased( input* in, int button );
-void input_getMouseMove( input* in, int* x, int* y );
-void input_getMouseDrag( input* in, int button, int* x, int* y );
 
 // *** Touch
 #ifdef TOUCH
