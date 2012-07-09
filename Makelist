@@ -24,6 +24,7 @@ SRCS =	src/camera.c \
 		src/camera/velcam.c \
 		src/input/keyboard.c \
 		src/input/mouse.c \
+		src/input/touch.c \
 		src/mem/allocator.c \
 		src/render/modelinstance.c \
 		src/render/render.c \

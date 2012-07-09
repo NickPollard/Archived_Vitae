@@ -58,63 +58,15 @@ int input_keybindWasHeld( input* in, keybind bind ) {
 	return input_keyWasHeld( in, in->keybinds[bind] );
 }
 
-#ifdef TOUCH
-void input_registerTouch( input* in, int x, int y, enum touchAction action ) {
-	in->touchX = x;
-	in->touchY = y;
-	if ( action == kTouchDown || action == kTouchMove )
-		in->touched = true;
-	else if ( action == kTouchUp )
-		in->touched = false;
-}
 
-void input_getTouchDrag( input* in, int* x, int* y ) {
-	*x = 0;
-	*y = 0;
-	if ( in->data[in->active].touched && in->data[in->active ^ 0x1].touched ) {
-		*x = in->data[in->active].touchX - in->data[in->active ^ 0x1].touchX;
-		*y = in->data[in->active].touchY - in->data[in->active ^ 0x1].touchY;
-	}
-}
-
-bool input_touchPressedInternal( input* in ) {
-	return ( in->data[in->active].touched && !(in->data[in->active ^ 0x1].touched) );
-}
-
-bool input_touchPressed( input* in, int x_min, int y_min, int x_max, int y_max ) {
-	int x = in->data[in->active].touchX;
-	int y = in->data[in->active].touchY;
-	return input_touchPressedInternal( in ) &&
-		 	contains( x, x_min, x_max ) &&
-		 	contains( y, y_min, y_max );
-}
-
-bool input_touchHeldInternal( input* in ) {
-	return in->data[in->active].touched;
-}
-
-bool input_touchHeld( input* in, int x_min, int y_min, int x_max, int y_max ) {
-	if ( x_min < 0 ) x_min += in->w;
-	if ( y_min < 0 ) y_min += in->h;
-	if ( x_max < 0 ) x_max += in->w;
-	if ( y_max < 0 ) y_max += in->h;
-
-	int x = in->data[in->active].touchX;
-	int y = in->data[in->active].touchY;
-	return input_touchHeldInternal( in ) &&
-		 	contains( x, x_min, x_max ) &&
-		 	contains( y, y_min, y_max );
+int getKeyInternal( int key ) {
+	(void)key;
+	return 0x0;
 }
 
 void input_setWindowSize( input* in, int w, int h ) {
 	in->w = w;
 	in->h = h;
-}
-#endif
-
-int getKeyInternal( int key ) {
-	(void)key;
-	return 0x0;
 }
 
 // tick the input, recording this frames input data from devices
@@ -126,19 +78,7 @@ void input_tick( input* in, float dt ) {
 	input_mouseTick( in, dt );
 
 #ifdef TOUCH
-	// TODO - probably need to sync this properly with Android input thread?
-	// Store current state of touch
-	in->data[in->active].touched = in->touched;
-	in->data[in->active].touchX = in->touchX;
-	in->data[in->active].touchY = in->touchY;
-	// keep last touched state - we only revert to false if we receive a release event
-	in->touchX = 0;
-	in->touchY = 0;
-/*
-	if ( input_touchPressedInternal( in ) ) {
-		printf( "Touched! %d %d\n", in->data[in->active].touchX, in->data[in->active].touchY );
-	}
-	*/
+	input_touchTick( in, dt );
 #endif
 }
 
