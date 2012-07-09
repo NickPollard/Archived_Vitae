@@ -12,7 +12,6 @@
 #include "common.h"
 #include "engine.h"
 #include "input.h"
-#include "maths.h"
 #include "particle.h"
 #include "mem/allocator.h"
 #include "render/render.h"

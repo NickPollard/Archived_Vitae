@@ -1,17 +1,11 @@
 // vector.h
 #pragma once
 
-union vector_u {
-   	struct {
-		float x;
-		float y;
-		float z;
-		float w;
-	} coord;
-	float	val[4];
-};
+#include "maths/mathstypes.h"
 
 vector Vector(float x, float y, float z, float w);
+
+void Set(vector* v, float x, float y, float z, float w);
 
 void Add(vector* dst, const vector* srcA, const vector* srcB);
 void Sub(vector *dst, const vector* srcA, const vector* srcB);

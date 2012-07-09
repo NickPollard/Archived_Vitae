@@ -2,6 +2,7 @@
 #define __TRANSFORM_H__
 
 #include "maths/maths.h"
+#include "maths/matrix.h"
 #include "mem/pool.h"
 
 // *** Transform ***

@@ -25,6 +25,7 @@ SRCS =	src/camera.c \
 		src/input/mouse.c \
 		src/input/touch.c \
 		src/maths/maths.c \
+		src/maths/matrix.c \
 		src/maths/vector.c \
 		src/mem/allocator.c \
 		src/render/modelinstance.c \
@@ -40,9 +41,3 @@ SRCS =	src/camera.c \
 		src/system/thread.c \
 		src/ui/panel.c \
 		src/external/murmur.c
-
-#		src/external/util.c \
-#		src/font.c \
-#		src/render/debugdraw.c \
-#		src/debug/debug.c \
-#		src/debug/debugtext.c

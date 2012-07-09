@@ -2,6 +2,8 @@
 #pragma once
 
 #include "maths/maths.h"
+#include "maths/matrix.h"
+#include "maths/vector.h"
 #include "camera.h"
 
 //

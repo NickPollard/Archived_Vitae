@@ -5,6 +5,8 @@
 #define kMaxCollidingBodies 256
 
 #include "maths/maths.h"
+#include "maths/matrix.h"
+#include "maths/vector.h"
 
 enum shapeType {
 	shapeInvalid,

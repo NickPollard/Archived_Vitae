@@ -13,6 +13,13 @@ vector Vector(float x, float y, float z, float w) {
 	return v;
 }
 
+void Set(vector* v, float x, float y, float z, float w) {
+	v->coord.x = x;
+	v->coord.y = y;
+	v->coord.z = z;
+	v->coord.w = w;
+}
+
 // Vector Addition
 void Add(vector* dst, const vector* srcA, const vector* srcB) {
 	for (int i = 0; i < 4; i++)
