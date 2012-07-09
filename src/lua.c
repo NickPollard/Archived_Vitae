@@ -15,6 +15,7 @@
 #include "input.h"
 #include "particle.h"
 #include "physic.h"
+#include "input/keyboard.h"
 #include "render/modelinstance.h"
 #include "render/texture.h"
 #include "script/lisp.h"

@@ -7,6 +7,7 @@
 #include "camera.h"
 #include "input.h"
 #include "transform.h"
+#include "input/keyboard.h"
 #include "mem/allocator.h"
 #include "render/render.h" // TODO: remove
 

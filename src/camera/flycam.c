@@ -5,6 +5,7 @@
 //---------------------
 #include "input.h"
 #include "transform.h"
+#include "input/keyboard.h"
 #include "mem/allocator.h"
 
 // Flycam constructor

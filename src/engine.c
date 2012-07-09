@@ -16,6 +16,7 @@
 #include "terrain.h"
 #include "transform.h"
 #include "camera/flycam.h"
+#include "input/keyboard.h"
 #include "render/debugdraw.h"
 #include "render/modelinstance.h"
 #include "render/render.h"

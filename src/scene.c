@@ -11,6 +11,7 @@
 #include "mem/allocator.h"
 #include "particle.h"
 #include "physic.h"
+#include "input/keyboard.h"
 #include "render/debugdraw.h"
 #include "render/modelinstance.h"
 //#include "system/file.h"
