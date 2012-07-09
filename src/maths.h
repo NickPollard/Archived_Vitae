@@ -2,8 +2,6 @@
 #ifndef __MATHS_H__
 #define __MATHS_H__
 
-#include <GL/glfw.h>
-
 #include <math.h>
 
 #define PI 3.1415926535897932
