@@ -2,6 +2,7 @@
 #ifndef __MATHS_H__
 #define __MATHS_H__
 
+#include "render/vgl.h"
 #include <math.h>
 
 #define PI 3.1415926535897932

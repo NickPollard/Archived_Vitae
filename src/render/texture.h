@@ -2,7 +2,7 @@
 #ifndef __TEXTURE_H__
 #define __TEXTURE_H__
 
-#include <GL/gl.h>
+#include "render/vgl.h"
 
 // Globals
 extern GLuint g_texture_default;

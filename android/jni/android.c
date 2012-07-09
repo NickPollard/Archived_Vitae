@@ -20,11 +20,9 @@
 #include "system/hash.h"
 #include "system/string.h"
 
-#define TEST true
-
 // ###################################
 
-void test() {
+void runTests() {
 	// Memory Tests
 	test_allocator();
 
@@ -207,8 +205,8 @@ void android_main( struct android_app* app ) {
 	// Can't init engine until EGL is initialised
 	engine_init( app->userData, argc, argv );
 
-#if TEST
-	test();
+#if UNIT_TEST
+	runTests();
 #endif
 
 	engine_run( app->userData );

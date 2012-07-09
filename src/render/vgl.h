@@ -1,8 +1,20 @@
 // vgl.h
 #pragma once
 
-//#include <GL/gl.h>
-//#include <GL/glu.h>
+#ifdef ANDROID
+#define OPENGL_ES
+#endif
+
+#ifndef ANDROID
+#define OPENGL
+#endif
+
+#ifdef OPENGL
+#include <GL/gl.h>
+#endif // OPENGL
+#ifdef OPENGL_ES
+#include <GLES2/gl2.h>
+#endif // OPENGL_ES
 
 //
 // Vitae Graphics Library - a wrapper around a lower level graphics library (OpenGL)

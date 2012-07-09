@@ -37,14 +37,6 @@
 #define BUTTON_LEFT		0x0
 #define BUTTON_RIGHT	0x0
 
-#ifdef LINUX_X
-
-// Other
-#define KEY_SHIFT	0x0
-#define KEY_SPACE	0x0
-
-#endif // LINUX_X
-
 enum key {
 	KEY_ESC,
 	KEY_A,
@@ -77,6 +69,8 @@ enum key {
 	KEY_DOWN,
 	KEY_LEFT,
 	KEY_RIGHT,
+	KEY_SHIFT,
+	KEY_SPACE,
 	kMaxKeyCodes
 };
 

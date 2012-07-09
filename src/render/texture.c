@@ -10,8 +10,6 @@
 #include "system/string.h"
 #include "system/thread.h"
 
-#include "render/vgl.h"
-
 // Globals
 GLuint g_texture_default = 0;
 vmutex	texture_mutex = kMutexInitialiser;
