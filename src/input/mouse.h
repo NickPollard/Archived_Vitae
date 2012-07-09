@@ -16,7 +16,7 @@ bool input_mouseHeld( input* in, int button );
 bool input_mouseWasHeld( input* in, int button );
 bool input_mousePressed( input* in, int button );
 bool input_mouseReleased( input* in, int button );
-void input_getMouseMove( input* in, int* x, int* y );
-void input_getMouseDrag( input* in, int button, int* x, int* y );
+void input_mouseMove( input* in, int* x, int* y );
+void input_mouseDrag( input* in, int button, int* x, int* y );
 
 void input_mouseTick( input* in, float dt );

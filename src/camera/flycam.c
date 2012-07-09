@@ -59,7 +59,7 @@ void flycam_input( void* data, input* in  ) {
 	int x = 0, y = 0;
 	// Mouse drag coord is from TopLeft, ie. +x = right, +y = down
 #ifndef ANDROID
-	input_getMouseDrag( in, BUTTON_LEFT, &x, &y );
+	input_mouseDrag( in, BUTTON_LEFT, &x, &y );
 #else
 	input_getTouchDrag( in, &x, &y );
 #endif

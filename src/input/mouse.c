@@ -21,19 +21,19 @@ bool input_mouseReleased( input* in, int button ) {
 	return !input_mouseHeld( in, button ) && input_mouseWasHeld( in, button );
 }
 
-void input_getMousePos( input* in, int* x, int* y ) {
+void input_mousePosition( input* in, int* x, int* y ) {
 	*x = in->data[in->active].mouse.x;
 	*y = in->data[in->active].mouse.y;
 }
 
-void input_getMouseMove( input* in, int* x, int* y ) {
+void input_mouseMove( input* in, int* x, int* y ) {
 	*x = in->data[in->active].mouse.x - in->data[1 - in->active].mouse.x;
 	*y = in->data[in->active].mouse.y - in->data[1 - in->active].mouse.y;
 }
 
-void input_getMouseDrag( input* in, int button, int* x, int* y ) {
+void input_mouseDrag( input* in, int button, int* x, int* y ) {
 	if ( input_mouseHeld( in, button )) {
-		input_getMouseMove( in, x, y );
+		input_mouseMove( in, x, y );
 	}
 	else {
 		*x = 0;

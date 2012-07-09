@@ -60,7 +60,7 @@ void velcam_input( velcam* cam, input* in  ) {
 
 	int x = 0, y = 0;
 	// Mouse drag coord is from TopLeft, ie. +x = right, +y = down
-	input_getMouseDrag( in, BUTTON_LEFT, &x, &y );
+	input_mouseDrag( in, BUTTON_LEFT, &x, &y );
 	// We cross assign x and y, as an x pan is a pan around the x axis, 
 	// aka a pitch with is from vertical movement
 	fly_in.pan.coord.y = (float)x * mouseScale;
