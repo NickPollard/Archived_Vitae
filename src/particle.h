@@ -1,6 +1,6 @@
 // particle.h
 #pragma once
-#include "maths.h"
+#include "maths/maths.h"
 
 #define kMaxParticles 128
 #define kMaxParticleVerts (kMaxParticles * 6)

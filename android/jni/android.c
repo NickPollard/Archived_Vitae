@@ -22,6 +22,7 @@
 
 // ###################################
 
+#if UNIT_TEST
 void runTests() {
 	// Memory Tests
 	test_allocator();
@@ -31,12 +32,13 @@ void runTests() {
 	// System Tests
 	test_sfile();
 
-	test_matrix();
+	test_maths();
 
 	test_property();
 
 	test_string();
 }
+#endif // UNIT_TEST
 
 // Just the current frame in the display.
 static void draw_frame( window* w ) {

@@ -2,7 +2,7 @@
 #pragma once
 
 #include "common.fwd.h"
-#include "maths.h"
+#include "maths/maths.h"
 
 #define DEBUG_RENDER_LIGHTS 0
 

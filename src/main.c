@@ -11,7 +11,7 @@
 #include "collision.h"
 #include "engine.h"
 #include "input.h"
-#include "maths.h"
+#include "maths/maths.h"
 #include "particle.h"
 #include "terrain.h"
 #include "mem/allocator.h"
@@ -36,7 +36,7 @@ void runTests() {
 	
 	test_lisp();
 
-	test_matrix();
+	test_maths();
 
 	test_property();
 

@@ -9,7 +9,7 @@
 
 #include "common.fwd.h"
 #include "engine.h"
-#include "maths.h"
+#include "maths/maths.h"
 #include "transform.h"
 
 #define MAX_TRANSFORMS 512

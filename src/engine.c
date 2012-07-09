@@ -8,7 +8,7 @@
 #include "font.h"
 #include "input.h"
 #include "lua.h"
-#include "maths.h"
+#include "maths/maths.h"
 #include "model.h"
 #include "particle.h"
 #include "scene.h"
@@ -138,7 +138,7 @@ void engine_tick( engine* e ) {
 
 	//printf( "TICK: frametime %.4fms (%.2f fps)\n", time, 1.f/time );
 
-	lua_preTick( dt );
+	lua_preTick( e->lua, dt );
 
 	input_tick( e->input, dt );
 	scene_tick( theScene, dt );

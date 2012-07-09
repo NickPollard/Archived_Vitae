@@ -2,7 +2,7 @@
 #pragma once
 
 #include "common.fwd.h"
-#include "maths.h"
+#include "maths/maths.h"
 #include "render/render.h"
 
 #define kMaxSubMeshes 4

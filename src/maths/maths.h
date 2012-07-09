@@ -1,7 +1,7 @@
 // Maths.h
-#ifndef __MATHS_H__
-#define __MATHS_H__
+#pragma once
 
+#include "maths/vector.h"
 #include "render/vgl.h"
 #include <math.h>
 
@@ -10,16 +10,6 @@
 typedef float matrix[4][4];
 
 extern matrix matrix_identity;
-
-union vector_u {
-   	struct {
-		float x;
-		float y;
-		float z;
-		float w;
-	} coord;
-	float	val[4];
-};
 
 typedef struct quat_s {
 	float x;
@@ -32,12 +22,6 @@ typedef struct quat_s {
 // columns are laid out contiguously in memory
 // ie val[0][x] = a point in the first column
 // Translation values are in the 12th, 13th, 14th, 15th addresses of the buffer
-/*
-typedef union matrix_u {
-	vector cols[4];
-	float val[4][4];
-} matrix;
-*/
 
 bool f_eq( float a, float b );
 
@@ -55,37 +39,6 @@ float lerp( float a, float b, float factor );
 float map_range( float point, float begin, float end );
 
 bool isPowerOf2( unsigned int n );
-
-// *** Vectors
-
-vector Vector(float x, float y, float z, float w);
-
-// Vector Addition
-void Add(vector* dst, const vector* srcA, const vector* srcB);
-
-// Vector subtraction
-void Sub(vector *dst, const vector* srcA, const vector* srcB);
-
-// Vector dot product
-float Dot( const vector* A, const vector* B );
-
-// Vector cross product
-void Cross(vector* dst, const vector* srcA, const vector* srcB);
-
-// Normalise a vector
-// No use of restrict; dst *can* alias src
-void Normalize( vector* dst, const vector* src );
-bool isNormalized( const vector* v );
-
-void vector_scale( vector* dst, vector* src, float scale );
-vector vector_lerp( vector* from, vector* to, float amount );
-
-vector vector_mul( vector* a, vector* b );
-vector vector_max( vector* a, vector* b );
-vector vector_min( vector* a, vector* b );
-
-float vector_length( const vector* v );
-float vector_distance( const vector* a, const vector* b );
 
 // Matrix Vector multiply
 vector matrixVecMul(matrix m, const vector* v);
@@ -143,13 +96,8 @@ void matrix_rotY( matrix dst, float angle );
 void matrix_rotZ( matrix dst, float angle );
 
 // *** Test
-void test_matrix();
+#ifdef UNIT_TEST
+void test_maths();
+#endif // UNIT_TEST
 
 void matrix_print( matrix src );
-
-void vector_print( const vector* v );
-void vector_printf( const char* label, const vector* v );
-
-bool vector_equal( const vector* a, const vector* b );
-
-#endif // __MATHS_H__

@@ -3,7 +3,7 @@
 #include "common.h"
 #include "font.h"
 //-----------------------
-#include "maths.h"
+#include "maths/maths.h"
 #include "external/util.h"
 #include "render/debugdraw.h"
 #include "system/file.h"

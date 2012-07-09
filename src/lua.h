@@ -35,7 +35,7 @@ struct luaInterface_s {
 
 typedef struct luaInterface_s luaInterface;
 
-void lua_preTick( float dt );
+void lua_preTick( lua_State* l, float dt );
 
 // Is the luaCallback currently enabled?
 int luaCallback_enabled(luaCallback* l);

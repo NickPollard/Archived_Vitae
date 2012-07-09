@@ -4,7 +4,7 @@
 #include "input.h"
 //---------------------
 #include "engine.h"
-#include "maths.h"
+#include "maths/maths.h"
 #include "test.h"
 #include "input/keyboard.h"
 #include "mem/allocator.h"

@@ -2,7 +2,7 @@
 
 #pragma once
 #include "mem/pool.h"
-#include "maths.h"
+#include "maths/maths.h"
 
 #include "model.h"
 

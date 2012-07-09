@@ -1,7 +1,7 @@
 #ifndef __TRANSFORM_H__
 #define __TRANSFORM_H__
 
-#include "maths.h"
+#include "maths/maths.h"
 #include "mem/pool.h"
 
 // *** Transform ***

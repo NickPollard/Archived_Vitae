@@ -3,7 +3,7 @@
 #include "common.h"
 #include "model.h"
 //-----------------------
-#include "maths.h"
+#include "maths/maths.h"
 #include "model_loader.h"
 #include "engine.h"
 #include "mem/allocator.h"

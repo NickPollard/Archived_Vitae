@@ -3,7 +3,7 @@
 #include "common.h"
 #include "render/debugdraw.h"
 //-----------------------
-#include "maths.h"
+#include "maths/maths.h"
 #include "render/render.h"
 
 #include "render/vgl.h"

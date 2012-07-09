@@ -23,13 +23,14 @@ all : $(EXECUTABLE)
 clean :
 	@echo "--- Removing Object Files ---"
 	@find bin/release -name '*.o' -exec rm -vf {} \;
+	@find bin/release -name '*.d' -exec rm -vf {} \;
 	@echo "--- Removing Executable ---"
 	@-rm -vf $(EXECUTABLE);
 
 cleandebug : 
 	@echo "--- Removing Object Files ---"
-	@-rm -vf bin/debug/*.o;
-	@-rm -vf bin/debug/*/*.o;
+	@find bin/debug -name '*.o' -exec rm -vf {} \;
+	@find bin/debug -name '*.d' -exec rm -vf {} \;
 	@echo "--- Removing Debug Executable ---"
 	@-rm -vf $(EXECUTABLE)_debug;
 

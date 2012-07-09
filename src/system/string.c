@@ -3,7 +3,7 @@
 #include "common.h"
 #include "string.h"
 //-----------------------
-#include "maths.h"
+#include "maths/maths.h"
 #include "mem/allocator.h"
 #include <stdarg.h>
 #include <strings.h>

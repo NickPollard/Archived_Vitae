@@ -1,6 +1,6 @@
 // skybox.h
 #pragma once
-#include "maths.h"
+#include "maths/maths.h"
 
 #define SKYBOX_VERTEX_ATTRIBS( f ) \
 	f( position ) \

@@ -3,7 +3,7 @@
 #include "common.h"
 #include "render/texture.h"
 //---------------------
-#include "maths.h"
+#include "maths/maths.h"
 #include "mem/allocator.h"
 #include "render/render.h"
 #include "system/file.h"

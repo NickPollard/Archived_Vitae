@@ -1,5 +1,4 @@
 // Maths.c
-
 #include "common.h"
 #include "maths.h"
 //----------------------
@@ -59,119 +58,6 @@ bool isPowerOf2( unsigned int n ) {
 	printf( "n & (n-1): %x.\n", n & ~(n-1) );
 	*/
 	return (n & (n - 1)) == 0;
-}
-
-// *** Vectors
-
-vector Vector(float x, float y, float z, float w) {
-	vector v;
-	v.coord.x = x;
-	v.coord.y = y;
-	v.coord.z = z;
-	v.coord.w = w;
-	return v;
-}
-
-// Vector Addition
-void Add(vector* dst, const vector* srcA, const vector* srcB) {
-	for (int i = 0; i < 4; i++)
-		dst->val[i] = srcA->val[i] + srcB->val[i];
-}
-
-// Vector &subtraction
-void Sub(vector* dst, const vector* srcA, const vector* srcB) {
-	for (int i = 0; i < 4; i++)
-		dst->val[i] = srcA->val[i] - srcB->val[i];
-}
-
-// Vector dot product
-float Dot( const vector* A, const vector* B ) {
-	return (A->coord.x * B->coord.x + A->coord.y * B->coord.y + A->coord.z * B->coord.z);
-}
-
-// Vector cross product
-void Cross(vector* dst, const vector* srcA, const vector* srcB) {
-	vAssert( dst != srcA );
-	vAssert( dst != srcB );
-	dst->coord.x = (srcA->coord.y * srcB->coord.z) - (srcA->coord.z * srcB->coord.y);
-	dst->coord.y = (srcA->coord.z * srcB->coord.x) - (srcA->coord.x * srcB->coord.z);
-	dst->coord.z = (srcA->coord.x * srcB->coord.y) - (srcA->coord.y * srcB->coord.x);
-	dst->coord.w = 1.f;
-}
-
-void vector_scale( vector* dst, vector* src, float scale ) {
-	dst->coord.x = src->coord.x * scale;
-	dst->coord.y = src->coord.y * scale;
-	dst->coord.z = src->coord.z * scale;
-	dst->coord.w = src->coord.w;
-}
-
-float vector_length( const vector* v ) {
-	float length = sqrt( v->coord.x * v->coord.x + v->coord.y * v->coord.y + v->coord.z * v->coord.z );
-	return length;
-}
-// Normalise a vector
-// No use of restrict; dst *can* alias src
-void Normalize( vector* dst, const vector* src ) {
-	float length = vector_length( src );
-	float invLength = 1.f / length;
-	dst->coord.x = src->coord.x * invLength;
-	dst->coord.y = src->coord.y * invLength;
-	dst->coord.z = src->coord.z * invLength;
-	dst->coord.w = src->coord.w; // Preserve the W coord? This seems right to me
-}
-
-bool isNormalized( const vector* v ) {
-#if 0
-	printf( "IsNormalized: Vector v: " );
-	vector_print( v );
-	printf( ", length: %.10f\n", vector_length( v ));
-#endif
-	return f_eq( 1.f, vector_length( v ));
-}
-
-vector vector_lerp( vector* from, vector* to, float amount ) {
-	vector v;
-	float inv = 1.f - amount;
-	v.coord.x = from->coord.x * inv + to->coord.x * amount;
-	v.coord.y = from->coord.y * inv + to->coord.y * amount;
-	v.coord.z = from->coord.z * inv + to->coord.z * amount;
-	v.coord.w = from->coord.w * inv + to->coord.w * amount;
-	return v;
-}
-
-vector vector_mul( vector* a, vector* b ) {
-	vector v;
-	v.coord.x = a->coord.x * b->coord.x;
-	v.coord.y = a->coord.y * b->coord.y;
-	v.coord.z = a->coord.z * b->coord.z;
-	v.coord.w = a->coord.w * b->coord.w;
-	return v;
-}
-
-
-vector vector_max( vector* a, vector* b ) {
-	vector m;
-	m.coord.x = fmaxf( a->coord.x, b->coord.x );
-	m.coord.y = fmaxf( a->coord.y, b->coord.y );
-	m.coord.z = fmaxf( a->coord.z, b->coord.z );
-	m.coord.w = fmaxf( a->coord.w, b->coord.w );
-	return m;
-}
-
-vector vector_min( vector* a, vector* b ) {
-	vector m;
-	m.coord.x = fminf( a->coord.x, b->coord.x );
-	m.coord.y = fminf( a->coord.y, b->coord.y );
-	m.coord.z = fminf( a->coord.z, b->coord.z );
-	m.coord.w = fminf( a->coord.w, b->coord.w );
-	return m;
-}
-
-float vector_distance( const vector* a, const vector* b ) {
-	vector displacement;
-	Sub( &displacement, a, b );
-	return vector_length( &displacement );
 }
 
 // Matrix Vector multiply
@@ -270,29 +156,6 @@ void matrix_setIdentity(matrix m) {
 	m[1][1] = 1.f;
 	m[2][2] = 1.f;
 	m[3][3] = 1.f; }
-
-void vector_print( const vector* v ) {
-	printf( "%.4f, %.4f, %.4f, %.4f", v->val[0], v->val[1], v->val[2], v->val[3] );
-}
-
-void vector_printf( const char* label, const vector* v ) {
-	printf( "%s", label );
-	vector_print( v );
-	printf( "\n" );
-}
-
-bool vector_equal( const vector* a, const vector* b ) {
-	for (int i = 0; i < 4; i++)
-		if ( !f_eq( ((float*)a)[i], ((float*)b)[i] ) ) {
-			printf( "vector_equal: vectors not equal.\nA: " );
-			vector_print( a );
-			printf( "\nB: " );
-			vector_print( b );
-			printf( "\n" );
-			return false;
-		}
-	return true;
-}
 
 bool matrix_equal( matrix a, matrix b ) {
 	for (int i = 0; i < 16; i++)
@@ -638,6 +501,7 @@ quaternion quaternion_fromEuler( vector* euler_angles ) {
 	assert( 0 );
 }
 
+#ifdef UNIT_TEST
 void test_matrix() {
 	matrix a, b, c;
 	matrix_setIdentity( a );
@@ -696,3 +560,8 @@ void test_matrix() {
 	vAssert( f_eq( fround( -1.3f, 1.f ),  -1.f ));
 
 }
+
+void test_maths() {
+	test_matrix();
+}
+#endif // UNIT_TEST

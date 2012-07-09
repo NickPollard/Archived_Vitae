@@ -1,6 +1,6 @@
 // physic.h
 #pragma once
-#include "maths.h"
+#include "maths/maths.h"
 
 typedef struct physic_s {
 	transform* trans;

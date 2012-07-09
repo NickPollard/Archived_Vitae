@@ -1,6 +1,6 @@
 // dynamicfog.h
 #pragma once
-#include "src/maths.h"
+#include "src/maths/maths.h"
 
 #define kNumFogs 4
 

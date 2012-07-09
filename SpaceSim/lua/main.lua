@@ -241,15 +241,18 @@ end
 wave_interval_time = 10.0
 
 function playership_tick()
-	acceleration = 0.10
-	yaw = 0.002
-	pitch = 0.002
+	acceleration = 16.0
+	yaw_per_second =1.2 
+	pitch_per_second = 1.2
 	width = 80
+	pitch = pitch_per_second * dt;
+	yaw = yaw_per_second * dt;
+	delta_speed = acceleration * dt;
 	if vkeyHeld( input, key.w )  or vtouchHeld( input, 000.0, -width*3, 100.0, -width*2 ) then
-		player_ship.speed = player_ship.speed + acceleration
+		player_ship.speed = player_ship.speed + delta_speed
 	end
 	if vkeyHeld( input, key.s )  or vtouchHeld( input, 000.0, -width, 100.0, -1.0 ) then
-		player_ship.speed = player_ship.speed - acceleration
+		player_ship.speed = player_ship.speed - delta_speed
 	end
 	if vkeyHeld( input, key.left ) or vtouchHeld( input, -width*3, -width*3, -width*2, -1.0 ) then
 		vtransform_yaw( player_ship.transform, -yaw );

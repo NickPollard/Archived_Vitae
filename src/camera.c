@@ -3,7 +3,7 @@
 #include "common.h"
 #include "camera.h"
 //---------------------
-#include "maths.h"
+#include "maths/maths.h"
 #include "transform.h"
 #include "mem/allocator.h"
 

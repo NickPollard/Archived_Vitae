@@ -6,7 +6,6 @@ SRCS =	src/camera.c \
 		src/light.c \
 		src/lua.c \
 		src/main.c \
-		src/maths.c \
 		src/model.c \
 		src/model_loader.c \
 		src/particle.c \
@@ -25,6 +24,8 @@ SRCS =	src/camera.c \
 		src/input/keyboard.c \
 		src/input/mouse.c \
 		src/input/touch.c \
+		src/maths/maths.c \
+		src/maths/vector.c \
 		src/mem/allocator.c \
 		src/render/modelinstance.c \
 		src/render/render.c \

@@ -71,7 +71,7 @@
 #include "common.h"
 #include "lisp.h"
 //--------------------------------------------------------
-#include "maths.h"
+#include "maths/maths.h"
 #include "mem/allocator.h"
 #include "model.h"
 #include "model_loader.h"

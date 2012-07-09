@@ -2,7 +2,7 @@
 #ifndef __DEBUGDRAW__
 #define __DEBUGDRAW__
 
-#include "src/maths.h"
+#include "src/maths/maths.h"
 
 // Draw a debug cross at the point *center*
 void debugdraw_cross( const vector* center, float radius );

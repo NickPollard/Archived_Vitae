@@ -47,10 +47,13 @@ void lua_init() {
 	lua_vector_count = 0;
 }
 
-void lua_preTick( float dt ) {
-	(void)dt;
+void lua_preTick( lua_State* l, float dt ) {
 	// reset vectors at the start of every tick
 	lua_vector_count = 0;
+
+	// Send the dt value to LUA for it to use
+	lua_pushnumber( l, dt );
+	lua_setglobal( l, "dt" ); // store the table in the 'key' global variable
 }
 
 

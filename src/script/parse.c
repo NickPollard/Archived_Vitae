@@ -4,7 +4,7 @@
 #include "parse.h"
 //-----------------------
 #include "light.h"
-#include "maths.h"
+#include "maths/maths.h"
 #include "model.h"
 #include "model_loader.h"
 #include "scene.h"

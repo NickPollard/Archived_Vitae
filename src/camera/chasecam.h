@@ -1,7 +1,7 @@
 // chasecam.h
 #pragma once
 
-#include "maths.h"
+#include "maths/maths.h"
 #include "camera.h"
 
 typedef struct chasecam_s {
