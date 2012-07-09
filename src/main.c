@@ -20,13 +20,12 @@
 #include "system/hash.h"
 #include "system/string.h"
 
-#define TEST true
-
 void test_lisp();
 
 // ###################################
 
-void test() {
+#if UNIT_TEST
+void runTests() {
 	// Memory Tests
 	test_allocator();
 
@@ -51,6 +50,7 @@ void test() {
 
 	test_collision();
 }
+#endif // UNIT_TEST
 
 // ###################################
 
@@ -63,8 +63,8 @@ int main(int argc, char** argv) {
 	engine* e = engine_create();
 	engine_init( e, argc, argv );
 
-#if TEST
-	test();
+#if UNIT_TEST
+	runTests();
 #endif
 
 	engine_run( e );

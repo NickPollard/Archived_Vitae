@@ -660,12 +660,10 @@ void lua_keycodes( lua_State* l ) {
 		string[1] = '\0';
 		lua_setfieldi( l, string, i + capital_offset );
 	}
-	/*
 	lua_setfieldi( l, "w", KEY_W );
 	lua_setfieldi( l, "a", KEY_A );
 	lua_setfieldi( l, "s", KEY_S );
 	lua_setfieldi( l, "d", KEY_D );
-	*/
 	lua_setfieldi( l, "up", KEY_UP );
 	lua_setfieldi( l, "down", KEY_DOWN );
 	lua_setfieldi( l, "left", KEY_LEFT );

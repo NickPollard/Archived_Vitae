@@ -24,10 +24,13 @@
 #define true 1
 #define false 0
 
+// *** Unit Testing
+#define UNIT_TEST true
 #define TERM_RED "[1;31;40m"
 #define TERM_GREEN "[1;32;40m"
 #define TERM_WHITE "[0;37;40m"
 
+// *** Architecture
 #define ARCH_64BIT
 #ifdef ARCH_64BIT
 #define dPTRf "%ld"
@@ -40,6 +43,7 @@
 #define then ?
 #define otherwise :
 
+// *** Android specific
 #ifndef ANDROID
 #define LINUX_X // At the moment we only support linux apart from Android
 #endif
@@ -55,7 +59,9 @@
 
 #define printf( ... )  LOGI( __VA_ARGS__ )
 
-#endif
+#endif // ANDROID
+
+// *** Asserts
 
 #define vAssert( a )	if ( !(a) ) { \
 							printf( "Assert Failed: " #a " (%s:%d)\n", __FILE__, __LINE__ ); \

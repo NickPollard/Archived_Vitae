@@ -135,24 +135,13 @@ struct input_s {
 input_data x_key_array;
 #endif
 
-// constructor
+// Constructor
 input* input_create();
 
 // tick the input, recording this frames input data from devices
 void input_tick( input* in, float dt );
 
-// Is the key held down this frame? Regardless of previous state
-int input_keyHeld( input* i, enum key k );
-
-// Was the key held down last frame? Regardless of previous state
-int input_keyWasHeld( input* i, enum key k );
-
-// Was the key first pressed this frame? ie. It is depressed now, but was not last frame
-int input_keyPressed( input* i, enum key k );
-
-// Was the key first released this frame? ie. It is not depressed now, but was last frame
-int input_keyReleased( input* i, enum key k );
-
+// *** Keybinds
 int input_registerKeybind( );
 
 // Set a keybind for the given input setup only, overwriting the default
@@ -160,6 +149,17 @@ void input_setKeyBind( input* in, keybind bind, int key );
 
 // Set a default keybind. This will be copied into any input that is created after
 void input_setDefaultKeyBind( keybind bind, int key );
+
+/*
+	Held - the key is currently held
+	WasHeld - the key was held the last frame
+	Pressed - the key is currently held, but was not held last frame (i.e. key down)
+	Released - they key was currently held, but is no longer (i.e. key up)
+   */
+int input_keyHeld( input* i, enum key k );
+int input_keyWasHeld( input* i, enum key k );
+int input_keyPressed( input* i, enum key k );
+int input_keyReleased( input* i, enum key k );
 
 // Keybind varients of the key functions
 int input_keybindPressed( input* in, int keybind );

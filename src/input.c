@@ -5,6 +5,7 @@
 //---------------------
 #include "engine.h"
 #include "maths.h"
+#include "test.h"
 #include "mem/allocator.h"
 
 #ifdef LINUX_X
@@ -238,6 +239,10 @@ void input_tick( input* in, float dt ) {
 	(void)dt;
 	in->active = in->active ^ 0x1;		// flip the key buffers (we effectively double buffer the key state)
 
+#ifdef LINUX_X
+	memcpy( in->data[in->active].keys, x_key_array.keys, sizeof( char) * INPUT_KEYDATA_SIZE );
+#endif // LINUX_X
+
 #ifndef ANDROID	
 	// Store current state of keys
 	/*
@@ -248,7 +253,6 @@ void input_tick( input* in, float dt ) {
 		}
 	}
 	*/
-	memcpy( in->data[in->active].keys, x_key_array.keys, sizeof( char) * INPUT_KEYDATA_SIZE );
 
 	// Store current state of mouse
 	in->data[in->active].mouse = 0x0;
@@ -282,12 +286,16 @@ void input_initKeyCodes( xwindow* xwin ) {
 	key_codes[KEY_DOWN] = XKeysymToKeycode( xwin->display, XK_Down);
 	key_codes[KEY_LEFT] = XKeysymToKeycode( xwin->display, XK_Left);
 	key_codes[KEY_RIGHT] = XKeysymToKeycode( xwin->display, XK_Right);
+	
+	key_codes[KEY_W] = XKeysymToKeycode( xwin->display, XK_W);
+	key_codes[KEY_S] = XKeysymToKeycode( xwin->display, XK_S);
 }
 #else
 void input_initKeyCodes() {
 }
 #endif // LINUX_X
 
+#if UNIT_TEST
 void test_input() {
 	printf( "--- Beginning Unit Test: Input System ---\n" );
 	// Key array test
@@ -302,4 +310,6 @@ void test_input() {
 		keyArray_set( &data, key, 0 );
 		vAssert( keyArray_get( &data, key ) == 0);
 	}
+	test( true, "Read and Wrote to all keys in key array successfully.", NULL );
 }
+#endif // UNIT_TEST

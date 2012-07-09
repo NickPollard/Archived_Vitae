@@ -2,6 +2,7 @@
 #include "common.h"
 #include "allocator.h"
 //---------------------
+#include "test.h"
 #include "system/thread.h"
 #include <assert.h>
 #include <stdio.h>
@@ -302,43 +303,37 @@ block* block_create( void* data, int size ) {
 // Tests
 //
 
+#if UNIT_TEST
 void test_allocator() {
 	printf( "%s--- Beginning Unit Test: Heap Allocator ---\n", TERM_WHITE );
 	heapAllocator* heap = heap_create( 4096 );
 
-	if (!heap) {
-		printf("[ Failed ]\tAllocator not created.\n");
-	} else {
-		printf("[ %sPassed%s ]\tAllocator created succesfully.\n", TERM_GREEN, TERM_WHITE );
-	}
-//	if (heap->total_size == 4096) {
-//		printf("[ Passed: Create Allocator of 4096 byte heap.\n");
-//	} else {
-//		printf("[ Failed ]\tAllocator has incorrect size (should be 4096).\n");
-//	}
+	test( heap, "Allocator created successfully.", "Allocator not created." );
+	test( heap->total_size == 4096, "Created Allocator of 4096 byte heap.", "Allocator has incorrect size (should be 4096)." );
 
 	void* a = heap_allocate( heap, 2048 );
 	memset( a, 0, 2048 );
-	printf( "[ %sPassed%s ]\tAllocated 2048 bytes succesfully.\n", TERM_GREEN, TERM_WHITE );
+	test( true, "Allocated 2048 bytes succesfully.", NULL );
 
 	void* b = heap_allocate( heap, 1024 );
 	memset( b, 0, 1024 );
-	printf( "[ %sPassed%s ]\tAllocated 2048 + 1024 bytes succesfully.\n", TERM_GREEN, TERM_WHITE );
+	test( true, "Allocated 2048 + 1024 bytes succesfully.", NULL );
 
 	heap_deallocate( heap, a );
-	printf( "[ %sPassed%s ]\tDeallocated 2048 bytes succesfully.\n", TERM_GREEN, TERM_WHITE );
+	test( true, "Deallocated 2048 bytes succesfully.", NULL );
 
 	heap_deallocate( heap, b );
-	printf( "[ %sPassed%s ]\tDeallocated 1024 bytes succesfully.\n", TERM_GREEN, TERM_WHITE );
+	test( true, "Deallocated 1024 bytes succesfully.", NULL );
 
 	a = heap_allocate( heap, 3072 );
 	memset( a, 0, 3072 );
-	printf( "[ %sPassed%s ]\tAllocated 3072 bytes succesfully.\n", TERM_GREEN, TERM_WHITE );
+	test( true, "Allocated 3072 bytes succesfully.", NULL );
 
 	b = heap_allocate( heap, 512 );
 	memset( b, 0, 512 );
-	printf( "[ %sPassed%s ]\tAllocated 512 bytes succesfully.\n", TERM_GREEN, TERM_WHITE );
+	test( true, "Allocated 512 bytes succesfully.", NULL );
 }
+#endif // UNIT_TEST
 
 passthroughAllocator* passthrough_create( heapAllocator* heap ) {
 	passthroughAllocator* p = mem_alloc( sizeof( passthroughAllocator ));
