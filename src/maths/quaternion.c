@@ -172,6 +172,6 @@ void test_quaternion() {
 	vector_printf( "point_: ", &point_ );
 
 	// Test quaternion_fromEuler
-	vAssert( 0 );
+	//vAssert( 0 );
 }
 #endif // UNIT_TEST

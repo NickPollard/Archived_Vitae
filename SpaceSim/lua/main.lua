@@ -230,7 +230,7 @@ function start()
 	-- The player class itself creates several native C classes in the engine
 	player_ship = playership_create()
 	pi = 3.1415
-	vtransform_yaw( player_ship.transform, -pi/2 * 0.7 );
+	vtransform_yaw( player_ship.transform, pi/2 * 0.7 );
 	chasecam = vchasecam_follow( engine, player_ship.transform )
 	flycam = vflycam( engine )
 	vscene_setCamera( chasecam )
@@ -242,7 +242,7 @@ wave_interval_time = 10.0
 
 function playership_tick()
 	acceleration = 16.0
-	yaw_per_second =1.2 
+	yaw_per_second = 1.2 
 	pitch_per_second = 1.2
 	width = 80
 	pitch = pitch_per_second * dt;
@@ -255,10 +255,10 @@ function playership_tick()
 		player_ship.speed = player_ship.speed - delta_speed
 	end
 	if vkeyHeld( input, key.left ) or vtouchHeld( input, -width*3, -width*3, -width*2, -1.0 ) then
-		vtransform_yaw( player_ship.transform, -yaw );
+		vtransform_yaw( player_ship.transform, yaw );
 	end
 	if vkeyHeld( input, key.right ) or vtouchHeld( input, -width, -width*3, -1.0, -1.0 ) then
-		vtransform_yaw( player_ship.transform, yaw );
+		vtransform_yaw( player_ship.transform, -yaw );
 	end
 	if vkeyHeld( input, key.up ) or vtouchHeld( input, -width*3, -width*3, -1.0, -width*2 ) then
 		vtransform_pitch( player_ship.transform, -pitch );

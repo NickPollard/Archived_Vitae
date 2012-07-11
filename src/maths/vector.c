@@ -48,7 +48,7 @@ void Cross(vector* dst, const vector* srcA, const vector* srcB) {
 	dst->coord.x = (srcA->coord.y * srcB->coord.z) - (srcA->coord.z * srcB->coord.y);
 	dst->coord.y = (srcA->coord.z * srcB->coord.x) - (srcA->coord.x * srcB->coord.z);
 	dst->coord.z = (srcA->coord.x * srcB->coord.y) - (srcA->coord.y * srcB->coord.x);
-	dst->coord.w = 1.f;
+	dst->coord.w = 0.f; // If we're getting the cross product, it's a vector not a point
 }
 
 void vector_scale( vector* dst, vector* src, float scale ) {

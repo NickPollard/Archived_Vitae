@@ -330,37 +330,35 @@ void matrix_normalize( matrix m ) {
 	}
 }
 
-// Create a rotation matrix representing a rotation about the Y-axis (Yaw)
-// of *angle* radians
-// NOTE: the angle must be in radians, not degrees
+// Create a rotation matrix representing a rotation of ANGLE radians about the Y-axis (Yaw)
 // Axes are aligned as if +Z is into the screen, +Y is up, +X is right
-// A Positive Yaw rotation means to yaw right, ie. as if turning a corner to the right
+// A Positive Yaw rotation means to yaw left, ie. as if turning a corner to the left
 void matrix_rotY( matrix dst, float angle ) {
 	float sinTheta = sin( angle );
 	float cosTheta = cos( angle );
 	matrix_setIdentity( dst );
 	dst[0][0] = cosTheta;
-	dst[0][2] = -sinTheta;
-	dst[2][0] = sinTheta;
+	dst[0][2] = sinTheta;
+	dst[2][0] = -sinTheta;
 	dst[2][2] = cosTheta;
 }
 
+// Create a rotation matrix representing a rotation of ANGLE radians about the Z-axis (Roll)
+// Axes are aligned as if +Z is into the screen, +Y is up, +X is right
+// A Positive Roll rotation means to roll left, ie. as if banking to the left
 void matrix_rotZ( matrix dst, float angle ) {
 	float sinTheta = sin( angle );
 	float cosTheta = cos( angle );
 	matrix_setIdentity( dst );
 	dst[0][0] = cosTheta;
-	dst[0][1] = -sinTheta;
-	dst[1][0] = sinTheta;
+	dst[0][1] = sinTheta;
+	dst[1][0] = -sinTheta;
 	dst[1][1] = cosTheta;
 }
 
-
-// Create a rotation matrix representing a rotation about the X-axis (Pitch)
-// of *angle* radians
-// NOTE: the angle must be in radians, not degrees
+// Create a rotation matrix representing a rotation of ANGLE radians about the X-axis (Pitch)
 // Axes are aligned as if +Z is into the screen, +Y is up, +X is right
-// A positive rotation (pitch) means to pitch up (ie. lean back)
+// A Positive pitch rotation means to pitch up, ie. as if to climb
 void matrix_rotX( matrix dst, float angle ) {
 	float sinTheta = sin( angle );
 	float cosTheta = cos( angle );
@@ -411,6 +409,18 @@ void matrix_fromAxisAngle( matrix m, vector axis, float angle ) {
 	
 	matrix_rotZ( rotation, angle );
 	matrix_inverse( to_original_space, to_normal_space );
+
+/*
+	printf( "To Normal Space:\n" );
+	matrix_print( to_normal_space );
+	printf( "\n" );
+	printf( "Rotation matrix:\n" );
+	matrix_print( rotation );
+	printf( "\n" );
+	printf( "Back to original space:\n" );
+	matrix_print( to_original_space );
+	printf( "\n" );
+	*/
 
 	// We compose the matrices into one operation that:
 	//   Converts to axis space
@@ -500,18 +510,49 @@ void test_matrix() {
 	vAssert( f_eq( fround( -0.5f, 1.f ), 0.f ));
 	vAssert( f_eq( fround( -1.3f, 1.f ),  -1.f ));
 
-	// TODO
-	// Test matrix_fromAxisAngle();
+	// Test matrix_fromAxisAngle()
+	// Ensure that doing matrix_fromAxisAngle rotations for the cardinal axes
+	// gives the same results as our matrix_rotN functions
+	matrix rotationAxisAngle, rotationX, rotationY, rotationZ;
+
+	matrix_fromAxisAngle( rotationAxisAngle, x_axis, PI/2 );
+	matrix_rotX( rotationX, PI/2 );
+	vector result_a = matrix_vecMul( rotationAxisAngle, &z_axis );
+	vector result_b = matrix_vecMul ( rotationX, &z_axis );
+	test( vector_equal( &result_a, &result_b ), "Matrix X axis rotation", "Matrix X axis rotation." );
+
+	matrix_fromAxisAngle( rotationAxisAngle, y_axis, PI/2 );
+	matrix_rotY( rotationY, PI/2 );
+	result_a = matrix_vecMul( rotationAxisAngle, &x_axis );
+	result_b = matrix_vecMul ( rotationY, &x_axis );
+	test( vector_equal( &result_a, &result_b ), "Matrix Y axis rotation", "Matrix Y axis rotation." );
+
+	matrix_fromAxisAngle( rotationAxisAngle, z_axis, PI/2 );
+	matrix_rotZ( rotationZ, PI/2 );
+	result_a = matrix_vecMul( rotationAxisAngle, &y_axis );
+	result_b = matrix_vecMul ( rotationZ, &y_axis );
+	test( vector_equal( &result_a, &result_b ), "Matrix Z axis rotation", "Matrix Y axis rotation." );
+
+	// ***
+
+	// +ve rotation around X is actually a pitch UP
 	matrix rotation;
 	matrix_fromAxisAngle( rotation, x_axis, PI/2 );
-	printf( "Rotation matrix: 90deg around X-axis: " );
-	matrix_print( rotation );
-	printf( "\n" );
 	vector result = matrix_vecMul( rotation, &z_axis );
 	test( vector_equal( &result, &y_axis ), "Matrix arbitrary axis rotation", "Matrix arbitrary axis rotation." );
-	vector_printf( "Z-axis rotated 90deg around X-axis: ", &result );
+	
+	// +ve rotation around y is actually a yaw LEFT
+	matrix_fromAxisAngle( rotation, y_axis, PI/2 );
+	result = matrix_vecMul( rotation, &x_axis );
+	test( vector_equal( &result, &z_axis ), "Matrix arbitrary axis rotation", "Matrix arbitrary axis rotation." );
+
+	// +ve rotation around z is actually a roll LEFT
+	matrix_fromAxisAngle( rotation, z_axis, PI/2 );
+	result = matrix_vecMul( rotation, &x_axis );
+	test( vector_equal( &result, &y_axis ), "Matrix arbitrary axis rotation", "Matrix arbitrary axis rotation." );
+	//vector_printf( "y_axis rotated 90deg around z axis: ", &result );
 	
 	// Test matrix_fromEuler();
-	vAssert( 0 );
+	//vAssert( 0 );
 }
 #endif // UNIT_TEST
