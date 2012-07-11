@@ -8,6 +8,7 @@
 #include "input.h"
 #include "transform.h"
 #include "input/keyboard.h"
+#include "maths/vector.h"
 #include "mem/allocator.h"
 #include "render/render.h" // TODO: remove
 
@@ -79,7 +80,7 @@ void velcam_process( velcam* cam, velcamInput* in ) {
 	render_validateMatrix( m );
 	// We have a translation in camera space
 	// Want to go to world space, so use normal (not inverse) cam transform
-	vector translation_delta = matrixVecMul( m, &in->track );
+	vector translation_delta = matrix_vecMul( m, &in->track );
 	Add( &cam->translation, matrix_getTranslation( cam->trans->world ), &translation_delta );
 	matrix_setTranslation( m, &cam->translation );
 	transform_setWorldSpace( cam->trans, m );
@@ -96,7 +97,7 @@ void velcam_tick( velcam* f, float dt ) {
 	assert( f->camera_target );
 	vector vel;
 	vector forward = Vector( 0.f, 0.f, 1.f, 0.f );
-	vel = matrixVecMul( f->trans->world, &forward );
+	vel = matrix_vecMul( f->trans->world, &forward );
 	float speed = 0.f;
 	vector_scale( &vel, &vel, speed );
 	f->phys->velocity = vel;

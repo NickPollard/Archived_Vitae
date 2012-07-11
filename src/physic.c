@@ -3,6 +3,7 @@
 #include "src/physic.h"
 //---------------------
 #include "transform.h"
+#include "maths/vector.h"
 
 physic* physic_create()  {
 	physic* p = mem_alloc( sizeof( physic ));

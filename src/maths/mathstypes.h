@@ -63,12 +63,14 @@ extern matrix matrix_identity;
    s	= cos (t/2)
 
    (where t (theta) is the angle of rotation)
+
+   The x,y,z elements are equivalent to the i,j,k elements in complex notation. The s element is the real part.
    */
 
 typedef struct quat_s {
+	float s;
 	float x;
 	float y;
 	float z;
-	float s;
 } quaternion;
 

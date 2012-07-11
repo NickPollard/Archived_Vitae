@@ -3,7 +3,7 @@
 #include "maths/mathstypes.h"
 #include "render/vgl.h"
 
-vector matrixVecMul(matrix m, const vector* v);
+vector matrix_vecMul(matrix m, const vector* v);
 
 // Get the inverse of a 4x4 matrix
 void matrix_inverse( matrix dst, matrix src );
@@ -25,16 +25,16 @@ void matrix_setIdentity(matrix m);
 const GLfloat* matrix_getGlMatrix(matrix m);
 
 // Multiply two matrices together
-void matrix_mul(matrix dst, matrix m1, matrix m2);
+void matrix_mul(matrix dst, matrix a, matrix b);
 
 // Build a matrix from a rotation and translation
-void matrix_fromRotTrans( matrix dst, quaternion* rotation, vector* translation );
+void matrix_fromRotationTranslation( matrix m, quaternion rotation, vector translation );
 
 // Copy one matrix to another
 void matrix_cpy(matrix dst, matrix src);
 
 // Build a rotation matrix from given Euler Angles
-void matrix_fromEuler( matrix dst, vector* euler_angles );
+void matrix_fromEuler( matrix m, vector* euler_angles );
 
 // Normalize a matrix (so the 3x3 rotation component consists of 3 unit axes)
 void matrix_normalize( matrix m );
@@ -43,6 +43,9 @@ void matrix_normalize( matrix m );
 void matrix_rotX( matrix dst, float angle );
 void matrix_rotY( matrix dst, float angle );
 void matrix_rotZ( matrix dst, float angle );
+
+// Build a rotation matrix (no translation) from a quaternion
+void matrix_fromQuaternion( matrix dst, quaternion q );
 
 // Print a matrix to the output
 void matrix_print( matrix src );

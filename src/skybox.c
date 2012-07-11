@@ -5,6 +5,7 @@
 //-----------------------
 #include "model.h"
 #include "model_loader.h"
+#include "maths/vector.h"
 #include "render/render.h"
 #include "render/shader.h"
 #include "render/texture.h"

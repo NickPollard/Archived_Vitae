@@ -4,6 +4,7 @@
 #include "camera.h"
 //---------------------
 #include "maths/maths.h"
+#include "maths/vector.h"
 #include "transform.h"
 #include "mem/allocator.h"
 
@@ -46,7 +47,7 @@ void camera_calculateFrustum( camera* c, vector* frustum ) {
 	// First 3 elements are the normal, last is the D value
 
 	vector v = Vector( 0.0, 0.0, 1.0, 0.0 ); // 0.0 w coordinate since vector not point
-	vector view = matrixVecMul( c->trans->world, &v );
+	vector view = matrix_vecMul( c->trans->world, &v );
 	vector p = *matrix_getTranslation( c->trans->world );
 
 	/*

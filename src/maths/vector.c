@@ -4,6 +4,10 @@
 //----------------------
 #include "maths/maths.h"
 
+const vector x_axis = {{ 1.f, 0.f, 0.f, 0.f }};
+const vector y_axis = {{ 0.f, 1.f, 0.f, 0.f }};
+const vector z_axis = {{ 0.f, 0.f, 1.f, 0.f }};
+
 vector Vector(float x, float y, float z, float w) {
 	vector v;
 	v.coord.x = x;
@@ -125,6 +129,15 @@ bool vector_equal( const vector* a, const vector* b ) {
 			return false;
 		}
 	return true;
+}
+
+vector vector_fromQuaternion( quaternion q ) {
+	vector v;
+	v.coord.x = q.x;
+	v.coord.y = q.y;
+	v.coord.z = q.z;
+	v.coord.w = 0.f;
+	return v;
 }
 
 // *** Output

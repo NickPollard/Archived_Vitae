@@ -420,7 +420,7 @@ int LUA_transformVector( lua_State* l ) {
 	transform* t = lua_toptr( l, 1 );
 	vector* v = lua_toptr( l, 2 );
 	vector* _v = lua_createVector();
-	*_v = matrixVecMul( t->world, v );
+	*_v = matrix_vecMul( t->world, v );
 	lua_pushptr( l, _v );
 	return 1;
 }

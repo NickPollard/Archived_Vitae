@@ -10,6 +10,7 @@
 #include "model.h"
 #include "scene.h"
 #include "skybox.h"
+#include "maths/vector.h"
 #include "render/debugdraw.h"
 #include "render/modelinstance.h"
 #include "render/shader.h"
@@ -623,7 +624,7 @@ void render_sceneParams( sceneParams* params ) {
 	render_setUniform_vector( *resources.uniforms.sky_color_top, &params->sky_color );
 
 	const vector world_space_sun_dir = {{ 0.f, 0.f, 1.f, 0.f }};
-	vector sun_dir = matrixVecMul( modelview, &world_space_sun_dir );
+	vector sun_dir = matrix_vecMul( modelview, &world_space_sun_dir );
 	render_setUniform_vector( *resources.uniforms.camera_space_sun_direction, &sun_dir );
 }
 

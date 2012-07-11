@@ -78,7 +78,7 @@ void flycam_process( flycam* cam, flycamInput* in ) {
 	matrix_fromEuler( cam->transform, &cam->euler );
 	// We have a translation in camera space
 	// Want to go to world space, so use normal (not inverse) cam transform
-	vector translation_delta = matrixVecMul( cam->transform, &in->track );
+	vector translation_delta = matrix_vecMul( cam->transform, &in->track );
 	Add( &cam->translation, &cam->translation, &translation_delta );
 	matrix_setTranslation( cam->transform, &cam->translation );
 }

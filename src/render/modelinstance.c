@@ -4,9 +4,10 @@
 #include "modelinstance.h"
 //-----------------------
 #include "camera.h"
-#include "render/render.h"
 #include "particle.h"
 #include "transform.h"
+#include "maths/vector.h"
+#include "render/render.h"
 
 IMPLEMENT_POOL( modelInstance )
 
@@ -72,13 +73,13 @@ aabb aabb_calculate( int vert_count, vector* verts, matrix m ) {
 	aabb bb;
 	vector vert = verts[0];
 	if ( m )
-		vert = matrixVecMul( m, &verts[0] );
+		vert = matrix_vecMul( m, &verts[0] );
 	bb.min = vert;
 	bb.max = vert;
 	for ( int i = 1; i < vert_count; i++ ) {
 		vert = verts[i];
 		if ( m )
-			vert = matrixVecMul( m, &verts[i] );
+			vert = matrix_vecMul( m, &verts[i] );
 
 		bb.min = vector_min( &bb.min, &vert );
 		bb.max = vector_max( &bb.max, &vert );

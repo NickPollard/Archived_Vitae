@@ -3,6 +3,10 @@
 
 #include "maths/mathstypes.h"
 
+extern const vector x_axis;
+extern const vector y_axis;
+extern const vector z_axis;
+
 vector Vector(float x, float y, float z, float w);
 
 void Set(vector* v, float x, float y, float z, float w);
@@ -28,6 +32,8 @@ float vector_length( const vector* v );
 float vector_distance( const vector* a, const vector* b );
 
 bool vector_equal( const vector* a, const vector* b );
+
+vector vector_fromQuaternion( quaternion q );
 
 // *** Output
 void vector_print( const vector* v );

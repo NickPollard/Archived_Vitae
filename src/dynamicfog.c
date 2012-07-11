@@ -2,8 +2,9 @@
 #include "common.h"
 #include "dynamicfog.h"
 //-----------------------
-#include "src/mem/allocator.h"
-#include "src/scene.h"
+#include "scene.h"
+#include "maths/vector.h"
+#include "mem/allocator.h"
 
 dynamicFog* dynamicFog_create() {
 	dynamicFog* f = mem_alloc( sizeof( dynamicFog ));

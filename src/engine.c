@@ -154,7 +154,7 @@ void engine_tick( engine* e ) {
 	}
 
 	vector v = Vector( 0.0, 0.0, 30.0, 1.0 );
-	theTerrain->sample_point = matrixVecMul( theScene->cam->trans->world, &v );
+	theTerrain->sample_point = matrix_vecMul( theScene->cam->trans->world, &v );
 	PROFILE_END( PROFILE_ENGINE_TICK );
 
 }

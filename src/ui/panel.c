@@ -3,11 +3,12 @@
 #include "common.h"
 #include "panel.h"
 //-------------------------
+#include "model.h"
+#include "maths/vector.h"
 #include "mem/allocator.h"
 #include "render/shader.h"
 #include "render/texture.h"
 #include "system/hash.h"
-#include "model.h"
 
 // Create a Panel
 panel* panel_create() {

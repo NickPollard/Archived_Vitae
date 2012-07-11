@@ -1,7 +1,6 @@
 // collision.c
-
-#include "src/common.h"
-#include "src/collision.h"
+#include "common.h"
+#include "collision.h"
 //---------------------
 #include "engine.h"
 #include "transform.h"
@@ -76,8 +75,8 @@ void collision_tick( float dt ) {
 
 bool collisionFunc_SphereSphere( shape* a, shape* b, matrix matrix_a, matrix matrix_b ) {
 	(void)matrix_a; (void)matrix_b;
-	vector origin_a = matrixVecMul( matrix_a, &a->origin );
-	vector origin_b = matrixVecMul( matrix_b, &b->origin );
+	vector origin_a = matrix_vecMul( matrix_a, &a->origin );
+	vector origin_b = matrix_vecMul( matrix_b, &b->origin );
 	return vector_distance( &origin_a, &origin_b ) < ( a->radius + b->radius );
 }
 

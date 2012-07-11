@@ -2,8 +2,6 @@
 #pragma once
 
 #include "maths/mathstypes.h"
-#include "maths/matrix.h"
-#include "maths/vector.h"
 #include <math.h>
 
 #define PI 3.1415926535897932
@@ -25,9 +23,6 @@ float lerp( float a, float b, float factor );
 float map_range( float point, float begin, float end );
 
 bool isPowerOf2( unsigned int n );
-
-// Build a rotation quaternion from Euler Angle values
-quaternion quaternion_fromEuler( vector* euler_angles );
 
 // *** Test
 #ifdef UNIT_TEST

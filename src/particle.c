@@ -2,8 +2,9 @@
 #include "src/common.h"
 #include "src/particle.h"
 //---------------------
-#include "mem/allocator.h"
 #include "model.h"
+#include "maths/vector.h"
+#include "mem/allocator.h"
 #include "render/render.h"
 #include "render/shader.h"
 #include "render/texture.h"
@@ -52,7 +53,7 @@ void particleEmitter_spawnParticle( particleEmitter* e ) {
 	if ( !e->definition->flags & kParticleWorldSpace )
 		p->position	= offset;
 	else
-		p->position = matrixVecMul( e->trans->world, &offset );
+		p->position = matrix_vecMul( e->trans->world, &offset );
 	p->age = 0.f;
 	if ( e->definition->flags & kParticleRandomRotation )
 		p->rotation = frand( 0.f, 2*PI );
@@ -94,14 +95,14 @@ void particle_quad( particleEmitter* e, vertex* dst, vector* point, float rotati
 
 	vector p;
 	if ( !e->definition->flags & kParticleWorldSpace )
-		p = matrixVecMul( modelview, point );
+		p = matrix_vecMul( modelview, point );
 	else
-		p = matrixVecMul( camera_inverse, point );
+		p = matrix_vecMul( camera_inverse, point );
 
 	// Particle Rotation
 	matrix m;
 	matrix_rotZ( m, rotation );
-	offset = matrixVecMul( m, &offset );
+	offset = matrix_vecMul( m, &offset );
 
 	Add( &dst[0].position, &p, &offset );
 	dst[0].normal = Vector( 0.f, 0.f, 1.f, 0.f );
@@ -114,7 +115,7 @@ void particle_quad( particleEmitter* e, vertex* dst, vector* point, float rotati
 	dst[1].color = color;
 
 	offset = Vector( size, -size, 0.f, 0.f );
-	offset = matrixVecMul( m, &offset );
+	offset = matrix_vecMul( m, &offset );
 
 	Add( &dst[2].position, &p, &offset );
 	dst[2].normal = Vector( 0.f, 0.f, 1.f, 0.f );

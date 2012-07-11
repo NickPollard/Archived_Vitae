@@ -4,6 +4,7 @@
 #include "chasecam.h"
 //---------------------
 #include "transform.h"
+#include "maths/vector.h"
 
 chasecam* chasecam_create() {
 	chasecam* c = mem_alloc( sizeof( chasecam ));
@@ -18,7 +19,7 @@ void chasecam_tick( void* data, float dt ) {
 
 	// Calculate the position as the offset from the chase target
 	vector offset = Vector( 0.f, 8.f, -15.f, 1.f );
-	vector position = matrixVecMul( c->target->world, &offset );
+	vector position = matrix_vecMul( c->target->world, &offset );
 
 	float lerp = fminf( 1.f, 4.f * dt );
 	c->position = vector_lerp( &c->position, &position, lerp );

@@ -2,7 +2,10 @@
 #include "common.h"
 #include "matrix.h"
 //----------------------
+#include "test.h"
 #include "maths/maths.h"
+#include "maths/vector.h"
+#include "maths/quaternion.h"
 
 matrix matrix_identity =
 {
@@ -13,7 +16,7 @@ matrix matrix_identity =
 };
 
 // Matrix Vector multiply
-vector matrixVecMul( matrix m, const vector* v) {
+vector matrix_vecMul( matrix m, const vector* v) {
 	vector out;
 	out.coord.x = m[0][0] * v->coord.x + 
 					m[1][0] * v->coord.y + 
@@ -267,8 +270,8 @@ void matrix_inverse( matrix inverse, matrix src ) {
 #if 0
 	vector a, b, c;
 	a = Vector( 0.5f, 1.2f, 3.0f, 1.0 );
-	b = matrixVecMul( src, &a );
-	c = matrixVecMul( inverse, &b );
+	b = matrix_vecMul( src, &a );
+	c = matrix_vecMul( inverse, &b );
 
 	printf( "det: %.6f\n", other_det );
 	printf( "Inverse:\n" );
@@ -291,14 +294,14 @@ const GLfloat* matrix_getGlMatrix( matrix m ) {
 	return (const GLfloat*)m; }
 
 // Multiply two matrices together
-void matrix_mul( matrix dst, matrix m1, matrix m2 ) {
+void matrix_mul( matrix dst, matrix a, matrix b ) {
 	matrix m;
 	for ( int i = 0; i < 4; i++ ) {
 		for ( int j = 0; j < 4; j++ ) {
-			m[i][j] = m1[0][j] * m2[i][0]
-						+ m1[1][j] * m2[i][1]
-						+ m1[2][j] * m2[i][2]
-						+ m1[3][j] * m2[i][3]; }}
+			m[i][j] = a[0][j] * b[i][0]
+						+ a[1][j] * b[i][1]
+						+ a[2][j] * b[i][2]
+						+ a[3][j] * b[i][3]; }}
 	matrix_cpy( dst, m );
 }
 
@@ -310,29 +313,6 @@ void matrix_cpy( matrix dst, matrix src ) {
 		*a++ = *b++; } }
 
 /*
-void matrix_fromRotTrans( matrix dst, quaternion* rotation, vector* translation ) {
-	// TODO: implement
-	printf( "Not Yet Implemented: matrix_fromRotTrans \n");
-	assert( 0 );
-
-	// From the Quat we get:
-	// The axis of rotation
-	// the angle of rotation
-	vector axis;
-	float angle;
-
-	// Then we can compute this into a matrix
-	matrix m = matrix_fromAxisAngle();
-}
-*/
-
-		/*
-matrix matrix_fromAxisAngle( vector* axis, float angle ) {
-	
-}
-*/
-
-		/*
 quaternion slerp( quaternion p0, quaternion p1, float t ) {
 	float o = ; // Omega - total angle between p0 and p1
 	sin_o = sinf( o );	// Cache this
@@ -398,25 +378,69 @@ void matrix_print( matrix src ) {
 	printf( "  %.6f, %.6f, %.6f, %.6f }\n ", src[0][3], src[1][3], src[2][3], src[3][3] );
 }
 
+void matrix_compose3( matrix m, matrix a, matrix b, matrix c ) {
+	matrix_mul( m, b, c );
+	matrix_mul( m, a, m );
+}
+
+// Create a rotation matrix M for a rotation ANGLE around an arbitrary AXIS
+void matrix_fromAxisAngle( matrix m, vector axis, float angle ) {
+	matrix_setIdentity( m );
+
+	matrix to_normal_space, to_original_space, rotation;
+	
+	// Build a matrix to convert to axis space - i.e. the axis becomes
+	// the new Z axis, and X and Y axes are perpendicular to axis (and
+	// each other, of course)
+	
+	// Check that axis is not equal to what we're crossing it with, as
+	// this could give degenerate results
+	matrix_setIdentity( to_normal_space );
+	vector x, y;
+	if ( vector_equal( &x_axis, &axis )) {
+		 Cross( &x, &y_axis, &axis );
+		 Cross( &y, &axis, &x );
+	}
+	else {
+		Cross( &y, &axis, &x_axis );
+		Cross( &x, &y, &axis );
+	}
+	matrix_setColumn( to_normal_space, 0, &x );	
+	matrix_setColumn( to_normal_space, 1, &y );	
+	matrix_setColumn( to_normal_space, 2, &axis );	
+	
+	matrix_rotZ( rotation, angle );
+	matrix_inverse( to_original_space, to_normal_space );
+
+	// We compose the matrices into one operation that:
+	//   Converts to axis space
+	//	 Rotates around the Z-axis (which is the axis of rotation now)
+	//	 Converts back to original space
+	matrix_compose3( m, to_original_space, rotation, to_normal_space );
+}
+
 // Build a rotation matrix from given Euler Angles
-void matrix_fromEuler( matrix dst, vector* euler_angles ) {
-	matrix x, y, z;
-	matrix_rotX( x, euler_angles->coord.x );
-	matrix_rotY( y, euler_angles->coord.y );
-	matrix_rotZ( z, euler_angles->coord.z );
+void matrix_fromEuler( matrix m, vector* euler_angles ) {
+	// Compose from 3 indivual rotations;
+	matrix m_yaw, m_pitch, m_roll;
+	matrix_fromAxisAngle( m_yaw, y_axis, euler_angles->coord.x );
+	matrix_fromAxisAngle( m_pitch, x_axis, euler_angles->coord.y );
+	matrix_fromAxisAngle( m_roll, z_axis, euler_angles->coord.z );
 
-	// Compose angles in the standard YXZ Euler order
-	matrix_mul( dst, y, x );
-	matrix_mul( dst, dst, z );
+	matrix_compose3( m, m_roll, m_pitch, m_yaw );
+}
 
-//	matrix_print( dst );
+void matrix_fromQuaternion( matrix m, quaternion q ) {
+	vector axis;
+	float angle;
+	quaternion_getAxisAngle( q, &axis, &angle );
+	matrix_fromAxisAngle( m, axis, angle );
 }
-/*
-matrix matrix_fromQuat( quaternion q ) {
-	matrix m;
-	return m;
+
+void matrix_fromRotationTranslation( matrix m, quaternion rotation, vector translation ) {
+	matrix_fromQuaternion( m, rotation );
+	matrix_setTranslation( m, &translation );
 }
-*/
 
 #ifdef UNIT_TEST
 void test_matrix() {
@@ -457,8 +481,8 @@ void test_matrix() {
 	assert( f_eq( c[1][0], -0.5f ) );
 
 	v = Vector( 0.4f, 0.2f, -3.f, 1.f );
-	vector v2 = matrixVecMul( a, &v );
-	v2 = matrixVecMul( c, &v2 );
+	vector v2 = matrix_vecMul( a, &v );
+	v2 = matrix_vecMul( c, &v2 );
 	assert( vector_equal( &v, &v2 ));
 
 	vector vdot = Vector( 1.f, 0.f, 0.f, 0.f );
@@ -476,5 +500,18 @@ void test_matrix() {
 	vAssert( f_eq( fround( -0.5f, 1.f ), 0.f ));
 	vAssert( f_eq( fround( -1.3f, 1.f ),  -1.f ));
 
+	// TODO
+	// Test matrix_fromAxisAngle();
+	matrix rotation;
+	matrix_fromAxisAngle( rotation, x_axis, PI/2 );
+	printf( "Rotation matrix: 90deg around X-axis: " );
+	matrix_print( rotation );
+	printf( "\n" );
+	vector result = matrix_vecMul( rotation, &z_axis );
+	test( vector_equal( &result, &y_axis ), "Matrix arbitrary axis rotation", "Matrix arbitrary axis rotation." );
+	vector_printf( "Z-axis rotated 90deg around X-axis: ", &result );
+	
+	// Test matrix_fromEuler();
+	vAssert( 0 );
 }
 #endif // UNIT_TEST

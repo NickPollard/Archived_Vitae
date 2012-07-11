@@ -2,6 +2,10 @@
 #include "common.h"
 #include "maths.h"
 //----------------------
+#include "maths/matrix.h"
+#include "maths/quaternion.h"
+#include "maths/vector.h"
+
 #include <assert.h>
 
 static const float epsilon = 0.0001f;
@@ -52,36 +56,11 @@ bool isPowerOf2( unsigned int n ) {
 	return (n & (n - 1)) == 0;
 }
 
-quaternion quat_fromMatrix( matrix m ) {
-	quaternion q;
-	// Need to calculate axis and angle of rotation
-	// Quaternion is:
-	// v s where v is sin(2t) . axis
-	// s is cos(2t)
-
-	vector* z_old = NULL;
-	const vector* z_new = matrix_getCol( m, 2 );
-	// The axis of rotation must be perpendicular to both old and new angles
-	// If both Z axis are identical, the axis of rotation must be the Z axis
-	vector axis; 
-	Cross( &axis, z_old, z_new );
-	float cos_t = Dot( z_old, z_new );
-	float t = acos( cos_t );
-	(void)t;
-	return q;
-}
-
-
-// Build a rotation quaternion from Euler Angle values
-quaternion quaternion_fromEuler( vector* euler_angles ) {
-	(void)euler_angles;
-	// TODO: implement
-	printf("Not Yet Implemented: quaternion_fromEuler.\n" );
-	assert( 0 );
-}
-
 #ifdef UNIT_TEST
 void test_maths() {
+	printf( "--- Beginning Unit Test: Maths ---\n" );
 	test_matrix();
+
+	test_quaternion();
 }
 #endif // UNIT_TEST

@@ -2,6 +2,7 @@
 #include "transform.h"
 //-------------------------
 #include "scene.h"
+#include "maths/vector.h"
 #include "mem/allocator.h"
 #include "debug/debugtext.h"
 

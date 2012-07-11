@@ -2,6 +2,7 @@
 #include "common.h"
 #include "terrain.h"
 //-----------------------
+#include "maths/vector.h"
 #include "mem/allocator.h"
 #include "render/render.h"
 #include "render/shader.h"
