@@ -26,6 +26,16 @@ void quaternion_getAxisAngle( quaternion q, vector* axis, float* angle );
 // Build a rotation quaternion from Euler Angle values
 quaternion quaternion_fromEuler( vector* euler_angles );
 
+// Spherical linear interpolation of quaternions
+quaternion quaternion_slerp( quaternion p0, quaternion p1, float t );
+
+// Do a straight quaternion rotation on vector v
+vector	quaternion_rotation( quaternion rotation, vector v );
+
+// *** Output
+void quaternion_print( const quaternion* q );
+void quaternion_printf( const char* label, const quaternion* q );
+
 #ifdef UNIT_TEST
 void test_quaternion();
 #endif // UNIT_TEST

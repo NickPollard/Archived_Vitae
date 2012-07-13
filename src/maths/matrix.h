@@ -17,6 +17,7 @@ const vector* matrix_getCol( matrix m, int i );
 void matrix_setTranslation(matrix m, const vector* v);
 void matrix_clearTranslation( matrix m );
 const vector* matrix_getTranslation(matrix m);
+quaternion matrix_getRotation( matrix m );
 
 // Initialise a matrix to the identity
 void matrix_setIdentity(matrix m);

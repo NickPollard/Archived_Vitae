@@ -27,7 +27,7 @@ bool quaternion_equal( quaternion a, quaternion b ) {
 quaternion quaternion_fromAxisAngle( vector axis, float angle ) {
 	quaternion q;
 	q.s = cos( angle/2 );
-	float k = sin( angle/2 );
+	float k = sinf( angle/2 );
 	q.x = k * axis.coord.x;
 	q.y = k * axis.coord.y;
 	q.z = k * axis.coord.z;
@@ -36,7 +36,7 @@ quaternion quaternion_fromAxisAngle( vector axis, float angle ) {
 
 void quaternion_getAxisAngle( quaternion q, vector* axis, float* angle ) {
 	*angle = 2 * acos( q.s );
-	float k = 1 / sin( (*angle)/2 );
+	float k = 1 / sinf( (*angle)/2 );
 	axis->coord.x = q.x * k;
 	axis->coord.y = q.y * k;
 	axis->coord.z = q.z * k;
@@ -58,6 +58,7 @@ quaternion quaternion_fromVector( vector v ) {
 	return q;
 }
 
+// Do a straight quaternion rotation on vector v
 vector	quaternion_rotation( quaternion rotation, vector v ) {
 	quaternion q = quaternion_fromVector( v );
 	quaternion q_rot = quaternion_conjugation( rotation, q );
@@ -100,6 +101,20 @@ quaternion quaternion_fromEuler( vector* euler_angles ) {
 	quaternion q = quaternion_conjugation( pitch, quaternion_conjugation( yaw, roll ));
 
 	return q;
+}
+
+quaternion quaternion_slerp( quaternion p0, quaternion p1, float t ) {
+	float dot = Dot( (vector*)&p0, (vector*)&p1 );
+	float o = acosf( dot );		// Omega - total angle between p0 and p1
+	float sin_o = sinf( o );	// Cache this
+	float kp0 = sinf( (1 - t) * o ) / sin_o;
+	float kp1 = sinf( t * o ) / sin_o;
+	quaternion r;
+	r.s = kp0 * p0.s + kp1 * p1.s;
+	r.x = kp0 * p0.x + kp1 * p1.x;
+	r.y = kp0 * p0.y + kp1 * p1.y;
+	r.z = kp0 * p0.z + kp1 * p1.z;
+	return r;
 }
 
 /*
@@ -150,6 +165,46 @@ void test_quaternion() {
 	q = quaternion_multiply( j, i );	
 	test( quaternion_equal( q, neg_k ), "Quaternion Multiply success: j*i = -k", "Quaternion multiply failed: j*i != -k" );
 
+	// Test axis/angle encoding
+	{
+		vector axis = Vector( 1.f, 2.f, 3.f, 0.f );
+		Normalize( &axis, &axis );
+		float angle = 0.3f;
+		q = quaternion_fromAxisAngle( axis, angle );
+		float angle_;
+		vector axis_;
+		quaternion_getAxisAngle( q, &axis_, &angle_ );
+		test( f_eq( angle, angle_ ) && vector_equal( &axis, &axis_ ), "Quaternion axis/angle extracted same as created", "Quaternion axis/angle extracted different from when created." );
+	}			{
+		vector axis = Vector( 1.f, 0.f, 0.f, 0.f );
+		Normalize( &axis, &axis );
+		float angle = PI / 2.f;
+		q = quaternion_fromAxisAngle( axis, angle );
+		float angle_;
+		vector axis_;
+		quaternion_getAxisAngle( q, &axis_, &angle_ );
+		test( f_eq( angle, angle_ ) && vector_equal( &axis, &axis_ ), "Quaternion axis/angle extracted same as created", "Quaternion axis/angle extracted different from when created." );
+	}{
+		vector axis = Vector( 0.f, 1.f, 0.f, 0.f );
+		Normalize( &axis, &axis );
+		float angle = PI / 2.f;
+		q = quaternion_fromAxisAngle( axis, angle );
+		float angle_;
+		vector axis_;
+		quaternion_getAxisAngle( q, &axis_, &angle_ );
+		test( f_eq( angle, angle_ ) && vector_equal( &axis, &axis_ ), "Quaternion axis/angle extracted same as created", "Quaternion axis/angle extracted different from when created." );
+	}{
+		vector axis = Vector( 0.f, 0.f, 1.f, 0.f );
+		Normalize( &axis, &axis );
+		float angle = PI / 2.f;
+		q = quaternion_fromAxisAngle( axis, angle );
+		float angle_;
+		vector axis_;
+		quaternion_getAxisAngle( q, &axis_, &angle_ );
+		test( f_eq( angle, angle_ ) && vector_equal( &axis, &axis_ ), "Quaternion axis/angle extracted same as created", "Quaternion axis/angle extracted different from when created." );
+	}
+
+
 	// Test rotation
 
 	// Make a pi/2 (90deg) rotation around the x axis
@@ -163,13 +218,24 @@ void test_quaternion() {
 	vector point_ = quaternion_rotation( rotation, point );
 	vector target_point = Vector( 0.f, -1.f, 0.f, 0.f );
 	test( vector_equal( &point_, &target_point ), "Quaternion rotation success", "Quaternion rotation failed" );
-	vector_printf( "point_: ", &point_ );
+	//vector_printf( "point_: ", &point_ );
 
 	// More complex rotation
 	angle = PI / 4;
 	rotation = quaternion_fromAxisAngle( axis, angle );
 	point_ = quaternion_rotation( rotation, point );
-	vector_printf( "point_: ", &point_ );
+	//vector_printf( "point_: ", &point_ );
+
+	// Test slerp
+	q = quaternion_slerp( i, j, 0.f );
+	test( quaternion_equal( q, i ), "Quaternion slerp with t = 0.f", "Quaternion slerp with t = 0.f" );
+
+	q = quaternion_slerp( i, j, 1.f );
+	test( quaternion_equal( q, j ), "Quaternion slerp with t = 1.f", "Quaternion slerp with t = 1.f" );
+
+	q = quaternion_slerp( i, j, 0.5f );
+	quaternion expected = Quaternion( 0.f, 0.7071f, 0.7071f, 0.f );
+	test( quaternion_equal( q, expected ), "Quaternion slerp with t = 0.5f", "Quaternion slerp with t = 0.5f" );
 
 	// Test quaternion_fromEuler
 	//vAssert( 0 );

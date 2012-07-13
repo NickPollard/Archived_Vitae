@@ -97,6 +97,27 @@ const vector* matrix_getTranslation(matrix m) {
 const vector* matrix_getCol( matrix m, int i ) {
 	return (vector*)m[i]; }
 
+float matrix_getTrace33( matrix m ) {
+	return m[0][0] + m[1][1] + m[2][2];
+}
+
+quaternion matrix_getRotation( matrix m ) {
+	quaternion q;
+
+	float trace = matrix_getTrace33( m );
+	// trace + 1 == 4w^2
+	q.s = sqrt( trace + 1 ) / 2.f;
+	q.x = sqrt( 1 + m[0][0] - m[1][1] - m[2][2] ) / 2.f;
+	q.y = sqrt( 1 - m[0][0] + m[1][1] - m[2][2] ) / 2.f;
+	q.z = sqrt( 1 - m[0][0] - m[1][1] + m[2][2] ) / 2.f;
+	// Get the correct sign out of the off-diagonal parts of the matrix
+	q.x *= fsign( m[1][2] - m[2][1] );
+	q.y *= fsign( m[2][0] - m[0][2] );
+	q.z *= fsign( m[0][1] - m[1][0] );
+
+	return q;
+}
+
 // Initialise a matrix to the identity
 void matrix_setIdentity(matrix m) {
 	memset(m, 0, sizeof(matrix));
@@ -312,15 +333,6 @@ void matrix_cpy( matrix dst, matrix src ) {
 	for (int i = 0; i < 16; i++) {
 		*a++ = *b++; } }
 
-/*
-quaternion slerp( quaternion p0, quaternion p1, float t ) {
-	float o = ; // Omega - total angle between p0 and p1
-	sin_o = sinf( o );	// Cache this
-	quaternion r = (sinf( (1 - t) / o ) / sin_o) * p0 + (sinf( t / o ) / sin_o) * p1;
-	return r;
-}
-*/
-
 // Normalize the axes to be unit axes
 void matrix_normalize( matrix m ) {
 	vector v;
@@ -330,11 +342,24 @@ void matrix_normalize( matrix m ) {
 	}
 }
 
+// Create a rotation matrix representing a rotation of ANGLE radians about the X-axis (Pitch)
+// Axes are aligned as if +Z is into the screen, +Y is up, +X is right
+// A Positive pitch rotation means to pitch up, ie. as if to climb
+void matrix_rotX( matrix dst, float angle ) {
+	float sinTheta = sinf( angle );
+	float cosTheta = cos( angle );
+	matrix_setIdentity( dst );
+	dst[1][1] = cosTheta;
+	dst[1][2] = -sinTheta;
+	dst[2][1] = sinTheta;
+	dst[2][2] = cosTheta;
+}
+
 // Create a rotation matrix representing a rotation of ANGLE radians about the Y-axis (Yaw)
 // Axes are aligned as if +Z is into the screen, +Y is up, +X is right
 // A Positive Yaw rotation means to yaw left, ie. as if turning a corner to the left
 void matrix_rotY( matrix dst, float angle ) {
-	float sinTheta = sin( angle );
+	float sinTheta = sinf( angle );
 	float cosTheta = cos( angle );
 	matrix_setIdentity( dst );
 	dst[0][0] = cosTheta;
@@ -347,33 +372,20 @@ void matrix_rotY( matrix dst, float angle ) {
 // Axes are aligned as if +Z is into the screen, +Y is up, +X is right
 // A Positive Roll rotation means to roll left, ie. as if banking to the left
 void matrix_rotZ( matrix dst, float angle ) {
-	float sinTheta = sin( angle );
+	float sinTheta = sinf( angle );
 	float cosTheta = cos( angle );
 	matrix_setIdentity( dst );
 	dst[0][0] = cosTheta;
-	dst[0][1] = sinTheta;
-	dst[1][0] = -sinTheta;
+	dst[0][1] = -sinTheta;
+	dst[1][0] = sinTheta;
 	dst[1][1] = cosTheta;
-}
-
-// Create a rotation matrix representing a rotation of ANGLE radians about the X-axis (Pitch)
-// Axes are aligned as if +Z is into the screen, +Y is up, +X is right
-// A Positive pitch rotation means to pitch up, ie. as if to climb
-void matrix_rotX( matrix dst, float angle ) {
-	float sinTheta = sin( angle );
-	float cosTheta = cos( angle );
-	matrix_setIdentity( dst );
-	dst[1][1] = cosTheta;
-	dst[1][2] = -sinTheta;
-	dst[2][1] = sinTheta;
-	dst[2][2] = cosTheta;
 }
 
 void matrix_print( matrix src ) {
-	printf( "{ %.6f, %.6f, %.6f, %.6f\n ", src[0][0], src[1][0], src[2][0], src[3][0] );
-	printf( "  %.6f, %.6f, %.6f, %.6f\n ", src[0][1], src[1][1], src[2][1], src[3][1] );
-	printf( "  %.6f, %.6f, %.6f, %.6f\n ", src[0][2], src[1][2], src[2][2], src[3][2] );
-	printf( "  %.6f, %.6f, %.6f, %.6f }\n ", src[0][3], src[1][3], src[2][3], src[3][3] );
+	printf( "{ %.6f, %.6f, %.6f, %.6f\n",	src[0][0], src[1][0], src[2][0], src[3][0] );
+	printf( "  %.6f, %.6f, %.6f, %.6f\n",	src[0][1], src[1][1], src[2][1], src[3][1] );
+	printf( "  %.6f, %.6f, %.6f, %.6f\n",	src[0][2], src[1][2], src[2][2], src[3][2] );
+	printf( "  %.6f, %.6f, %.6f, %.6f }\n", src[0][3], src[1][3], src[2][3], src[3][3] );
 }
 
 void matrix_compose3( matrix m, matrix a, matrix b, matrix c ) {
@@ -381,38 +393,51 @@ void matrix_compose3( matrix m, matrix a, matrix b, matrix c ) {
 	matrix_mul( m, a, m );
 }
 
+// Build a matrix to convert to axis space - i.e. the axis becomes
+// the new Z axis, and X and Y axes are perpendicular to axis (and
+// each other, of course)
+void matrix_toAxisSpace( matrix m, vector axis ) {
+	// Check that axis is not equal to what we're crossing it with, as
+	// this could give degenerate results
+	matrix_setIdentity( m );
+	vector x, y;
+	if ( vector_equal( &x_axis, &axis )) {
+#if 0
+		 Cross( &x, &axis, &y_axis );
+		 Cross( &y, &x, &axis );
+#else
+		 Cross( &x, &y_axis, &axis );
+		 Cross( &y, &axis, &x );
+#endif
+	}
+	else {
+#if 0
+		Cross( &y, &x_axis, &axis );
+		Cross( &x, &axis, &y );
+#else
+		Cross( &y, &axis, &x_axis );
+		Cross( &x, &y, &axis );
+#endif
+	}
+	matrix_setRow( m, 0, &x );	
+	matrix_setRow( m, 1, &y );	
+	matrix_setRow( m, 2, &axis );	
+}
+
 // Create a rotation matrix M for a rotation ANGLE around an arbitrary AXIS
 void matrix_fromAxisAngle( matrix m, vector axis, float angle ) {
 	matrix_setIdentity( m );
 
-	matrix to_normal_space, to_original_space, rotation;
-	
-	// Build a matrix to convert to axis space - i.e. the axis becomes
-	// the new Z axis, and X and Y axes are perpendicular to axis (and
-	// each other, of course)
-	
-	// Check that axis is not equal to what we're crossing it with, as
-	// this could give degenerate results
-	matrix_setIdentity( to_normal_space );
-	vector x, y;
-	if ( vector_equal( &x_axis, &axis )) {
-		 Cross( &x, &y_axis, &axis );
-		 Cross( &y, &axis, &x );
-	}
-	else {
-		Cross( &y, &axis, &x_axis );
-		Cross( &x, &y, &axis );
-	}
-	matrix_setColumn( to_normal_space, 0, &x );	
-	matrix_setColumn( to_normal_space, 1, &y );	
-	matrix_setColumn( to_normal_space, 2, &axis );	
+	matrix to_axis_space, to_original_space, rotation;
+
+	matrix_toAxisSpace( to_axis_space, axis );
 	
 	matrix_rotZ( rotation, angle );
-	matrix_inverse( to_original_space, to_normal_space );
+	matrix_inverse( to_original_space, to_axis_space );
 
 /*
-	printf( "To Normal Space:\n" );
-	matrix_print( to_normal_space );
+	printf( "\nTo Normal Space:\n" );
+	matrix_print( to_axis_space );
 	printf( "\n" );
 	printf( "Rotation matrix:\n" );
 	matrix_print( rotation );
@@ -426,7 +451,7 @@ void matrix_fromAxisAngle( matrix m, vector axis, float angle ) {
 	//   Converts to axis space
 	//	 Rotates around the Z-axis (which is the axis of rotation now)
 	//	 Converts back to original space
-	matrix_compose3( m, to_original_space, rotation, to_normal_space );
+	matrix_compose3( m, to_original_space, rotation, to_axis_space );
 }
 
 // Build a rotation matrix from given Euler Angles
@@ -444,7 +469,37 @@ void matrix_fromQuaternion( matrix m, quaternion q ) {
 	vector axis;
 	float angle;
 	quaternion_getAxisAngle( q, &axis, &angle );
+	printf( "Axis : ");
+	vector_print( &axis );
+	printf( ", angle: %.2f\n", angle );
 	matrix_fromAxisAngle( m, axis, angle );
+}
+
+// Quaternion->Matrix conversion, inspired by http://en.wikipedia.org/wiki/Rotation_matrix#Quaternion
+// Can easily be derived through matrix representations of quaternion pre- and post- multiplication
+// Works for any Quaternion, even non-unit or zero
+void matrix_fromQuaternion_( matrix m, quaternion q ) {
+	float magnitude = q.s*q.s + q.x*q.x + q.y*q.y + q.z*q.z;
+	float s = ( magnitude > 0.f ) ? 2.f/magnitude : 0.f;
+	float X = q.x * s, Y = q.y * s, Z = q.z * s;
+	// All possible combinations, precalc here for efficiency taking into account s;
+	float wX = q.s*X, wY = q.s*Y, wZ = q.s*Z;
+	float xX = q.x*X, xY = q.x*Y, xZ = q.x*Z;
+	float yY = q.y*Y, yZ = q.y*Z, zZ = q.z*Z;
+	
+	matrix_setIdentity( m );
+
+	m[0][0] = 1.f - (yY + zZ);
+	m[0][1] = xY + wZ;
+	m[0][2] = xZ - wY;
+	
+	m[1][0] = xY - wZ;
+	m[1][1] = 1.f - (xX + zZ);
+	m[1][2] = yZ + wX;
+
+	m[2][0] = xZ + wY;
+	m[2][1] = yZ - wX;	
+	m[2][2] = 1.f - (xX + yY);
 }
 
 void matrix_fromRotationTranslation( matrix m, quaternion rotation, vector translation ) {
@@ -510,31 +565,82 @@ void test_matrix() {
 	vAssert( f_eq( fround( -0.5f, 1.f ), 0.f ));
 	vAssert( f_eq( fround( -1.3f, 1.f ),  -1.f ));
 
-	// Test matrix_fromAxisAngle()
-	// Ensure that doing matrix_fromAxisAngle rotations for the cardinal axes
-	// gives the same results as our matrix_rotN functions
-	matrix rotationAxisAngle, rotationX, rotationY, rotationZ;
+	// Test matrix_toAxisSpace
+	{
+		matrix x,y,z;
+		matrix_toAxisSpace( x, x_axis );
+		matrix_toAxisSpace( y, y_axis );
+		matrix_toAxisSpace( z, z_axis );
+		matrix expected_x = {{ 0.f, 0.f, 1.f, 0.f }, { 0.f, 1.f, 0.f, 0.f, }, { -1.f, 0.f, 0.f, 0.f, }, { 0.f, 0.f, 0.f, 1.f }};
+		test( matrix_equal( x, expected_x ), "matrix_toAxisSpace produced correct matrix for X axis", "matrix_toAxisSpace produced incorrect matrix for X axis" );
+		matrix expected_y = {{ 1.f, 0.f, 0.f, 0.f }, { 0.f, 0.f, 1.f, 0.f, }, { 0.f, -1.f, 0.f, 0.f, }, { 0.f, 0.f, 0.f, 1.f }};
+		test( matrix_equal( y, expected_y ), "matrix_toAxisSpace produced correct matrix for Y axis", "matrix_toAxisSpace produced incorrect matrix for Y axis" );
+		test( matrix_equal( z, matrix_identity ), "matrix_toAxisSpace produced correct matrix for Z axis", "matrix_toAxisSpace produced incorrect matrix for X axis" );
+	
+	/*	
+		matrix a;
+		vector axis = Vector( 1.f, 2.f, 3.f, 0.f );
+		Normalize( &axis, &axis );
+		matrix_toAxisSpace( a, axis );	
+		matrix_print( a );
+		*/
 
-	matrix_fromAxisAngle( rotationAxisAngle, x_axis, PI/2 );
-	matrix_rotX( rotationX, PI/2 );
-	vector result_a = matrix_vecMul( rotationAxisAngle, &z_axis );
-	vector result_b = matrix_vecMul ( rotationX, &z_axis );
-	test( vector_equal( &result_a, &result_b ), "Matrix X axis rotation", "Matrix X axis rotation." );
+		//vAssert( 0 );
+	}
 
-	matrix_fromAxisAngle( rotationAxisAngle, y_axis, PI/2 );
-	matrix_rotY( rotationY, PI/2 );
-	result_a = matrix_vecMul( rotationAxisAngle, &x_axis );
-	result_b = matrix_vecMul ( rotationY, &x_axis );
-	test( vector_equal( &result_a, &result_b ), "Matrix Y axis rotation", "Matrix Y axis rotation." );
+	/*
+	{
+		// Test matrix_fromAxisAngle()
+		// Ensure that doing matrix_fromAxisAngle rotations for the cardinal axes
+		// gives the same results as our matrix_rotN functions
+		matrix rotationAxisAngle, rotationX, rotationY, rotationZ;
+		matrix_fromAxisAngle( rotationAxisAngle, x_axis, PI/2 );
+		matrix_rotX( rotationX, PI/2 );
+		vector result_a = matrix_vecMul( rotationAxisAngle, &z_axis );
+		vector result_b = matrix_vecMul ( rotationX, &z_axis );
+		test( vector_equal( &result_a, &result_b ), "Matrix X axis rotation", "Matrix X axis rotation." );
 
-	matrix_fromAxisAngle( rotationAxisAngle, z_axis, PI/2 );
-	matrix_rotZ( rotationZ, PI/2 );
-	result_a = matrix_vecMul( rotationAxisAngle, &y_axis );
-	result_b = matrix_vecMul ( rotationZ, &y_axis );
-	test( vector_equal( &result_a, &result_b ), "Matrix Z axis rotation", "Matrix Y axis rotation." );
+		matrix_fromAxisAngle( rotationAxisAngle, y_axis, PI/2 );
+		matrix_rotY( rotationY, PI/2 );
+		result_a = matrix_vecMul( rotationAxisAngle, &x_axis );
+		result_b = matrix_vecMul ( rotationY, &x_axis );
+		test( vector_equal( &result_a, &result_b ), "Matrix Y axis rotation", "Matrix Y axis rotation." );
+
+		matrix_fromAxisAngle( rotationAxisAngle, z_axis, PI/2 );
+		matrix_rotZ( rotationZ, PI/2 );
+		result_a = matrix_vecMul( rotationAxisAngle, &y_axis );
+		result_b = matrix_vecMul ( rotationZ, &y_axis );
+		test( vector_equal( &result_a, &result_b ), "Matrix Z axis rotation", "Matrix Z axis rotation." );
+	}
+	*/
+
+	{
+		matrix m;
+		float angle = 1.f;
+		vector axis = Vector( 1.f, 2.f, 3.f, 0.f );
+		Normalize( &axis, &axis );
+		quaternion q = quaternion_fromAxisAngle( axis, angle );
+		matrix_fromQuaternion_( m, q );
+		quaternion q_ = matrix_getRotation( m );
+		test( quaternion_equal( q, q_ ), "Quaternion rotation extracted correctly from matrix.", "Quaternion rotation extracted from matrix different from when created." );
+	}
+
+	{
+		matrix m, m_;
+		float angle = 1.f;
+		vector axis = Vector( 1.f, 2.f, 3.f, 0.f );
+		Normalize( &axis, &axis );
+		quaternion q = quaternion_fromAxisAngle( axis, angle );
+		matrix_fromQuaternion_( m, q );
+		matrix_fromAxisAngle( m_, axis, angle );
+		test( matrix_equal( m, m_ ), "Constructing matrix from axis angle same as from quaternion made with axis angle", "Constructing matrix from axis angle different than when going via quaternion." );
+	}
+
+	vAssert( 0 );
 
 	// ***
 
+	/*
 	// +ve rotation around X is actually a pitch UP
 	matrix rotation;
 	matrix_fromAxisAngle( rotation, x_axis, PI/2 );
@@ -546,12 +652,93 @@ void test_matrix() {
 	result = matrix_vecMul( rotation, &x_axis );
 	test( vector_equal( &result, &z_axis ), "Matrix arbitrary axis rotation", "Matrix arbitrary axis rotation." );
 
-	// +ve rotation around z is actually a roll LEFT
+	// +ve rotation around z is actually a roll RIGHT
 	matrix_fromAxisAngle( rotation, z_axis, PI/2 );
-	result = matrix_vecMul( rotation, &x_axis );
-	test( vector_equal( &result, &y_axis ), "Matrix arbitrary axis rotation", "Matrix arbitrary axis rotation." );
+	result = matrix_vecMul( rotation, &y_axis );
+	test( vector_equal( &result, &x_axis ), "Matrix arbitrary axis rotation", "Matrix arbitrary axis rotation." );
 	//vector_printf( "y_axis rotated 90deg around z axis: ", &result );
-	
+	*/
+
+	{
+		float angle = PI / 2.f;
+		quaternion q = quaternion_fromAxisAngle( x_axis, angle );
+		vector v = Vector( 0.f, 1.f, 0.f, 0.f );
+		vector v_ = quaternion_rotation( q, v );
+		matrix m;
+		matrix_fromQuaternion_( m, q );
+		vector v__ = matrix_vecMul( m, &v );
+		test( vector_equal( &v_, &v__ ), "quaternion rotation = quaternion->matrix", "quaternion rotation != quaternion->matrix" );
+	}
+	{
+		float angle = PI / 2.f;
+		quaternion q = quaternion_fromAxisAngle( y_axis, angle );
+		vector v = Vector( 0.f, 0.f, 1.f, 0.f );
+		vector v_ = quaternion_rotation( q, v );
+		matrix m;
+		matrix_fromQuaternion_( m, q );
+		vector v__ = matrix_vecMul( m, &v );
+		test( vector_equal( &v_, &v__ ), "quaternion rotation = quaternion->matrix", "quaternion rotation != quaternion->matrix" );
+	}
+	{
+		float angle = PI / 2.f;
+		quaternion q = quaternion_fromAxisAngle( z_axis, angle );
+		vector v = Vector( 1.f, 0.f, 0.f, 0.f );
+		vector v_ = quaternion_rotation( q, v );
+		matrix m;
+		matrix_fromQuaternion_( m, q );
+		vector v__ = matrix_vecMul( m, &v );
+		test( vector_equal( &v_, &v__ ), "quaternion rotation = quaternion->matrix", "quaternion rotation != quaternion->matrix" );
+	}
+
+	/*
+	{
+		// Test from Quaternion
+		vector axis = Vector( 1.f, 0.f, 0.f, 0.f );
+		Normalize( &axis, &axis );
+		float angle = PI / 2.f;
+		quaternion q = quaternion_fromAxisAngle( axis, angle );
+		matrix m, m_;
+		matrix_fromQuaternion( m, q );
+		matrix_fromQuaternion_( m_, q );
+		printf( "m:\n" );
+		matrix_print( m );
+		printf( "m_:\n" );
+		matrix_print( m_ );
+		test( matrix_equal( m, m_ ), "matrix_fromQuaternion: X axis", "matrix_fromQuaternion: X axis" );
+	}
+	{
+		// Test from Quaternion
+		vector axis = Vector( 0.f, 1.f, 0.f, 0.f );
+		Normalize( &axis, &axis );
+		float angle = PI / 2.f;
+		quaternion q = quaternion_fromAxisAngle( axis, angle );
+		matrix m, m_;
+		matrix_fromQuaternion( m, q );
+		matrix_fromQuaternion_( m_, q );
+		printf( "m:\n" );
+		matrix_print( m );
+		printf( "m_:\n" );
+		matrix_print( m_ );
+		test( matrix_equal( m, m_ ), "matrix_fromQuaternion: Y axis", "matrix_fromQuaternion: Y axis" );
+	}
+	{
+		// Test from Quaternion
+		vector axis = Vector( 0.f, 0.f, 1.f, 0.f );
+		Normalize( &axis, &axis );
+		float angle = PI / 2.f;
+		quaternion q = quaternion_fromAxisAngle( axis, angle );
+		matrix m, m_;
+		matrix_fromQuaternion( m, q );
+		matrix_fromQuaternion_( m_, q );
+		printf( "m:\n" );
+		matrix_print( m );
+		printf( "m_:\n" );
+		matrix_print( m_ );
+		test( matrix_equal( m, m_ ), "matrix_fromQuaternion: Z axis", "matrix_fromQuaternion: Z axis" );
+	}
+	*/
+
+
 	// Test matrix_fromEuler();
 	//vAssert( 0 );
 }

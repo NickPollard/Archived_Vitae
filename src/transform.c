@@ -2,6 +2,7 @@
 #include "transform.h"
 //-------------------------
 #include "scene.h"
+#include "maths/quaternion.h"
 #include "maths/vector.h"
 #include "mem/allocator.h"
 #include "debug/debugtext.h"
@@ -195,4 +196,8 @@ void transform_roll( transform* t, float roll ) {
 
 const vector* transform_getWorldPosition( transform* t ) {
 	return matrix_getTranslation( t->world );
+}
+
+quaternion transform_getWorldRotation( transform* t ) {
+	return matrix_getRotation( t->world );
 }

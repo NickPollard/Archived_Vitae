@@ -95,20 +95,20 @@ float terrain_sample( float u, float v ) {
 	float scale_m_u = 40.f;
 	float scale_m_v = 40.f;
 	float height_m = 40.f;
-	float mountains = (1.0f + sin( u / scale_m_u ) * sin( v / scale_m_v )) * 0.5f * height_m;
+	float mountains = (1.0f + sinf( u / scale_m_u ) * sinf( v / scale_m_v )) * 0.5f * height_m;
 
 	float detail =
 	(
-			0.5 * sin( u ) * sin( v ) +
-			sin( u / 3.f ) * sin( v / 3.f ) +
-			5 * sin( u / 10.f ) * sin( v / 10.f ) * sin( u / 10.f ) * sin( v / 10.f )
+			0.5 * sinf( u ) * sinf( v ) +
+			sinf( u / 3.f ) * sinf( v / 3.f ) +
+			5 * sinf( u / 10.f ) * sinf( v / 10.f ) * sinf( u / 10.f ) * sinf( v / 10.f )
 	);
 
 	float canyon_length_scale = 250.f;
 	float scale = 5.f;
 	u /= scale;
 	float canyon_width_scale = 100.f;
-	u += sin( v / (canyon_length_scale) ) * canyon_width_scale;
+	u += sinf( v / (canyon_length_scale) ) * canyon_width_scale;
 	float height = 40.f;
 	float width = 4.f;
 	float base_radius = 4.f;

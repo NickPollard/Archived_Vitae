@@ -23,6 +23,9 @@ float fround( float value, float round ) {
 	return floorf( (value / round) + 0.5f ) * round;
 }
 
+float fsign( float f ) {
+	return ( f >= 0.f ) ? 1.f : -1.f;
+}
 
 int max( int a, int b ) {
 	return ( a > b ) ? a : b;
@@ -59,8 +62,9 @@ bool isPowerOf2( unsigned int n ) {
 #ifdef UNIT_TEST
 void test_maths() {
 	printf( "--- Beginning Unit Test: Maths ---\n" );
-	test_matrix();
 
 	test_quaternion();
+
+	test_matrix();
 }
 #endif // UNIT_TEST
