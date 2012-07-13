@@ -29,25 +29,13 @@ void chasecam_tick( void* data, float dt ) {
 	float lerp = fclamp( lerp_speed * dt, 0.f, 1.f );
 	c->position = vector_lerp( &c->position, &position, lerp );
 
-
-
 	matrix world_space;
 	quaternion target_rotation = transform_getWorldRotation( c->target );
-	float slerp_factor = 0.f;
+	float slerp_factor = 0.01f;
 	c->rotation = quaternion_slerp( c->rotation, target_rotation, slerp_factor );
 
 	matrix_fromRotationTranslation( world_space, c->rotation, c->position );
-	matrix_print( world_space );
+	matrix_setTranslation( world_space, &c->position );
 	render_validateMatrix( world_space );
 	transform_setWorldSpace( c->cam.trans, world_space );	
-
-	/*
-	matrix world_space;
-	// Rotation
-	matrix_cpy( world_space, c->target->world );
-	// Position
-	matrix_setTranslation( world_space, &c->position );
-
-	transform_setWorldSpace( c->cam.trans, world_space );	
-	*/
 }

@@ -255,16 +255,16 @@ function playership_tick()
 		player_ship.speed = player_ship.speed - delta_speed
 	end
 	if vkeyHeld( input, key.left ) or vtouchHeld( input, -width*3, -width*3, -width*2, -1.0 ) then
-		vtransform_yaw( player_ship.transform, yaw );
-	end
-	if vkeyHeld( input, key.right ) or vtouchHeld( input, -width, -width*3, -1.0, -1.0 ) then
 		vtransform_yaw( player_ship.transform, -yaw );
 	end
+	if vkeyHeld( input, key.right ) or vtouchHeld( input, -width, -width*3, -1.0, -1.0 ) then
+		vtransform_yaw( player_ship.transform, yaw );
+	end
 	if vkeyHeld( input, key.up ) or vtouchHeld( input, -width*3, -width*3, -1.0, -width*2 ) then
-		vtransform_pitch( player_ship.transform, -pitch );
+		vtransform_pitch( player_ship.transform, pitch );
 	end
 	if vkeyHeld( input, key.down ) or vtouchHeld( input, -width*3, -width, -1.0, -1.0 ) then
-		vtransform_pitch( player_ship.transform, pitch );
+		vtransform_pitch( player_ship.transform, -pitch );
 	end
 
 	-- Gunfire

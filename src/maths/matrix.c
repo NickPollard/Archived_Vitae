@@ -105,6 +105,9 @@ quaternion matrix_getRotation( matrix m ) {
 	quaternion q;
 
 	float trace = matrix_getTrace33( m );
+
+	/*
+
 	// trace + 1 == 4w^2
 	q.s = sqrt( trace + 1 ) / 2.f;
 	q.x = sqrt( 1 + m[0][0] - m[1][1] - m[2][2] ) / 2.f;
@@ -114,6 +117,42 @@ quaternion matrix_getRotation( matrix m ) {
 	q.x *= fsign( m[1][2] - m[2][1] );
 	q.y *= fsign( m[2][0] - m[0][2] );
 	q.z *= fsign( m[0][1] - m[1][0] );
+	*/
+
+	if ( trace >= 0.f ) {
+		float r = sqrt( 1 + trace );
+		float s = 0.5f / r;
+		q.s = 0.5f * r;
+		q.x = ( m[1][2] - m[2][1] ) * s;
+		q.y = ( m[2][0] - m[0][2] ) * s;
+		q.z = ( m[0][1] - m[1][0] ) * s;
+	}
+	else if (( m[0][0] > m[1][1] ) && ( m[0][0] > m[2][2] )) {
+		float r = sqrt( 1 + m[0][0] - m[1][1] - m[2][2] );
+		float s = 0.5f / r;
+		q.s = ( m[1][2] - m[2][1] ) * s;
+		q.x = 0.5 * r;
+		q.y = ( m[1][0] + m[0][1] ) * s;
+		q.z = ( m[0][2] + m[2][0] ) * s;
+	} 
+	else if ( m[1][1] > m[2][2] ) {
+		float r = sqrt( 1 - m[0][0] + m[1][1] - m[2][2] );
+		float s = 0.5f / r;
+
+		q.s = ( m[2][0] - m[0][2] ) * s;
+		q.x = ( m[0][1] + m[1][0] ) * s;
+		q.y = 0.5 * r;
+		q.z = ( m[1][2] + m[2][1] ) * s;
+	} 
+	else {
+		float r = sqrt( 1 - m[0][0] - m[1][1] + m[2][2] );
+		float s = 0.5f / r;
+
+		q.s = ( m[0][1] - m[1][0] ) * s;
+		q.x = ( m[2][0] + m[0][2] ) * s;
+		q.y = ( m[1][2] + m[2][1] ) * s;
+		q.z = 0.5 * r;
+	}
 
 	return q;
 }
@@ -465,20 +504,10 @@ void matrix_fromEuler( matrix m, vector* euler_angles ) {
 	matrix_compose3( m, m_roll, m_pitch, m_yaw );
 }
 
-void matrix_fromQuaternion( matrix m, quaternion q ) {
-	vector axis;
-	float angle;
-	quaternion_getAxisAngle( q, &axis, &angle );
-	printf( "Axis : ");
-	vector_print( &axis );
-	printf( ", angle: %.2f\n", angle );
-	matrix_fromAxisAngle( m, axis, angle );
-}
-
 // Quaternion->Matrix conversion, inspired by http://en.wikipedia.org/wiki/Rotation_matrix#Quaternion
 // Can easily be derived through matrix representations of quaternion pre- and post- multiplication
 // Works for any Quaternion, even non-unit or zero
-void matrix_fromQuaternion_( matrix m, quaternion q ) {
+void matrix_fromQuaternion( matrix m, quaternion q ) {
 	float magnitude = q.s*q.s + q.x*q.x + q.y*q.y + q.z*q.z;
 	float s = ( magnitude > 0.f ) ? 2.f/magnitude : 0.f;
 	float X = q.x * s, Y = q.y * s, Z = q.z * s;
@@ -584,7 +613,7 @@ void test_matrix() {
 		vector axis = Vector( 1.f, 2.f, 3.f, 0.f );
 		Normalize( &axis, &axis );
 		quaternion q = quaternion_fromAxisAngle( axis, angle );
-		matrix_fromQuaternion_( m, q );
+		matrix_fromQuaternion( m, q );
 		quaternion q_ = matrix_getRotation( m );
 		test( quaternion_equal( q, q_ ), "Quaternion rotation extracted correctly from matrix.", "Quaternion rotation extracted from matrix different from when created." );
 	}
@@ -595,7 +624,7 @@ void test_matrix() {
 		vector axis = Vector( 1.f, 2.f, 3.f, 0.f );
 		Normalize( &axis, &axis );
 		quaternion q = quaternion_fromAxisAngle( axis, angle );
-		matrix_fromQuaternion_( m, q );
+		matrix_fromQuaternion( m, q );
 		matrix_fromAxisAngle( m_, axis, angle );
 		test( matrix_equal( m, m_ ), "Constructing matrix from axis angle same as from quaternion made with axis angle", "Constructing matrix from axis angle different than when going via quaternion." );
 	}
@@ -630,7 +659,7 @@ void test_matrix() {
 		vector v = Vector( 0.f, 1.f, 0.f, 0.f );
 		vector v_ = quaternion_rotation( q, v );
 		matrix m;
-		matrix_fromQuaternion_( m, q );
+		matrix_fromQuaternion( m, q );
 		vector v__ = matrix_vecMul( m, &v );
 		test( vector_equal( &v_, &v__ ), "quaternion rotation = quaternion->matrix", "quaternion rotation != quaternion->matrix" );
 	}
@@ -640,7 +669,7 @@ void test_matrix() {
 		vector v = Vector( 0.f, 0.f, 1.f, 0.f );
 		vector v_ = quaternion_rotation( q, v );
 		matrix m;
-		matrix_fromQuaternion_( m, q );
+		matrix_fromQuaternion( m, q );
 		vector v__ = matrix_vecMul( m, &v );
 		test( vector_equal( &v_, &v__ ), "quaternion rotation = quaternion->matrix", "quaternion rotation != quaternion->matrix" );
 	}
@@ -650,46 +679,10 @@ void test_matrix() {
 		vector v = Vector( 1.f, 0.f, 0.f, 0.f );
 		vector v_ = quaternion_rotation( q, v );
 		matrix m;
-		matrix_fromQuaternion_( m, q );
+		matrix_fromQuaternion( m, q );
 		vector v__ = matrix_vecMul( m, &v );
 		test( vector_equal( &v_, &v__ ), "quaternion rotation = quaternion->matrix", "quaternion rotation != quaternion->matrix" );
 	}
-
-	{
-		// Test from Quaternion
-		vector axis = Vector( 1.f, 0.f, 0.f, 0.f );
-		Normalize( &axis, &axis );
-		float angle = PI / 2.f;
-		quaternion q = quaternion_fromAxisAngle( axis, angle );
-		matrix m, m_;
-		matrix_fromQuaternion( m, q );
-		matrix_fromQuaternion_( m_, q );
-		test( matrix_equal( m, m_ ), "matrix_fromQuaternion: X axis", "matrix_fromQuaternion: X axis" );
-	}
-	{
-		// Test from Quaternion
-		vector axis = Vector( 0.f, 1.f, 0.f, 0.f );
-		Normalize( &axis, &axis );
-		float angle = PI / 2.f;
-		quaternion q = quaternion_fromAxisAngle( axis, angle );
-		matrix m, m_;
-		matrix_fromQuaternion( m, q );
-		matrix_fromQuaternion_( m_, q );
-		test( matrix_equal( m, m_ ), "matrix_fromQuaternion: Y axis", "matrix_fromQuaternion: Y axis" );
-	}
-	{
-		// Test from Quaternion
-		vector axis = Vector( 0.f, 0.f, 1.f, 0.f );
-		Normalize( &axis, &axis );
-		float angle = PI / 2.f;
-		quaternion q = quaternion_fromAxisAngle( axis, angle );
-		matrix m, m_;
-		matrix_fromQuaternion( m, q );
-		matrix_fromQuaternion_( m_, q );
-		test( matrix_equal( m, m_ ), "matrix_fromQuaternion: Z axis", "matrix_fromQuaternion: Z axis" );
-	}
-
-	vAssert( 0 );
 
 	// Test matrix_fromEuler();
 	//vAssert( 0 );
