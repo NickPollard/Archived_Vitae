@@ -350,8 +350,8 @@ void matrix_rotX( matrix dst, float angle ) {
 	float cosTheta = cos( angle );
 	matrix_setIdentity( dst );
 	dst[1][1] = cosTheta;
-	dst[1][2] = -sinTheta;
-	dst[2][1] = sinTheta;
+	dst[1][2] = sinTheta;
+	dst[2][1] = -sinTheta;
 	dst[2][2] = cosTheta;
 }
 
@@ -363,8 +363,8 @@ void matrix_rotY( matrix dst, float angle ) {
 	float cosTheta = cos( angle );
 	matrix_setIdentity( dst );
 	dst[0][0] = cosTheta;
-	dst[0][2] = sinTheta;
-	dst[2][0] = -sinTheta;
+	dst[0][2] = -sinTheta;
+	dst[2][0] = sinTheta;
 	dst[2][2] = cosTheta;
 }
 
@@ -376,8 +376,8 @@ void matrix_rotZ( matrix dst, float angle ) {
 	float cosTheta = cos( angle );
 	matrix_setIdentity( dst );
 	dst[0][0] = cosTheta;
-	dst[0][1] = -sinTheta;
-	dst[1][0] = sinTheta;
+	dst[0][1] = sinTheta;
+	dst[1][0] = -sinTheta;
 	dst[1][1] = cosTheta;
 }
 
@@ -576,43 +576,7 @@ void test_matrix() {
 		matrix expected_y = {{ 1.f, 0.f, 0.f, 0.f }, { 0.f, 0.f, 1.f, 0.f, }, { 0.f, -1.f, 0.f, 0.f, }, { 0.f, 0.f, 0.f, 1.f }};
 		test( matrix_equal( y, expected_y ), "matrix_toAxisSpace produced correct matrix for Y axis", "matrix_toAxisSpace produced incorrect matrix for Y axis" );
 		test( matrix_equal( z, matrix_identity ), "matrix_toAxisSpace produced correct matrix for Z axis", "matrix_toAxisSpace produced incorrect matrix for X axis" );
-	
-	/*	
-		matrix a;
-		vector axis = Vector( 1.f, 2.f, 3.f, 0.f );
-		Normalize( &axis, &axis );
-		matrix_toAxisSpace( a, axis );	
-		matrix_print( a );
-		*/
-
-		//vAssert( 0 );
 	}
-
-	/*
-	{
-		// Test matrix_fromAxisAngle()
-		// Ensure that doing matrix_fromAxisAngle rotations for the cardinal axes
-		// gives the same results as our matrix_rotN functions
-		matrix rotationAxisAngle, rotationX, rotationY, rotationZ;
-		matrix_fromAxisAngle( rotationAxisAngle, x_axis, PI/2 );
-		matrix_rotX( rotationX, PI/2 );
-		vector result_a = matrix_vecMul( rotationAxisAngle, &z_axis );
-		vector result_b = matrix_vecMul ( rotationX, &z_axis );
-		test( vector_equal( &result_a, &result_b ), "Matrix X axis rotation", "Matrix X axis rotation." );
-
-		matrix_fromAxisAngle( rotationAxisAngle, y_axis, PI/2 );
-		matrix_rotY( rotationY, PI/2 );
-		result_a = matrix_vecMul( rotationAxisAngle, &x_axis );
-		result_b = matrix_vecMul ( rotationY, &x_axis );
-		test( vector_equal( &result_a, &result_b ), "Matrix Y axis rotation", "Matrix Y axis rotation." );
-
-		matrix_fromAxisAngle( rotationAxisAngle, z_axis, PI/2 );
-		matrix_rotZ( rotationZ, PI/2 );
-		result_a = matrix_vecMul( rotationAxisAngle, &y_axis );
-		result_b = matrix_vecMul ( rotationZ, &y_axis );
-		test( vector_equal( &result_a, &result_b ), "Matrix Z axis rotation", "Matrix Z axis rotation." );
-	}
-	*/
 
 	{
 		matrix m;
@@ -636,28 +600,29 @@ void test_matrix() {
 		test( matrix_equal( m, m_ ), "Constructing matrix from axis angle same as from quaternion made with axis angle", "Constructing matrix from axis angle different than when going via quaternion." );
 	}
 
-	vAssert( 0 );
+	{
+		// Test matrix_fromAxisAngle()
+		// Ensure that doing matrix_fromAxisAngle rotations for the cardinal axes
+		// gives the same results as our matrix_rotN functions
+		matrix rotationAxisAngle, rotationX, rotationY, rotationZ;
+		matrix_fromAxisAngle( rotationAxisAngle, x_axis, PI/2 );
+		matrix_rotX( rotationX, PI/2 );
+		vector result_a = matrix_vecMul( rotationAxisAngle, &z_axis );
+		vector result_b = matrix_vecMul ( rotationX, &z_axis );
+		test( vector_equal( &result_a, &result_b ), "Matrix X axis rotation", "Matrix X axis rotation." );
 
-	// ***
+		matrix_fromAxisAngle( rotationAxisAngle, y_axis, PI/2 );
+		matrix_rotY( rotationY, PI/2 );
+		result_a = matrix_vecMul( rotationAxisAngle, &x_axis );
+		result_b = matrix_vecMul ( rotationY, &x_axis );
+		test( vector_equal( &result_a, &result_b ), "Matrix Y axis rotation", "Matrix Y axis rotation." );
 
-	/*
-	// +ve rotation around X is actually a pitch UP
-	matrix rotation;
-	matrix_fromAxisAngle( rotation, x_axis, PI/2 );
-	vector result = matrix_vecMul( rotation, &z_axis );
-	test( vector_equal( &result, &y_axis ), "Matrix arbitrary axis rotation", "Matrix arbitrary axis rotation." );
-	
-	// +ve rotation around y is actually a yaw LEFT
-	matrix_fromAxisAngle( rotation, y_axis, PI/2 );
-	result = matrix_vecMul( rotation, &x_axis );
-	test( vector_equal( &result, &z_axis ), "Matrix arbitrary axis rotation", "Matrix arbitrary axis rotation." );
-
-	// +ve rotation around z is actually a roll RIGHT
-	matrix_fromAxisAngle( rotation, z_axis, PI/2 );
-	result = matrix_vecMul( rotation, &y_axis );
-	test( vector_equal( &result, &x_axis ), "Matrix arbitrary axis rotation", "Matrix arbitrary axis rotation." );
-	//vector_printf( "y_axis rotated 90deg around z axis: ", &result );
-	*/
+		matrix_fromAxisAngle( rotationAxisAngle, z_axis, PI/2 );
+		matrix_rotZ( rotationZ, PI/2 );
+		result_a = matrix_vecMul( rotationAxisAngle, &y_axis );
+		result_b = matrix_vecMul ( rotationZ, &y_axis );
+		test( vector_equal( &result_a, &result_b ), "Matrix Z axis rotation", "Matrix Z axis rotation." );
+	}
 
 	{
 		float angle = PI / 2.f;
@@ -690,7 +655,6 @@ void test_matrix() {
 		test( vector_equal( &v_, &v__ ), "quaternion rotation = quaternion->matrix", "quaternion rotation != quaternion->matrix" );
 	}
 
-	/*
 	{
 		// Test from Quaternion
 		vector axis = Vector( 1.f, 0.f, 0.f, 0.f );
@@ -700,10 +664,6 @@ void test_matrix() {
 		matrix m, m_;
 		matrix_fromQuaternion( m, q );
 		matrix_fromQuaternion_( m_, q );
-		printf( "m:\n" );
-		matrix_print( m );
-		printf( "m_:\n" );
-		matrix_print( m_ );
 		test( matrix_equal( m, m_ ), "matrix_fromQuaternion: X axis", "matrix_fromQuaternion: X axis" );
 	}
 	{
@@ -715,10 +675,6 @@ void test_matrix() {
 		matrix m, m_;
 		matrix_fromQuaternion( m, q );
 		matrix_fromQuaternion_( m_, q );
-		printf( "m:\n" );
-		matrix_print( m );
-		printf( "m_:\n" );
-		matrix_print( m_ );
 		test( matrix_equal( m, m_ ), "matrix_fromQuaternion: Y axis", "matrix_fromQuaternion: Y axis" );
 	}
 	{
@@ -730,14 +686,10 @@ void test_matrix() {
 		matrix m, m_;
 		matrix_fromQuaternion( m, q );
 		matrix_fromQuaternion_( m_, q );
-		printf( "m:\n" );
-		matrix_print( m );
-		printf( "m_:\n" );
-		matrix_print( m_ );
 		test( matrix_equal( m, m_ ), "matrix_fromQuaternion: Z axis", "matrix_fromQuaternion: Z axis" );
 	}
-	*/
 
+	vAssert( 0 );
 
 	// Test matrix_fromEuler();
 	//vAssert( 0 );
