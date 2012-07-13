@@ -31,11 +31,15 @@ void chasecam_tick( void* data, float dt ) {
 
 	matrix world_space;
 	quaternion target_rotation = transform_getWorldRotation( c->target );
-	float slerp_factor = 0.01f;
+	const float slerp_speed = 4.f;
+	float slerp_factor = fclamp( slerp_speed * dt, 0.f, 1.f );
+	printf( "dt: %.2f\n", dt );
+	quaternion_print( &c->rotation );
 	c->rotation = quaternion_slerp( c->rotation, target_rotation, slerp_factor );
+	
+	quaternion_print( &c->rotation );
 
 	matrix_fromRotationTranslation( world_space, c->rotation, c->position );
-	matrix_setTranslation( world_space, &c->position );
 	render_validateMatrix( world_space );
 	transform_setWorldSpace( c->cam.trans, world_space );	
 }

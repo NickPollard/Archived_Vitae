@@ -41,6 +41,10 @@ float Dot( const vector* A, const vector* B ) {
 	return (A->coord.x * B->coord.x + A->coord.y * B->coord.y + A->coord.z * B->coord.z);
 }
 
+float Dot4( const vector* A, const vector* B ) {
+	return (A->coord.x * B->coord.x + A->coord.y * B->coord.y + A->coord.z * B->coord.z + A->coord.w * B->coord.w );
+}
+
 // Vector cross product
 void Cross(vector* dst, const vector* srcA, const vector* srcB) {
 	vAssert( dst != srcA );

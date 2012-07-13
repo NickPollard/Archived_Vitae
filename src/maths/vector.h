@@ -14,6 +14,7 @@ void Set(vector* v, float x, float y, float z, float w);
 void Add(vector* dst, const vector* srcA, const vector* srcB);
 void Sub(vector *dst, const vector* srcA, const vector* srcB);
 float Dot( const vector* A, const vector* B );
+float Dot4( const vector* A, const vector* B );
 void Cross(vector* dst, const vector* srcA, const vector* srcB);
 
 // Normalise a vector

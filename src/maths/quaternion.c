@@ -104,16 +104,25 @@ quaternion quaternion_fromEuler( vector* euler_angles ) {
 }
 
 quaternion quaternion_slerp( quaternion p0, quaternion p1, float t ) {
-	float dot = Dot( (vector*)&p0, (vector*)&p1 );
-	float o = acosf( dot );		// Omega - total angle between p0 and p1
-	float sin_o = sinf( o );	// Cache this
-	float kp0 = sinf( (1 - t) * o ) / sin_o;
-	float kp1 = sinf( t * o ) / sin_o;
 	quaternion r;
-	r.s = kp0 * p0.s + kp1 * p1.s;
-	r.x = kp0 * p0.x + kp1 * p1.x;
-	r.y = kp0 * p0.y + kp1 * p1.y;
-	r.z = kp0 * p0.z + kp1 * p1.z;
+	float dot = Dot4( (vector*)&p0, (vector*)&p1 );
+	// If angles are really close (or identical), just do a linear interp to stop degeneracy
+	if ( dot  > 0.99f ) {
+		r.s = (1.f - t) * p0.s + t * p1.s;
+		r.x = (1.f - t) * p0.x + t * p1.x;
+		r.y = (1.f - t) * p0.y + t * p1.y;
+		r.z = (1.f - t) * p0.z + t * p1.z;
+	}
+	else {
+		float o = acosf( dot );		// Omega - total angle between p0 and p1
+		float sin_o = sinf( o );	// Cache this
+		float kp0 = sinf( (1 - t) * o ) / sin_o;
+		float kp1 = sinf( t * o ) / sin_o;
+		r.s = kp0 * p0.s + kp1 * p1.s;
+		r.x = kp0 * p0.x + kp1 * p1.x;
+		r.y = kp0 * p0.y + kp1 * p1.y;
+		r.z = kp0 * p0.z + kp1 * p1.z;
+	}
 	return r;
 }
 

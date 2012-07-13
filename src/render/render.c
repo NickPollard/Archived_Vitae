@@ -553,13 +553,19 @@ void render_perspectiveMatrix( matrix m, float fov, float aspect, float near, fl
 }
 
 void render_validateMatrix( matrix m ) {
+	bool should_assert = false;
 	for ( int i = 0; i < 3; i++ ) {
-		assert( isNormalized( matrix_getCol( m, i ) ));
+		should_assert |= !isNormalized( matrix_getCol( m, i ) );
 	}
-	assert( f_eq( m[0][3], 0.f ));
-	assert( f_eq( m[1][3], 0.f ));
-	assert( f_eq( m[2][3], 0.f ));
-	assert( f_eq( m[3][3], 1.f ));
+	should_assert |= !( f_eq( m[0][3], 0.f ));
+	should_assert |= !( f_eq( m[1][3], 0.f ));
+	should_assert |= !( f_eq( m[2][3], 0.f ));
+	should_assert |= !( f_eq( m[3][3], 1.f ));
+	if ( should_assert ) {
+		printf( "Validate matrix failed:\n" );
+		matrix_print( m );
+		vAssert( !should_assert );
+	}
 }
 
 void render_resetModelView( ) {
