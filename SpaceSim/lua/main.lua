@@ -229,15 +229,13 @@ function start()
 	player_ship = playership_create()
 
 	-- Set up steering input for the player ship
-	player_ship.joypad_mapper = joypad_mapSquare( 240, 240, 30, 30 )
-
-	--[[
-	local x = 1040
-	local y = 480
-	local w = 240
-	local h = 240
-	--]]
-	player_ship.joypad = vcreateTouchPad( input, 1040, 480, 240, 240 )
+	local w = 360
+	local h = 360
+	local x = 1280 - w
+	local y = 720 - h
+	local deadzone = 30
+	player_ship.joypad_mapper = joypad_mapSquare( w, h, deadzone, deadzone )
+	player_ship.joypad = vcreateTouchPad( input, x, y, w, h )
 
 	vtransform_yaw( player_ship.transform, math.pi/2 * 0.7 );
 	chasecam = vchasecam_follow( engine, player_ship.transform )
@@ -283,7 +281,7 @@ function playership_tick()
 		input_pitch = 0
 	end
 
-	pitch = input_pitch * pitch_per_second * dt;
+	pitch = -input_pitch * pitch_per_second * dt;
 	yaw = input_yaw * yaw_per_second * dt;
 	delta_speed = acceleration * dt;
 

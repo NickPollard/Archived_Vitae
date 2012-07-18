@@ -96,10 +96,10 @@ void test_engine_init( engine* e ) {
 	// UI
 	{
 		panel* p = panel_create();
-		p->x = 1040.f;
+		p->x = 920.f;
 		p->y = 0.f;
-		p->width = 240.f;
-		p->height = 240.f;
+		p->width = 360.f;
+		p->height = 360.f;
 		//p->texture = texture_loadTGA( "dat/img/circle.tga" );
 		texture_request( &p->texture, "dat/img/circle.tga" );
 		static_test_panel = p;
