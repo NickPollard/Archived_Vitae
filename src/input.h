@@ -4,6 +4,10 @@
 #include "input/keyboard.h"
 #include "input/mouse.h"
 
+#define TOUCH
+
+
+
 // *** General input defines
 #define INPUT_DATA_FRAMES 2
 
@@ -15,13 +19,15 @@
 #include "input/touch.h"
 #endif // TOUCH
 
+// *** Main input struct
+
 // Keys stored as a packed bitmask
 // ie. each byte stores 8 flags for 8 keys respectively
 typedef struct input_data_s {
 	key_array keys;
 	mouse mouse;
 #ifdef TOUCH
-	touch_panel touch;
+	touchPanel touch;
 #endif // TOUCH
 } input_data;
 
@@ -30,7 +36,7 @@ struct input_s {
 	input_data data[INPUT_DATA_FRAMES]; // This frame, last frame - switch on every frame
 	int keybinds[INPUT_MAX_KEYBINDS];
 #ifdef TOUCH
-	touch_panel touch;
+	touchPanel touch;
 #endif // TOUCH
 	int w;
 	int h;

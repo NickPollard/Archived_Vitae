@@ -130,6 +130,7 @@ void engine_addRender( engine* e, void* entity, renderfunc render );
 
 void engine_removeRender( engine* e, void* entity, renderfunc render );
 
+// *** Array funcs
 int array_find( void** array, int count, void* ptr );
-
+void array_add( void** array, int* count, void* ptr );
 void array_remove( void** array, int* count, void* ptr );

@@ -71,6 +71,14 @@
 							assert( (a) ); \
 						}
 
+// Higher Order macros
+
+#define for_each( array, size, func, ... )  \
+	for ( int i = 0; i < size; ++i ) { \
+		func( array[i], __VA_ARGS__ ); \
+	}
+
+
 
 // types
 //typedef unsigned int uint;

@@ -325,7 +325,7 @@ int LUA_keyHeld( lua_State* l ) {
 	return 0;
 }
 
-#ifdef ANDROID
+#ifdef TOUCH
 int LUA_touchPressed( lua_State* l ) {
 	if ( lua_isnumber( l, 2 ) && 
 	 	lua_isnumber( l, 3 ) &&
@@ -363,6 +363,27 @@ int LUA_touchHeld( lua_State* l ) {
 	printf( "Error: Lua: Invalid touch bounds specified" );
 	return 0;
 }
+
+int LUA_createTouchPad( lua_State* l ) {
+	input* in = lua_toptr( l, 1 );
+	int x = lua_tonumber( l, 2 );
+	int y = lua_tonumber( l, 3 );
+	int w = lua_tonumber( l, 4 );
+	int h = lua_tonumber( l, 5 );
+	touchPad* pad = touchPanel_addTouchPad( &in->touch, touchPad_create( x, y, w, h ));
+	lua_pushptr( l, pad );
+	return 1;
+}
+
+int LUA_touchPadTouched( lua_State* l ) {
+	touchPad* pad = lua_toptr( l, 1 );
+	int x, y;
+	bool touched = touchPad_touched( pad, &x, &y );
+	lua_pushboolean( l, touched );
+	lua_pushnumber( l, x );
+	lua_pushnumber( l, y );
+	return 3;
+}
 #else
 int LUA_touchHeld( lua_State* l ) {
 	lua_pushboolean( l, false );
@@ -372,7 +393,17 @@ int LUA_touchPressed( lua_State* l ) {
 	lua_pushboolean( l, false );
 	return 1;
 }
-#endif // ANDROID
+int LUA_createTouchPad( lua_State* l ) {
+	lua_pushnumber( l, 0 );
+	return 1;
+}
+int LUA_touchPadTouched( lua_State* l ) {
+	lua_pushboolean( l, false );
+	lua_pushnumber( l, -1 );
+	lua_pushnumber( l, -1 );
+	return 3;
+}
+#endif // TOUCH
 
 int LUA_transform_yaw( lua_State* l ) {
 	transform* t = lua_toptr( l, 1 );
@@ -597,6 +628,8 @@ lua_State* vlua_create( engine* e, const char* filename ) {
 	lua_registerFunction( l, LUA_keyHeld, "vkeyHeld" );
 	lua_registerFunction( l, LUA_touchPressed, "vtouchPressed" );
 	lua_registerFunction( l, LUA_touchHeld, "vtouchHeld" );
+	lua_registerFunction( l, LUA_createTouchPad, "vcreateTouchPad" );
+	lua_registerFunction( l, LUA_touchPadTouched, "vtouchPadTouched" );
 	// *** Scene
 	lua_registerFunction( l, LUA_createModelInstance, "vcreateModelInstance" );
 	lua_registerFunction( l, LUA_deleteModelInstance, "vdeleteModelInstance" );

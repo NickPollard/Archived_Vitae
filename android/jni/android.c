@@ -125,7 +125,7 @@ static int32_t handle_input(struct android_app* app, AInputEvent* event) {
 		int32_t motion_action = AMotionEvent_getAction( event );
 		int x = AMotionEvent_getX( event, 0 );
 		int y = AMotionEvent_getY( event, 0 );
-		printf( "Touch input. %d %d (action: %d)\n", x, y, motion_action );
+		//printf( "Touch input. %d %d (action: %d)\n", x, y, motion_action );
 		enum touchAction action;
 		switch( motion_action )
 		{
