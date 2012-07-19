@@ -15,6 +15,7 @@
 #include "particle.h"
 #include "mem/allocator.h"
 #include "render/render.h"
+#include "script/lisp.h"
 #include "system/file.h"
 #include "system/hash.h"
 #include "system/string.h"
@@ -30,6 +31,8 @@ void runTests() {
 
 	// System Tests
 	test_sfile();
+
+	test_lisp();
 
 	test_maths();
 
