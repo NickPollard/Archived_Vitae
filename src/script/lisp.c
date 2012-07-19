@@ -1179,6 +1179,7 @@ term* lisp_func_property_create( context* c, term* raw_args ) {
 	// get the stride
 	term* s = head( args );
 	int stride = (int)(*s->number);
+	printf( "Creating property with stride: %d\n", stride );
 	property* p = property_create( stride );
 	term* tp = term_create( _typeObject, p );
 

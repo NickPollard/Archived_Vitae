@@ -4,10 +4,6 @@
 #include "input/keyboard.h"
 #include "input/mouse.h"
 
-#define TOUCH
-
-
-
 // *** General input defines
 #define INPUT_DATA_FRAMES 2
 

@@ -592,6 +592,11 @@ int LUA_explosion( lua_State* l ) {
 	return 0;
 }
 
+void lua_setConstantBool( lua_State* l, const char* name, bool b ) {
+	lua_pushboolean( l, b );
+	lua_setglobal( l, name ); // Store in the global variable named <name>
+}
+
 void lua_makeConstantPtr( lua_State* l, const char* name, void* ptr ) {
 	lua_pushptr( l, ptr );
 	lua_setglobal( l, name ); // Store in the global variable named <name>
@@ -660,6 +665,12 @@ lua_State* vlua_create( engine* e, const char* filename ) {
 
 	lua_makeConstantPtr( l, "engine", e );
 	lua_makeConstantPtr( l, "input", e->input );
+
+#ifdef TOUCH
+	lua_setConstantBool( l, "touch_enabled", true );
+#else
+	lua_setConstantBool( l, "touch_enabled", false );
+#endif
 
 	lua_keycodes( l );
 
