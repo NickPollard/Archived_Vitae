@@ -107,10 +107,10 @@ typedef void (*attributeSetter)( term* ob, term* value );
 map* attrFuncMap = NULL;
 
 //// Attribute functions /////////////////////////////////////////
-void attr_particle_setSize( term* particle_term, term* size_attr );
-void attr_particle_setColor( term* particle_term, term* color_attr );
-void attr_particle_setLifetime( term* particle, term* lifetime );
-void attr_particle_setSpawnInterval( term* particle, term* spawn_interval );
+void attr_particle_setSize( term* definition_term, term* size_attr );
+void attr_particle_setColor( term* definition_term, term* color_attr );
+void attr_particle_setLifetime( term* definition_term, term* lifetime );
+void attr_particle_setSpawnInterval( term* definition_term, term* spawn_interval );
 //// Attribute functions /////////////////////////////////////////
 
 bool isType( term* t, enum termType type ) {
@@ -1150,47 +1150,44 @@ term* lisp_func_attribute( context* c, term* raw_args ) {
 	return &lisp_false;
 }
 
-void attr_particle_setSpawnInterval( term* particle, term* spawn_interval ) {
+void attr_particle_setSpawnInterval( term* definition_term, term* spawn_interval ) {
 	// TODO - we need to copy and preserve this correctly
-	particleEmitter* p = particle->data;
-	lisp_assert( p->definition != 0x0 );
-	p->definition->spawn_interval = *(spawn_interval->number);
+	particleEmitterDef* def = definition_term->data;
+	lisp_assert( def != 0x0 );
+	def->spawn_interval = *(spawn_interval->number);
 }
 
-void attr_particle_setLifetime( term* particle, term* lifetime ) {
+void attr_particle_setLifetime( term* definition_term, term* lifetime ) {
 	// TODO - we need to copy and preserve this correctly
-	particleEmitter* p = particle->data;
-	lisp_assert( p->definition != 0x0 );
-	p->definition->lifetime = *(lifetime->number);
+	particleEmitterDef* def = definition_term->data;
+	lisp_assert( def != 0x0 );
+	def->lifetime = *(lifetime->number);
 }
 
-void attr_particle_setColor( term* particle_term, term* color_attr ) {
+void attr_particle_setColor( term* definition_term, term* color_attr ) {
 	// TODO - we need to copy and preserve this correctly
-	particleEmitter* p = particle_term->data;
+	particleEmitterDef* def = definition_term->data;
 	property* color = property_copy( color_attr->data );
-	lisp_assert( p->definition != 0x0 );
-	p->definition->color = color;
+	lisp_assert( def != 0x0 );
+	def->color = color;
 }
 
-void attr_particle_setSize( term* particle_term, term* size_attr ) {
+void attr_particle_setSize( term* definition_term, term* size_attr ) {
 	lisp_assert( isType( size_attr, _typeObject ));
 	// TODO - we need to copy and preserve this correctly
 	property* size = property_copy( size_attr->data );
-	particleEmitter* p = particle_term->data;
-	lisp_assert( p->definition != 0x0 );
-	p->definition->size = size;
+	particleEmitterDef* def = definition_term->data;
+	lisp_assert( def != 0x0 );
+	def->size = size;
 }
 
 // (particle_create)
-term* lisp_func_particle_create( context* c, term* raw_args ) {
+term* lisp_func_particle_emitter_definition_create( context* c, term* raw_args ) {
 	(void)c;
 	(void)raw_args;
 
-	particleEmitter* p = particleEmitter_create();
-	vAssert( p->definition != 0 );
-	term* tp = term_create( _typeObject, p );	
-
-	return tp;
+	particleEmitterDef* def = particleEmitterDef_create();
+	return term_create( _typeObject, def );	
 }
 
 // (property_create stride)
@@ -1301,7 +1298,7 @@ void lisp_initContext( context* c ) {
 	define_cfunction( c, "property_addKey", lisp_func_property_addkey );
 	
 	define_cfunction( c, "attribute", lisp_func_attribute );
-	define_cfunction( c, "particle_create", lisp_func_particle_create );
+	define_cfunction( c, "particle_emitter_definition_create", lisp_func_particle_emitter_definition_create );
 
 	define_function( c, "mesh", "( args ) (foldl object_process (mesh_create) args)" );
 	//define_function( c, "filename", "(() b )" );
@@ -1504,17 +1501,17 @@ void test_lisp() {
 	}
 
 	{
-		term* t = _eval( lisp_parse_string( "(attribute \"size\" (property_create 2.0) (particle_create))" ), c );
+		term* t = _eval( lisp_parse_string( "(attribute \"size\" (property_create 2.0) (particle_emitter_definition_create))" ), c );
 		lisp_assert( isType( t, typeFalse ));
 	}
 
 	{
-		term* t = _eval( lisp_parse_string( "(attribute \"size\" (property_addKey (property_create 2.0) (quote (0.0 1.0))) (particle_create))" ), c );
+		term* t = _eval( lisp_parse_string( "(attribute \"size\" (property_addKey (property_create 2.0) (quote (0.0 1.0))) (particle_emitter_definition_create))" ), c );
 		lisp_assert( isType( t, typeFalse ));
 	}
 
 	{
-		term* t = _eval( lisp_parse_string( "(attribute \"size\" (property (quote ((0.0 1.0) (0.3 2.0) (0.6 2.0) (2.0 4.0)))) (particle_create))" ), c );
+		term* t = _eval( lisp_parse_string( "(attribute \"size\" (property (quote ((0.0 1.0) (0.3 2.0) (0.6 2.0) (2.0 4.0)))) (particle_emitter_definition_create))" ), c );
 		lisp_assert( isType( t, typeFalse ));
 	}
 

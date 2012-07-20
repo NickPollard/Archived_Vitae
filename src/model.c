@@ -212,11 +212,9 @@ modelHandle model_getHandleFromFilename( const char* filename ) {
 	// If the model is already in the array, return it
 	for ( int i = 0; i < model_count; i++ ) {
 		if ( string_equal( filename, modelFiles[i] )) {
-			printf( "Model \"%s\" already exists!\n", filename );
 			return (modelHandle)i;
 		}
 	}
-	printf( "Loading Model \"%s\"\n", filename );
 	// Otherwise add it and return
 	assert( model_count < kMaxModels );
 	modelHandle handle = (modelHandle)model_count;

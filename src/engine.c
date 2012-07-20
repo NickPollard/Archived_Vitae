@@ -211,6 +211,7 @@ void engine_init(engine* e, int argc, char** argv) {
 #endif // ANDROID
 
 	// *** Start up Core Systems
+	particle_init();
 	//font_init();
 
 	// *** Initialise Lua

@@ -40,8 +40,6 @@ void modelInstance_createSubEmitters( modelInstance* instance ) {
 		// TEST setup particle stuff
 		// TODO cleanup particle/particleDef split (inc. creation)
 		vAssert( m->emitters[i]->definition );
-		mem_free( instance->emitters[i]->definition );
-
 		instance->emitters[i]->definition = m->emitters[i]->definition;
 
 		// Take parent transform if in model

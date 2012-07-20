@@ -130,9 +130,7 @@ void lua_runFunc( lua_State* l, int ref, int args ) {
 int LUA_createModelInstance( lua_State* l ) {
 	if ( lua_isstring( l, 1 ) ) {
 		const char* filename = lua_tostring( l, 1 );
-		printf( "LUA: Creating instance of model \"%s\"\n", filename );
 		modelInstance* m = modelInstance_create( model_getHandleFromFilename( filename ) );
-
 		lua_pushptr( l, m );
 		return 1;
 	} else {
@@ -505,32 +503,30 @@ int LUA_particle_create( lua_State* l ) {
 	engine* e = lua_toptr( l, 1 );
 	transform* t = lua_toptr( l, 2 );
 
-	context* c = lisp_newContext();
-
 /*	
 	term* particle_term = lisp_eval_file( lisp_global_context, "dat/script/lisp/missile_particle.s" );
-	particleEmitter* p = particle_term->data;
+	particleEmitter* emitter = particle_term->data;
 	*/
 
-	particleEmitter* p = particle_loadAsset( "dat/script/lisp/missile_particle.s" );
+	particleEmitterDef* def = particle_loadAsset( "dat/script/lisp/missile_particle.s" );
+	def->velocity = Vector( 0.f, 0.1f, 0.f, 0.f );
+	def->flags = def->flags | kParticleWorldSpace
+							| kParticleRandomRotation;
+	//def->spawn_interval = 0.03f;
 
-	p->definition->velocity = Vector( 0.f, 0.1f, 0.f, 0.f );
-	//p->definition->spawn_interval = 0.03f;
-	p->trans = t;
-	p->definition->flags = p->definition->flags | kParticleWorldSpace
-												| kParticleRandomRotation;
+	particleEmitter* emitter = particle_newEmitter( def );
 
-	texture_request( &p->definition->texture_diffuse, "dat/img/cloud_rgba128.tga" );
+	emitter->trans = t;
 
-	engine_addRender( e, p, particleEmitter_render );
-	startTick( e, p, particleEmitter_tick );
+	engine_addRender( e, emitter, particleEmitter_render );
+	startTick( e, emitter, particleEmitter_tick );
 	
-	context_delete( c );
 	//
 	//
 	//
 /*
-	particleEmitter* p_ = particleEmitter_create();
+	particleEmitterDef* def = particleEmitterDef_create();
+	particleEmitter* p_ = particle_newEmitter( def );
 	p_->definition->lifetime = 2.3f;
 	p_->definition->size = property_create( 2 );
 	property_addf( p_->definition->size, 0.f, 0.f );
@@ -559,7 +555,8 @@ int LUA_explosion( lua_State* l ) {
 	engine* e = lua_toptr( l, 1 );
 	transform* t = lua_toptr( l, 2 );
 	
-	particleEmitter* p = particleEmitter_create();
+	particleEmitterDef* def = particleEmitterDef_create();
+	particleEmitter* p = particle_newEmitter( def );
 	p->definition->lifetime = 2.f;
 	p->definition->spawn_box = Vector( 0.3f, 0.3f, 0.3f, 0.f );
 

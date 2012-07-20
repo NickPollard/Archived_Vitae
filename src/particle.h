@@ -49,12 +49,18 @@ struct particleEmitter_s {
 	GLushort*	element_buffer;
 };
 
+// *** System static init
+void particle_init();
+
+// *** Emitter functions
+particleEmitterDef* particleEmitterDef_create();
 particleEmitter* particleEmitter_create();
+particleEmitter* particle_newEmitter( particleEmitterDef* definition );
 void particleEmitter_render( void* data );
 void particleEmitter_tick( void* e, float dt );
 
 // *** Asset loading
-particleEmitter* particle_loadAsset( const char* particle_file );
+particleEmitterDef* particle_loadAsset( const char* particle_file );
 
 property* property_create( int stride );
 property* property_copy( property* p );
