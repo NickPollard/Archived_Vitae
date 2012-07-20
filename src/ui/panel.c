@@ -52,3 +52,7 @@ void panel_draw( panel* p, float x, float y ) {
 	// There are now <index_count> vertices, as we have unrolled them
 	drawCall_create( &renderPass_alpha, resources.shader_ui, element_count, element_buffer, vertex_buffer, p->texture, modelview );
 }
+
+void panel_render( void* panel_ ) {
+	panel_draw( (panel*)panel_, 0.f, 0.f );
+}

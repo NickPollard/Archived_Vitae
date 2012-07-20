@@ -234,6 +234,8 @@ function setup_controls()
 		player_ship.joypad_mapper = joypad_mapSquare( w, h, deadzone, deadzone )
 		player_ship.joypad = vcreateTouchPad( input, x, y, w, h )
 		player_ship.steering_input = steering_input_joypad
+		-- UI drawing is upside down compared to touchpad placement - what to do about this?
+		vcreateUIPanel( engine, x, 0, w, h )
 	else
 		player_ship.steering_input = steering_input_keyboard
 	end

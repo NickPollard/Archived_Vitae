@@ -20,6 +20,7 @@
 #include "render/texture.h"
 #include "script/lisp.h"
 #include "system/file.h"
+#include "ui/panel.h"
 
 #define MAX_LUA_VECTORS 64
 vector lua_vectors[MAX_LUA_VECTORS];
@@ -592,6 +593,22 @@ int LUA_explosion( lua_State* l ) {
 	return 0;
 }
 
+int LUA_createUIPanel( lua_State* l ) {
+	engine* e = lua_toptr( l, 1 );
+	float x = lua_tonumber( l, 2 );
+	float y = lua_tonumber( l, 3 );
+	float w = lua_tonumber( l, 4 );
+	float h = lua_tonumber( l, 5 );
+	panel* p = panel_create();
+	p->x = x;
+	p->y = y;
+	p->width = w;
+	p->height = h;
+	texture_request( &p->texture, "dat/img/circle.tga" );
+	engine_addRender( e, p, panel_render );
+	return 0;
+}
+
 void lua_setConstantBool( lua_State* l, const char* name, bool b ) {
 	lua_pushboolean( l, b );
 	lua_setglobal( l, name ); // Store in the global variable named <name>
@@ -662,6 +679,8 @@ lua_State* vlua_create( engine* e, const char* filename ) {
 	lua_registerFunction( l, LUA_chasecam_follow, "vchasecam_follow" );
 	lua_registerFunction( l, LUA_flycam, "vflycam" );
 	lua_registerFunction( l, LUA_setCamera, "vscene_setCamera" );
+	// *** UI
+	lua_registerFunction( l, LUA_createUIPanel, "vcreateUIPanel" );
 
 	lua_makeConstantPtr( l, "engine", e );
 	lua_makeConstantPtr( l, "input", e->input );

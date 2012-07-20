@@ -26,7 +26,6 @@
 #include "script/lisp.h"
 #include "script/parse.h"
 #include "system/thread.h"
-#include "ui/panel.h"
 
 // Lua Libraries
 #include <lauxlib.h>
@@ -57,8 +56,6 @@ void engine_addTicker( engine* e, void* entity, tickfunc tick );
  *  Test Functions
  *
  */
-
-panel* static_test_panel;
 
 void test_engine_init( engine* e ) {
 #if 0
@@ -92,19 +89,6 @@ void test_engine_init( engine* e ) {
 		f->scene = theScene;
 		startTick( e, (void*)f, dynamicFog_tick );
 	}
-
-	// UI
-	{
-		panel* p = panel_create();
-		p->x = 920.f;
-		p->y = 0.f;
-		p->width = 360.f;
-		p->height = 360.f;
-		//p->texture = texture_loadTGA( "dat/img/circle.tga" );
-		texture_request( &p->texture, "dat/img/circle.tga" );
-		static_test_panel = p;
-	}
-
 }
 
 /*
@@ -283,15 +267,11 @@ void engine_render( engine* e ) {
 		render( theScene );
 		skybox_render( NULL );
 		engine_renderRenders( e );
-		//temp
-		panel_draw( static_test_panel, 0.f, 0.f );
 	}
 #else
 	render( theScene );
 	skybox_render( NULL );
 	engine_renderRenders( e );
-	// temp
-	panel_draw( static_test_panel, 0.f, 0.f );
 #endif // ANDROID
 	// Allow the render thread to start
 	vthread_signalCondition( start_render );
