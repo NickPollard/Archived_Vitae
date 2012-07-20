@@ -1,7 +1,7 @@
 // lisp.h
 #pragma once
 
-#define DEBUG_PARSE 1
+#define DEBUG_PARSE 0
 #define DEBUG_CONTEXT 0
 
 #if DEBUG_PARSE

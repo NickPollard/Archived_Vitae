@@ -53,6 +53,9 @@ particleEmitter* particleEmitter_create();
 void particleEmitter_render( void* data );
 void particleEmitter_tick( void* e, float dt );
 
+// *** Asset loading
+particleEmitter* particle_loadAsset( const char* particle_file );
+
 property* property_create( int stride );
 property* property_copy( property* p );
 void property_addf( property* p, float time, float value );

@@ -8,6 +8,7 @@
 #include "render/render.h"
 #include "render/shader.h"
 #include "render/texture.h"
+#include "script/lisp.h"
 #include "system/hash.h"
 
 float property_samplef( property* p, float time );
@@ -253,4 +254,10 @@ void test_property() {
 	property_samplef( p, 0.75f );
 	property_samplef( p, 1.5f );
 	property_samplef( p, 3.0f );
+}
+
+particleEmitter* particle_loadAsset( const char* particle_file ) {
+	term* particle_term = lisp_eval_file( lisp_global_context, particle_file );
+	particleEmitter* p = particle_term->data;
+	return p;
 }

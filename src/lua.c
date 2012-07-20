@@ -507,15 +507,12 @@ int LUA_particle_create( lua_State* l ) {
 
 	context* c = lisp_newContext();
 
-#if 0	
-	particleEmitter* p = particleEmitter_create();
-	p->definition->spawn_box = Vector( 0.3f, 0.3f, 0.3f, 0.f );
-	term* size_term = lisp_eval_file( c, "dat/script/lisp/property.s" );
-	p->definition->size = size_term->data;
-#endif
-	
+/*	
 	term* particle_term = lisp_eval_file( lisp_global_context, "dat/script/lisp/missile_particle.s" );
 	particleEmitter* p = particle_term->data;
+	*/
+
+	particleEmitter* p = particle_loadAsset( "dat/script/lisp/missile_particle.s" );
 
 	p->definition->velocity = Vector( 0.f, 0.1f, 0.f, 0.f );
 	//p->definition->spawn_interval = 0.03f;
@@ -532,7 +529,7 @@ int LUA_particle_create( lua_State* l ) {
 	//
 	//
 	//
-
+/*
 	particleEmitter* p_ = particleEmitter_create();
 	p_->definition->lifetime = 2.3f;
 	p_->definition->size = property_create( 2 );
@@ -551,7 +548,7 @@ int LUA_particle_create( lua_State* l ) {
 
 	engine_addRender( e, p_, particleEmitter_render );
 	startTick( e, p_, particleEmitter_tick );
-
+*/
 
 
 

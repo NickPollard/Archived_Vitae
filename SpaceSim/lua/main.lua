@@ -19,12 +19,10 @@ player_ship = nil
 -- Create a spacesim Game object
 -- A gameobject has a visual representation (model), a physical entity for velocity and momentum (physic)
 -- and a transform for locating it in space (transform)
-function gameobject_create( model )
-	vprint( "gameobject_create" )
-	vprint( model )
+function gameobject_create( model_file )
 	g = {}
 	g.test = 256
-	g.model = vcreateModelInstance( model )
+	g.model = vcreateModelInstance( model_file )
 	g.physic = vcreatePhysic()
 	g.transform = vcreateTransform()
 	g.body = vcreateBodySphere( g )
