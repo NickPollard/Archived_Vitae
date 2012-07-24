@@ -561,6 +561,20 @@ int LUA_explosion( lua_State* l ) {
 	return 0;
 }
 
+// Get the world X,Y,Z position of a point a given DISTANCE down the canyon
+int LUA_canyonPosition( lua_State* l ) {
+	float u = lua_tonumber( l, 1 );
+	float x, y, z;
+	position = terrain_canyonPosition( u );
+	x = position.x;
+	y = position.y;
+	z = position.z;
+	lua_pushnumber( l, x );
+	lua_pushnumber( l, y );
+	lua_pushnumber( l, z );
+	return 3;
+}
+
 void lua_makeConstantPtr( lua_State* l, const char* name, void* ptr ) {
 	lua_pushptr( l, ptr );
 	lua_setglobal( l, name ); // Store in the global variable named <name>
@@ -624,6 +638,9 @@ lua_State* vlua_create( engine* e, const char* filename ) {
 	lua_registerFunction( l, LUA_chasecam_follow, "vchasecam_follow" );
 	lua_registerFunction( l, LUA_flycam, "vflycam" );
 	lua_registerFunction( l, LUA_setCamera, "vscene_setCamera" );
+
+	// *** Game
+	lua_registerFunction( l , LUA_canyonPosition, "vcanyon_position" );
 
 	lua_makeConstantPtr( l, "engine", e );
 	lua_makeConstantPtr( l, "input", e->input );

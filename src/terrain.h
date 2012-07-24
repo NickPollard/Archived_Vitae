@@ -46,5 +46,7 @@ void terrain_render( void* data );
 // The tickfunc
 void terrain_tick( void* data, float dt );
 
+vector terrain_canyonPosition( float u );
+
 // *** Test
 void test_terrain();

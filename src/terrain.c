@@ -90,42 +90,56 @@ void terrain_createBlocks( terrain* t ) {
 	}
 }
 
-// The procedural function
-float terrain_sample( float u, float v ) {
+// Returns a value between 0.f and height_m
+float terrain_mountainHeight( float u, float v ) {
 	float scale_m_u = 40.f;
 	float scale_m_v = 40.f;
 	float height_m = 40.f;
-	float mountains = (1.0f + sinf( u / scale_m_u ) * sinf( v / scale_m_v )) * 0.5f * height_m;
+	return = (1.0f + sinf( u / scale_m_u ) * sinf( v / scale_m_v )) * 0.5f * height_m;
+}
 
-	float detail =
-	(
-			0.5 * sinf( u ) * sinf( v ) +
+float terrain_detailHeight( float u, float v ) {
+	return	0.5 * sinf( u ) * sinf( v ) +
 			sinf( u / 3.f ) * sinf( v / 3.f ) +
 			5 * sinf( u / 10.f ) * sinf( v / 10.f ) * sinf( u / 10.f ) * sinf( v / 10.f )
-	);
+}
 
+float terrain_canyonHeight( float u, float v ) {
 	float canyon_length_scale = 250.f;
 	float scale = 5.f;
 	u /= scale;
 	float canyon_width_scale = 100.f;
 	u += sinf( v / (canyon_length_scale) ) * canyon_width_scale;
-	float height = 40.f;
+	float canyon_height = 40.f;
 	float width = 4.f;
 	float base_radius = 4.f;
-	float new_u = u;
+	float canyon_horizontal_offset = u;
 	if ( u < 0.f )
 	{
-		new_u = fminf( u + base_radius, 0.f );
+		canyon_horizontal_offset = fminf( u + base_radius, 0.f );
 	}
 	else
 	{
-		new_u = fmaxf( u - base_radius, 0.f );
+		canyon_horizontal_offset = fmaxf( u - base_radius, 0.f );
 	}
 
-	float mask = cos( fclamp( new_u / 4.f, -PI/2.f, PI/2.f ));
-	float canyon = 1.f - fclamp( powf( new_u / width, 4.f ), 0.f, 1.f );
+	float mask = cos( fclamp( canyon_horizontal_offset / 4.f, -PI/2.f, PI/2.f ));
+	return (1.f - fclamp( powf( canyon_horizontal_offset / width, 4.f ), 0.f, 1.f )) * mask * canyon_height;
+}
 
-	return mountains + detail - ( mask * canyon ) * height;
+// The procedural function
+float terrain_sample( float u, float v ) {
+	float mountains = terrain_mountainHeight( u, v );
+	float detail = terrain_detailHeight( u, v );
+	float canyon = terrain_canyonHeight( u, v );
+
+	return mountains + detail - canyon;
+}
+
+vector terrain_canyonPosition( float u ) {
+	v = canyon( u );
+	z = terrain_sample( u, v );
+	return Vector( x, y, z, 1.f );
 }
 
 // Could be called during runtime, in which case reinit render variables

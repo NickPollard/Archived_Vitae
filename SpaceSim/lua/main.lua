@@ -425,3 +425,53 @@ function test( )
 
 	wave[0]()
 end
+
+spawn_offset = 0.0
+spawn_interval = 10.0
+
+function spawn_index( pos )
+	return math.floor( ( pos - spawn_offset ) / spawn_interval )
+end
+
+function spawn_pos( i )
+	return i * spawn_interval + spawn_offset;
+end
+
+function spawn_cube( u )
+	x, y, z = vcanyon_position( u )
+	local cube = gameobject_create( "dat/model/cube.s" )
+	position = Vector( x, y, z, 1.0 )
+	vtransform_setWorldPosition( cube.transform, position )
+end
+
+-- Spawn all entities in the given range
+function entities_spawnAll( near, far )
+	previous_spawns = spawn_index( near )
+	
+	i = previous_spawns
+	while contains( near, far, spawn_pos( i )  )do
+		pos = spawn_pos( i )
+		spawn_cube( pos )
+		i = i + 1
+	end
+	--[[
+	for entity in entities do
+		spawn( entity )
+	end
+	--]]
+end
+
+last_spawn = 0.0
+
+-- Get the current spawn range from the ship and previous spawn completion
+function spawnRange( near, ship )
+	far  = Position( ship ) + spawn_distance
+	return near, far
+end
+
+-- Spawn all entities that need to be spawned this frame
+function update_spawns()
+	near, far = spawnRange( last_spawn, player_ship )
+	entities_spawnAll( near, far )
+	last_spawn = far;
+end
