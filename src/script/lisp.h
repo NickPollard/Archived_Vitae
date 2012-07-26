@@ -82,3 +82,7 @@ void term_takeRef( term* t );
 
 // Release a held reference to term [t]
 void term_deref( term* t );
+
+#ifdef UNIT_TEST
+void test_lisp();
+#endif

@@ -61,7 +61,7 @@ void flycam_input( void* data, input* in  ) {
 #ifndef ANDROID
 	input_mouseDrag( in, BUTTON_LEFT, &x, &y );
 #else
-	input_getTouchDrag( in, &x, &y );
+	input_getTouchDrag( in, 0, &x, &y );
 #endif
 	// We cross assign x and y, as an x pan is a pan around the x axis, 
 	// aka a pitch with is from vertical movement

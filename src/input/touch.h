@@ -10,15 +10,18 @@ TODO: Touch documentation
 enum touchAction {
 	kTouchDown,
 	kTouchMove,
-	kTouchUp
+	kTouchUp,
+	kTouchUnknown
 };
 
 #define kMaxMultiTouch 16
 #define kMaxTouchPads 16
+#define kInvalidTouchUid -1
+#define kInvalidIndex -1
 
 // A touch stimulus, there will be one for each current touch in a multi-touch environment
 typedef struct touch_s {
-	unsigned int uid;
+	int uid;
 	int x;
 	int y;
 	int drag_x;
@@ -35,22 +38,27 @@ typedef struct touchPad_s {
 	int width;
 	int height;
 	bool active;
+	int		touch_count;
 	touch	touches[kMaxMultiTouch];
 } touchPad;
 
 // A touch input device, i.e. a touch screen on a phone or tablet
 typedef struct touchPanel_s {
+	int		touch_count;
+	touch	touches[kMaxMultiTouch];
+	/*
 	bool	touched;
 	int32_t x;
 	int32_t y;
+	*/
 	int touch_pad_count;
 	touchPad** touch_pad;
 } touchPanel;
 
 
 // *** Touch
-void input_registerTouch( input* in, int x, int y, enum touchAction action );
-void input_getTouchDrag( input* in, int* x, int* y );
+void input_registerTouch( input* in, int uid, int x, int y, enum touchAction action );
+void input_getTouchDrag( input* in, int pointer, int* x, int* y );
 bool input_touchPressed( input* in, int x_min, int y_min, int x_max, int y_max );
 bool input_touchHeld( input* in, int x_min, int y_min, int x_max, int y_max );
 

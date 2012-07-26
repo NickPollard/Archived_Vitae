@@ -329,7 +329,7 @@ function playership_tick()
 	vtransform_pitch( player_ship.transform, pitch );
 
 	-- Gunfire
-	if vkeyPressed( input, key.space ) or vtouchPressed( input, 0.0, 0.0, 200.0, 200.0 ) then
+	if vkeyPressed( input, key.space ) or vtouchPressed( input, 0.0, 0.0, 300.0, 300.0 ) then
 		player_fire( player_ship )
 	end
 

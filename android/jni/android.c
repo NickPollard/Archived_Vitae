@@ -118,6 +118,14 @@ static void handle_cmd( struct android_app* app, int32_t cmd ) {
 	}
 }
 
+int android_motionAction_getActionCode( int motion_action ) {
+	return motion_action & AMOTION_EVENT_ACTION_MASK;
+}
+
+int android_motionAction_getPointerIndex( int motion_action ) {
+	return ( motion_action & AMOTION_EVENT_ACTION_POINTER_INDEX_MASK ) >> AMOTION_EVENT_ACTION_POINTER_INDEX_SHIFT;
+}
+
 // Process the next input event.
 static int32_t handle_input(struct android_app* app, AInputEvent* event) {
     engine* e = app->userData;
@@ -125,12 +133,24 @@ static int32_t handle_input(struct android_app* app, AInputEvent* event) {
 	vAssert( e->input );
 	// AInputEvent_getSource() == AINPUT_SOURCE_TOUCHSCREEN
     if ( AInputEvent_getType(event) == AINPUT_EVENT_TYPE_MOTION ) {
-		int32_t motion_action = AMotionEvent_getAction( event );
+		int motion_action = AMotionEvent_getAction( event );
+		int action_code = android_motionAction_getActionCode( motion_action );
 		int x = AMotionEvent_getX( event, 0 );
 		int y = AMotionEvent_getY( event, 0 );
-		//printf( "Touch input. %d %d (action: %d)\n", x, y, motion_action );
+
+		/*
+		printf( "touch_event %d\n", action_code );
+		int pointer_count = AMotionEvent_getPointerCount( event );
+		for ( int i = 0; i < pointer_count; ++i ) {
+			int px = AMotionEvent_getX( event, i );
+			int py = AMotionEvent_getY( event, i );
+			int id = AMotionEvent_getPointerId( event, i );
+			printf( "-- pointer index %d, id %d ( %d %d )\n", i, id, px, py );
+		}
+		*/
+
 		enum touchAction action;
-		switch( motion_action )
+		switch( action_code )
 		{
 			case AMOTION_EVENT_ACTION_UP:
 				action = kTouchUp;
@@ -141,11 +161,25 @@ static int32_t handle_input(struct android_app* app, AInputEvent* event) {
 			case AMOTION_EVENT_ACTION_MOVE:
 				action = kTouchMove;		
 				break;
-			default:
+			case AMOTION_EVENT_ACTION_POINTER_UP:
 				action = kTouchUp;
 				break;
+			case AMOTION_EVENT_ACTION_POINTER_DOWN:
+				action = kTouchDown;
+				break;
+			default:
+				action = kTouchUnknown;
+				break;
 		}
-		input_registerTouch( e->input, x, y, action );
+		
+		int pointer_index = 0;
+		if ( action_code == AMOTION_EVENT_ACTION_POINTER_DOWN ||
+			 action_code == AMOTION_EVENT_ACTION_POINTER_UP ) {
+			pointer_index = android_motionAction_getPointerIndex( motion_action );
+		}
+
+		int uid = AMotionEvent_getPointerId( event, pointer_index );
+		input_registerTouch( e->input, uid, x, y, action );
         return 1;
     }
     return 0;
