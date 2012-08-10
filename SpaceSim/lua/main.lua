@@ -256,10 +256,12 @@ function start()
 	local width = 25.0
 	while spawn_v < 3.0 do
 		spawn_v = spawn_v + 0.3
-		spawn_cube( spawn_v )
+		spawn_target( spawn_v )
 		spawn_atCanyon( -width, spawn_v, "dat/model/skyscraper.s" )
 		spawn_atCanyon( width, spawn_v, "dat/model/skyscraper.s" )
 	end
+
+	--ship_spawner()
 end
 
 wave_interval_time = 10.0
@@ -511,12 +513,19 @@ function spawn_pos( i )
 	return i * spawn_interval + spawn_offset;
 end
 
-function spawn_cube( v )
+function spawn_target( v )
 	local u = 0.0
 	local x, y, z = vcanyon_position( u, v )
-	local cube = gameobject_create( "dat/model/cube.s" )
-	local position = Vector( x, y, z, 1.0 )
-	vtransform_setWorldPosition( cube.transform, position )
+	local target = gameobject_create( "dat/model/test_sphere.s" )
+	local position = Vector( x, y + 10.0, z, 1.0 )
+	vtransform_setWorldPosition( target.transform, position )
+	vbody_registerCollisionCallback( target.body, target_collisionHandler )
+end
+
+function target_collisionHandler( target, collider )
+	vprint( "Target destroyed!" )
+	--spawn_explosion( target.transform )
+	gameobject_destroy( target )
 end
 
 function spawn_atCanyon( u, v, model )
@@ -533,7 +542,7 @@ function entities_spawnAll( near, far )
 	i = previous_spawns
 	while contains( near, far, spawn_pos( i )  )do
 		pos = spawn_pos( i )
-		spawn_cube( pos )
+		spawn_target( pos )
 		i = i + 1
 	end
 	--[[

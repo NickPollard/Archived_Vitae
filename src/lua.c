@@ -146,10 +146,16 @@ void testcallback( body* this, body* other, void* data ) {
 	(void)data;
 }
 
+typedef struct luaCollisionCallbackData_s {
+	lua_State* l;
+	int callback_ref;
+} luaCollisionCallbackData;
+
 void lua_collisionCallback( body* this, body* other, void* data ) {
-	lua_State* l = ((void**)data)[0];
-	int ref = ((int*)data)[1];
-	printf( "Lua registry indices: %d %d\n", this->intdata, other->intdata );
+	luaCollisionCallbackData* callback_data = (luaCollisionCallbackData*)data;
+	lua_State* l = callback_data->l;
+	int ref = callback_data->callback_ref;
+	//printf( "Lua registry indices: %d %d %d\n", ref, this->intdata, other->intdata );
 
 	lua_retrieve( l, ref );
 	lua_retrieve( l, this->intdata );
@@ -239,22 +245,22 @@ int LUA_body_setTransform( lua_State* l ) {
 	b->trans = t;
 	return 0;
 }
-
 int LUA_body_registerCollisionCallback( lua_State* l ) {
 	printf( "Registering lua collision handler.\n" );
 	body* b = lua_toptr( l, 1 );
 	// Store the lua func callback in the Lua registry
 	// and keep a reference to it so we can resolve it later
-	uintptr_t ref = lua_store( l ); // Must be top of the stack
+	int ref = lua_store( l ); // Must be top of the stack
+	//printf( "Callback ref: %d.\n", ref );
 	b->callback = lua_collisionCallback;
 	// Store the Lua ref (which resolves to the function)
 	// in the callback_data for the body
 	// This allows us to call the correct lua func (or closure)
 	// for this body
 	// TODO: fix this temp hack
-	uintptr_t* data = mem_alloc( sizeof( void* ) * 2 );
-	data[0] = (uintptr_t)l;
-	data[1] = ref;
+	luaCollisionCallbackData* data = mem_alloc( sizeof( luaCollisionCallbackData ));
+	data->l = l;
+	data->callback_ref = ref;
 	b->callback_data = data;
 	return 0;
 }

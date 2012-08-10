@@ -25,11 +25,11 @@ void main() {
 	frag_position = modelview * position;
 	cameraSpace_frag_normal = modelview * normal;
 	texcoord = uv.xy;
-	float height = position.y;
 
 	vert_color = vec4( 0.1, 0.1, 0.1, 1.0 );
 
 	// We can calculate fog per vertex as we know polys will be small for terrain
+	float height = position.y;
 	float fog_far = 350.0;
 	float fog_near = 100.0;
 	float fog_height = 160.0;

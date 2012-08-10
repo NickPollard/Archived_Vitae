@@ -11,6 +11,7 @@ precision mediump float;
 varying vec4 frag_position;
 varying vec4 frag_normal;
 varying vec2 texcoord;
+varying float fog;
 const int LIGHT_COUNT = 2;
 
 // Uniform
@@ -19,6 +20,8 @@ uniform vec4 light_position[LIGHT_COUNT];
 uniform vec4 light_diffuse[LIGHT_COUNT];
 uniform vec4 light_specular[LIGHT_COUNT];
 uniform sampler2D tex;
+uniform vec4 fog_color;
+uniform vec4 camera_space_sun_direction;
 
 // Test Light values
 const vec4 light_ambient = vec4( 0.2, 0.2, 0.2, 0.0 );
@@ -26,9 +29,14 @@ const vec4 light_ambient = vec4( 0.2, 0.2, 0.2, 0.0 );
 const vec4 directional_light_direction = vec4( 1.0, -1.0, 1.0, 0.0 );
 const vec4 directional_light_diffuse = vec4( 0.2, 0.2, 0.1, 1.0 );
 const vec4 directional_light_specular = vec4( 0.2, 0.2, 0.1, 1.0 );
+const vec4 sun_color = vec4( 1.0, 0.5, 0.0, 0.0 );
 
 const vec4 material_specular = vec4( 0.5, 0.5, 0.5, 1.0 );
 const float light_radius = 20.0;
+
+float sun_fog( vec4 local_sun_dir, vec4 fragment_position ) {
+	return max( 0.0, dot( local_sun_dir, normalize( fragment_position )));
+}
 
 void main() {
 #if 0
@@ -81,10 +89,15 @@ void main() {
 #endif
 
 	vec4 material_diffuse = texture2D( tex, texcoord );
-	gl_FragColor =	total_specular_color * material_specular + 
-					total_diffuse_color * material_diffuse;
+	vec4 fragColor =	total_specular_color * material_specular + 
+						total_diffuse_color * material_diffuse;
+	
+	// sunlight on fog
+	float fog_sun_factor = sun_fog( camera_space_sun_direction, frag_position );
+	vec4 local_fog_color = fog_color + (sun_color * fog_sun_factor);
+
+	gl_FragColor = mix( fragColor, local_fog_color, fog );
 	gl_FragColor.w = 1.0;
-//	gl_FragColor = vec4( texcoord.xy, 0.2, 1.0 );
 #endif
 
 }

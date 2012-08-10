@@ -27,7 +27,6 @@ const vec4 light_ambient = vec4( 0.2, 0.2, 0.2, 1.0 );
 const vec4 directional_light_direction = vec4( 1.0, -0.5, 1.0, 0.0 );
 const vec4 directional_light_diffuse = vec4( 1.0, 1.0, 0.4, 1.0 );
 const vec4 directional_light_specular = vec4( 0.5, 0.5, 0.5, 1.0 );
-
 const vec4 sun_color = vec4( 1.0, 0.5, 0.0, 0.0 );
 
 const float light_radius = 20.0;
@@ -95,11 +94,9 @@ void main() {
 
 	// sunlight on fog
 	float fog_sun_factor = sun_fog( camera_space_sun_direction, frag_position );
-	//vec4 local_fog_color = mix( fog_color, sun_color, fog_sun_factor );
 	vec4 local_fog_color = fog_color + (sun_color * fog_sun_factor);
 
 	gl_FragColor = mix( fragColor, local_fog_color, fog );
-	//gl_FragColor = fragColor;
 	gl_FragColor.w = 1.0;
 
 #else
