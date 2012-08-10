@@ -8,6 +8,7 @@
 #include "render/render.h"
 #include "render/shader.h"
 #include "render/texture.h"
+#include "script/lisp.h"
 #include "system/hash.h"
 
 float property_samplef( property* p, float time );
@@ -16,15 +17,16 @@ vector property_samplev( property* p, float time );
 particleEmitterDef* particleEmitterDef_create() {
 	particleEmitterDef* def = mem_alloc( sizeof( particleEmitterDef ));
 	memset( def, 0, sizeof( particleEmitterDef ));
+	def->spawn_box = Vector( 0.f, 0.f, 0.f, 0.f );
+	// TODO - shouldn't be doing this here, but need to do it only once per particle def
+	texture_request( &def->texture_diffuse, "dat/img/cloud_rgba128.tga" );
 	return def;
 }
 
 particleEmitter* particleEmitter_create() {
 	particleEmitter* p = mem_alloc( sizeof( particleEmitter ));
 	memset( p, 0, sizeof( particleEmitter ));
-	p->definition = particleEmitterDef_create();
-	p->definition->spawn_box = Vector( 0.f, 0.f, 0.f, 0.f );
-
+	p->definition = NULL;
 	p->vertex_buffer = mem_alloc( sizeof( vertex ) * kMaxParticleVerts );
 	p->element_buffer = mem_alloc( sizeof( vertex ) * kMaxParticleVerts );
 
@@ -174,6 +176,7 @@ property* property_create( int stride ) {
 }
 
 property* property_copy( property* p ) {
+	printf( "Copying property with stride %d\n", p->stride );
 	property* p_copy = property_create( p->stride );
 	p_copy->count = p->count;
 	memcpy( p_copy->data, p->data, sizeof( float ) * p->stride * kmax_property_values );
@@ -252,4 +255,33 @@ void test_property() {
 	property_samplef( p, 0.75f );
 	property_samplef( p, 1.5f );
 	property_samplef( p, 3.0f );
+}
+
+map* particleEmitterAssets = NULL;
+#define kMaxParticleAssets 256
+
+void particle_init() {
+	particleEmitterAssets = map_create( kMaxParticleAssets, sizeof( particleEmitterDef* ));
+}
+
+particleEmitterDef* particle_loadAsset( const char* particle_file ) {
+	// try to find it if it's already loaded
+	int key = mhash( particle_file );
+	void** result = map_find( particleEmitterAssets, key );
+	if ( result ) {
+		particleEmitterDef* def = *((particleEmitterDef**)result);
+		return def;
+	}
+	
+	// otherwise load it and add it
+	term* particle_term = lisp_eval_file( lisp_global_context, particle_file );
+	particleEmitterDef* def = particle_term->data;
+	map_add( particleEmitterAssets, key, &def );
+	return def;
+}
+
+particleEmitter* particle_newEmitter( particleEmitterDef* definition ) {
+	particleEmitter* p = particleEmitter_create();
+	p->definition = definition;
+	return p;
 }

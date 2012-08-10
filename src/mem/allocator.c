@@ -60,7 +60,7 @@ void* heap_allocate_aligned( heapAllocator* heap, size_t size, size_t alignment 
 	block* b = heap_findEmptyBlock( heap, size );
 
 	if ( !b ) {
-		heap_dumpBlocks( heap );
+		//heap_dumpBlocks( heap );
 		printError( "HeapAllocator out of memory on request for " dPTRf " bytes. Total size: " dPTRf " bytes, Used size: " dPTRf " bytes\n", size, heap->total_size, heap->total_allocated );
 		assert( 0 );
 	}

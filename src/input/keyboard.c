@@ -84,14 +84,16 @@ void input_keyboardTick( input* in, float dt ) {
 
 #ifdef LINUX_X
 void input_initKeyCodes( xwindow* xwin ) {
-	key_codes[KEY_ESC] = XKeysymToKeycode( xwin->display, XK_Escape);
-	key_codes[KEY_UP] = XKeysymToKeycode( xwin->display, XK_Up);
-	key_codes[KEY_DOWN] = XKeysymToKeycode( xwin->display, XK_Down);
-	key_codes[KEY_LEFT] = XKeysymToKeycode( xwin->display, XK_Left);
-	key_codes[KEY_RIGHT] = XKeysymToKeycode( xwin->display, XK_Right);
+	key_codes[KEY_ESC] = XKeysymToKeycode( xwin->display, XK_Escape );
+	key_codes[KEY_UP] = XKeysymToKeycode( xwin->display, XK_Up );
+	key_codes[KEY_DOWN] = XKeysymToKeycode( xwin->display, XK_Down );
+	key_codes[KEY_LEFT] = XKeysymToKeycode( xwin->display, XK_Left );
+	key_codes[KEY_RIGHT] = XKeysymToKeycode( xwin->display, XK_Right );
 	
-	key_codes[KEY_W] = XKeysymToKeycode( xwin->display, XK_W);
-	key_codes[KEY_S] = XKeysymToKeycode( xwin->display, XK_S);
+	key_codes[KEY_W] = XKeysymToKeycode( xwin->display, XK_W );
+	key_codes[KEY_S] = XKeysymToKeycode( xwin->display, XK_S );
+	
+	key_codes[KEY_SPACE] = XKeysymToKeycode( xwin->display, XK_space );
 }
 #else
 void input_initKeyCodes() {

@@ -24,6 +24,11 @@ input* input_create() {
 	in->active = 0;
 	memset( in->data, 0, sizeof( input_data ) * INPUT_DATA_FRAMES );
 	memcpy( in->keybinds, input_keybinds, INPUT_MAX_KEYBINDS ); // init the keybinds to defaults
+#ifdef TOUCH
+	touchPanel_init( &in->touch );
+	touchPanel_init( &in->data[0].touch );
+	touchPanel_init( &in->data[1].touch );
+#endif // TOUCH
 	return in;
 }
 //

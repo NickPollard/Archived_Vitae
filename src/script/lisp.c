@@ -107,10 +107,10 @@ typedef void (*attributeSetter)( term* ob, term* value );
 map* attrFuncMap = NULL;
 
 //// Attribute functions /////////////////////////////////////////
-void attr_particle_setSize( term* particle_term, term* size_attr );
-void attr_particle_setColor( term* particle_term, term* color_attr );
-void attr_particle_setLifetime( term* particle, term* lifetime );
-void attr_particle_setSpawnInterval( term* particle, term* spawn_interval );
+void attr_particle_setSize( term* definition_term, term* size_attr );
+void attr_particle_setColor( term* definition_term, term* color_attr );
+void attr_particle_setLifetime( term* definition_term, term* lifetime );
+void attr_particle_setSpawnInterval( term* definition_term, term* spawn_interval );
 //// Attribute functions /////////////////////////////////////////
 
 bool isType( term* t, enum termType type ) {
@@ -124,11 +124,11 @@ bool isValue( term* t ) {
 void term_delete( term* t );
 
 void term_takeRef( term* t ) {
-	++t->refcount;
+	++(t->refcount);
 	}
 
 void term_deref( term* t ) {
-	--t->refcount;
+	--(t->refcount);
 	vAssert( t->refcount >= 0 );
 	if ( t->refcount == 0 )
 		term_delete( t );
@@ -177,7 +177,7 @@ term* term_create( enum termType type, void* value ) {
 	mem_popStack();
 	t->type = type;
 	t->head = value;
-	if ( type == _typeList && value ) {
+	if (( type == _typeList ) && value ) {
 		term_takeRef( (term*)value );
 		}
 	t->tail = NULL;
@@ -483,6 +483,22 @@ void term_debugStreamPrint( streamWriter* s, term* t ) {
 		stream_printf( s, "[Intrinsic] " );
 }
 
+void term_validate( term* t ) {
+	const int kDepth = 5;
+	int outer_depth = 0;
+	while( isType( t, _typeList ) && t->head && outer_depth < kDepth ) {
+		term* t_ = head( t );
+		int inner_depth = 0;
+		while( isType( t_, _typeList ) && t_->head && inner_depth < kDepth ) {
+			lisp_assert( t != t_ );
+			t_ = head( t_ );
+			++inner_depth;
+		}
+		t = head( t );
+		++outer_depth;
+	}
+}
+
 typedef term* (*fmap_func)( term*, void* );
 typedef term* (*lisp_func)( context*, term* );
 
@@ -492,7 +508,7 @@ term* fmap_1( fmap_func f, void* arg, term* expr ) {
 	vAssert( isType( expr, _typeList ));
 	return _cons( f( head( expr ), arg ),
 		   			fmap_1( f, arg, tail( expr )));
-	}
+}
 
 void* exec( context* c, term* func, term* args);
 
@@ -561,6 +577,7 @@ term* _eval( term* expr, void* _context ) {
 #ifdef DEBUG
 	debug_lisp_stack_pop();
 #endif
+	term_validate( result );
 	return result;
 	}
 
@@ -651,12 +668,14 @@ void* exec( context* c, term* func, term* args ) {
 		// Evaluate the function in the local context including the argument bindings
 		term* ret = _eval( expr, local );
 		context_delete( local );
+		term_validate( ret );
 		return ret;
 		}
 
 	if ( isType( func, typeIntrinsic )) {
 		lisp_func f = func->data;
 		term* ret = f( c, args );
+		term_validate( ret );
 		return ret;
 		}
 
@@ -913,7 +932,9 @@ term* lisp_func_object_process( context *c, term* raw_args ) {
 	// Eval and validate args
 	term* args = fmap_1( _eval, c, raw_args );
 	term_takeRef( args );
-	vAssert( list_length( args ) == 2 );
+	lisp_assert( list_length( args ) == 2 );
+	lisp_assert( isType( head( tail( args )), _typeList ));
+	lisp_assert( isType( head( args ), _typeObject ));
 
 	// Alias args
 	term* ret = head( args );
@@ -1110,15 +1131,18 @@ term* lisp_func_attribute( context* c, term* raw_args ) {
 	(void)raw_args;
 	
 	lisp_assert( isType( raw_args, _typeList ));
+	lisp_assert( list_length( raw_args ) ==  3 );
 	term* args = fmap_1( _eval, c, raw_args );
+	term* value = head( tail( args ));
+	term_validate( value );
 	term_takeRef( args );
 
-	const char* name = head( args )->string;
-	term* value = head( tail( args ));
+	const char* attribute_name = head( args )->string;
+	lisp_assert( isType( tail( args ), _typeList ));
 	term* ob = head( tail( tail( args )));
 
-	PARSE_PRINT( "LISP: Processing attribute \"%s\"\n", name );
-	attributeSetter attr = attributeFunction( /* object, */ name );
+
+	attributeSetter attr = attributeFunction( /* object, */ attribute_name );
 	attr( ob, value );
 
 	// TODO: Fix this, we can't deref the thing we've appended properly? (In object-process)
@@ -1126,46 +1150,44 @@ term* lisp_func_attribute( context* c, term* raw_args ) {
 	return &lisp_false;
 }
 
-void attr_particle_setSpawnInterval( term* particle, term* spawn_interval ) {
+void attr_particle_setSpawnInterval( term* definition_term, term* spawn_interval ) {
 	// TODO - we need to copy and preserve this correctly
-	particleEmitter* p = particle->data;
-	lisp_assert( p->definition != 0x0 );
-	p->definition->spawn_interval = *(spawn_interval->number);
+	particleEmitterDef* def = definition_term->data;
+	lisp_assert( def != 0x0 );
+	def->spawn_interval = *(spawn_interval->number);
 }
 
-void attr_particle_setLifetime( term* particle, term* lifetime ) {
+void attr_particle_setLifetime( term* definition_term, term* lifetime ) {
 	// TODO - we need to copy and preserve this correctly
-	particleEmitter* p = particle->data;
-	lisp_assert( p->definition != 0x0 );
-	p->definition->lifetime = *(lifetime->number);
+	particleEmitterDef* def = definition_term->data;
+	lisp_assert( def != 0x0 );
+	def->lifetime = *(lifetime->number);
 }
 
-void attr_particle_setColor( term* particle_term, term* color_attr ) {
+void attr_particle_setColor( term* definition_term, term* color_attr ) {
 	// TODO - we need to copy and preserve this correctly
-	particleEmitter* p = particle_term->data;
+	particleEmitterDef* def = definition_term->data;
 	property* color = property_copy( color_attr->data );
-	lisp_assert( p->definition != 0x0 );
-	p->definition->color = color;
+	lisp_assert( def != 0x0 );
+	def->color = color;
 }
 
-void attr_particle_setSize( term* particle_term, term* size_attr ) {
+void attr_particle_setSize( term* definition_term, term* size_attr ) {
+	lisp_assert( isType( size_attr, _typeObject ));
 	// TODO - we need to copy and preserve this correctly
-	particleEmitter* p = particle_term->data;
 	property* size = property_copy( size_attr->data );
-	lisp_assert( p->definition != 0x0 );
-	p->definition->size = size;
+	particleEmitterDef* def = definition_term->data;
+	lisp_assert( def != 0x0 );
+	def->size = size;
 }
 
 // (particle_create)
-term* lisp_func_particle_create( context* c, term* raw_args ) {
+term* lisp_func_particle_emitter_definition_create( context* c, term* raw_args ) {
 	(void)c;
 	(void)raw_args;
 
-	particleEmitter* p = particleEmitter_create();
-	vAssert( p->definition != 0 );
-	term* tp = term_create( _typeObject, p );	
-
-	return tp;
+	particleEmitterDef* def = particleEmitterDef_create();
+	return term_create( _typeObject, def );	
 }
 
 // (property_create stride)
@@ -1214,7 +1236,13 @@ term* lisp_func_property_addkey( context* c, term* raw_args ) {
 	}	
 	PARSE_PRINT( "\n" );
 	property_addfv( p, k, values );
+
+	// de-couple the property term from args before we deref, we don't want it GCed
+	args->head = NULL;
 	term_deref( args );	
+
+	lisp_assert( isType( tp, _typeObject ));
+	vAssert( tp->data == p );
 	return tp;
 }
 
@@ -1270,7 +1298,7 @@ void lisp_initContext( context* c ) {
 	define_cfunction( c, "property_addKey", lisp_func_property_addkey );
 	
 	define_cfunction( c, "attribute", lisp_func_attribute );
-	define_cfunction( c, "particle_create", lisp_func_particle_create );
+	define_cfunction( c, "particle_emitter_definition_create", lisp_func_particle_emitter_definition_create );
 
 	define_function( c, "mesh", "( args ) (foldl object_process (mesh_create) args)" );
 	//define_function( c, "filename", "(() b )" );
@@ -1465,13 +1493,34 @@ void test_lisp() {
 
 	//vAssert( 0 );
 
-	context_delete( c );
-
 	//heap_dumpUsedBlocks( lisp_heap );
+	{
+		term* t = _eval( lisp_parse_string( "(property (quote ((0.0 1.0) (0.3 2.0) (0.6 2.0) (2.0 4.0))))" ), c );
+		lisp_assert( isType( t, _typeObject ));
+		lisp_assert( ((property*)t->data)->stride == 2 );
+	}
+
+	{
+		term* t = _eval( lisp_parse_string( "(attribute \"size\" (property_create 2.0) (particle_emitter_definition_create))" ), c );
+		lisp_assert( isType( t, typeFalse ));
+	}
+
+	{
+		term* t = _eval( lisp_parse_string( "(attribute \"size\" (property_addKey (property_create 2.0) (quote (0.0 1.0))) (particle_emitter_definition_create))" ), c );
+		lisp_assert( isType( t, typeFalse ));
+	}
+
+	{
+		term* t = _eval( lisp_parse_string( "(attribute \"size\" (property (quote ((0.0 1.0) (0.3 2.0) (0.6 2.0) (2.0 4.0)))) (particle_emitter_definition_create))" ), c );
+		lisp_assert( isType( t, typeFalse ));
+	}
+
+	context_delete( c );
 
 	printf( "Lisp heap storing " dPTRf " bytes in " dPTRf " allocations.\n", lisp_heap->total_allocated, lisp_heap->allocations );
 	printf( "Context heap storing " dPTRf " bytes in " dPTRf " allocations.\n", context_heap->total_allocated, context_heap->allocations );
 	//assert( 0 );
+
 	}
 
 /*

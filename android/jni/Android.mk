@@ -80,7 +80,7 @@ LOCAL_C_INCLUDES += $(LOCAL_PATH)/$(MY_LUA_PATH)
 LOCAL_C_INCLUDES += $(LOCAL_PATH)/$(MY_GLFW_PATH)
 LOCAL_C_INCLUDES += $(LOCAL_PATH)/$(MY_LIBZIP_PATH)
 
-LOCAL_CFLAGS := -g -pg #debug
+LOCAL_CFLAGS := -g -pg -D DEBUG #debug
 LOCAL_LDFLAGS := -Wl,-Map,xxx.map #create map file
 LOCAL_CFLAGS += -std=gnu99
 

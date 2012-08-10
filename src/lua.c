@@ -21,6 +21,7 @@
 #include "render/texture.h"
 #include "script/lisp.h"
 #include "system/file.h"
+#include "ui/panel.h"
 
 #define MAX_LUA_VECTORS 64
 vector lua_vectors[MAX_LUA_VECTORS];
@@ -130,9 +131,7 @@ void lua_runFunc( lua_State* l, int ref, int args ) {
 int LUA_createModelInstance( lua_State* l ) {
 	if ( lua_isstring( l, 1 ) ) {
 		const char* filename = lua_tostring( l, 1 );
-		printf( "LUA: Creating instance of model \"%s\"\n", filename );
 		modelInstance* m = modelInstance_create( model_getHandleFromFilename( filename ) );
-
 		lua_pushptr( l, m );
 		return 1;
 	} else {
@@ -326,7 +325,7 @@ int LUA_keyHeld( lua_State* l ) {
 	return 0;
 }
 
-#ifdef ANDROID
+#ifdef TOUCH
 int LUA_touchPressed( lua_State* l ) {
 	if ( lua_isnumber( l, 2 ) && 
 	 	lua_isnumber( l, 3 ) &&
@@ -364,6 +363,27 @@ int LUA_touchHeld( lua_State* l ) {
 	printf( "Error: Lua: Invalid touch bounds specified" );
 	return 0;
 }
+
+int LUA_createTouchPad( lua_State* l ) {
+	input* in = lua_toptr( l, 1 );
+	int x = lua_tonumber( l, 2 );
+	int y = lua_tonumber( l, 3 );
+	int w = lua_tonumber( l, 4 );
+	int h = lua_tonumber( l, 5 );
+	touchPad* pad = touchPanel_addTouchPad( &in->touch, touchPad_create( x, y, w, h ));
+	lua_pushptr( l, pad );
+	return 1;
+}
+
+int LUA_touchPadTouched( lua_State* l ) {
+	touchPad* pad = lua_toptr( l, 1 );
+	int x, y;
+	bool touched = touchPad_touched( pad, &x, &y );
+	lua_pushboolean( l, touched );
+	lua_pushnumber( l, x );
+	lua_pushnumber( l, y );
+	return 3;
+}
 #else
 int LUA_touchHeld( lua_State* l ) {
 	lua_pushboolean( l, false );
@@ -373,7 +393,17 @@ int LUA_touchPressed( lua_State* l ) {
 	lua_pushboolean( l, false );
 	return 1;
 }
-#endif // ANDROID
+int LUA_createTouchPad( lua_State* l ) {
+	lua_pushnumber( l, 0 );
+	return 1;
+}
+int LUA_touchPadTouched( lua_State* l ) {
+	lua_pushboolean( l, false );
+	lua_pushnumber( l, -1 );
+	lua_pushnumber( l, -1 );
+	return 3;
+}
+#endif // TOUCH
 
 int LUA_transform_yaw( lua_State* l ) {
 	transform* t = lua_toptr( l, 1 );
@@ -474,35 +504,30 @@ int LUA_particle_create( lua_State* l ) {
 	engine* e = lua_toptr( l, 1 );
 	transform* t = lua_toptr( l, 2 );
 
-	context* c = lisp_newContext();
-
-#if 0	
-	particleEmitter* p = particleEmitter_create();
-	p->definition->spawn_box = Vector( 0.3f, 0.3f, 0.3f, 0.f );
-	term* size_term = lisp_eval_file( c, "dat/script/lisp/property.s" );
-	p->definition->size = size_term->data;
-#endif
-	
+/*	
 	term* particle_term = lisp_eval_file( lisp_global_context, "dat/script/lisp/missile_particle.s" );
-	particleEmitter* p = particle_term->data;
+	particleEmitter* emitter = particle_term->data;
+	*/
 
-	p->definition->velocity = Vector( 0.f, 0.1f, 0.f, 0.f );
-	//p->definition->spawn_interval = 0.03f;
-	p->trans = t;
-	p->definition->flags = p->definition->flags | kParticleWorldSpace
-												| kParticleRandomRotation;
+	particleEmitterDef* def = particle_loadAsset( "dat/script/lisp/missile_particle.s" );
+	def->velocity = Vector( 0.f, 0.1f, 0.f, 0.f );
+	def->flags = def->flags | kParticleWorldSpace
+							| kParticleRandomRotation;
+	//def->spawn_interval = 0.03f;
 
-	texture_request( &p->definition->texture_diffuse, "dat/img/cloud_rgba128.tga" );
+	particleEmitter* emitter = particle_newEmitter( def );
 
-	engine_addRender( e, p, particleEmitter_render );
-	startTick( e, p, particleEmitter_tick );
+	emitter->trans = t;
+
+	engine_addRender( e, emitter, particleEmitter_render );
+	startTick( e, emitter, particleEmitter_tick );
 	
-	context_delete( c );
 	//
 	//
 	//
-
-	particleEmitter* p_ = particleEmitter_create();
+/*
+	particleEmitterDef* def = particleEmitterDef_create();
+	particleEmitter* p_ = particle_newEmitter( def );
 	p_->definition->lifetime = 2.3f;
 	p_->definition->size = property_create( 2 );
 	property_addf( p_->definition->size, 0.f, 0.f );
@@ -520,7 +545,7 @@ int LUA_particle_create( lua_State* l ) {
 
 	engine_addRender( e, p_, particleEmitter_render );
 	startTick( e, p_, particleEmitter_tick );
-
+*/
 
 
 
@@ -531,7 +556,8 @@ int LUA_explosion( lua_State* l ) {
 	engine* e = lua_toptr( l, 1 );
 	transform* t = lua_toptr( l, 2 );
 	
-	particleEmitter* p = particleEmitter_create();
+	particleEmitterDef* def = particleEmitterDef_create();
+	particleEmitter* p = particle_newEmitter( def );
 	p->definition->lifetime = 2.f;
 	p->definition->spawn_box = Vector( 0.3f, 0.3f, 0.3f, 0.f );
 
@@ -577,6 +603,27 @@ int LUA_canyonPosition( lua_State* l ) {
 	return 3;
 }
 
+int LUA_createUIPanel( lua_State* l ) {
+	engine* e = lua_toptr( l, 1 );
+	float x = lua_tonumber( l, 2 );
+	float y = lua_tonumber( l, 3 );
+	float w = lua_tonumber( l, 4 );
+	float h = lua_tonumber( l, 5 );
+	panel* p = panel_create();
+	p->x = x;
+	p->y = y;
+	p->width = w;
+	p->height = h;
+	texture_request( &p->texture, "dat/img/circle.tga" );
+	engine_addRender( e, p, panel_render );
+	return 0;
+}
+
+void lua_setConstantBool( lua_State* l, const char* name, bool b ) {
+	lua_pushboolean( l, b );
+	lua_setglobal( l, name ); // Store in the global variable named <name>
+}
+
 void lua_makeConstantPtr( lua_State* l, const char* name, void* ptr ) {
 	lua_pushptr( l, ptr );
 	lua_setglobal( l, name ); // Store in the global variable named <name>
@@ -613,6 +660,8 @@ lua_State* vlua_create( engine* e, const char* filename ) {
 	lua_registerFunction( l, LUA_keyHeld, "vkeyHeld" );
 	lua_registerFunction( l, LUA_touchPressed, "vtouchPressed" );
 	lua_registerFunction( l, LUA_touchHeld, "vtouchHeld" );
+	lua_registerFunction( l, LUA_createTouchPad, "vcreateTouchPad" );
+	lua_registerFunction( l, LUA_touchPadTouched, "vtouchPadTouched" );
 	// *** Scene
 	lua_registerFunction( l, LUA_createModelInstance, "vcreateModelInstance" );
 	lua_registerFunction( l, LUA_deleteModelInstance, "vdeleteModelInstance" );
@@ -640,12 +689,20 @@ lua_State* vlua_create( engine* e, const char* filename ) {
 	lua_registerFunction( l, LUA_chasecam_follow, "vchasecam_follow" );
 	lua_registerFunction( l, LUA_flycam, "vflycam" );
 	lua_registerFunction( l, LUA_setCamera, "vscene_setCamera" );
+	// *** UI
+	lua_registerFunction( l, LUA_createUIPanel, "vcreateUIPanel" );
 
 	// *** Game
 	lua_registerFunction( l , LUA_canyonPosition, "vcanyon_position" );
 
 	lua_makeConstantPtr( l, "engine", e );
 	lua_makeConstantPtr( l, "input", e->input );
+
+#ifdef TOUCH
+	lua_setConstantBool( l, "touch_enabled", true );
+#else
+	lua_setConstantBool( l, "touch_enabled", false );
+#endif
 
 	lua_keycodes( l );
 

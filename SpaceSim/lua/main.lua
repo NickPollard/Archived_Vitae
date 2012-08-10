@@ -19,12 +19,10 @@ player_ship = nil
 -- Create a spacesim Game object
 -- A gameobject has a visual representation (model), a physical entity for velocity and momentum (physic)
 -- and a transform for locating it in space (transform)
-function gameobject_create( model )
-	vprint( "gameobject_create" )
-	vprint( model )
+function gameobject_create( model_file )
 	g = {}
 	g.test = 256
-	g.model = vcreateModelInstance( model )
+	g.model = vcreateModelInstance( model_file )
 	g.physic = vcreatePhysic()
 	g.transform = vcreateTransform()
 	g.body = vcreateBodySphere( g )
@@ -223,54 +221,118 @@ function ship_destroy( ship )
 	-- spawn explosion
 end
 
-function start()
-	vprint( "start" )
+function setup_controls()
+	-- Set up steering input for the player ship
+	if touch_enabled then
+		local w = 360
+		local h = 360
+		local x = 1280 - w
+		local y = 720 - h
+		local deadzone = 30
+		player_ship.joypad_mapper = joypad_mapSquare( w, h, deadzone, deadzone )
+		player_ship.joypad = vcreateTouchPad( input, x, y, w, h )
+		player_ship.steering_input = steering_input_joypad
+		-- UI drawing is upside down compared to touchpad placement - what to do about this?
+		vcreateUIPanel( engine, x, 0, w, h )
+	else
+		player_ship.steering_input = steering_input_keyboard
+	end
+end
 
-	-- We create a player object which is a game-specific Lua lclass
+function start()
+	-- We create a player object which is a game-specific Lua class
 	-- The player class itself creates several native C classes in the engine
 	player_ship = playership_create()
-	pi = 3.1415
-	vtransform_yaw( player_ship.transform, pi/2 * 0.7 );
+	setup_controls()
+
+	vtransform_yaw( player_ship.transform, math.pi/2 * 0.7 );
 	chasecam = vchasecam_follow( engine, player_ship.transform )
 	flycam = vflycam( engine )
 	vscene_setCamera( chasecam )
-
-	--ship_spawner()
 end
 
 wave_interval_time = 10.0
 
+function sign( x )
+	if x > 0 then
+		return 1.0
+	else
+		return -1.0
+	end
+end
+
+-- maps a touch input on the joypad into a joypad tilt
+-- can have a defined deadzone in the middle (resulting in 0)
+function joypad_mapSquare( width, height, deadzone_x, deadzone_y )
+	return function( x, y ) 	
+		center_x = width / 2
+		center_y = height / 2
+		x = sign( x - center_x ) * math.max( math.abs( x - center_x ) - deadzone_x, 0.0 ) / (( width - deadzone_x ) / 2 )
+		y = sign( y - center_y ) * math.max( math.abs( y - center_y ) - deadzone_y, 0.0 ) / (( height - deadzone_y ) / 2 )
+		return x,y
+	end
+end
+
+function steering_input_joypad()
+	-- Using Joypad
+	local yaw = 0.0
+	local pitch = 0.0
+	touched, joypad_x, joypad_y = vtouchPadTouched( player_ship.joypad )
+	if touched then
+		yaw, pitch = player_ship.joypad_mapper( joypad_x, joypad_y )
+		vprint( "inputs mapped " .. yaw .. " " .. pitch )
+	end
+	return yaw, pitch
+end
+function steering_input_keyboard()
+	local yaw = 0.0
+	local pitch = 0.0
+	-- Steering
+	if vkeyHeld( input, key.left ) then
+		yaw = -1.0
+	end
+	if vkeyHeld( input, key.right ) then
+		yaw = 1.0
+	end
+	if vkeyHeld( input, key.up ) then
+		pitch = -1.0
+	end
+	if vkeyHeld( input, key.down ) then
+		pitch = 1.0
+	end
+	return yaw, pitch
+end
+
 function playership_tick()
 	acceleration = 16.0
-	yaw_per_second = 1.2 
-	pitch_per_second = 1.2
+	yaw_per_second = 1.5 
+	pitch_per_second = 1.5
 	width = 80
-	pitch = pitch_per_second * dt;
-	yaw = yaw_per_second * dt;
+
+	local input_yaw = 0.0
+	local input_pitch = 0.0
+	input_yaw, input_pitch = player_ship.steering_input()
+
+	pitch = -input_pitch * pitch_per_second * dt;
+	yaw = input_yaw * yaw_per_second * dt;
 	delta_speed = acceleration * dt;
+
+	-- throttle
 	if vkeyHeld( input, key.w )  or vtouchHeld( input, 000.0, -width*3, 100.0, -width*2 ) then
 		player_ship.speed = player_ship.speed + delta_speed
 	end
 	if vkeyHeld( input, key.s )  or vtouchHeld( input, 000.0, -width, 100.0, -1.0 ) then
 		player_ship.speed = player_ship.speed - delta_speed
 	end
-	if vkeyHeld( input, key.left ) or vtouchHeld( input, -width*3, -width*3, -width*2, -1.0 ) then
-		vtransform_yaw( player_ship.transform, -yaw );
-	end
-	if vkeyHeld( input, key.right ) or vtouchHeld( input, -width, -width*3, -1.0, -1.0 ) then
-		vtransform_yaw( player_ship.transform, yaw );
-	end
-	if vkeyHeld( input, key.up ) or vtouchHeld( input, -width*3, -width*3, -1.0, -width*2 ) then
-		vtransform_pitch( player_ship.transform, pitch );
-	end
-	if vkeyHeld( input, key.down ) or vtouchHeld( input, -width*3, -width, -1.0, -1.0 ) then
-		vtransform_pitch( player_ship.transform, -pitch );
-	end
+
+	vtransform_yaw( player_ship.transform, yaw );
+	vtransform_pitch( player_ship.transform, pitch );
 
 	-- Gunfire
-	if vkeyPressed( input, key.space ) or vtouchPressed( input, 0.0, 0.0, 200.0, 200.0 ) then
+	if vkeyPressed( input, key.space ) or vtouchPressed( input, 0.0, 0.0, 300.0, 300.0 ) then
 		player_fire( player_ship )
 	end
+
 
 
 	ship_v = Vector( 0.0, 0.0, player_ship.speed, 0.0 )

@@ -809,7 +809,8 @@ void* s_mesh( sterm* raw_properties ) {
 void* s_particle_emitter( sterm* raw_args ) {
 	sterm* args = eval_list( raw_args );
 	(void)args;
-	particleEmitter* p = particleEmitter_create();
+	particleEmitterDef* def = particleEmitterDef_create();
+	particleEmitter* p = particle_newEmitter( def );
 	p->definition->lifetime = 2.f;
 	p->definition->spawn_box = Vector( 0.1f, 0.1f, 0.1f, 0.f );
 

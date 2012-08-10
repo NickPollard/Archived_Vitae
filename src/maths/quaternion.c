@@ -103,9 +103,22 @@ quaternion quaternion_fromEuler( vector* euler_angles ) {
 	return q;
 }
 
+quaternion quaternion_negate( quaternion q ) {
+	q.s = -q.s;
+	q.x = -q.x;
+	q.y = -q.y;
+	q.z = -q.z;
+	return q;
+}
+
 quaternion quaternion_slerp( quaternion p0, quaternion p1, float t ) {
+	// If the dot product is negative, we negate one of the ends to force the short path ( o < 180deg )
 	quaternion r;
 	float dot = Dot4( (vector*)&p0, (vector*)&p1 );
+	if ( dot < 0.f ) {
+		p1 = quaternion_negate( p1 );
+		dot = -dot;
+	}
 	// If angles are really close (or identical), just do a linear interp to stop degeneracy
 	if ( dot  > 0.99f ) {
 		r.s = (1.f - t) * p0.s + t * p1.s;
