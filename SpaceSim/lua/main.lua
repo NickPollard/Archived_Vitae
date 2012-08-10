@@ -252,10 +252,13 @@ function start()
 
 
 	-- Test spawns
-	spawn_v = 0.0
-	while spawn_v < 10.0 do
-		spawn_v = spawn_v + 0.1
+	spawn_v = -3.0
+	local width = 25.0
+	while spawn_v < 3.0 do
+		spawn_v = spawn_v + 0.3
 		spawn_cube( spawn_v )
+		spawn_atCanyon( -width, spawn_v, "dat/model/skyscraper.s" )
+		spawn_atCanyon( width, spawn_v, "dat/model/skyscraper.s" )
 	end
 end
 
@@ -509,12 +512,18 @@ function spawn_pos( i )
 end
 
 function spawn_cube( v )
-	u = 0.0
-	x, y, z = vcanyon_position( u, v )
-	vprint( "Spawn position (v = " .. v .. "): " .. x .. " " .. y .. " " .. z )
+	local u = 0.0
+	local x, y, z = vcanyon_position( u, v )
 	local cube = gameobject_create( "dat/model/cube.s" )
-	position = Vector( x, 0.0, z, 1.0 )
+	local position = Vector( x, y, z, 1.0 )
 	vtransform_setWorldPosition( cube.transform, position )
+end
+
+function spawn_atCanyon( u, v, model )
+	local x, y, z = vcanyon_position( u, v )
+	local position = Vector( x, y, z, 1.0 )
+	local obj = gameobject_create( model )
+	vtransform_setWorldPosition( obj.transform, position )
 end
 
 -- Spawn all entities in the given range
