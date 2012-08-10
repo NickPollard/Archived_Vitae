@@ -11,10 +11,11 @@
 #include "model.h"
 #include "scene.h"
 #include "engine.h"
-#include "transform.h"
 #include "input.h"
 #include "particle.h"
 #include "physic.h"
+#include "terrain.h"
+#include "transform.h"
 #include "input/keyboard.h"
 #include "render/modelinstance.h"
 #include "render/texture.h"
@@ -564,11 +565,12 @@ int LUA_explosion( lua_State* l ) {
 // Get the world X,Y,Z position of a point a given DISTANCE down the canyon
 int LUA_canyonPosition( lua_State* l ) {
 	float u = lua_tonumber( l, 1 );
+	float v = lua_tonumber( l, 2 );
 	float x, y, z;
-	position = terrain_canyonPosition( u );
-	x = position.x;
-	y = position.y;
-	z = position.z;
+	vector position = terrain_canyonPosition( u, v );
+	x = position.coord.x;
+	y = position.coord.y;
+	z = position.coord.z;
 	lua_pushnumber( l, x );
 	lua_pushnumber( l, y );
 	lua_pushnumber( l, z );

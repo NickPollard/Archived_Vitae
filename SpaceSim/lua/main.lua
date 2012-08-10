@@ -437,8 +437,9 @@ function spawn_pos( i )
 	return i * spawn_interval + spawn_offset;
 end
 
-function spawn_cube( u )
-	x, y, z = vcanyon_position( u )
+function spawn_cube( v )
+	u = 0.0
+	x, y, z = vcanyon_position( u, v )
 	local cube = gameobject_create( "dat/model/cube.s" )
 	position = Vector( x, y, z, 1.0 )
 	vtransform_setWorldPosition( cube.transform, position )

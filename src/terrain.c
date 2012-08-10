@@ -95,36 +95,34 @@ float terrain_mountainHeight( float u, float v ) {
 	float scale_m_u = 40.f;
 	float scale_m_v = 40.f;
 	float height_m = 40.f;
-	return = (1.0f + sinf( u / scale_m_u ) * sinf( v / scale_m_v )) * 0.5f * height_m;
+	return (1.0f + sinf( u / scale_m_u ) * sinf( v / scale_m_v )) * 0.5f * height_m;
 }
 
 float terrain_detailHeight( float u, float v ) {
 	return	0.5 * sinf( u ) * sinf( v ) +
 			sinf( u / 3.f ) * sinf( v / 3.f ) +
-			5 * sinf( u / 10.f ) * sinf( v / 10.f ) * sinf( u / 10.f ) * sinf( v / 10.f )
+			5 * sinf( u / 10.f ) * sinf( v / 10.f ) * sinf( u / 10.f ) * sinf( v / 10.f );
 }
 
-float terrain_canyonHeight( float u, float v ) {
-	float canyon_length_scale = 250.f;
-	float scale = 5.f;
-	u /= scale;
-	float canyon_width_scale = 100.f;
-	u += sinf( v / (canyon_length_scale) ) * canyon_width_scale;
-	float canyon_height = 40.f;
-	float width = 4.f;
-	float base_radius = 4.f;
-	float canyon_horizontal_offset = u;
-	if ( u < 0.f )
-	{
-		canyon_horizontal_offset = fminf( u + base_radius, 0.f );
-	}
-	else
-	{
-		canyon_horizontal_offset = fmaxf( u - base_radius, 0.f );
-	}
+// Get the canyon height at a given world X and world Z
+float terrain_canyonHeight( float x, float z ) {
+	const float canyon_height = 40.f;
+	const float width = 4.f;
+	const float base_radius = 4.f;
+	const float canyon_longitudinal_scale = 250.f;
+	const float canyon_horizontal_scale = 5.f;
+	const float canyon_width_scale = 100.f;
+	// U = horizontal
+	// V = longitudinal
 
-	float mask = cos( fclamp( canyon_horizontal_offset / 4.f, -PI/2.f, PI/2.f ));
-	return (1.f - fclamp( powf( canyon_horizontal_offset / width, 4.f ), 0.f, 1.f )) * mask * canyon_height;
+	// Turn the world-space X and Z into a canyon-space U (this is the displacement from the center of the canyon)
+	float v = z / canyon_longitudinal_scale;
+	float u = x / canyon_horizontal_scale + sinf( v ) * canyon_width_scale;
+	u = ( u < 0.f ) ? fminf( u + base_radius, 0.f ) : fmaxf( u - base_radius, 0.f );
+	
+	// Turn the canyon-space U into a height
+	float mask = cos( fclamp( u / 4.f, -PI/2.f, PI/2.f ));
+	return (1.f - fclamp( powf( x / width, 4.f ), 0.f, 1.f )) * mask * canyon_height;
 }
 
 // The procedural function
@@ -136,9 +134,29 @@ float terrain_sample( float u, float v ) {
 	return mountains + detail - canyon;
 }
 
-vector terrain_canyonPosition( float u ) {
-	v = canyon( u );
-	z = terrain_sample( u, v );
+// Turn canyon space U and V coords into world space X and Z
+// For height, use terrain_sample( x, z ) with the X and Z returned from this function
+void terrain_canyon( float u, float v, float* x, float* z ) {
+	//const float width = 4.f;
+	//const float base_radius = 4.f;
+	const float canyon_longitudinal_scale = 250.f;
+	const float canyon_horizontal_scale = 5.f;
+	const float canyon_width_scale = 100.f;
+	// U = horizontal
+	// V = longitudinal
+
+	//float u = x / canyon_horizontal_scale + sinf( z / (canyon_longitudinal_scale) ) * canyon_width_scale;
+	
+	// Turn the canyon-space U and V into world space X and Z
+	*z = v * canyon_longitudinal_scale;
+	*x = ( u - sinf( v ) * canyon_width_scale ) * canyon_horizontal_scale;
+}
+
+// Get the world-position of the canyon at a given canyon-distance V and canyon-x-displacement U
+vector terrain_canyonPosition( float u, float v ) {
+	float x, z;
+	terrain_canyon( u, v, &x, &z );
+	float y = terrain_sample( x, z );
 	return Vector( x, y, z, 1.f );
 }
 
