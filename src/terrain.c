@@ -122,7 +122,7 @@ float terrain_canyonHeight( float x, float z ) {
 	
 	// Turn the canyon-space U into a height
 	float mask = cos( fclamp( u / 4.f, -PI/2.f, PI/2.f ));
-	return (1.f - fclamp( powf( x / width, 4.f ), 0.f, 1.f )) * mask * canyon_height;
+	return (1.f - fclamp( powf( u / width, 4.f ), 0.f, 1.f )) * mask * canyon_height;
 }
 
 // The procedural function

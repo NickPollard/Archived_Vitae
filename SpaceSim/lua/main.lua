@@ -249,6 +249,14 @@ function start()
 	chasecam = vchasecam_follow( engine, player_ship.transform )
 	flycam = vflycam( engine )
 	vscene_setCamera( chasecam )
+
+
+	-- Test spawns
+	spawn_v = 0.0
+	while spawn_v < 10.0 do
+		spawn_v = spawn_v + 0.1
+		spawn_cube( spawn_v )
+	end
 end
 
 wave_interval_time = 10.0
@@ -379,6 +387,7 @@ function tick()
 
 	dt = 0.033
 	timers_tick( dt )
+
 --[[
 	if wave_complete( current_wave ) then
 		current_wave = current_wave + 1
@@ -502,8 +511,9 @@ end
 function spawn_cube( v )
 	u = 0.0
 	x, y, z = vcanyon_position( u, v )
+	vprint( "Spawn position (v = " .. v .. "): " .. x .. " " .. y .. " " .. z )
 	local cube = gameobject_create( "dat/model/cube.s" )
-	position = Vector( x, y, z, 1.0 )
+	position = Vector( x, 0.0, z, 1.0 )
 	vtransform_setWorldPosition( cube.transform, position )
 end
 
