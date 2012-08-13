@@ -831,6 +831,8 @@ void* s_particle_emitter( sterm* raw_args ) {
 	p->definition->spawn_interval = 0.01f;
 	//p->definition->flags = p->definition->flags | kParticleWorldSpace;
 	p->definition->flags = p->definition->flags;// | kParticleRandomRotation;
+	p->definition->spawn_rate = property_create( 2 );
+	property_addf( p->definition->spawn_rate, 0.f, 30.f );
 	//p->trans = t;
 	texture_request( &p->definition->texture_diffuse, "dat/img/star_rgba64.tga" );
 

@@ -157,12 +157,14 @@ scene* test_scene_init( engine* e ) {
 	sterm_free( stree );
 	s->eng = e;
 
+	/*
 	// Activate emitters
 	for ( int i = 0; i < s->emitter_count; i++ ) {
 		particleEmitter* p = s->emitters[i];
 		engine_addRender( s->eng, p, particleEmitter_render );
 		startTick( s->eng, p, particleEmitter_tick );
 	}
+*/
 
 	// Test Misc scene setup
 	scene_setAmbient( s, 0.2f, 0.2f, 0.2f, 1.f );

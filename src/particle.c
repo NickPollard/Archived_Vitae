@@ -83,6 +83,7 @@ void particleEmitter_tick( void* data, float dt ) {
 	}
 
 	// Spawn new particle
+	vAssert( e->definition->spawn_rate );
 	if ( e->definition->spawn_rate ) {
 		e->next_spawn += dt;
 		float spawn_rate = property_samplef( e->definition->spawn_rate, e->emitter_age );
