@@ -21,6 +21,7 @@ varying float fog;
 uniform	mat4 projection;
 uniform	mat4 modelview;
 
+/*
 float fog( vec4 world_position, vec4 cam_position ) {
 	// We can calculate fog per vertex as we know polys will be small for terrain
 	float height = world_position.y;
@@ -33,6 +34,7 @@ float fog( vec4 world_position, vec4 cam_position ) {
 	float fog_max = 0.4;
 	return clamp( ( distance - fog_near ) / ( fog_far - fog_near ), 0.0, fog_max ) * height_factor;
 }
+*/
 
 void main() {
 	gl_Position = projection * modelview * position;
@@ -41,5 +43,16 @@ void main() {
 	texcoord = uv.xy;
 	// TODO - need to get a proper world position, not model position
 	// This means we need the model matrix separate from the combined model-view
-	fog = fog( position, frag_position );
+	//fog = fog( position, frag_position );
+
+	// We can calculate fog per vertex as we know polys will be small for terrain
+	float height = position.y;
+	float fog_far = 350.0;
+	float fog_near = 100.0;
+	float fog_height = 160.0;
+	float height_factor = clamp( ( fog_height - height ) / fog_height, 0.0, 1.0 );
+	float max_distance = 350.0;
+	float distance = min( max_distance, frag_position.z );
+	float fog_max = 0.4;
+	fog = clamp( ( distance - fog_near ) / ( fog_far - fog_near ), 0.0, fog_max ) * height_factor;
 }

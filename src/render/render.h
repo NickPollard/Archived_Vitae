@@ -168,7 +168,7 @@ typedef struct drawCall_s {
 	shader*		vitae_shader;
 	// Uniforms
 	matrix		modelview;
-	GLint		texture;
+	GLuint		texture;
 	vector		fog_color;
 
 	// Buffer data

@@ -4,6 +4,8 @@
 
 #include "render/vgl.h"
 
+#define kInvalidGLTexture 0xffffffff
+
 // Globals
 extern GLuint g_texture_default;
 

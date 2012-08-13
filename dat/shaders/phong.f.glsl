@@ -16,9 +16,11 @@ const int LIGHT_COUNT = 2;
 
 // Uniform
 uniform mat4 worldspace;
+#ifdef POINT_LIGHTS
 uniform vec4 light_position[LIGHT_COUNT];
 uniform vec4 light_diffuse[LIGHT_COUNT];
 uniform vec4 light_specular[LIGHT_COUNT];
+#endif // POINT_LIGHTS
 uniform sampler2D tex;
 uniform vec4 fog_color;
 uniform vec4 camera_space_sun_direction;

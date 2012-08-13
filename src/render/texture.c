@@ -47,6 +47,7 @@ void texture_request( GLuint* tex, const char* filename ) {
 		vAssert( texture_request_count < kMaxTextureRequests );
 		textureRequest* request = &requests[texture_request_count++];
 		request->tex = tex;
+		*request->tex = kInvalidGLTexture;
 		request->filename = string_createCopy( filename );
 	}
 	vmutex_unlock( &texture_mutex );

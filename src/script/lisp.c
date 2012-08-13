@@ -111,6 +111,7 @@ void attr_particle_setSize( term* definition_term, term* size_attr );
 void attr_particle_setColor( term* definition_term, term* color_attr );
 void attr_particle_setLifetime( term* definition_term, term* lifetime );
 void attr_particle_setSpawnInterval( term* definition_term, term* spawn_interval );
+void attr_particle_setSpawnRate( term* definition_term, term* spawn_rate );
 //// Attribute functions /////////////////////////////////////////
 
 bool isType( term* t, enum termType type ) {
@@ -1022,6 +1023,7 @@ void lisp_init() {
 	attributeFunction_set( "color", attr_particle_setColor );
 	attributeFunction_set( "lifetime", attr_particle_setLifetime );
 	attributeFunction_set( "spawn_interval", attr_particle_setSpawnInterval );
+	attributeFunction_set( "spawn_rate", attr_particle_setSpawnRate );
 
 	lisp_global_context = lisp_newContext();
 }
@@ -1141,13 +1143,20 @@ term* lisp_func_attribute( context* c, term* raw_args ) {
 	lisp_assert( isType( tail( args ), _typeList ));
 	term* ob = head( tail( tail( args )));
 
-
 	attributeSetter attr = attributeFunction( /* object, */ attribute_name );
 	attr( ob, value );
 
 	// TODO: Fix this, we can't deref the thing we've appended properly? (In object-process)
 	//term_deref( args );	
 	return &lisp_false;
+}
+
+void attr_particle_setSpawnRate( term* definition_term, term* spawn_rate_attr ) {
+	// TODO - we need to copy and preserve this correctly
+	particleEmitterDef* def = definition_term->data;
+	lisp_assert( def != 0x0 );
+	property* spawn_rate = property_copy( spawn_rate_attr->data );
+	def->spawn_rate = spawn_rate;
 }
 
 void attr_particle_setSpawnInterval( term* definition_term, term* spawn_interval ) {

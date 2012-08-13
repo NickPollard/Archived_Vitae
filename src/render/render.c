@@ -47,11 +47,7 @@ matrix perspective;
 
 gl_resources resources;
 
-#ifdef ANDROID
 window window_main = { 1280, 720, 0, 0, 0, true };
-#else
-window window_main = { 1280, 720, 0, 0, 0, true };
-#endif
 
 GLuint render_glBufferCreate( GLenum target, const void* data, GLsizei size ) {
 	//printf( "Allocating oGL buffer.\n" );
@@ -715,10 +711,12 @@ void render_drawCall_draw( drawCall* draw ) {
 }
 
 void render_drawBatch( drawCall* draw ) {
-	//render_setUniform_vector( *resources.uniforms.fog_color,	&draw->fog_color );
-	render_setUniform_texture( *resources.uniforms.tex,			draw->texture );
-	render_setUniform_matrix( *resources.uniforms.modelview,	draw->modelview );
-	render_drawCall_draw( draw );
+	// Only draw if we have a valid texture
+	if ( draw->texture != kInvalidGLTexture ) {
+		render_setUniform_texture( *resources.uniforms.tex,			draw->texture );
+		render_setUniform_matrix( *resources.uniforms.modelview,	draw->modelview );
+		render_drawCall_draw( draw );
+	}
 }
 
 void render_drawCallBatch( int count, drawCall* calls ) {

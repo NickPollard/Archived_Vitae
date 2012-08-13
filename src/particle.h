@@ -10,7 +10,8 @@
 
 enum particleEmitter_flags {
 	kParticleWorldSpace = 0x1,
-	kParticleRandomRotation = 0x2
+	kParticleRandomRotation = 0x2,
+	kParticleBurst = 0x3
 };
 
 typedef struct particle_s {
@@ -32,6 +33,7 @@ typedef struct particleEmitterDef_s {
 	// Properties
 	property* size;
 	property* color;
+	property* spawn_rate;
 	vector	velocity;
 	GLuint	texture_diffuse;
 	uint8_t	flags;
@@ -43,6 +45,7 @@ struct particleEmitter_s {
 	int		start;
 	int		count;
 	float	next_spawn;
+	float	emitter_age;
 	particleEmitterDef*	definition;
 
 	vertex*		vertex_buffer;

@@ -584,7 +584,8 @@ int LUA_explosion( lua_State* l ) {
 	p->definition->spawn_interval = 0.03f;
 	p->trans = t;
 	p->definition->flags = p->definition->flags | kParticleWorldSpace
-												| kParticleRandomRotation;
+												| kParticleRandomRotation
+												| kParticleBurst;
 
 	texture_request( &p->definition->texture_diffuse, "dat/img/cloud_rgba128.tga" );
 

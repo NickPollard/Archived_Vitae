@@ -524,7 +524,7 @@ end
 
 function target_collisionHandler( target, collider )
 	vprint( "Target destroyed!" )
-	--spawn_explosion( target.transform )
+	spawn_explosion( target.transform )
 	gameobject_destroy( target )
 end
 

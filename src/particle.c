@@ -83,11 +83,17 @@ void particleEmitter_tick( void* data, float dt ) {
 	}
 
 	// Spawn new particle
-	e->next_spawn += dt;
-	if ( e->next_spawn > e->definition->spawn_interval ) {
-		e->next_spawn = 0.f;
-		particleEmitter_spawnParticle( e );
+	if ( e->definition->spawn_rate ) {
+		e->next_spawn += dt;
+		float spawn_rate = property_samplef( e->definition->spawn_rate, e->emitter_age );
+		float spawn_interval = 1.f / spawn_rate;
+		// We might spawn more than one particle per frame, if the frame is long or the spawn interval is short
+		while ( e->next_spawn > spawn_interval ) {
+			e->next_spawn = fmaxf( 0.f, e->next_spawn - spawn_interval);
+			particleEmitter_spawnParticle( e );
+		}
 	}
+	e->emitter_age += dt;
 }
 
 // Output the 4 verts of the quad to the target vertex array

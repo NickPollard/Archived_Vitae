@@ -5,5 +5,6 @@
 		   (attribute "color" (property (quote ((0.0 1.0 0.0 0.0 1.0)
 												 (1.0 0.0 0.0 1.0 0.0)))))
 			(attribute "lifetime" 1.0)
-			(attribute "spawn_interval" 0.03)
+			(attribute "spawn_rate" (property (quote ((0.0 30.0)
+													(1.0 3.0)))))
 		   )))
