@@ -2,8 +2,8 @@
 *.swp
 
 # Compiled
-./vitae
 vitae_debug
+vitae_release
 bin
 *.o
 *.so

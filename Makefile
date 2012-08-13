@@ -11,7 +11,7 @@ include Makelist
 OBJS = $(SRCS:src/%.c=bin/release/%.o)
 OBJS_DBG = $(SRCS:src/%.c=bin/debug/%.o)
 
-all : $(EXECUTABLE)
+all : $(EXECUTABLE)_release
 
 # pull in dependency info for *existing* .o files
 #-include $(OBJS:.o=.d)
@@ -47,9 +47,9 @@ cleanandroid :
 	@find /home/nick/Projects/Vitae/android/obj/local/armeabi/objs-debug -name '*.o' -exec rm {} \;
 	@ant clean -f android/build.xml
 
-$(EXECUTABLE) : $(SRCS) $(OBJS)
+$(EXECUTABLE)_release : $(SRCS) $(OBJS)
 	@echo "- Linking $@"
-	@$(C) $(LFLAGS) -O2 -o $(EXECUTABLE) $(OBJS) $(LIBS)
+	@$(C) $(LFLAGS) -O2 -o $(EXECUTABLE)_release $(OBJS) $(LIBS)
 
 
 debug : $(EXECUTABLE)_debug
