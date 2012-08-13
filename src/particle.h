@@ -11,7 +11,7 @@
 enum particleEmitter_flags {
 	kParticleWorldSpace = 0x1,
 	kParticleRandomRotation = 0x2,
-	kParticleBurst = 0x3
+	kParticleBurst = 0x4
 };
 
 typedef struct particle_s {
@@ -28,7 +28,6 @@ typedef struct property_s {
 
 typedef struct particleEmitterDef_s {
 	float	lifetime;
-	float	spawn_interval;
 	vector	spawn_box;
 	// Properties
 	property* size;

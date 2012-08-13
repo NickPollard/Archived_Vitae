@@ -828,9 +828,7 @@ void* s_particle_emitter( sterm* raw_args ) {
 	property_addv( p->definition->color, 2.f, Vector( 0.f, 0.f, 1.f, 0.f ));
 
 	p->definition->velocity = Vector( 0.f, 0.0f, -3.f, 0.f );
-	p->definition->spawn_interval = 0.01f;
-	//p->definition->flags = p->definition->flags | kParticleWorldSpace;
-	p->definition->flags = p->definition->flags;// | kParticleRandomRotation;
+	p->definition->flags = p->definition->flags;
 	p->definition->spawn_rate = property_create( 2 );
 	property_addf( p->definition->spawn_rate, 0.f, 30.f );
 	//p->trans = t;

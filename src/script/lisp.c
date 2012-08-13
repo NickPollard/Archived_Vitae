@@ -110,7 +110,6 @@ map* attrFuncMap = NULL;
 void attr_particle_setSize( term* definition_term, term* size_attr );
 void attr_particle_setColor( term* definition_term, term* color_attr );
 void attr_particle_setLifetime( term* definition_term, term* lifetime );
-void attr_particle_setSpawnInterval( term* definition_term, term* spawn_interval );
 void attr_particle_setSpawnRate( term* definition_term, term* spawn_rate );
 //// Attribute functions /////////////////////////////////////////
 
@@ -1022,7 +1021,6 @@ void lisp_init() {
 	attributeFunction_set( "size", attr_particle_setSize );
 	attributeFunction_set( "color", attr_particle_setColor );
 	attributeFunction_set( "lifetime", attr_particle_setLifetime );
-	attributeFunction_set( "spawn_interval", attr_particle_setSpawnInterval );
 	attributeFunction_set( "spawn_rate", attr_particle_setSpawnRate );
 
 	lisp_global_context = lisp_newContext();
@@ -1157,13 +1155,6 @@ void attr_particle_setSpawnRate( term* definition_term, term* spawn_rate_attr ) 
 	lisp_assert( def != 0x0 );
 	property* spawn_rate = property_copy( spawn_rate_attr->data );
 	def->spawn_rate = spawn_rate;
-}
-
-void attr_particle_setSpawnInterval( term* definition_term, term* spawn_interval ) {
-	// TODO - we need to copy and preserve this correctly
-	particleEmitterDef* def = definition_term->data;
-	lisp_assert( def != 0x0 );
-	def->spawn_interval = *(spawn_interval->number);
 }
 
 void attr_particle_setLifetime( term* definition_term, term* lifetime ) {

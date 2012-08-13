@@ -13,6 +13,8 @@
 
 float property_samplef( property* p, float time );
 vector property_samplev( property* p, float time );
+float property_valuef( property* p, int key );
+property* property_range( property* p, float from, float to );
 
 particleEmitterDef* particleEmitterDef_create() {
 	particleEmitterDef* def = mem_alloc( sizeof( particleEmitterDef ));
@@ -84,7 +86,19 @@ void particleEmitter_tick( void* data, float dt ) {
 
 	// Spawn new particle
 	vAssert( e->definition->spawn_rate );
-	if ( e->definition->spawn_rate ) {
+	// Burst mode means we batch-spawn particles on keys, otherwise spawn nothing
+	if ( e->definition->flags & kParticleBurst ) {
+		property* keys = property_range( e->definition->spawn_rate, e->emitter_age, e->emitter_age + dt );
+		for ( int key = 0; key < keys->count; ++key ) {
+			int count = (int)property_valuef( e->definition->spawn_rate, key );
+			for ( int i = 0; i < count; ++i ) {
+				particleEmitter_spawnParticle( e );
+			}
+		}
+		mem_free( keys );
+	}
+	// Default is normal interpolated spawning
+	else {
 		e->next_spawn += dt;
 		float spawn_rate = property_samplef( e->definition->spawn_rate, e->emitter_age );
 		float spawn_interval = 1.f / spawn_rate;
@@ -250,6 +264,35 @@ vector property_samplev( property* p, float time ) {
 	property_sample( p, time, &before, &after, &factor );
 	vector value = vector_lerp( (vector*)&p->data[before*p->stride+1], (vector*)&p->data[after*p->stride+1], factor );
 	return value;
+}
+
+float property_valuef( property* p, int key ) {
+	float f = p->data[key * p->stride + 1]; // we add 1 to skip the domain
+	return f;
+}
+
+float property_keyDomain( float* key ) {
+	return *key;
+}
+
+// Return a new property that contains only the keys in the given domain range
+property* property_range( property* p, float from, float to ) {
+	property* p_filtered = property_create( p->stride );
+	float* key = p->data;
+	float* max = key + p->stride * p->count;
+	while ( key < max && property_keyDomain( key ) < from ) {
+		key += p->stride;
+	}
+	while ( key < max && property_keyDomain( key ) < to ) {
+		if ( p->stride == 2 ) {
+			property_addf( p_filtered, key[0], key[1] );
+		} else if ( p->stride == 5 ) {
+			vector v = Vector( key[1], key[2], key[3], key[4] );
+			property_addv( p_filtered, key[0], v );
+		}
+		key += p->stride;
+	}
+	return p_filtered;
 }
 
 void test_property() {

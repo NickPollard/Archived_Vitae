@@ -519,7 +519,6 @@ int LUA_particle_create( lua_State* l ) {
 	def->velocity = Vector( 0.f, 0.1f, 0.f, 0.f );
 	def->flags = def->flags | kParticleWorldSpace
 							| kParticleRandomRotation;
-	//def->spawn_interval = 0.03f;
 
 	particleEmitter* emitter = particle_newEmitter( def );
 
@@ -544,7 +543,6 @@ int LUA_particle_create( lua_State* l ) {
 	property_addv( p_->definition->color, 0.5f, Vector( 1.f, 0.4f, 0.f, 0.8f ));
 	property_addv( p_->definition->color, 2.3f, Vector( 1.f, 0.4f, 0.f, 0.f ));
 	p_->definition->velocity = Vector( 0.f, 0.0f, 0.f, 0.f );
-	p_->definition->spawn_interval = 0.3f;
 	p_->definition->spawn_box = Vector( 0.3f, 0.f, 0.3f, 0.f );
 	p_->trans = t;
 	texture_request( &p_->definition->texture_diffuse, "dat/img/star_rgba64.tga" );
@@ -565,23 +563,28 @@ int LUA_explosion( lua_State* l ) {
 	particleEmitterDef* def = particleEmitterDef_create();
 	particleEmitter* p = particle_newEmitter( def );
 	p->definition->lifetime = 2.f;
-	p->definition->spawn_box = Vector( 0.3f, 0.3f, 0.3f, 0.f );
+	p->definition->spawn_box = Vector( 1.0f, 1.0f, 1.0f, 0.f );
 
 	// size
 	p->definition->size = property_create( 2 );
 	property_addf( p->definition->size, 0.f, 1.f );
-	property_addf( p->definition->size, 0.3f, 15.f );
+	property_addf( p->definition->size, 0.3f, 7.f );
 	property_addf( p->definition->size, 1.f, 20.f );
 
 	// color
 	p->definition->color = property_create( 5 );
 	property_addv( p->definition->color, 0.f, Vector( 1.f, 1.f, 0.3f, 0.f ));
-	property_addv( p->definition->color, 0.3f, Vector( 1.f, 0.7f, 0.3f, 1.f ));
-	property_addv( p->definition->color, 0.8f, Vector( 1.f, 0.5f, 0.f, 0.5f ));
-	property_addv( p->definition->color, 1.0f, Vector( 1.f, 0.0f, 0.f, 0.f ));
+	property_addv( p->definition->color, 0.2f, Vector( 1.f, 0.7f, 0.3f, 1.f ));
+	property_addv( p->definition->color, 0.5f, Vector( 1.f, 0.5f, 0.f, 0.3f ));
+	property_addv( p->definition->color, 2.0f, Vector( 1.f, 0.0f, 0.f, 0.f ));
 
 	p->definition->velocity = Vector( 0.f, 0.f, 0.f, 0.f );
-	p->definition->spawn_interval = 0.03f;
+
+	p->definition->spawn_rate = property_create( 2 );
+	property_addf( p->definition->spawn_rate, 0.f, 5.f );
+	property_addf( p->definition->spawn_rate, 0.1f, 5.f );
+
+
 	p->trans = t;
 	p->definition->flags = p->definition->flags | kParticleWorldSpace
 												| kParticleRandomRotation
