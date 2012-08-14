@@ -77,6 +77,7 @@
 #include "maths/maths.h"
 #include "maths/vector.h"
 #include "mem/allocator.h"
+#include "render/texture.h"
 #include "system/hash.h"
 #include "system/file.h"
 #include "system/string.h"
@@ -112,6 +113,7 @@ void attr_particle_setColor( term* definition_term, term* color_attr );
 void attr_particle_setLifetime( term* definition_term, term* lifetime );
 void attr_particle_setSpawnRate( term* definition_term, term* spawn_rate );
 void attr_particle_flags( term* definition_term, term* flags );
+void attr_particle_texture( term* definition_term, term* texture_attr );
 //// Attribute functions /////////////////////////////////////////
 
 bool isType( term* t, enum termType type ) {
@@ -1025,6 +1027,7 @@ void lisp_init() {
 	attributeFunction_set( "lifetime", attr_particle_setLifetime );
 	attributeFunction_set( "spawn_rate", attr_particle_setSpawnRate );
 	attributeFunction_set( "flags", attr_particle_flags );
+	attributeFunction_set( "texture", attr_particle_texture );
 
 	lisp_global_context = lisp_newContext();
 }
@@ -1207,6 +1210,15 @@ void attr_particle_flags( term* definition_term, term* flags_attr ) {
 
 	printf( "Setting particle flags: %x\n", flags );
 	def->flags = def->flags | flags;
+}
+
+void attr_particle_texture( term* definition_term, term* texture_attr ) {
+	particleEmitterDef* def = definition_term->data;
+	lisp_assert( def != 0x0 );
+	lisp_assert( isType( texture_attr, _typeString ));
+
+	printf( "Setting particle texture: %s\n", texture_attr->string );
+	texture_request( &def->texture_diffuse, texture_attr->string );
 }
 
 void attr_particle_setSpawnRate( term* definition_term, term* spawn_rate_attr ) {

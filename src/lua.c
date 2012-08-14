@@ -509,27 +509,9 @@ int LUA_transform_setWorldSpaceByTransform( lua_State* l ) {
 int LUA_particle_create( lua_State* l ) {
 	engine* e = lua_toptr( l, 1 );
 	transform* t = lua_toptr( l, 2 );
+	const char* particle_file = lua_tostring( l, 3 );
 
-	particleEmitterDef* def = particle_loadAsset( "dat/script/lisp/missile_particle.s" );
-	def->velocity = Vector( 0.f, 0.1f, 0.f, 0.f );
-	def->flags = def->flags | kParticleWorldSpace
-							| kParticleRandomRotation;
-
-	particleEmitter* emitter = particle_newEmitter( def );
-
-	emitter->trans = t;
-
-	engine_addRender( e, emitter, particleEmitter_render );
-	startTick( e, emitter, particleEmitter_tick );
-	
-	return 0;
-}
-
-int LUA_explosion( lua_State* l ) {
-	engine* e = lua_toptr( l, 1 );
-	transform* t = lua_toptr( l, 2 );
-
-	particleEmitterDef* def = particle_loadAsset( "dat/script/lisp/explosion.s" );
+	particleEmitterDef* def = particle_loadAsset( particle_file );
 	def->velocity = Vector( 0.f, 0.f, 0.f, 0.f );
 	def->flags = def->flags | kParticleWorldSpace
 							| kParticleRandomRotation;
@@ -640,7 +622,6 @@ lua_State* vlua_create( engine* e, const char* filename ) {
 	lua_registerFunction( l, LUA_transform_setWorldPosition, "vtransform_setWorldPosition" );
 	lua_registerFunction( l, LUA_transform_setWorldSpaceByTransform, "vtransform_setWorldSpaceByTransform" );
 	lua_registerFunction( l, LUA_particle_create, "vparticle_create" );
-	lua_registerFunction( l, LUA_explosion, "vexplosion" );
 	// *** Camera
 	lua_registerFunction( l, LUA_chasecam_follow, "vchasecam_follow" );
 	lua_registerFunction( l, LUA_flycam, "vflycam" );

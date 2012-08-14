@@ -20,8 +20,6 @@ particleEmitterDef* particleEmitterDef_create() {
 	particleEmitterDef* def = mem_alloc( sizeof( particleEmitterDef ));
 	memset( def, 0, sizeof( particleEmitterDef ));
 	def->spawn_box = Vector( 0.f, 0.f, 0.f, 0.f );
-	// TODO - shouldn't be doing this here, but need to do it only once per particle def
-	texture_request( &def->texture_diffuse, "dat/img/cloud_rgba128.tga" );
 	return def;
 }
 

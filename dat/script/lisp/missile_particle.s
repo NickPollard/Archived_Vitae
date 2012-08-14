@@ -5,6 +5,7 @@
 		   (attribute "color" (property (quote ((0.0 1.0 0.0 0.0 1.0)
 												 (1.0 0.0 0.0 1.0 0.0)))))
 			(attribute "lifetime" 1.0)
+			(attribute "texture" "dat/img/cloud_rgba128.tga")
 			(attribute "spawn_rate" (property (quote ((0.0 30.0)
 													(1.0 3.0)))))
 		   )))

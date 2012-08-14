@@ -38,8 +38,6 @@ function gameobject_create( model_file )
 end
 
 function gameobject_destroy( g )
-	vprint( "gameobject_destroy" )
-	vprint( string.format( "Test num: %d", g.test ))
 	vdeleteModelInstance( g.model )
 	--vdestroyPhysic( g.physic )
 	--vdestroyTransform( g.transform )
@@ -49,7 +47,7 @@ end
 function spawn_explosion( position )
 	-- Attach a particle effect to the object
 	local t = vcreateTransform()
-	vexplosion( engine, t )
+	vparticle_create( engine, t, "dat/script/lisp/explosion.s" )
 	-- Position it at the correct muzzle position and rotation
 	vtransform_setWorldSpaceByTransform( t, position )
 end
@@ -64,7 +62,7 @@ function player_fire( p )
 	vtransform_setWorldSpaceByTransform( g.transform, p.transform )
 
 	-- Attach a particle effect to the object
-	inTime( 0.2, function () vparticle_create( engine, g.transform ) end )
+	inTime( 0.2, function () vparticle_create( engine, g.transform, "dat/script/lisp/missile_particle.s" ) end )
 
 	-- Apply initial velocity
 	bullet_speed = 150.0;
@@ -523,7 +521,6 @@ function spawn_target( v )
 end
 
 function target_collisionHandler( target, collider )
-	vprint( "Target destroyed!" )
 	spawn_explosion( target.transform )
 	gameobject_destroy( target )
 end
