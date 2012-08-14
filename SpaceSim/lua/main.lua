@@ -48,6 +48,8 @@ function spawn_explosion( position )
 	-- Attach a particle effect to the object
 	local t = vcreateTransform()
 	vparticle_create( engine, t, "dat/script/lisp/explosion.s" )
+	vparticle_create( engine, t, "dat/script/lisp/explosion_b.s" )
+	vparticle_create( engine, t, "dat/script/lisp/explosion_c.s" )
 	-- Position it at the correct muzzle position and rotation
 	vtransform_setWorldSpaceByTransform( t, position )
 end
