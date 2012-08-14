@@ -111,6 +111,7 @@ void attr_particle_setSize( term* definition_term, term* size_attr );
 void attr_particle_setColor( term* definition_term, term* color_attr );
 void attr_particle_setLifetime( term* definition_term, term* lifetime );
 void attr_particle_setSpawnRate( term* definition_term, term* spawn_rate );
+void attr_particle_flags( term* definition_term, term* flags );
 //// Attribute functions /////////////////////////////////////////
 
 bool isType( term* t, enum termType type ) {
@@ -500,6 +501,7 @@ void term_validate( term* t ) {
 }
 
 typedef term* (*fmap_func)( term*, void* );
+typedef term* (*fold_func)( term*, term* );
 typedef term* (*lisp_func)( context*, term* );
 
 term* fmap_1( fmap_func f, void* arg, term* expr ) {
@@ -1022,6 +1024,7 @@ void lisp_init() {
 	attributeFunction_set( "color", attr_particle_setColor );
 	attributeFunction_set( "lifetime", attr_particle_setLifetime );
 	attributeFunction_set( "spawn_rate", attr_particle_setSpawnRate );
+	attributeFunction_set( "flags", attr_particle_flags );
 
 	lisp_global_context = lisp_newContext();
 }
@@ -1147,6 +1150,63 @@ term* lisp_func_attribute( context* c, term* raw_args ) {
 	// TODO: Fix this, we can't deref the thing we've appended properly? (In object-process)
 	//term_deref( args );	
 	return &lisp_false;
+}
+
+/*
+term* setParticleFlags( term* flag_term, void* flag_ptr ) {
+	(void)flag_term;
+	particle_flags_t* flags = flag_ptr;
+	particle_flags_t flag = 0x0;
+	*flags = *flags | flag;
+	return NULL;
+}
+*/
+
+// Turn a flag atom into a bitmask number
+term* parseFlag( term* flag_atom, void* unused /* to fit fmap_func signature */ ) {
+	(void)unused;
+	int* flag = mem_alloc( sizeof( int ));
+	*flag = 0x0;
+	// TODO this should be some kind of lookup
+	if (string_equal( flag_atom->string, "particle_burst" )) {
+		*flag = kParticleBurst;
+	}
+	term* flag_term = term_create( typeInt, flag );
+	return flag_term;
+}
+
+term* lisp_bitwiseOr( term* a, term* b ) {
+	lisp_assert( isType( a, typeInt ));
+	lisp_assert( isType( b, typeInt ));
+	int* or_result = mem_alloc( sizeof( int ));
+	*or_result = *a->integer | *b->integer;
+	term* result = term_create( typeInt, or_result );
+	return result;
+}
+
+term* foldl( fold_func f, term* initial, term* list ) {
+	lisp_assert( initial );
+	lisp_assert( list );
+	if ( list_length( list ) > 1 ) {
+		return foldl( f, f( initial, head( list )), tail( list ));
+	}
+	else {
+		return f( initial, head( list )); 
+	}
+}
+
+void attr_particle_flags( term* definition_term, term* flags_attr ) {
+	particleEmitterDef* def = definition_term->data;
+	lisp_assert( def != 0x0 );
+
+	int* zero = mem_alloc( sizeof( int ));
+	*zero = 0;
+	term* lisp_zero = term_create( typeInt, zero );
+	term* flags_term = foldl( lisp_bitwiseOr, lisp_zero, fmap_1( parseFlag, NULL, flags_attr ));
+	particle_flags_t flags = (particle_flags_t)(*flags_term->integer);
+
+	printf( "Setting particle flags: %x\n", flags );
+	def->flags = def->flags | flags;
 }
 
 void attr_particle_setSpawnRate( term* definition_term, term* spawn_rate_attr ) {

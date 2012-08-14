@@ -510,11 +510,6 @@ int LUA_particle_create( lua_State* l ) {
 	engine* e = lua_toptr( l, 1 );
 	transform* t = lua_toptr( l, 2 );
 
-/*	
-	term* particle_term = lisp_eval_file( lisp_global_context, "dat/script/lisp/missile_particle.s" );
-	particleEmitter* emitter = particle_term->data;
-	*/
-
 	particleEmitterDef* def = particle_loadAsset( "dat/script/lisp/missile_particle.s" );
 	def->velocity = Vector( 0.f, 0.1f, 0.f, 0.f );
 	def->flags = def->flags | kParticleWorldSpace
@@ -527,74 +522,25 @@ int LUA_particle_create( lua_State* l ) {
 	engine_addRender( e, emitter, particleEmitter_render );
 	startTick( e, emitter, particleEmitter_tick );
 	
-	//
-	//
-	//
-/*
-	particleEmitterDef* def = particleEmitterDef_create();
-	particleEmitter* p_ = particle_newEmitter( def );
-	p_->definition->lifetime = 2.3f;
-	p_->definition->size = property_create( 2 );
-	property_addf( p_->definition->size, 0.f, 0.f );
-	property_addf( p_->definition->size, 0.5f, 10.f );
-	property_addf( p_->definition->size, 2.f, 25.f );
-	p_->definition->color = property_create( 5 );
-	property_addv( p_->definition->color, 0.f, Vector( 1.f, 1.f, 0.f, 0.8f ));
-	property_addv( p_->definition->color, 0.5f, Vector( 1.f, 0.4f, 0.f, 0.8f ));
-	property_addv( p_->definition->color, 2.3f, Vector( 1.f, 0.4f, 0.f, 0.f ));
-	p_->definition->velocity = Vector( 0.f, 0.0f, 0.f, 0.f );
-	p_->definition->spawn_box = Vector( 0.3f, 0.f, 0.3f, 0.f );
-	p_->trans = t;
-	texture_request( &p_->definition->texture_diffuse, "dat/img/star_rgba64.tga" );
-
-	engine_addRender( e, p_, particleEmitter_render );
-	startTick( e, p_, particleEmitter_tick );
-*/
-
-
-
 	return 0;
 }
 
 int LUA_explosion( lua_State* l ) {
 	engine* e = lua_toptr( l, 1 );
 	transform* t = lua_toptr( l, 2 );
+
+	particleEmitterDef* def = particle_loadAsset( "dat/script/lisp/explosion.s" );
+	def->velocity = Vector( 0.f, 0.f, 0.f, 0.f );
+	def->flags = def->flags | kParticleWorldSpace
+							| kParticleRandomRotation;
+
+	particleEmitter* emitter = particle_newEmitter( def );
+
+	emitter->trans = t;
+
+	engine_addRender( e, emitter, particleEmitter_render );
+	startTick( e, emitter, particleEmitter_tick );
 	
-	particleEmitterDef* def = particleEmitterDef_create();
-	particleEmitter* p = particle_newEmitter( def );
-	p->definition->lifetime = 2.f;
-	p->definition->spawn_box = Vector( 1.0f, 1.0f, 1.0f, 0.f );
-
-	// size
-	p->definition->size = property_create( 2 );
-	property_addf( p->definition->size, 0.f, 1.f );
-	property_addf( p->definition->size, 0.3f, 7.f );
-	property_addf( p->definition->size, 1.f, 20.f );
-
-	// color
-	p->definition->color = property_create( 5 );
-	property_addv( p->definition->color, 0.f, Vector( 1.f, 1.f, 0.3f, 0.f ));
-	property_addv( p->definition->color, 0.2f, Vector( 1.f, 0.7f, 0.3f, 1.f ));
-	property_addv( p->definition->color, 0.5f, Vector( 1.f, 0.5f, 0.f, 0.3f ));
-	property_addv( p->definition->color, 2.0f, Vector( 1.f, 0.0f, 0.f, 0.f ));
-
-	p->definition->velocity = Vector( 0.f, 0.f, 0.f, 0.f );
-
-	p->definition->spawn_rate = property_create( 2 );
-	property_addf( p->definition->spawn_rate, 0.f, 5.f );
-	property_addf( p->definition->spawn_rate, 0.1f, 5.f );
-
-
-	p->trans = t;
-	p->definition->flags = p->definition->flags | kParticleWorldSpace
-												| kParticleRandomRotation
-												| kParticleBurst;
-
-	texture_request( &p->definition->texture_diffuse, "dat/img/cloud_rgba128.tga" );
-
-	engine_addRender( e, p, particleEmitter_render );
-	startTick( e, p, particleEmitter_tick );
-
 	return 0;
 }
 

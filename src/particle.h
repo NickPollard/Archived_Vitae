@@ -26,6 +26,8 @@ typedef struct property_s {
 	float* data;
 } property;
 
+typedef uint8_t particle_flags_t;
+
 typedef struct particleEmitterDef_s {
 	float	lifetime;
 	vector	spawn_box;
@@ -35,7 +37,7 @@ typedef struct particleEmitterDef_s {
 	property* spawn_rate;
 	vector	velocity;
 	GLuint	texture_diffuse;
-	uint8_t	flags;
+	particle_flags_t	flags;
 } particleEmitterDef;
 
 struct particleEmitter_s {

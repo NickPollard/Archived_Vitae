@@ -27,6 +27,7 @@ enum termType {
 	_typeAtom,
 	_typeString,
 	typeFloat,
+	typeInt,
 	_typeVector,
 	typeIntrinsic,
 	_typeObject,
@@ -41,6 +42,7 @@ enum termType {
    */
 struct term_s;
 typedef struct term_s term;
+
 struct term_s {
 	enum termType type;
 	union {
@@ -48,6 +50,7 @@ struct term_s {
 		void* data;
 		char* string;
 		float* number;
+		int*	integer;
 	};
 	term* tail;
 	int refcount;
