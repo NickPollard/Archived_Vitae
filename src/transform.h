@@ -25,6 +25,9 @@ void transform_initPool();
 transform* transform_create();
 transform* transform_createAndAdd( scene* s );
 
+// Delete a transform
+void transform_delete( transform* t );
+
 // Create a new default transform with the given parent
 transform* transform_create_Parent(scene* s, transform* parent);
 

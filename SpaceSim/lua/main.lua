@@ -38,9 +38,10 @@ function gameobject_create( model_file )
 end
 
 function gameobject_destroy( g )
-	vdeleteModelInstance( g.model )
-	--vdestroyPhysic( g.physic )
-	--vdestroyTransform( g.transform )
+	inTime( 0.3, function () vdeleteModelInstance( g.model ) 
+							vdestroyTransform( g.transform )
+							--vdestroyPhysic( g.physic )
+				end )
 	vdestroyBody( g.body )
 end
 
@@ -364,7 +365,7 @@ function debug_tick()
 end
 
 -- Called once per frame to update the current Lua State
-function tick()
+function tick( dt )
 	if starting then
 		starting = false
 		start()
@@ -374,7 +375,6 @@ function tick()
 
 	debug_tick()
 
-	dt = 0.033
 	timers_tick( dt )
 
 --[[

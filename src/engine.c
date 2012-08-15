@@ -148,7 +148,13 @@ void engine_tick( engine* e ) {
 #if DEBUG_LUA
 		printf("Calling engine::onTick handler: %s\n", e->onTick->func);
 #endif
-		LUA_CALL( e->lua, e->onTick->func );
+		//LUA_CALL( e->lua, e->onTick->func );
+	
+		lua_getglobal( e->lua, e->onTick->func );				
+		lua_pushnumber( e->lua, dt );
+		lua_pcall( e->lua,	/* args */			1,
+				/* returns */		0,
+				/* error handler */ 0);
 	}
 
 	vector v = Vector( 0.0, 0.0, 30.0, 1.0 );

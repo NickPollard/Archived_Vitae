@@ -269,7 +269,13 @@ int LUA_body_destroy( lua_State* l ) {
 	body* b = lua_toptr( l, 1 );
 	vAssert( b );
 	collision_removeBody( b );
+	return 0;
+}
 
+int LUA_transform_destroy( lua_State* l ) {
+	transform* t = lua_toptr( l, 1 );
+	vAssert( t );
+	transform_delete( t );
 	return 0;
 }
 
@@ -630,6 +636,7 @@ lua_State* vlua_create( engine* e, const char* filename ) {
 	lua_registerFunction( l, LUA_transformVector, "vtransformVector" );
 	lua_registerFunction( l, LUA_transform_setWorldPosition, "vtransform_setWorldPosition" );
 	lua_registerFunction( l, LUA_transform_setWorldSpaceByTransform, "vtransform_setWorldSpaceByTransform" );
+	lua_registerFunction( l, LUA_transform_destroy, "vdestroyTransform" );
 	lua_registerFunction( l, LUA_particle_create, "vparticle_create" );
 	// *** Camera
 	lua_registerFunction( l, LUA_chasecam_follow, "vchasecam_follow" );

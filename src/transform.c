@@ -65,6 +65,10 @@ transform* transform_create() {
 	return t;
 }
 
+void transform_delete( transform* t ) {
+	pool_transform_free( static_transform_pool, t );
+}
+
 transform* transform_createAndAdd( scene* s ) {
 	assert( s->transform_count < MAX_TRANSFORMS );
 	transform* t = transform_create();
