@@ -1218,7 +1218,8 @@ void attr_particle_texture( term* definition_term, term* texture_attr ) {
 	lisp_assert( isType( texture_attr, _typeString ));
 
 	printf( "Setting particle texture: %s\n", texture_attr->string );
-	texture_request( &def->texture_diffuse, texture_attr->string );
+	//texture_request( &def->texture_diffuse, texture_attr->string );
+	def->texture_diffuse = texture_load( texture_attr->string );
 }
 
 void attr_particle_setSpawnRate( term* definition_term, term* spawn_rate_attr ) {

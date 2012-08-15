@@ -511,7 +511,7 @@ void render_init( void* app ) {
 	glFrontFace( GL_CW );
 	glEnable( GL_CULL_FACE );
 
-	texture_init();
+	texture_staticInit();
 	shader_init();
 	render_buildShaders();
 	skybox_init();

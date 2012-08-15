@@ -189,7 +189,7 @@ void particleEmitter_render( void* data ) {
 	// The transformation has been applied already for particle positions
 	matrix_setIdentity( modelview );
 	int index_count = 6 * p->count;
-	drawCall* draw = drawCall_create( &renderPass_alpha, resources.shader_particle, index_count, p->element_buffer, p->vertex_buffer, p->definition->texture_diffuse, modelview );
+	drawCall* draw = drawCall_create( &renderPass_alpha, resources.shader_particle, index_count, p->element_buffer, p->vertex_buffer, p->definition->texture_diffuse->gl_tex, modelview );
 	draw->depth_mask = GL_FALSE;
 }
 

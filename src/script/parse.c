@@ -832,7 +832,8 @@ void* s_particle_emitter( sterm* raw_args ) {
 	p->definition->spawn_rate = property_create( 2 );
 	property_addf( p->definition->spawn_rate, 0.f, 30.f );
 	//p->trans = t;
-	texture_request( &p->definition->texture_diffuse, "dat/img/star_rgba64.tga" );
+	//texture_request( &p->definition->texture_diffuse, "dat/img/star_rgba64.tga" );
+	def->texture_diffuse = texture_load( "dat/img/star_rgba64.tga" );
 
 	return sterm_createProperty( "particle_emitter", typeObject, p );
 }

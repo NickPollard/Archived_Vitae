@@ -9,7 +9,7 @@
 // Globals
 extern GLuint g_texture_default;
 
-void texture_init();
+void texture_staticInit();
 
 GLuint texture_loadTGA(const char* filename);
 
@@ -49,7 +49,14 @@ typedef struct tga_header_s {
 } tga_header;
 
 
+struct texture_s {
+	GLuint gl_tex;
+	const char* filename;
+};
+
 void texture_tick();
 void texture_request( GLuint* tex, const char* filename );
+
+texture* texture_load( const char* filename );
 
 #endif // __TEXTURE_H__

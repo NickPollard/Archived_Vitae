@@ -7,16 +7,13 @@
 #include "mem/allocator.h"
 #include "render/render.h"
 #include "system/file.h"
+#include "system/hash.h"
 #include "system/string.h"
 #include "system/thread.h"
 
 // Globals
 GLuint g_texture_default = 0;
 vmutex	texture_mutex = kMutexInitialiser;
-
-void texture_init() {
-	g_texture_default = texture_loadTGA( "dat/img/test64rgba.tga" );
-}
 
 typedef struct textureRequest_s {
 	GLuint* tex;
@@ -42,6 +39,7 @@ void texture_tick() {
 }
 
 void texture_request( GLuint* tex, const char* filename ) {
+	// TODO - check if we've already loaded it
 	vmutex_lock( &texture_mutex );
 	{
 		vAssert( texture_request_count < kMaxTextureRequests );
@@ -52,6 +50,61 @@ void texture_request( GLuint* tex, const char* filename ) {
 	}
 	vmutex_unlock( &texture_mutex );
 }
+
+void texture_init( texture* t, const char* filename ) {
+	t->gl_tex = kInvalidGLTexture;
+	t->filename = string_createCopy( filename );
+}
+
+// Hash map of pointers to textures
+#define kTextureCacheMaxEntries 256
+map* texture_cache = NULL;
+
+void textureCache_init() {
+	vAssert( texture_cache == NULL );
+	texture_cache = map_create( kTextureCacheMaxEntries, sizeof( texture* ));
+}
+
+texture* textureCache_find( const char* filename ) {
+	void** result = map_find( texture_cache, mhash( filename ));
+	if ( result )
+		return *((texture**)result);
+	else
+		return NULL;
+}
+
+void textureCache_add( texture* t, const char* filename ) {
+	map_add( texture_cache, mhash( filename ), &t );
+}
+
+#define kTexturesMax 1024
+texture textures[kTexturesMax];
+int texture_count = 0;
+
+texture* texture_nextEmpty() {
+	return &textures[texture_count++];
+}
+
+// Get a texture matching a given filename
+// Pulls it from cache if existing, otherwise loads it asynchronously
+texture* texture_load( const char* filename ) {
+	texture* t;
+	t = textureCache_find( filename );
+	if ( t ) {
+		printf( "Texture \"%s\" already loaded.\n", filename );
+		return t;
+	}
+	else {
+		printf( "Loading Texture \"%s\".\n", filename );
+		t = texture_nextEmpty();
+		texture_init( t, filename );
+		textureCache_add( t, filename );
+		// temp
+		texture_request( &t->gl_tex, filename );
+	}
+	return t;
+}
+
 
 uint8_t* read_tga( const char* file, int* w, int* h ) {
 	size_t length = 0;
@@ -102,12 +155,6 @@ uint8_t* read_tga( const char* file, int* w, int* h ) {
 }
 
 GLuint texture_loadTGA( const char* filename ) {
-	//TODO:
-	/*
-	This should load from a texture library. ie. lookup the name, 
-	if it doesn't exist load it, otherwise return the already loaded one.
-	   */
-
 	printf( "TEXTURE: Loading TGA \"%s\"\n" , filename );
 	GLuint tex;
 	int w, h;
@@ -142,4 +189,9 @@ GLuint texture_loadTGA( const char* filename ) {
 	mem_free( img );	// OpenGL copies the data, so we can free this here
 
 	return tex;
+}
+
+void texture_staticInit() {
+	g_texture_default = texture_loadTGA( "dat/img/test64rgba.tga" );
+	textureCache_init();
 }
