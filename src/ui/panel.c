@@ -50,7 +50,8 @@ void panel_draw( panel* p, float x, float y ) {
 
 	// Copy our data to the GPU
 	// There are now <index_count> vertices, as we have unrolled them
-	drawCall_create( &renderPass_alpha, resources.shader_ui, element_count, element_buffer, vertex_buffer, p->texture, modelview );
+	drawCall* draw = drawCall_create( &renderPass_alpha, resources.shader_ui, element_count, element_buffer, vertex_buffer, p->texture, modelview );
+	draw->depth_mask = GL_FALSE;
 }
 
 void panel_render( void* panel_ ) {
