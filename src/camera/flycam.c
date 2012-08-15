@@ -91,7 +91,8 @@ void flycam_setTarget( flycam* f, camera* c ) {
 */
 
 // Update the flycam, setting the target data to latest
-void flycam_tick( void* data, float dt ) {
+void flycam_tick( void* data, float dt, engine* eng ) {
+	(void)eng;
 	(void)dt;
 	flycam* f = data;
 	transform_setWorldSpace( f->camera_target.trans, f->transform );

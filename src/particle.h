@@ -61,7 +61,7 @@ particleEmitterDef* particleEmitterDef_create();
 particleEmitter* particleEmitter_create();
 particleEmitter* particle_newEmitter( particleEmitterDef* definition );
 void particleEmitter_render( void* data );
-void particleEmitter_tick( void* e, float dt );
+void particleEmitter_tick( void* e, float dt, engine* eng );
 
 // *** Asset loading
 particleEmitterDef* particle_loadAsset( const char* particle_file );

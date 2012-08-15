@@ -25,4 +25,4 @@ typedef struct chasecam_s {
 
 chasecam* chasecam_create();
 
-void chasecam_tick( void* data, float dt );
+void chasecam_tick( void* data, float dt, engine* eng );

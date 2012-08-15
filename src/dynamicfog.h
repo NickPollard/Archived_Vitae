@@ -16,4 +16,4 @@ typedef struct dynamicFog_s {
 dynamicFog* dynamicFog_create();
 
 // the dynamicFog tick function implementation
-void dynamicFog_tick( void* v, float dt );
+void dynamicFog_tick( void* v, float dt, engine* eng );

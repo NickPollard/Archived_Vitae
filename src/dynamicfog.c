@@ -23,7 +23,8 @@ dynamicFog* dynamicFog_create() {
 	return f;
 }
 
-void dynamicFog_tick( void* v, float dt ) {
+void dynamicFog_tick( void* v, float dt, engine* eng ) {
+	(void)eng;
 	dynamicFog* fog = v;
 	fog->time += dt;
 	const float timeCycle = 120.f;

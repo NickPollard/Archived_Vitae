@@ -10,4 +10,4 @@ typedef struct physic_s {
 
 physic* physic_create();
 
-void physic_tick( void* data, float dt );
+void physic_tick( void* data, float dt, engine* eng );

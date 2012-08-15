@@ -44,7 +44,7 @@ void terrain_setResolution( terrain* t, int u, int v );
 void terrain_render( void* data );
 
 // The tickfunc
-void terrain_tick( void* data, float dt );
+void terrain_tick( void* data, float dt, engine* eng );
 
 vector terrain_canyonPosition( float u, float v );
 

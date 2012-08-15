@@ -63,7 +63,7 @@ void particleEmitter_spawnParticle( particleEmitter* e ) {
 		p->rotation = 0.f;
 }
 
-void particleEmitter_tick( void* data, float dt ) {
+void particleEmitter_tick( void* data, float dt, engine* eng ) {
 	particleEmitter* e = data;
 	// Update existing particles
 	vector delta;
@@ -86,6 +86,7 @@ void particleEmitter_tick( void* data, float dt ) {
 	vAssert( e->definition->spawn_rate );
 	// Burst mode means we batch-spawn particles on keys, otherwise spawn nothing
 	if ( e->definition->flags & kParticleBurst ) {
+		// TODO - don't allocate here
 		property* keys = property_range( e->definition->spawn_rate, e->emitter_age, e->emitter_age + dt );
 		for ( int key = 0; key < keys->count; ++key ) {
 			int count = (int)property_valuef( e->definition->spawn_rate, key );
@@ -107,6 +108,12 @@ void particleEmitter_tick( void* data, float dt ) {
 		}
 	}
 	e->emitter_age += dt;
+
+	// TEST
+	if ( e->emitter_age > 3.f ) {
+		engine_removeRender( eng, e, particleEmitter_render );
+		stopTick( eng, e, particleEmitter_tick );
+	}
 }
 
 // Output the 4 verts of the quad to the target vertex array

@@ -9,9 +9,9 @@
 // Tick all tickers in the tick list!
 // All tickers in a list share the same tick function
 // This is to (hopefully) improve cache usage and debugging
-void delegate_tick(delegate* d, float dt) {
+void delegate_tick(delegate* d, float dt, engine* eng ) {
 	for ( int i = 0; i < d->count; i++ ) {
-		((tickfunc)d->tick)( d->data[i], dt );
+		((tickfunc)d->tick)( d->data[i], dt, eng );
 	}
 }
 

@@ -3,7 +3,7 @@
 #define __TICKER_H__
 
 // Tick function signature
-typedef void (*tickfunc)( void*, float );
+typedef void (*tickfunc)( void*, float, engine* );
 // Render function signature
 typedef void (*renderfunc)( void*);
 // Input function signature
@@ -32,7 +32,7 @@ typedef struct {
 } delegate;
 
 // tick all objects in a delegate
-void delegate_tick(delegate* t, float dt);
+void delegate_tick(delegate* t, float dt, engine* eng );
 
 // render all objects in a delegate
 void delegate_render( delegate* d );

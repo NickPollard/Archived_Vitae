@@ -18,7 +18,8 @@ chasecam* chasecam_create() {
 	return c;
 }
 
-void chasecam_tick( void* data, float dt ) {
+void chasecam_tick( void* data, float dt, engine* eng ) {
+	(void)eng;
 	chasecam* c = (chasecam*) data;
 
 	// Calculate the position as the offset from the chase target

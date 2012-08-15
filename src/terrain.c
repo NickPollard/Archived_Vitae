@@ -431,8 +431,9 @@ void terrainBlock_render( terrainBlock* b ) {
 #endif
 }
 
-void terrain_tick( void* data, float dt ) {
+void terrain_tick( void* data, float dt, engine* eng ) {
 	(void)dt;
+	(void)eng;
 	terrain* t = data;
 	terrain_updateBlocks( t );
 }

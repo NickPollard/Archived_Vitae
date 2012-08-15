@@ -13,7 +13,8 @@ physic* physic_create()  {
 	return p;
 }
 
-void physic_tick( void* data, float dt ) {
+void physic_tick( void* data, float dt, engine* eng ) {
+	(void)eng;
 	physic* p = data;
 	assert( p->trans );
 

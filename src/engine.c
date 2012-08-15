@@ -106,6 +106,18 @@ void engine_input( engine* e ) {
 
 float frame_times[10];
 
+void countVisibleParticleEmitters( engine* e ) {
+	int count = 0;
+	delegatelist* d_list = e->renders;
+	while ( d_list ) {
+		if ( d_list->head->tick == particleEmitter_render) {
+			count += d_list->head->count;
+		}
+		d_list = d_list->tail;
+	}
+	printf( "Visible particle emitters: %d.\n", count );
+}
+
 // tick - process a frame of game update
 void engine_tick( engine* e ) {
 	PROFILE_BEGIN( PROFILE_ENGINE_TICK );
@@ -129,6 +141,8 @@ void engine_tick( engine* e ) {
 	collision_tick( dt );
 
 	engine_tickTickers( e, dt );
+
+	//countVisibleParticleEmitters( e );
 
 	if ( e->onTick && luaCallback_enabled( e->onTick ) ) {
 #if DEBUG_LUA
@@ -380,7 +394,7 @@ void engine_tickTickers( engine* e, float dt ) {
 	delegatelist* d = e->tickers;
 	while (d != NULL) {
 		assert( d->head );	// Should never be NULL heads
-		delegate_tick( d->head, dt ); // tick the whole of this delegate
+		delegate_tick( d->head, dt, e ); // tick the whole of this delegate
 		d = d->tail;
 	}
 }
@@ -469,8 +483,22 @@ void engine_addTicker( engine* e, void* entity, tickfunc tick ) {
 		d = engine_addTickDelegate( e, tick );
 	delegate_add( d, entity);
 }
+
+void engine_removeDelegateEntry( delegatelist* d, void* entity, void* delegate_func ) {
+	delegatelist* d_list = d;
+	while ( d_list ) {
+		if ( d_list->head->tick == delegate_func ) {
+			delegate_remove( d_list->head, entity );
+		}
+		d_list = d_list->tail;
+	}
+}
+
 void startTick( engine* e, void* entity, tickfunc tick ) {
 	engine_addTicker( e, entity, tick );
+}
+void stopTick( engine* e, void* entity, tickfunc tick ) {
+	engine_removeDelegateEntry( e->tickers, entity, tick );
 }
 
 void startInput( engine* e, void* entity, inputfunc in ) {
@@ -488,13 +516,9 @@ void engine_addRender( engine* e, void* entity, renderfunc render ) {
 }
 
 void engine_removeRender( engine* e, void* entity, renderfunc render ) {
-	delegate* d = engine_findRenderDelegate( e, render );
-	// TODO - need to change findDelegate to look through multiple delegates,
-	// and full ones. Once done, reinstate this assert and remove the if
-	//vAssert( d );
-	if ( d )
-		delegate_remove( d, entity );
+	engine_removeDelegateEntry( e->renders, entity, render );
 }
+
 
 int array_find( void** array, int count, void* ptr ) {
 	for ( int i = 0; i < count; ++i ) {
