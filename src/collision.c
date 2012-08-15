@@ -37,9 +37,25 @@ void collision_addBody( body* b ) {
 	bodies[body_count++] = b;
 }
 
-void collision_removeBody( body*  b ) {
+#define kMaxDeadBodies 32
+int dead_body_count = 0;
+body* dead_bodies[kMaxDeadBodies];
+
+void collision_removeBody( body* b ) {
+	vAssert( dead_body_count < kMaxDeadBodies );
+	dead_bodies[dead_body_count++] = b;
+}
+
+void collision_removeDeadBody( body*  b ) {
 	int i = array_find( (void**)bodies, body_count, b );
 	bodies[i] = bodies[--body_count];
+}
+
+void collision_removeDeadBodies( ) {
+	for ( int i = 0; i < dead_body_count; ++i ) {
+		collision_removeDeadBody( dead_bodies[i] );
+	}
+	dead_body_count = 0;
 }
 
 void collision_callback( body* a, body* b ) {
@@ -71,6 +87,8 @@ void collision_tick( float dt ) {
 	collision_generateEvents();
 
 	collision_runCallbacks();
+
+	collision_removeDeadBodies();
 }
 
 bool collisionFunc_SphereSphere( shape* a, shape* b, matrix matrix_a, matrix matrix_b ) {
