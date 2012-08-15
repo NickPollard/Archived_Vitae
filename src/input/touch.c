@@ -78,14 +78,12 @@ bool input_touchPressed( input* in, int x_min, int y_min, int x_max, int y_max )
 	return touched;
 }
 
-// TODO - specify which touch we want position for
-void input_getTouchPosition( input* in, int* x, int* y ) {
-	*x = in->data[in->active].touch.touches[0].x;
-	*y = in->data[in->active].touch.touches[0].y;
-}
-
 bool input_touchHeldInternal( input* in, int i ) {
 	return in->data[in->active].touch.touches[i].held;
+}
+
+bool input_touchValid( input* in, int i ) {
+	return in->data[in->active].touch.touches[i].uid != kInvalidTouchUid;
 }
 
 // TODO - this should take into account multi-touch, i.e. if ANY touch has occurred
@@ -96,15 +94,26 @@ bool input_touchHeld( input* in, int x_min, int y_min, int x_max, int y_max ) {
 	if ( y_max < 0 ) y_max += in->h;
 
 	bool held = false;
-	int num_touches = 1; // TODO
-	for ( int i = 0; i < num_touches && !held; ++i ) {
-		int x = in->data[in->active].touch.touches[i].x;
-		int y = in->data[in->active].touch.touches[i].y;
-		held = input_touchHeldInternal( in, i ) &&
+	for ( int i = 0; i < kMaxMultiTouch && !held; ++i ) {
+		touch* t = &in->data[in->active].touch.touches[i];
+		int x = t->x;
+		int y = t->y;
+		held = input_touchValid( in, i ) && input_touchHeldInternal( in, i ) &&
 				contains( x, x_min, x_max ) &&
 				contains( y, y_min, y_max );
 	}
 	return held;
+}
+
+bool input_touchInsideBounds( input* in, touch* t, int x_min, int y_min, int x_max, int y_max ) {
+	printf( "touch (%d %d), bounds (%d %d -> %d %d )\n", t->x, t->y, x_min, y_min, x_max, y_max );
+	if ( x_min < 0 ) x_min += in->w;
+	if ( y_min < 0 ) y_min += in->h;
+	if ( x_max < 0 ) x_max += in->w;
+	if ( y_max < 0 ) y_max += in->h;
+
+	bool inside = contains( t->x, x_min, x_max ) && contains( t->y, y_min, y_max );
+	return inside;
 }
 
 void input_touchTick( input* in, float dt ) {
@@ -128,7 +137,7 @@ void input_touchTick( input* in, float dt ) {
 	for ( int i = 0; i < kMaxMultiTouch; ++i ) {
 		touch* old = &in->data[1 - in->active].touch.touches[i];
 		if ( old->uid != kInvalidTouchUid && old->released ) {
-			printf( "touch released\n" );
+			printf( "touch %d released\n", old->uid );
 		}
 		if ( old->uid != kInvalidTouchUid && !old->released ) {
 			*new = *old;
@@ -199,6 +208,15 @@ void touchPanel_init( touchPanel* p ) {
 }
 
 void touchPanel_tick( touchPanel* panel, input* in, float dt ) {
+	int count = 0;
+	for ( int i = 0; i < kMaxMultiTouch; ++i ) {
+		if ( in->data[in->active].touch.touches[i].uid != kInvalidTouchUid )
+			++count;
+	}
+	printf( "global panel has %d touches.\n", count );
+
+
+
 	for_each( panel->touch_pad, panel->touch_pad_count, touchPad_tick, in, dt );
 }
 
@@ -225,20 +243,34 @@ void touchPanel_removeTouchPad( touchPanel* panel, touchPad* pad ) {
 void touchPad_tick( touchPad* p, input* in, float dt ) {
 	(void)p; (void)in; (void)dt;
 
-	touch* t = &p->touches[0];
-	t->x = t->y = -1;
-	if (input_touchHeld( in, p->x, p->y, p->x + p->width, p->y + p->height )) {
-		int x, y;
-		input_getTouchPosition( in, &x, &y );
-		t->x = touchPad_localX( p, x );	
-		t->y = touchPad_localY( p, y );	
+	int count = 0;
+	touch* local_touch = &p->touches[0];
+	for ( int i = 0; i < kMaxMultiTouch; ++i ) {
+		touch* global_touch = &in->data[in->active].touch.touches[i];
+		if ( input_touchValid( in, i ) && input_touchInsideBounds( in, global_touch, p->x, p->y, p->x + p->width, p->y + p->height )) {
+			// copy all touch data, but then update positions to pad space
+			*local_touch = *global_touch;
+			local_touch->x = touchPad_localX( p, global_touch->x );	
+			local_touch->y = touchPad_localY( p, global_touch->y );	
+			++local_touch;
+			++count;
+		}
+	}
+	printf( "touchpad has %d touches.\n", count );
+
+	// Blank out unused ones
+	while ( local_touch < &p->touches[kMaxMultiTouch] ) {
+		local_touch->x = -1;
+		local_touch->y = -1;
+		local_touch->uid = kInvalidTouchUid;
+		++local_touch;
 	}
 }
 
 bool touchPad_touched( touchPad* p, int* x, int* y ) {
 	*x = p->touches[0].x;
 	*y = p->touches[0].y;
-	return p->touches[0].x != -1;
+	return p->touches[0].x != kInvalidTouchUid;
 }
 
 void touchPad_activate( touchPad* p ) {

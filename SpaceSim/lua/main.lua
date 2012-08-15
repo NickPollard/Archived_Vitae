@@ -209,6 +209,7 @@ end
 function setup_controls()
 	-- Set up steering input for the player ship
 	if touch_enabled then
+		-- Steering
 		local w = 360
 		local h = 360
 		local x = 1280 - w
@@ -219,6 +220,12 @@ function setup_controls()
 		player_ship.steering_input = steering_input_joypad
 		-- UI drawing is upside down compared to touchpad placement - what to do about this?
 		vcreateUIPanel( engine, x, 0, w, h )
+		-- Firing Trigger
+		x = 0
+		y = 0
+		w = 200
+		h = 200
+		player_ship.fire_trigger = vcreateTouchPad( input, x, y, w, h )
 	else
 		player_ship.steering_input = steering_input_keyboard
 	end
@@ -327,7 +334,13 @@ function playership_tick()
 	vtransform_pitch( player_ship.transform, pitch );
 
 	-- Gunfire
-	if vkeyPressed( input, key.space ) or vtouchPressed( input, 0.0, 0.0, 300.0, 300.0 ) then
+	local fired = false
+	if touch_enabled then
+		fired, joypad_x, joypad_y = vtouchPadTouched( player_ship.fire_trigger )
+	else
+		fired = vkeyPressed( input, key.space )
+	end
+	if fired then
 		player_fire( player_ship )
 	end
 

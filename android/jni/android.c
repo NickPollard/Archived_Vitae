@@ -138,16 +138,6 @@ static int32_t handle_input(struct android_app* app, AInputEvent* event) {
 		int x = AMotionEvent_getX( event, 0 );
 		int y = AMotionEvent_getY( event, 0 );
 
-		/*
-		printf( "touch_event %d\n", action_code );
-		int pointer_count = AMotionEvent_getPointerCount( event );
-		for ( int i = 0; i < pointer_count; ++i ) {
-			int px = AMotionEvent_getX( event, i );
-			int py = AMotionEvent_getY( event, i );
-			int id = AMotionEvent_getPointerId( event, i );
-			printf( "-- pointer index %d, id %d ( %d %d )\n", i, id, px, py );
-		}
-		*/
 
 		enum touchAction action;
 		switch( action_code )
@@ -172,6 +162,22 @@ static int32_t handle_input(struct android_app* app, AInputEvent* event) {
 				break;
 		}
 		
+		int pointer_count = AMotionEvent_getPointerCount( event );
+		for ( int i = 0; i < pointer_count; ++i ) {
+			int pointer_x = AMotionEvent_getX( event, i );
+			int pointer_y = AMotionEvent_getY( event, i );
+			int uid = AMotionEvent_getPointerId( event, i );
+			input_registerTouch( e->input, uid, pointer_x, pointer_y, action );
+		}
+		
+		printf( "touch_event %d\n", action_code );
+		for ( int i = 0; i < pointer_count; ++i ) {
+			int pointer_x = AMotionEvent_getX( event, i );
+			int pointer_y = AMotionEvent_getY( event, i );
+			int id = AMotionEvent_getPointerId( event, i );
+			printf( "-- pointer index %d, id %d ( %d %d )\n", i, id, pointer_x, pointer_y );
+		}
+/*
 		int pointer_index = 0;
 		if ( action_code == AMOTION_EVENT_ACTION_POINTER_DOWN ||
 			 action_code == AMOTION_EVENT_ACTION_POINTER_UP ) {
@@ -180,6 +186,8 @@ static int32_t handle_input(struct android_app* app, AInputEvent* event) {
 
 		int uid = AMotionEvent_getPointerId( event, pointer_index );
 		input_registerTouch( e->input, uid, x, y, action );
+		*/
+
         return 1;
     }
     return 0;
