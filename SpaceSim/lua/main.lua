@@ -41,7 +41,7 @@ function gameobject_destroy( g )
 	vdeleteModelInstance( g.model )
 	--vdestroyPhysic( g.physic )
 	--vdestroyTransform( g.transform )
-	--vdestroyBody( g.body )
+	vdestroyBody( g.body )
 end
 
 function spawn_explosion( position )
@@ -71,22 +71,6 @@ function player_fire( p )
 	ship_v = Vector( 0.0, 0.0, bullet_speed, 0.0 )
 	world_v = vtransformVector( p.transform, ship_v )
 	vphysic_setVelocity( g.physic, world_v );
-
-	--inTime( 0.3, function () spawn_explosion( g.transform ) end );
-
-	--[[
-	gun_transform = vitae_attach_transform( g.model, "bullet_spawn" )
-	vitae_transform_setWorldSpace( g.transform, gun_transform )
-	speed = 10.0
-	velocity = gun_transform * vector( 0.0, 0.0, speed, 0.0 )
-	vitae_physic_setVelocity( g.physic, vitae_attach_position( g.model, "bullet_spawn" ) )
-	
-	vitae_physic_onCollision( g.physic, function ( bullet, target )
-		gameobject_destroy( bullet )
-		gameobject_destroy( target )
-		vitae_particle_spawn( "explosion.part", translation( bullet.transform ) )
-	end )
---]]
 end
 
 timers = {}

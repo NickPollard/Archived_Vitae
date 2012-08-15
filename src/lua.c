@@ -246,7 +246,7 @@ int LUA_body_setTransform( lua_State* l ) {
 	return 0;
 }
 int LUA_body_registerCollisionCallback( lua_State* l ) {
-	printf( "Registering lua collision handler.\n" );
+	LUA_DEBUG_PRINT( "Registering lua collision handler.\n" );
 	body* b = lua_toptr( l, 1 );
 	// Store the lua func callback in the Lua registry
 	// and keep a reference to it so we can resolve it later
@@ -262,6 +262,14 @@ int LUA_body_registerCollisionCallback( lua_State* l ) {
 	data->l = l;
 	data->callback_ref = ref;
 	b->callback_data = data;
+	return 0;
+}
+
+int LUA_body_destroy( lua_State* l ) {
+	body* b = lua_toptr( l, 1 );
+	vAssert( b );
+	collision_removeBody( b );
+
 	return 0;
 }
 
@@ -611,6 +619,7 @@ lua_State* vlua_create( engine* e, const char* filename ) {
 	lua_registerFunction( l, LUA_physic_setTransform, "vphysic_setTransform" );
 	lua_registerFunction( l, LUA_body_setTransform, "vbody_setTransform" );
 	lua_registerFunction( l, LUA_body_registerCollisionCallback, "vbody_registerCollisionCallback" );
+	lua_registerFunction( l, LUA_body_destroy, "vdestroyBody" );
 	lua_registerFunction( l, LUA_scene_addModel, "vscene_addModel" );
 	lua_registerFunction( l, LUA_scene_removeModel, "vscene_removeModel" );
 	lua_registerFunction( l, LUA_physic_activate, "vphysic_activate" );
