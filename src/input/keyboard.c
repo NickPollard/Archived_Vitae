@@ -17,6 +17,9 @@
 
 // *** Internal private functions, where they key has been translated into a keycode
 int keyCode( enum key k ) {
+	if ( k >= kMaxKeyCodes )
+		printf( "ERROR: Requesting keycode %d\n", k );
+	vAssert( k < kMaxKeyCodes );
 	return key_codes[k];
 }
 
@@ -92,6 +95,10 @@ void input_initKeyCodes( xwindow* xwin ) {
 	
 	key_codes[KEY_W] = XKeysymToKeycode( xwin->display, XK_W );
 	key_codes[KEY_S] = XKeysymToKeycode( xwin->display, XK_S );
+	key_codes[KEY_A] = XKeysymToKeycode( xwin->display, XK_A );
+	key_codes[KEY_D] = XKeysymToKeycode( xwin->display, XK_D );
+	
+	key_codes[KEY_C] = XKeysymToKeycode( xwin->display, XK_C );
 	
 	key_codes[KEY_SPACE] = XKeysymToKeycode( xwin->display, XK_space );
 }
