@@ -29,6 +29,7 @@ struct panel_s {
 
 	// Temp
 	GLuint	texture;
+	vertex vertex_buffer[4];
 };
 
 // Create a Panel

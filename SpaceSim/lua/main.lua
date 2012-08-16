@@ -208,27 +208,46 @@ end
 
 function setup_controls()
 	-- Set up steering input for the player ship
+	use_drag = true
 	if touch_enabled then
-		-- Steering
-		local w = 360
-		local h = 360
-		local x = 1280 - w
-		local y = 720 - h
-		local deadzone = 30
-		player_ship.joypad_mapper = joypad_mapSquare( w, h, deadzone, deadzone )
-		player_ship.joypad = vcreateTouchPad( input, x, y, w, h )
-		player_ship.steering_input = steering_input_joypad
-		-- UI drawing is upside down compared to touchpad placement - what to do about this?
-		vcreateUIPanel( engine, x, 0, w, h )
-		-- Firing Trigger
+		if use_drag then
+			-- Steering
+			local w = 720
+			local h = 720
+			local x = 1280 - w
+			local y = 720 - h
+			player_ship.joypad_mapper = drag_map()
+			player_ship.joypad = vcreateTouchPad( input, x, y, w, h )
+			player_ship.steering_input = steering_input_drag
+			-- UI drawing is upside down compared to touchpad placement - what to do about this?
+			vcreateUIPanel( engine, x, 0, w, h )
+
+		else
+			-- Steering
+			local w = 720
+			local h = 720
+			local x = 1280 - w
+			local y = 720 - h
+			local deadzone = 30
+			player_ship.joypad_mapper = joypad_mapSquare( w, h, deadzone, deadzone )
+			player_ship.joypad = vcreateTouchPad( input, x, y, w, h )
+			player_ship.steering_input = steering_input_joypad
+			-- UI drawing is upside down compared to touchpad placement - what to do about this?
+			vcreateUIPanel( engine, x, 0, w, h )
+
+		end			-- Firing Trigger
 		x = 0
-		y = 0
+		y = 30
 		w = 200
 		h = 200
 		player_ship.fire_trigger = vcreateTouchPad( input, x, y, w, h )
+		vcreateUIPanel( engine, x, 720-y-h, w, h )
 	else
 		player_ship.steering_input = steering_input_keyboard
 	end
+		-- throttle	
+		vcreateUIPanel( engine, 0, 200, 100, 100 )
+		vcreateUIPanel( engine, 0, 0, 100, 100 )
 end
 
 function start()
@@ -289,6 +308,29 @@ function steering_input_joypad()
 	end
 	return yaw, pitch
 end
+
+
+function steering_input_drag()
+	-- Using Joypad
+	local yaw = 0.0
+	local pitch = 0.0
+	dragged, drag_x, drag_y = vtouchPadDragged( player_ship.joypad )
+	if dragged then
+		yaw, pitch = player_ship.joypad_mapper( drag_x, drag_y )
+		vprint( "inputs mapped " .. yaw .. " " .. pitch )
+	end
+	return yaw, pitch
+end
+
+function drag_map()
+	return function( x, y )
+		x_scale = 15.0
+		y_scale = 15.0
+		return x / x_scale, y / y_scale
+	end
+end
+
+
 function steering_input_keyboard()
 	local yaw = 0.0
 	local pitch = 0.0
@@ -312,13 +354,15 @@ function playership_tick()
 	acceleration = 16.0
 	yaw_per_second = 1.5 
 	pitch_per_second = 1.5
-	width = 80
+	width = 100
 
 	local input_yaw = 0.0
 	local input_pitch = 0.0
 	input_yaw, input_pitch = player_ship.steering_input()
 
-	pitch = -input_pitch * pitch_per_second * dt;
+	-- set to -1.0 to invert
+	invert_pitch = 1.0
+	pitch = invert_pitch * input_pitch * pitch_per_second * dt;
 	yaw = input_yaw * yaw_per_second * dt;
 	delta_speed = acceleration * dt;
 

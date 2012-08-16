@@ -34,7 +34,7 @@ void input_registerTouch( input* in, int uid, int x, int y, enum touchAction act
 	vAssert( i != kInvalidIndex );
 
 	if ( action == kTouchDown ) {
-		printf( "Touch down: %d.\n", uid );
+		//printf( "Touch down: %d.\n", uid );
 	}
 
 	touch* t = &(in->touch.touches[i]);
@@ -106,7 +106,6 @@ bool input_touchHeld( input* in, int x_min, int y_min, int x_max, int y_max ) {
 }
 
 bool input_touchInsideBounds( input* in, touch* t, int x_min, int y_min, int x_max, int y_max ) {
-	printf( "touch (%d %d), bounds (%d %d -> %d %d )\n", t->x, t->y, x_min, y_min, x_max, y_max );
 	if ( x_min < 0 ) x_min += in->w;
 	if ( y_min < 0 ) y_min += in->h;
 	if ( x_max < 0 ) x_max += in->w;
@@ -137,7 +136,7 @@ void input_touchTick( input* in, float dt ) {
 	for ( int i = 0; i < kMaxMultiTouch; ++i ) {
 		touch* old = &in->data[1 - in->active].touch.touches[i];
 		if ( old->uid != kInvalidTouchUid && old->released ) {
-			printf( "touch %d released\n", old->uid );
+			//printf( "touch %d released\n", old->uid );
 		}
 		if ( old->uid != kInvalidTouchUid && !old->released ) {
 			*new = *old;
@@ -167,11 +166,15 @@ void input_touchTick( input* in, float dt ) {
 			touch* new = &in->data[in->active].touch.touches[active_touches];
 			*new = *pending;
 			++active_touches;
-			printf( "New touch received\n" );
+			//printf( "New touch received\n" );
 		}
 		else {
 			touch* old = &in->data[in->active].touch.touches[existing_touch_index];
+			int drag_x = pending->x - old->x;
+			int drag_y = pending->y - old->y;
 			*old = *pending;
+			old->drag_x = drag_x;
+			old->drag_y = drag_y;
 			//printf( "Old touch update received\n" );
 		}
 	}
@@ -208,15 +211,6 @@ void touchPanel_init( touchPanel* p ) {
 }
 
 void touchPanel_tick( touchPanel* panel, input* in, float dt ) {
-	int count = 0;
-	for ( int i = 0; i < kMaxMultiTouch; ++i ) {
-		if ( in->data[in->active].touch.touches[i].uid != kInvalidTouchUid )
-			++count;
-	}
-	printf( "global panel has %d touches.\n", count );
-
-
-
 	for_each( panel->touch_pad, panel->touch_pad_count, touchPad_tick, in, dt );
 }
 
@@ -256,7 +250,7 @@ void touchPad_tick( touchPad* p, input* in, float dt ) {
 			++count;
 		}
 	}
-	printf( "touchpad has %d touches.\n", count );
+	//printf( "touchpad has %d touches.\n", count );
 
 	// Blank out unused ones
 	while ( local_touch < &p->touches[kMaxMultiTouch] ) {
@@ -267,10 +261,18 @@ void touchPad_tick( touchPad* p, input* in, float dt ) {
 	}
 }
 
+bool touchPad_dragged( touchPad* p, int* x, int* y ) {
+	*x = p->touches[0].drag_x;
+	*y = p->touches[0].drag_y;
+	return ( p->touches[0].uid != kInvalidTouchUid ) &&
+			!p->touches[0].pressed && 
+			!p->touches[0].released;
+}
+
 bool touchPad_touched( touchPad* p, int* x, int* y ) {
 	*x = p->touches[0].x;
 	*y = p->touches[0].y;
-	return p->touches[0].x != kInvalidTouchUid;
+	return p->touches[0].uid != kInvalidTouchUid;
 }
 
 void touchPad_activate( touchPad* p ) {

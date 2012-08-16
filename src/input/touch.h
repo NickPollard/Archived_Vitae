@@ -73,3 +73,4 @@ touchPad* touchPanel_addTouchPad( touchPanel* panel, touchPad* pad );
 // *** Touch pads
 touchPad* touchPad_create( int x, int y, int w, int h );
 bool touchPad_touched( touchPad* p, int* x, int* y );
+bool touchPad_dragged( touchPad* p, int* x, int* y );

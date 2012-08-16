@@ -395,6 +395,16 @@ int LUA_createTouchPad( lua_State* l ) {
 	return 1;
 }
 
+int LUA_touchPadDragged( lua_State* l ) {
+	touchPad* pad = lua_toptr( l, 1 );
+	int x, y;
+	bool dragged = touchPad_dragged( pad, &x, &y );
+	lua_pushboolean( l, dragged );
+	lua_pushnumber( l, x );
+	lua_pushnumber( l, y );
+	return 3;
+}
+
 int LUA_touchPadTouched( lua_State* l ) {
 	touchPad* pad = lua_toptr( l, 1 );
 	int x, y;
@@ -416,6 +426,12 @@ int LUA_touchPressed( lua_State* l ) {
 int LUA_createTouchPad( lua_State* l ) {
 	lua_pushnumber( l, 0 );
 	return 1;
+}
+int LUA_touchPadDragged( lua_State* l ) {
+	lua_pushboolean( l, false );
+	lua_pushnumber( l, -1 );
+	lua_pushnumber( l, -1 );
+	return 3;
 }
 int LUA_touchPadTouched( lua_State* l ) {
 	lua_pushboolean( l, false );
@@ -614,6 +630,7 @@ lua_State* vlua_create( engine* e, const char* filename ) {
 	lua_registerFunction( l, LUA_touchHeld, "vtouchHeld" );
 	lua_registerFunction( l, LUA_createTouchPad, "vcreateTouchPad" );
 	lua_registerFunction( l, LUA_touchPadTouched, "vtouchPadTouched" );
+	lua_registerFunction( l, LUA_touchPadDragged, "vtouchPadDragged" );
 	// *** Scene
 	lua_registerFunction( l, LUA_createModelInstance, "vcreateModelInstance" );
 	lua_registerFunction( l, LUA_deleteModelInstance, "vdeleteModelInstance" );
@@ -697,6 +714,7 @@ void lua_keycodes( lua_State* l ) {
 	lua_setfieldi( l, "a", KEY_A );
 	lua_setfieldi( l, "s", KEY_S );
 	lua_setfieldi( l, "d", KEY_D );
+	lua_setfieldi( l, "c", KEY_C );
 	lua_setfieldi( l, "up", KEY_UP );
 	lua_setfieldi( l, "down", KEY_DOWN );
 	lua_setfieldi( l, "left", KEY_LEFT );

@@ -26,8 +26,6 @@ static GLushort element_buffer[] = {
 	2, 1, 0,
 	1, 2, 3
 };
-static vertex vertex_buffer[4];
-
 static const int element_count = 6;
 static const int vert_count = 4;
 
@@ -39,18 +37,18 @@ void panel_draw( panel* p, float x, float y ) {
 //	glDisable(GL_DEPTH_TEST);
 
 	// We draw a quad as two triangles
-	vertex_buffer[0].position = Vector( p->x,				p->y,				0.1f, 1.f );
-	vertex_buffer[1].position = Vector( p->x + p->width,	p->y,				0.1f, 1.f );
-	vertex_buffer[2].position = Vector( p->x,				p->y + p->height,	0.1f, 1.f );
-	vertex_buffer[3].position = Vector( p->x + p->width,	p->y + p->height,	0.1f, 1.f );
-	vertex_buffer[0].uv = Vector( 0.f, 0.f, 0.f, 0.f );
-	vertex_buffer[1].uv = Vector( 1.f, 0.f, 0.f, 0.f );
-	vertex_buffer[2].uv = Vector( 0.f, 1.f, 0.f, 0.f );
-	vertex_buffer[3].uv = Vector( 1.f, 1.f, 0.f, 0.f );
+	p->vertex_buffer[0].position = Vector( p->x,				p->y,				0.1f, 1.f );
+	p->vertex_buffer[1].position = Vector( p->x + p->width,	p->y,				0.1f, 1.f );
+	p->vertex_buffer[2].position = Vector( p->x,				p->y + p->height,	0.1f, 1.f );
+	p->vertex_buffer[3].position = Vector( p->x + p->width,	p->y + p->height,	0.1f, 1.f );
+	p->vertex_buffer[0].uv = Vector( 0.f, 0.f, 0.f, 0.f );
+	p->vertex_buffer[1].uv = Vector( 1.f, 0.f, 0.f, 0.f );
+	p->vertex_buffer[2].uv = Vector( 0.f, 1.f, 0.f, 0.f );
+	p->vertex_buffer[3].uv = Vector( 1.f, 1.f, 0.f, 0.f );
 
 	// Copy our data to the GPU
 	// There are now <index_count> vertices, as we have unrolled them
-	drawCall* draw = drawCall_create( &renderPass_alpha, resources.shader_ui, element_count, element_buffer, vertex_buffer, p->texture, modelview );
+	drawCall* draw = drawCall_create( &renderPass_alpha, resources.shader_ui, element_count, element_buffer, p->vertex_buffer, p->texture, modelview );
 	draw->depth_mask = GL_FALSE;
 }
 

@@ -169,7 +169,8 @@ static int32_t handle_input(struct android_app* app, AInputEvent* event) {
 			int uid = AMotionEvent_getPointerId( event, i );
 			input_registerTouch( e->input, uid, pointer_x, pointer_y, action );
 		}
-		
+	
+	/*	
 		printf( "touch_event %d\n", action_code );
 		for ( int i = 0; i < pointer_count; ++i ) {
 			int pointer_x = AMotionEvent_getX( event, i );
@@ -177,6 +178,8 @@ static int32_t handle_input(struct android_app* app, AInputEvent* event) {
 			int id = AMotionEvent_getPointerId( event, i );
 			printf( "-- pointer index %d, id %d ( %d %d )\n", i, id, pointer_x, pointer_y );
 		}
+		*/
+
 /*
 		int pointer_index = 0;
 		if ( action_code == AMOTION_EVENT_ACTION_POINTER_DOWN ||
