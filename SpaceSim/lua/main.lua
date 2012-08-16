@@ -208,7 +208,7 @@ end
 
 function setup_controls()
 	-- Set up steering input for the player ship
-	use_drag = true
+	use_drag = false
 	if touch_enabled then
 		if use_drag then
 			-- Steering
@@ -224,8 +224,8 @@ function setup_controls()
 
 		else
 			-- Steering
-			local w = 720
-			local h = 720
+			local w = 360
+			local h = 360
 			local x = 1280 - w
 			local y = 720 - h
 			local deadzone = 30
