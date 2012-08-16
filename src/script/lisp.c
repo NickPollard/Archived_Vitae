@@ -1174,6 +1174,12 @@ term* parseFlag( term* flag_atom, void* unused /* to fit fmap_func signature */ 
 	if (string_equal( flag_atom->string, "particle_burst" )) {
 		*flag = kParticleBurst;
 	}
+	if (string_equal( flag_atom->string, "particle_worldspace" )) {
+		*flag = kParticleWorldSpace;
+	}
+	if (string_equal( flag_atom->string, "particle_randomRotation" )) {
+		*flag = kParticleRandomRotation;
+	}
 	term* flag_term = term_create( typeInt, flag );
 	return flag_term;
 }

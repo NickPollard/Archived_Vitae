@@ -92,7 +92,9 @@ void main() {
 	vec4 local_fog_color = fog_color + (sun_color * fog_sun_factor);
 
 	vec4 fragColor = texture2D( tex, texcoord ) * frag_color;
+
 	local_fog_color.w = frag_color.w;
-	gl_FragColor = mix( fragColor, local_fog_color, fog );
+
+	gl_FragColor = mix( fragColor, local_fog_color, 0.0 );
 	
 }

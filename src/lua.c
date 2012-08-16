@@ -543,7 +543,7 @@ int LUA_particle_create( lua_State* l ) {
 
 	particleEmitterDef* def = particle_loadAsset( particle_file );
 	def->velocity = Vector( 0.f, 0.f, 0.f, 0.f );
-	def->flags = def->flags | kParticleWorldSpace
+	def->flags = def->flags /*| kParticleWorldSpace */
 							| kParticleRandomRotation;
 
 	particleEmitter* emitter = particle_newEmitter( def );

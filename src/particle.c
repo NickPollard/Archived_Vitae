@@ -69,7 +69,7 @@ void particleEmitter_spawnParticle( particleEmitter* e ) {
 	offset.coord.w = 1.f;
 
 	// If worldspace, spawn at the particle emitter position
-	if ( !e->definition->flags & kParticleWorldSpace )
+	if ( !(e->definition->flags & kParticleWorldSpace ))
 		p->position	= offset;
 	else
 		p->position = matrix_vecMul( e->trans->world, &offset );
@@ -139,7 +139,7 @@ void particle_quad( particleEmitter* e, vertex* dst, vector* point, float rotati
 	vector offset = Vector( size, size, 0.f, 0.f );
 
 	vector p;
-	if ( !e->definition->flags & kParticleWorldSpace )
+	if ( !(e->definition->flags & kParticleWorldSpace ))
 		p = matrix_vecMul( modelview, point );
 	else
 		p = matrix_vecMul( camera_inverse, point );

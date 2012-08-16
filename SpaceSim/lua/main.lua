@@ -55,23 +55,33 @@ function spawn_explosion( position )
 	vtransform_setWorldSpaceByTransform( t, position )
 end
 
-projectile_model = "dat/model/sphere.s"
-function player_fire( p )
-	local g = {}
+projectile_model = "dat/model/missile.s"
+function player_fire( ship )
+	muzzle_pos = Vector( 3.0, 0.0, 0.0, 1.0 );
+	fire_missile( ship, muzzle_pos );
+	muzzle_pos = Vector( -3.0, 0.0, 0.0, 1.0 );
+	fire_missile( ship, muzzle_pos );
+end
+
+function fire_missile( ship, offset )
+	local projectile = {}
 	-- Create a new Projectile
-	g = gameobject_create( projectile_model );
+	projectile = gameobject_create( projectile_model );
 
 	-- Position it at the correct muzzle position and rotation
-	vtransform_setWorldSpaceByTransform( g.transform, p.transform )
+	muzzle_world_pos = vtransformVector( ship.transform, muzzle_pos )
+	vtransform_setWorldSpaceByTransform( projectile.transform, ship.transform )
+	vtransform_setWorldPosition( projectile.transform, muzzle_world_pos )
 
 	-- Attach a particle effect to the object
-	inTime( 0.1, function () vparticle_create( engine, g.transform, "dat/script/lisp/missile_particle.s" ) end )
+	vparticle_create( engine, projectile.transform, "dat/script/lisp/missile_glow.s" )
+	inTime( 0.2, function () vparticle_create( engine, projectile.transform, "dat/script/lisp/missile_particle.s" ) end )
 
 	-- Apply initial velocity
 	bullet_speed = 150.0;
 	ship_v = Vector( 0.0, 0.0, bullet_speed, 0.0 )
-	world_v = vtransformVector( p.transform, ship_v )
-	vphysic_setVelocity( g.physic, world_v );
+	world_v = vtransformVector( ship.transform, ship_v )
+	vphysic_setVelocity( projectile.physic, world_v );
 end
 
 timers = {}
