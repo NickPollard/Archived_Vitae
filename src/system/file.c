@@ -3,12 +3,18 @@
 #include "file.h"
 //-----------------------
 #include "mem/allocator.h"
+#include "system/hash.h"
 #include "system/string.h"
 #include <assert.h>
+#ifdef LINUX_X
+#include <sys/stat.h>
+#endif // LINUX_X
 #ifdef ANDROID
 #include "zip.h"
 #include <jni.h>
-#endif
+#endif // ANDROID
+
+void vfile_storeModifiedTime( const char* file );
 
 //
 // *** File
@@ -123,6 +129,9 @@ FILE* vfile_open( const char* path, const char* mode ) {
 	char asset_path[kVfileMaxPathLength];
 	vfile_assetPath( asset_path, path );
 
+	// Store last modified time
+	vfile_storeModifiedTime( asset_path );
+
 	FILE* file = fopen( asset_path, mode );
 	if ( !file ) {
 		printf( "Error loading file: \"%s\"\n", asset_path );
@@ -200,3 +209,50 @@ const char* sstring_create( const char* token ) {
 	buffer[len-2] = '\0';
 	return buffer;
 };
+
+#define kMaxFileEntries 1024
+map* file_modified_times = NULL;
+
+void vfile_systemInit() {
+	vAssert( !file_modified_times );
+	file_modified_times = map_create( kMaxFileEntries, sizeof( time_t ));
+}
+
+void vfile_storeModifiedTime( const char* file ) {
+	if ( !file_modified_times )
+		return;
+	time_t modified_time;
+	struct stat file_stat;
+	int error = stat( file, &file_stat );
+	vAssert( error == 0 );
+	modified_time = file_stat.st_mtime;
+	
+	int key = mhash( file );
+	map_addOverride( file_modified_times, key, &modified_time );
+}
+
+time_t vfile_lastModifiedTime( const char* file ) {
+	int key = mhash( file );
+	time_t* modified_time = map_find( file_modified_times, key );
+	if (!modified_time )
+		return 0;
+	else
+		return *modified_time;
+}
+
+bool vfile_modifiedSinceLast( const char* file ) {
+#ifdef LINUX_X
+	time_t time_new, time_old;
+	struct stat file_stat;
+	int error = stat( file, &file_stat );
+	vAssert( error == 0 );
+
+	time_old = vfile_lastModifiedTime( file );
+
+	time_new = file_stat.st_mtime;
+	return ( time_new > time_old );
+#else
+	// TODO - implement for other platforms
+	return false;
+#endif
+}

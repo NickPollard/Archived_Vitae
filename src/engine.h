@@ -4,7 +4,7 @@
 #include "base/list.h"
 #include "lua.h"
 #include "ticker.h"
-#include "time.h"
+#include "vtime.h"
 
 #ifdef ANDROID
 // Android Libraries

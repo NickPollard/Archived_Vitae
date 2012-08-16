@@ -24,7 +24,7 @@
    and let me track them (string allocations should *only* be required
    for parsing or scripting
    */
-#define kStringHeapSize 4 * 1024
+#define kStringHeapSize 64 * 1024
 heapAllocator* global_string_heap = NULL;
 
 //

@@ -9,6 +9,7 @@
 #include "render/shader.h"
 #include "render/texture.h"
 #include "script/lisp.h"
+#include "system/file.h"
 #include "system/hash.h"
 
 float property_samplef( property* p, float time );
@@ -21,6 +22,22 @@ particleEmitterDef* particleEmitterDef_create() {
 	memset( def, 0, sizeof( particleEmitterDef ));
 	def->spawn_box = Vector( 0.f, 0.f, 0.f, 0.f );
 	return def;
+}
+
+// De-init the particleEmitterDef, freeing all its members
+void particleEmitterDef_deInit( particleEmitterDef* def ) {
+	if ( def->size ) {
+		mem_free( def->size );
+		def->size = NULL;
+	}
+	if ( def->color ) {
+		mem_free( def->color );
+		def->color = NULL;
+	}
+	if ( def->spawn_rate ) {
+		mem_free( def->spawn_rate );
+		def->spawn_rate = NULL;
+	}
 }
 
 particleEmitter* particleEmitter_create() {
@@ -110,7 +127,7 @@ void particleEmitter_tick( void* data, float dt, engine* eng ) {
 	e->emitter_age += dt;
 
 	// TEST
-	if ( e->emitter_age > 3.f ) {
+	if ( e->emitter_age > 5.f ) {
 		engine_removeRender( eng, e, particleEmitter_render );
 		stopTick( eng, e, particleEmitter_tick );
 	}
@@ -202,7 +219,7 @@ property* property_create( int stride ) {
 }
 
 property* property_copy( property* p ) {
-	printf( "Copying property with stride %d\n", p->stride );
+	//printf( "Copying property with stride %d\n", p->stride );
 	property* p_copy = property_create( p->stride );
 	p_copy->count = p->count;
 	memcpy( p_copy->data, p->data, sizeof( float ) * p->stride * kmax_property_values );
@@ -320,11 +337,20 @@ void particle_init() {
 }
 
 particleEmitterDef* particle_loadAsset( const char* particle_file ) {
-	// try to find it if it's already loaded
 	int key = mhash( particle_file );
+	// try to find it if it's already loaded
 	void** result = map_find( particleEmitterAssets, key );
 	if ( result ) {
 		particleEmitterDef* def = *((particleEmitterDef**)result);
+		// If the file has changed, we want to update this (live-reloading)
+		if ( vfile_modifiedSinceLast( particle_file )) {
+			// Load the new file
+			term* particle_term = lisp_eval_file( lisp_global_context, particle_file );
+			particleEmitterDef* new = particle_term->data;
+			// Save over the old
+			particleEmitterDef_deInit( def );
+			*def = *new;
+		}
 		return def;
 	}
 	

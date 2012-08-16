@@ -1,6 +1,10 @@
 // Standard C libraries
 #pragma once
 
+#ifndef ANDROID
+#define LINUX_X // At the moment we only support linux apart from Android
+#endif
+
 #include <assert.h>
 #include <errno.h>
 #include <stdbool.h>
@@ -45,10 +49,6 @@
 #define otherwise :
 
 // *** Android specific
-#ifndef ANDROID
-#define LINUX_X // At the moment we only support linux apart from Android
-#endif
-
 #ifdef ANDROID
 // *** Logging
 #include <android/log.h>

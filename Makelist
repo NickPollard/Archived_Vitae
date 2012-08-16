@@ -16,7 +16,7 @@ SRCS =	src/camera.c \
 		src/terrain.c \
 		src/test.c \
 		src/ticker.c \
-		src/time.c \
+		src/vtime.c \
 		src/transform.c \
 		src/camera/chasecam.c \
 		src/camera/flycam.c \

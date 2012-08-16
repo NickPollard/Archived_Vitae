@@ -56,8 +56,11 @@ struct particleEmitter_s {
 // *** System static init
 void particle_init();
 
-// *** Emitter functions
+// *** EmitterDef functions
 particleEmitterDef* particleEmitterDef_create();
+void particleEmitterDef_deInit( particleEmitterDef* def );
+
+// *** Emitter functions
 particleEmitter* particleEmitter_create();
 particleEmitter* particle_newEmitter( particleEmitterDef* definition );
 void particleEmitter_render( void* data );

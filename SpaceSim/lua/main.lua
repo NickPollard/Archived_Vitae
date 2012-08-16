@@ -65,7 +65,7 @@ function player_fire( p )
 	vtransform_setWorldSpaceByTransform( g.transform, p.transform )
 
 	-- Attach a particle effect to the object
-	inTime( 0.2, function () vparticle_create( engine, g.transform, "dat/script/lisp/missile_particle.s" ) end )
+	inTime( 0.1, function () vparticle_create( engine, g.transform, "dat/script/lisp/missile_particle.s" ) end )
 
 	-- Apply initial velocity
 	bullet_speed = 150.0;
@@ -242,12 +242,12 @@ function setup_controls()
 		h = 200
 		player_ship.fire_trigger = vcreateTouchPad( input, x, y, w, h )
 		vcreateUIPanel( engine, x, 720-y-h, w, h )
-	else
-		player_ship.steering_input = steering_input_keyboard
-	end
 		-- throttle	
 		vcreateUIPanel( engine, 0, 200, 100, 100 )
 		vcreateUIPanel( engine, 0, 0, 100, 100 )
+	else
+		player_ship.steering_input = steering_input_keyboard
+	end
 end
 
 function start()

@@ -61,6 +61,11 @@ void* map_findOrAdd( map* m, int key ) {
 	return data;
 }
 
+void map_addOverride( map* m, int key, void* value ) {
+	void* data = map_findOrAdd( m, key );
+	memcpy( data, value, m->stride );
+}
+
 void map_delete( map* m ) {
 	mem_free( m->keys );
 	mem_free( m->values );

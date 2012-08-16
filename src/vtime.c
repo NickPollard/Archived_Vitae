@@ -1,6 +1,6 @@
 // time.c
 #include "src/common.h"
-#include "src/time.h"
+#include "src/vtime.h"
 
 void rand_init() {
 	time_v t;

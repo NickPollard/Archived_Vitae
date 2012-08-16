@@ -355,7 +355,7 @@ term* lisp_parse_exprList( inputStream* stream ) {
 }
 
 term* lisp_parse_file( const char* filename ) {
-	printf( "FILE: Loading File \"%s\" for parsing.\n", filename );
+	//printf( "FILE: Loading File \"%s\" for parsing.\n", filename );
 	size_t length = 0;
 	char* contents = vfile_contents( filename, &length );
 	vAssert( (contents) );
@@ -1217,8 +1217,6 @@ void attr_particle_texture( term* definition_term, term* texture_attr ) {
 	lisp_assert( def != 0x0 );
 	lisp_assert( isType( texture_attr, _typeString ));
 
-	printf( "Setting particle texture: %s\n", texture_attr->string );
-	//texture_request( &def->texture_diffuse, texture_attr->string );
 	def->texture_diffuse = texture_load( texture_attr->string );
 }
 

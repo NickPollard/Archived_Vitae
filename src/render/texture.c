@@ -91,7 +91,7 @@ texture* texture_load( const char* filename ) {
 	texture* t;
 	t = textureCache_find( filename );
 	if ( t ) {
-		printf( "Texture \"%s\" already loaded.\n", filename );
+		//printf( "Texture \"%s\" already loaded.\n", filename );
 		return t;
 	}
 	else {

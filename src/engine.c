@@ -212,6 +212,7 @@ void engine_init(engine* e, int argc, char** argv) {
 
 	// *** Init System
 	rand_init();
+	vfile_systemInit();
 
 	// *** Initialise OpenGL
 	// On Android this is done in response to window events
