@@ -499,6 +499,22 @@ int LUA_transform_setWorldPosition( lua_State* l ) {
 	return 0;
 }
 
+int LUA_transform_getWorldPosition( lua_State* l ) {
+	transform* t = lua_toptr( l, 1 );
+	const vector* v = transform_getWorldPosition( t );
+	lua_pushptr( l, (void*)v );
+	return 1;
+}
+
+int LUA_vector_values( lua_State* l ) {
+	const vector* v = lua_toptr( l, 1 );
+	lua_pushnumber( l, v->coord.x );
+	lua_pushnumber( l, v->coord.y );
+	lua_pushnumber( l, v->coord.z );
+	lua_pushnumber( l, v->coord.w );
+	return 4;
+}
+
 int LUA_chasecam_follow( lua_State* l ) {
 	LUA_DEBUG_PRINT( "LUA chasecam_follow\n" );
 	engine* e = lua_toptr( l, 1 );
@@ -652,7 +668,9 @@ lua_State* vlua_create( engine* e, const char* filename ) {
 	lua_registerFunction( l, LUA_transform_roll, "vtransform_roll" );
 	lua_registerFunction( l, LUA_transformVector, "vtransformVector" );
 	lua_registerFunction( l, LUA_transform_setWorldPosition, "vtransform_setWorldPosition" );
+	lua_registerFunction( l, LUA_transform_getWorldPosition, "vtransform_getWorldPosition" );
 	lua_registerFunction( l, LUA_transform_setWorldSpaceByTransform, "vtransform_setWorldSpaceByTransform" );
+	lua_registerFunction( l, LUA_vector_values, "vvector_values" );
 	lua_registerFunction( l, LUA_transform_destroy, "vdestroyTransform" );
 	lua_registerFunction( l, LUA_particle_create, "vparticle_create" );
 	// *** Camera

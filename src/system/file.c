@@ -6,9 +6,9 @@
 #include "system/hash.h"
 #include "system/string.h"
 #include <assert.h>
-#ifdef LINUX_X
+#if defined(LINUX_X) || defined(ANDROID)
 #include <sys/stat.h>
-#endif // LINUX_X
+#endif // LINUX_X || ANDROID
 #ifdef ANDROID
 #include "zip.h"
 #include <jni.h>
@@ -241,7 +241,7 @@ time_t vfile_lastModifiedTime( const char* file ) {
 }
 
 bool vfile_modifiedSinceLast( const char* file ) {
-#ifdef LINUX_X
+#if defined(LINUX_X)
 	time_t time_new, time_old;
 	struct stat file_stat;
 	int error = stat( file, &file_stat );

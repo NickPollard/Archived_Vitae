@@ -277,10 +277,11 @@ function start()
 	local width = 25.0
 	while spawn_v < 3.0 do
 		spawn_v = spawn_v + 0.3
-		spawn_target( spawn_v )
+		--spawn_target( spawn_v )
 		spawn_atCanyon( -width, spawn_v, "dat/model/skyscraper.s" )
 		spawn_atCanyon( width, spawn_v, "dat/model/skyscraper.s" )
 	end
+	--entities_spawnAll( -750.0, 750.0 )
 
 	--ship_spawner()
 end
@@ -444,6 +445,8 @@ function tick( dt )
 
 	timers_tick( dt )
 
+	update_spawns( player_ship )
+
 --[[
 	if wave_complete( current_wave ) then
 		current_wave = current_wave + 1
@@ -553,8 +556,6 @@ function test( )
 	wave[0]()
 end
 
-spawn_offset = 0.0
-spawn_interval = 10.0
 
 function spawn_index( pos )
 	return math.floor( ( pos - spawn_offset ) / spawn_interval )
@@ -565,6 +566,7 @@ function spawn_pos( i )
 end
 
 function spawn_target( v )
+	vprint( "Spawn_target, v = " .. v )
 	local u = 0.0
 	local x, y, z = vcanyon_position( u, v )
 	local target = gameobject_create( "dat/model/test_sphere.s" )
@@ -585,34 +587,43 @@ function spawn_atCanyon( u, v, model )
 	vtransform_setWorldPosition( obj.transform, position )
 end
 
--- Spawn all entities in the given range
-function entities_spawnAll( near, far )
-	previous_spawns = spawn_index( near )
-	
-	i = previous_spawns
-	while contains( near, far, spawn_pos( i )  )do
-		pos = spawn_pos( i )
-		spawn_target( pos )
-		i = i + 1
-	end
-	--[[
-	for entity in entities do
-		spawn( entity )
-	end
-	--]]
-end
-
+-- spawn properties
+spawn_offset = 0.0
+spawn_interval = 0.3
+spawn_distance = -300.0
+-- spawn tracking
 last_spawn = 0.0
 
--- Get the current spawn range from the ship and previous spawn completion
-function spawnRange( near, ship )
-	far  = Position( ship ) + spawn_distance
-	return near, far
+
+function contains( value, range_a, range_b )
+	range_max = math.max( range_a, range_b )
+	range_min = math.min( range_a, range_b )
+	return ( value < range_max ) and ( value >= range_min )
+end
+
+-- Spawn all entities in the given range
+function entities_spawnAll( near, far )
+	canyon_v_scale = 250.0
+	near = near / canyon_v_scale
+	far = far / canyon_v_scale
+	i = spawn_index( near )
+	--vprint( "Evaluating spawn index: " .. i )
+	spawn_v = i * spawn_interval
+	--vprint( "spawn_v " .. spawn_v .. ", near " .. near .. ", far " .. far )
+	while contains( spawn_v, near, far ) do
+		vprint( "Spawning at " .. spawn_v .. "!" )
+		spawn_target( spawn_v )
+		i = i + 1
+		spawn_v = i * spawn_interval
+		--vprint( "Evaluating spawn index: " .. i )
+	end
 end
 
 -- Spawn all entities that need to be spawned this frame
-function update_spawns()
-	near, far = spawnRange( last_spawn, player_ship )
-	entities_spawnAll( near, far )
+function update_spawns( ship )
+	ship_pos = vtransform_getWorldPosition( ship.transform )
+	x,y,z,w = vvector_values( ship_pos )
+	far = z + spawn_distance
+	entities_spawnAll( last_spawn, far )
 	last_spawn = far;
 end
