@@ -142,9 +142,7 @@ end
 
 -- Create a player. The player is a specialised form of Gameobject
 function playership_create()
-	vprint( "playership_create" )
 	local p = gameobject_create( "dat/model/ship_hd.s" )
-
 	p.speed = 0.0
 	return p
 end
@@ -260,17 +258,36 @@ function setup_controls()
 	end
 end
 
-function start()
+function player_ship_collisionHandler( ship, collider )
+	-- stop the ship
+	ship.speed = 0.0
+	local no_velocity = Vector( 0.0, 0.0, 0.0, 0.0 )
+	vphysic_setVelocity( ship.physic, no_velocity )
+
+	-- destroy it
+	spawn_explosion( ship.transform )
+	gameobject_destroy( ship )
+
+	-- queue a restart
+	inTime( 2.0, restart )
+end
+
+function restart()
 	-- We create a player object which is a game-specific Lua class
 	-- The player class itself creates several native C classes in the engine
 	player_ship = playership_create()
+	local no_velocity = Vector( 0.0, 0.0, 0.0, 0.0 )
+	vphysic_setVelocity( player_ship.physic, no_velocity )
+	vbody_registerCollisionCallback( player_ship.body, player_ship_collisionHandler )
 	setup_controls()
-
-	vtransform_yaw( player_ship.transform, math.pi/2 * 0.7 );
+	vtransform_yaw( player_ship.transform, math.pi * 2 * 1.32 );
 	chasecam = vchasecam_follow( engine, player_ship.transform )
 	flycam = vflycam( engine )
 	vscene_setCamera( chasecam )
+end
 
+function start()
+	restart()
 
 	-- Test spawns
 	spawn_v = -3.0
