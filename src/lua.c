@@ -180,7 +180,7 @@ int LUA_createbodySphere( lua_State* l ) {
 }
 
 int LUA_deleteModelInstance( lua_State* l ) {
-	printf( "Delete Model Instance.\n" );
+	//printf( "Delete Model Instance.\n" );
 	modelInstance* m = lua_toptr( l, 1 );
 	scene_removeModel( theScene, m );
 	// TODO: remove from pool (not mem-free)
@@ -523,7 +523,7 @@ int LUA_chasecam_follow( lua_State* l ) {
 	startTick( e, (void*)c, chasecam_tick );	
 	c->cam.trans = transform_createAndAdd( theScene );
 	theScene->cam = &c->cam;
-	c->target = t;
+	chasecam_setTarget( c, t );
 	lua_pushptr( l, c );
 	return 1;
 }
