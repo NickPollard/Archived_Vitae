@@ -196,3 +196,19 @@ const vector* transform_getWorldPosition( transform* t ) {
 quaternion transform_getWorldRotation( transform* t ) {
 	return matrix_getRotation( t->world );
 }
+
+void transform_setWorldRotationMatrix( transform* t, matrix world_m ) {
+	transform_concatenate( t );
+	// parent * local_m = world_m;
+	if ( t->parent ) {
+		matrix inv_parent, local_m;
+		matrix_inverse( inv_parent, t->parent->world );
+		matrix_mul( local_m, inv_parent, world_m );
+		matrix_copyRotation( t->local, local_m );
+	}
+	else {
+		matrix_copyRotation( t->local, world_m );
+	}
+	printf( "transform set rotation:\n" );
+	matrix_print( t->local );
+}

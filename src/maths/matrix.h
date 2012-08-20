@@ -25,7 +25,7 @@ void matrix_setIdentity(matrix m);
 // Convert a V matrix to an OpenGL matrix
 const GLfloat* matrix_getGlMatrix(matrix m);
 
-// Multiply two matrices together
+// Multiply two matrices together ( A * B )
 void matrix_mul(matrix dst, matrix a, matrix b);
 
 // Build a matrix from a rotation and translation
@@ -47,6 +47,9 @@ void matrix_rotZ( matrix dst, float angle );
 
 // Build a rotation matrix (no translation) from a quaternion
 void matrix_fromQuaternion( matrix dst, quaternion q );
+
+void matrix_look( matrix m, vector forward );
+void matrix_copyRotation( matrix dst, matrix src );
 
 // Print a matrix to the output
 void matrix_print( matrix src );

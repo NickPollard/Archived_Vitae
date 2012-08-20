@@ -536,6 +536,22 @@ void matrix_fromRotationTranslation( matrix m, quaternion rotation, vector trans
 	matrix_setTranslation( m, &translation );
 }
 
+// Assume up is +y
+void matrix_look( matrix m, vector forward ) {
+	vector up = y_axis;
+	vector right;
+	Cross( &right, &up, &forward );
+	matrix_setColumn( m, 0, &right );
+	matrix_setColumn( m, 1, &up );
+	matrix_setColumn( m, 2, &forward );
+}
+
+void matrix_copyRotation( matrix dst, matrix src ) {
+	matrix_setColumn( dst, 0, matrix_getCol( src, 0 ));
+	matrix_setColumn( dst, 1, matrix_getCol( src, 1 ));
+	matrix_setColumn( dst, 2, matrix_getCol( src, 2 ));
+}
+
 #ifdef UNIT_TEST
 void test_matrix() {
 	matrix a, b, c;
@@ -682,6 +698,18 @@ void test_matrix() {
 		matrix_fromQuaternion( m, q );
 		vector v__ = matrix_vecMul( m, &v );
 		test( vector_equal( &v_, &v__ ), "quaternion rotation = quaternion->matrix", "quaternion rotation != quaternion->matrix" );
+	}
+
+	// matrix_look
+	{
+		matrix m;
+		matrix_look( m, z_axis );
+		const vector* up = matrix_getCol( m, 1 );
+		const vector* right = matrix_getCol( m, 0 );
+		const vector* forward = matrix_getCol( m, 2 );
+		test( vector_equal( up, &y_axis ), "matrix_look success", "matrix_look fail");
+		test( vector_equal( right, &x_axis ), "matrix_look success", "matrix_look fail");
+		test( vector_equal( forward, &z_axis ), "matrix_look success", "matrix_look fail");
 	}
 
 	// Test matrix_fromEuler();

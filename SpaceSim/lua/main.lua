@@ -309,11 +309,9 @@ function start()
 	local width = 25.0
 	while spawn_v < 3.0 do
 		spawn_v = spawn_v + 0.3
-		--spawn_target( spawn_v )
 		spawn_atCanyon( -width, spawn_v, "dat/model/skyscraper.s" )
 		spawn_atCanyon( width, spawn_v, "dat/model/skyscraper.s" )
 	end
-	--entities_spawnAll( -750.0, 750.0 )
 
 	--ship_spawner()
 end
@@ -598,12 +596,22 @@ function spawn_pos( i )
 end
 
 function spawn_target( v )
+	local spawn_height = 20.0
 	vprint( "Spawn_target, v = " .. v )
+
+	-- position
 	local u = 0.0
 	local x, y, z = vcanyon_position( u, v )
+	local position = Vector( x, y + spawn_height, z, 1.0 )
 	local target = gameobject_create( "dat/model/target.s" )
-	local position = Vector( x, y + 10.0, z, 1.0 )
 	vtransform_setWorldPosition( target.transform, position )
+
+	-- Orientation
+	local facing_x, facing_y, facing_z = vcanyon_position( u, v - ( 1.0 / canyon_v_scale ))
+	local facing_position = Vector( facing_x, y + spawn_height, facing_z, 1.0 )
+	vtransform_facingWorld( target.transform, facing_position )
+
+	-- Physics
 	vbody_registerCollisionCallback( target.body, target_collisionHandler )
 	vbody_setLayers( target.body, collision_layer_enemy )
 	vbody_setCollidableLayers( target.body, collision_layer_player )
@@ -635,9 +643,10 @@ function contains( value, range_a, range_b )
 	return ( value < range_max ) and ( value >= range_min )
 end
 
+canyon_v_scale = 250.0
+
 -- Spawn all entities in the given range
 function entities_spawnAll( near, far )
-	canyon_v_scale = 250.0
 	near = near / canyon_v_scale
 	far = far / canyon_v_scale
 	i = spawn_index( near )

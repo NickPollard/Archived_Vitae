@@ -59,4 +59,6 @@ void transform_yaw( transform* t, float yaw );
 void transform_pitch( transform* t, float pitch );
 void transform_roll( transform* t, float roll );
 
+void transform_setWorldRotationMatrix( transform* t, matrix m );
+
 #endif // __TRANSFORM_H__

@@ -552,6 +552,20 @@ int LUA_transform_setWorldSpaceByTransform( lua_State* l ) {
 	return 0;
 }
 
+int LUA_transform_facingWorld( lua_State* l ) {
+	transform* t = lua_toptr( l, 1 );
+	const vector* look_at = lua_toptr( l, 2 );
+	const vector* position = transform_getWorldPosition( t );
+	vector displacement;
+	Sub( &displacement, look_at, position );
+	Normalize( &displacement, &displacement );
+	matrix m;
+	matrix_look( m, displacement );
+	transform_setWorldRotationMatrix( t, m );
+	return 0;
+}
+
+
 int LUA_particle_create( lua_State* l ) {
 	engine* e = lua_toptr( l, 1 );
 	transform* t = lua_toptr( l, 2 );
@@ -681,6 +695,8 @@ lua_State* vlua_create( engine* e, const char* filename ) {
 	lua_registerFunction( l, LUA_transform_setWorldPosition, "vtransform_setWorldPosition" );
 	lua_registerFunction( l, LUA_transform_getWorldPosition, "vtransform_getWorldPosition" );
 	lua_registerFunction( l, LUA_transform_setWorldSpaceByTransform, "vtransform_setWorldSpaceByTransform" );
+	lua_registerFunction( l, LUA_transform_facingWorld, "vtransform_facingWorld" );
+
 	lua_registerFunction( l, LUA_vector_values, "vvector_values" );
 	lua_registerFunction( l, LUA_transform_destroy, "vdestroyTransform" );
 	lua_registerFunction( l, LUA_particle_create, "vparticle_create" );
