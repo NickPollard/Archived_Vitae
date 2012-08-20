@@ -206,8 +206,11 @@ void particleEmitter_render( void* data ) {
 	// The transformation has been applied already for particle positions
 	matrix_setIdentity( modelview );
 	int index_count = 6 * p->count;
-	drawCall* draw = drawCall_create( &renderPass_alpha, resources.shader_particle, index_count, p->element_buffer, p->vertex_buffer, p->definition->texture_diffuse->gl_tex, modelview );
-	draw->depth_mask = GL_FALSE;
+	// We only need to send this to the GPU if we actually have something to draw (i.e. particles have been emitted)
+	if ( index_count > 0 ) {
+		drawCall* draw = drawCall_create( &renderPass_alpha, resources.shader_particle, index_count, p->element_buffer, p->vertex_buffer, p->definition->texture_diffuse->gl_tex, modelview );
+		draw->depth_mask = GL_FALSE;
+	}
 }
 
 property* property_create( int stride ) {
