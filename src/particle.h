@@ -48,6 +48,7 @@ struct particleEmitter_s {
 	float	next_spawn;
 	float	emitter_age;
 	particleEmitterDef*	definition;
+	bool	destroyed;
 
 	vertex*		vertex_buffer;
 	GLushort*	element_buffer;
@@ -65,6 +66,8 @@ particleEmitter* particleEmitter_create();
 particleEmitter* particle_newEmitter( particleEmitterDef* definition );
 void particleEmitter_render( void* data );
 void particleEmitter_tick( void* e, float dt, engine* eng );
+void particleEmitter_destroy( particleEmitter* e );
+void particleEmitter_delete( particleEmitter* e );
 
 // *** Asset loading
 particleEmitterDef* particle_loadAsset( const char* particle_file );

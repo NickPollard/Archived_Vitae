@@ -46,6 +46,7 @@ particleEmitter* particleEmitter_create() {
 	p->definition = NULL;
 	p->vertex_buffer = mem_alloc( sizeof( vertex ) * kMaxParticleVerts );
 	p->element_buffer = mem_alloc( sizeof( vertex ) * kMaxParticleVerts );
+	p->destroyed = false;
 
 	return p;
 }
@@ -101,30 +102,39 @@ void particleEmitter_tick( void* data, float dt, engine* eng ) {
 
 	// Spawn new particle
 	vAssert( e->definition->spawn_rate );
-	// Burst mode means we batch-spawn particles on keys, otherwise spawn nothing
-	if ( e->definition->flags & kParticleBurst ) {
-		// TODO - don't allocate here
-		property* keys = property_range( e->definition->spawn_rate, e->emitter_age, e->emitter_age + dt );
-		for ( int key = 0; key < keys->count; ++key ) {
-			int count = (int)property_valuef( e->definition->spawn_rate, key );
-			for ( int i = 0; i < count; ++i ) {
+	// Only spawn if we haven't been requested to destroy
+	if ( !e->destroyed ) {
+		// Burst mode means we batch-spawn particles on keys, otherwise spawn nothing
+		if ( e->definition->flags & kParticleBurst ) {
+			// TODO - don't allocate here
+			property* keys = property_range( e->definition->spawn_rate, e->emitter_age, e->emitter_age + dt );
+			for ( int key = 0; key < keys->count; ++key ) {
+				int count = (int)property_valuef( e->definition->spawn_rate, key );
+				for ( int i = 0; i < count; ++i ) {
+					particleEmitter_spawnParticle( e );
+				}
+			}
+			mem_free( keys );
+		}
+		// Default is normal interpolated spawning
+		else {
+			e->next_spawn += dt;
+			float spawn_rate = property_samplef( e->definition->spawn_rate, e->emitter_age );
+			float spawn_interval = 1.f / spawn_rate;
+			// We might spawn more than one particle per frame, if the frame is long or the spawn interval is short
+			while ( e->next_spawn > spawn_interval ) {
+				e->next_spawn = fmaxf( 0.f, e->next_spawn - spawn_interval);
 				particleEmitter_spawnParticle( e );
 			}
 		}
-		mem_free( keys );
-	}
-	// Default is normal interpolated spawning
-	else {
-		e->next_spawn += dt;
-		float spawn_rate = property_samplef( e->definition->spawn_rate, e->emitter_age );
-		float spawn_interval = 1.f / spawn_rate;
-		// We might spawn more than one particle per frame, if the frame is long or the spawn interval is short
-		while ( e->next_spawn > spawn_interval ) {
-			e->next_spawn = fmaxf( 0.f, e->next_spawn - spawn_interval);
-			particleEmitter_spawnParticle( e );
-		}
 	}
 	e->emitter_age += dt;
+
+	if ( e->destroyed && e->count <= 0 ) {
+		engine_removeRender( eng, e, particleEmitter_render );
+		stopTick( eng, e, particleEmitter_tick );
+		particleEmitter_delete( e );
+	}
 
 	// TEST
 	if ( e->emitter_age > 5.f ) {
@@ -368,4 +378,18 @@ particleEmitter* particle_newEmitter( particleEmitterDef* definition ) {
 	particleEmitter* p = particleEmitter_create();
 	p->definition = definition;
 	return p;
+}
+
+void particleEmitter_destroy( particleEmitter* e ) {
+	e->destroyed = true;
+}
+
+void particleEmitter_delete( particleEmitter* e ) {
+	// Does not explicitly remove the definition
+	vAssert( e );
+	vAssert( e->vertex_buffer );
+	vAssert( e->element_buffer );
+	mem_free( e->vertex_buffer );
+	mem_free( e->element_buffer );
+	mem_free( e );
 }

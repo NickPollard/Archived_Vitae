@@ -583,6 +583,14 @@ int LUA_particle_create( lua_State* l ) {
 	engine_addRender( e, emitter, particleEmitter_render );
 	startTick( e, emitter, particleEmitter_tick );
 	
+	lua_pushptr( l, emitter );
+	return 1;
+}
+
+int LUA_particle_destroy( lua_State* l ) {
+	particleEmitter* emitter = lua_toptr( l, 1 );
+	vAssert( emitter );
+	particleEmitter_destroy( emitter );
 	return 0;
 }
 
@@ -700,6 +708,7 @@ lua_State* vlua_create( engine* e, const char* filename ) {
 	lua_registerFunction( l, LUA_vector_values, "vvector_values" );
 	lua_registerFunction( l, LUA_transform_destroy, "vdestroyTransform" );
 	lua_registerFunction( l, LUA_particle_create, "vparticle_create" );
+	lua_registerFunction( l, LUA_particle_destroy, "vparticle_destroy" );
 	// *** Collision
 	lua_registerFunction( l, LUA_body_setTransform, "vbody_setTransform" );
 	lua_registerFunction( l, LUA_body_registerCollisionCallback, "vbody_registerCollisionCallback" );

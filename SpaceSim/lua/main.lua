@@ -38,11 +38,18 @@ function gameobject_create( model_file )
 end
 
 function gameobject_destroy( g )
-	inTime( 0.3, function () vdeleteModelInstance( g.model ) 
+	inTime( 0.2, function () vdeleteModelInstance( g.model ) 
 							vdestroyTransform( g.transform )
 							--vdestroyPhysic( g.physic )
 				end )
 	vdestroyBody( g.body )
+end
+
+function spawn_missile_explosion( position )
+	-- Attach a particle effect to the object
+	local t = vcreateTransform()
+	vparticle_create( engine, t, "dat/script/lisp/missile_explosion.s" )
+	vtransform_setWorldSpaceByTransform( t, position )
 end
 
 function spawn_explosion( position )
@@ -68,12 +75,24 @@ function player_fire( ship )
 	end
 end
 
+function missile_collisionHandler( missile, other )
+	spawn_missile_explosion( missile.transform )
+	local no_velocity = Vector( 0.0, 0.0, 0.0, 0.0 )
+	vphysic_setVelocity( missile.physic, no_velocity )
+	vdeleteModelInstance( missile.model ) 
+	vdestroyTransform( missile.transform )
+	vdestroyBody( missile.body )
+	vparticle_destroy( missile.glow )
+	vparticle_destroy( missile.trail )
+end
+
 function fire_missile( ship, offset )
 	local projectile = {}
 	-- Create a new Projectile
 	projectile = gameobject_create( projectile_model );
 	vbody_setLayers( projectile.body, collision_layer_player )
 	vbody_setCollidableLayers( projectile.body, collision_layer_enemy )
+	vbody_registerCollisionCallback( projectile.body, missile_collisionHandler )
 
 	-- Position it at the correct muzzle position and rotation
 	muzzle_world_pos = vtransformVector( ship.transform, muzzle_pos )
@@ -81,8 +100,8 @@ function fire_missile( ship, offset )
 	vtransform_setWorldPosition( projectile.transform, muzzle_world_pos )
 
 	-- Attach a particle effect to the object
-	vparticle_create( engine, projectile.transform, "dat/script/lisp/missile_glow.s" )
-	inTime( 0.2, function () vparticle_create( engine, projectile.transform, "dat/script/lisp/missile_particle.s" ) end )
+	projectile.glow = vparticle_create( engine, projectile.transform, "dat/script/lisp/missile_glow.s" )
+	inTime( 0.2, function () projectile.trail = vparticle_create( engine, projectile.transform, "dat/script/lisp/missile_particle.s" ) end )
 
 	-- Apply initial velocity
 	bullet_speed = 150.0;
