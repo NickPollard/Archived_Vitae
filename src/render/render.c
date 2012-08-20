@@ -671,6 +671,21 @@ drawCall* drawCall_create( renderPass* pass, shader* vshader, int count, GLushor
 	return draw;
 }
 
+void render_printShader( shader* s ) {
+	if ( s == resources.shader_default )
+		printf( "shader: default\n" );
+	if ( s == resources.shader_particle )
+		printf( "shader: particle\n" );
+	if ( s == resources.shader_terrain )
+		printf( "shader: terrain\n" );
+	if ( s == resources.shader_skybox )
+		printf( "shader: skybox\n" );
+	if ( s == resources.shader_ui )
+		printf( "shader: ui\n" );
+	if ( s == resources.shader_filter )
+		printf( "shader: filter\n" );
+}
+
 void render_drawCall_draw( drawCall* draw ) {
 	// Bind Correct buffers
 	//printf( "drawCall_draw 1\n" );
@@ -705,6 +720,8 @@ void render_drawCall_draw( drawCall* draw ) {
 
 	// Now Draw!
 	VERTEX_ATTRIBS( VERTEX_ATTRIB_POINTER );
+	vAssert( draw->element_count > 0 );
+	//render_printShader( draw->vitae_shader );
 	glDrawElements( GL_TRIANGLES, draw->element_count, GL_UNSIGNED_SHORT, (void*)(uintptr_t)draw->element_buffer_offset );
 	VERTEX_ATTRIBS( VERTEX_ATTRIB_DISABLE_ARRAY );
 	//printf( "drawCall_draw 4\n" );

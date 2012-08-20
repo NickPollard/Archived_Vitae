@@ -56,11 +56,16 @@ function spawn_explosion( position )
 end
 
 projectile_model = "dat/model/missile.s"
+weapons_cooldown = 0.5
+
 function player_fire( ship )
-	muzzle_pos = Vector( 3.0, 0.0, 0.0, 1.0 );
-	fire_missile( ship, muzzle_pos );
-	muzzle_pos = Vector( -3.0, 0.0, 0.0, 1.0 );
-	fire_missile( ship, muzzle_pos );
+	if ship.cooldown <= 0.0 then
+		muzzle_pos = Vector( 3.0, 0.0, 0.0, 1.0 );
+		fire_missile( ship, muzzle_pos );
+		muzzle_pos = Vector( -3.0, 0.0, 0.0, 1.0 );
+		fire_missile( ship, muzzle_pos );
+		ship.cooldown = weapons_cooldown
+	end
 end
 
 function fire_missile( ship, offset )
@@ -146,6 +151,7 @@ end
 function playership_create()
 	local p = gameobject_create( "dat/model/ship_hd.s" )
 	p.speed = 0.0
+	p.cooldown = 0.0
 	return p
 end
 
@@ -387,7 +393,7 @@ function steering_input_keyboard()
 	return yaw, pitch
 end
 
-function playership_tick()
+function playership_tick( ship, dt )
 	acceleration = 16.0
 	yaw_per_second = 1.5 
 	pitch_per_second = 1.5
@@ -395,7 +401,7 @@ function playership_tick()
 
 	local input_yaw = 0.0
 	local input_pitch = 0.0
-	input_yaw, input_pitch = player_ship.steering_input()
+	input_yaw, input_pitch = ship.steering_input()
 
 	-- set to -1.0 to invert
 	invert_pitch = 1.0
@@ -405,31 +411,31 @@ function playership_tick()
 
 	-- throttle
 	if vkeyHeld( input, key.w )  or vtouchHeld( input, 000.0, -width*3, 100.0, -width*2 ) then
-		player_ship.speed = player_ship.speed + delta_speed
+		ship.speed = ship.speed + delta_speed
 	end
 	if vkeyHeld( input, key.s )  or vtouchHeld( input, 000.0, -width, 100.0, -1.0 ) then
-		player_ship.speed = player_ship.speed - delta_speed
+		ship.speed = ship.speed - delta_speed
 	end
 
-	vtransform_yaw( player_ship.transform, yaw );
-	vtransform_pitch( player_ship.transform, pitch );
+	vtransform_yaw( ship.transform, yaw );
+	vtransform_pitch( ship.transform, pitch );
 
 	-- Gunfire
 	local fired = false
 	if touch_enabled then
-		fired, joypad_x, joypad_y = vtouchPadTouched( player_ship.fire_trigger )
+		fired, joypad_x, joypad_y = vtouchPadTouched( ship.fire_trigger )
 	else
 		fired = vkeyPressed( input, key.space )
 	end
 	if fired then
-		player_fire( player_ship )
+		player_fire( ship )
 	end
+	ship.cooldown = ship.cooldown - dt
 
-
-
-	ship_v = Vector( 0.0, 0.0, player_ship.speed, 0.0 )
-	world_v = vtransformVector( player_ship.transform, ship_v )
-	vphysic_setVelocity( player_ship.physic, world_v )
+	-- Physics
+	ship_v = Vector( 0.0, 0.0, ship.speed, 0.0 )
+	world_v = vtransformVector( ship.transform, ship_v )
+	vphysic_setVelocity( ship.physic, world_v )
 end
 
 function toggle_camera()
@@ -465,7 +471,7 @@ function tick( dt )
 		start()
 	end
 
-	playership_tick()
+	playership_tick( player_ship, dt )
 
 	debug_tick()
 
@@ -595,7 +601,7 @@ function spawn_target( v )
 	vprint( "Spawn_target, v = " .. v )
 	local u = 0.0
 	local x, y, z = vcanyon_position( u, v )
-	local target = gameobject_create( "dat/model/test_sphere.s" )
+	local target = gameobject_create( "dat/model/target.s" )
 	local position = Vector( x, y + 10.0, z, 1.0 )
 	vtransform_setWorldPosition( target.transform, position )
 	vbody_registerCollisionCallback( target.body, target_collisionHandler )

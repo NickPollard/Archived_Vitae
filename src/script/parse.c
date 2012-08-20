@@ -799,6 +799,7 @@ void* s_mesh( sterm* raw_properties ) {
 	const char* diffuse_texture = property_find( args, "diffuse_texture" );
 	mesh* m = mesh_loadObj( filename );
 	if ( diffuse_texture ) {
+		printf( "Diffuse Texture: \"%s\"\n", diffuse_texture );
 		texture_request( &m->texture_diffuse, diffuse_texture );
 //		m->texture_diffuse = texture_loadTGA( diffuse_texture );
 	}
