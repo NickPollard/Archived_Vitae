@@ -112,7 +112,9 @@ bool shape_colliding( shape* a, shape* b, matrix matrix_a, matrix matrix_b ) {
 bool body_colliding( body* a, body* b ) {
 	vAssert( a->trans );
 	vAssert( b->trans );
-	return shape_colliding( a->shape, b->shape, a->trans->world, b->trans->world );
+	bool test_collision =	( a->collide_with & b->layers ) |
+	   						( a->layers & b->collide_with );
+	return test_collision && shape_colliding( a->shape, b->shape, a->trans->world, b->trans->world );
 }
 
 bool body_collided( body* b ) {
@@ -171,6 +173,12 @@ void test_collision() {
 	body* body_a = body_create( sphere_create( 1.f ), t_a );
 	body* body_b = body_create( sphere_create( 1.f ), t_b );
 	body* body_c = body_create( sphere_create( 1.f ), t_c );
+	body_a->layers |= 0x1;
+	body_b->layers |= 0x1;
+	body_c->layers |= 0x1;
+	body_a->collide_with |= 0x1;
+	body_b->collide_with |= 0x1;
+	body_c->collide_with |= 0x1;
 
 	collision_init();
 	collision_addBody( body_a );

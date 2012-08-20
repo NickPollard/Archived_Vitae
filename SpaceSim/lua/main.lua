@@ -67,6 +67,8 @@ function fire_missile( ship, offset )
 	local projectile = {}
 	-- Create a new Projectile
 	projectile = gameobject_create( projectile_model );
+	vbody_setLayers( projectile.body, collision_layer_player )
+	vbody_setCollidableLayers( projectile.body, collision_layer_enemy )
 
 	-- Position it at the correct muzzle position and rotation
 	muzzle_world_pos = vtransformVector( ship.transform, muzzle_pos )
@@ -272,13 +274,20 @@ function player_ship_collisionHandler( ship, collider )
 	inTime( 2.0, restart )
 end
 
+collision_layer_player = 1
+collision_layer_enemy = 2
+
 function restart()
 	-- We create a player object which is a game-specific Lua class
 	-- The player class itself creates several native C classes in the engine
 	player_ship = playership_create()
 	local no_velocity = Vector( 0.0, 0.0, 0.0, 0.0 )
 	vphysic_setVelocity( player_ship.physic, no_velocity )
+
 	vbody_registerCollisionCallback( player_ship.body, player_ship_collisionHandler )
+	vbody_setLayers( player_ship.body, collision_layer_player )
+	vbody_setCollidableLayers( player_ship.body, collision_layer_enemy )
+
 	setup_controls()
 	vtransform_yaw( player_ship.transform, math.pi * 2 * 1.32 );
 	chasecam = vchasecam_follow( engine, player_ship.transform )
@@ -590,6 +599,8 @@ function spawn_target( v )
 	local position = Vector( x, y + 10.0, z, 1.0 )
 	vtransform_setWorldPosition( target.transform, position )
 	vbody_registerCollisionCallback( target.body, target_collisionHandler )
+	vbody_setLayers( target.body, collision_layer_enemy )
+	vbody_setCollidableLayers( target.body, collision_layer_player )
 end
 
 function target_collisionHandler( target, collider )

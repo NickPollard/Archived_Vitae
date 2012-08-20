@@ -53,6 +53,8 @@ void chasecam_tick( void* data, float dt, engine* eng ) {
 void chasecam_setTarget( chasecam* c, transform* t ) {
 	c->target = t;
 	// When setting a target, jump straight to position and rotation
+	// Concatenate the target transform to make sure it's up-to-date
+	transform_concatenate( c->target );
 	c->position = chasecam_targetPosition( c );
 	c->rotation = chasecam_targetRotation( c );
 }

@@ -24,6 +24,7 @@ typedef struct shape_s {
 typedef struct body_s body;
 
 typedef void (*collisionCallback)( body* this, body* collided_width, void* data );
+typedef uint8_t collision_layers_t;
 
 struct body_s {
 	transform* trans;
@@ -32,6 +33,8 @@ struct body_s {
 		void* data;	// Pointer for storing arbitrary data - e.g. the owner 
 		int intdata;
 	};
+	collision_layers_t layers;
+	collision_layers_t collide_with;
 	collisionCallback callback;
 	void* callback_data;
 };

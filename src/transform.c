@@ -173,29 +173,20 @@ void transform_printDebug( transform* t, debugtextframe* f ) {
 
 void transform_yaw( transform* t, float yaw ) {
 	matrix m;
-	//vector angles = Vector( 0.f, yaw, 0.f, 0.f );
-	//matrix_fromEuler( m, &angles );
 	matrix_rotY( m, yaw );
 	matrix_mul( t->local, t->local, m );
-//	matrix_normalize( t->local );
 }
 
 void transform_pitch( transform* t, float pitch ) {
 	matrix m;
-	//vector angles = Vector( pitch, 0.f, 0.f, 0.f );
-	//matrix_fromEuler( m, &angles );
 	matrix_rotX( m, pitch );
 	matrix_mul( t->local, t->local, m );
-//	matrix_normalize( t->local );
 }
 
 void transform_roll( transform* t, float roll ) {
 	matrix m;
-	//vector angles = Vector( 0.f, 0.f, roll , 0.f );
-	//matrix_fromEuler( m, &angles );
 	matrix_rotZ( m, roll );
 	matrix_mul( t->local, t->local, m );
-//	matrix_normalize( t->local );
 }
 
 const vector* transform_getWorldPosition( transform* t ) {

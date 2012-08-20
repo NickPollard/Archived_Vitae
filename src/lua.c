@@ -603,6 +603,20 @@ int LUA_createUIPanel( lua_State* l ) {
 	return 0;
 }
 
+int LUA_body_setLayers( lua_State* l ) {
+	body* b = lua_toptr( l, 1 );
+	collision_layers_t layers = (collision_layers_t)lua_tonumber( l, 2 );
+	b->layers = layers;
+	return 0;
+}
+
+int LUA_body_setCollidableLayers( lua_State* l ) {
+	body* b = lua_toptr( l, 1 );
+	collision_layers_t layers = (collision_layers_t)lua_tonumber( l, 2 );
+	b->collide_with = layers;
+	return 0;
+}
+
 void lua_setConstantBool( lua_State* l, const char* name, bool b ) {
 	lua_pushboolean( l, b );
 	lua_setglobal( l, name ); // Store in the global variable named <name>
@@ -656,9 +670,6 @@ lua_State* vlua_create( engine* e, const char* filename ) {
 	lua_registerFunction( l, LUA_setWorldSpacePosition, "vsetWorldSpacePosition" );
 	lua_registerFunction( l, LUA_model_setTransform, "vmodel_setTransform" );
 	lua_registerFunction( l, LUA_physic_setTransform, "vphysic_setTransform" );
-	lua_registerFunction( l, LUA_body_setTransform, "vbody_setTransform" );
-	lua_registerFunction( l, LUA_body_registerCollisionCallback, "vbody_registerCollisionCallback" );
-	lua_registerFunction( l, LUA_body_destroy, "vdestroyBody" );
 	lua_registerFunction( l, LUA_scene_addModel, "vscene_addModel" );
 	lua_registerFunction( l, LUA_scene_removeModel, "vscene_removeModel" );
 	lua_registerFunction( l, LUA_physic_activate, "vphysic_activate" );
@@ -673,6 +684,12 @@ lua_State* vlua_create( engine* e, const char* filename ) {
 	lua_registerFunction( l, LUA_vector_values, "vvector_values" );
 	lua_registerFunction( l, LUA_transform_destroy, "vdestroyTransform" );
 	lua_registerFunction( l, LUA_particle_create, "vparticle_create" );
+	// *** Collision
+	lua_registerFunction( l, LUA_body_setTransform, "vbody_setTransform" );
+	lua_registerFunction( l, LUA_body_registerCollisionCallback, "vbody_registerCollisionCallback" );
+	lua_registerFunction( l, LUA_body_destroy, "vdestroyBody" );
+	lua_registerFunction( l, LUA_body_setCollidableLayers, "vbody_setCollidableLayers" );
+	lua_registerFunction( l, LUA_body_setLayers, "vbody_setLayers" );
 	// *** Camera
 	lua_registerFunction( l, LUA_chasecam_follow, "vchasecam_follow" );
 	lua_registerFunction( l, LUA_flycam, "vflycam" );
