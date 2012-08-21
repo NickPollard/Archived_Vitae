@@ -75,6 +75,7 @@ typedef struct gl_resources_s {
 	shader* shader_skybox;
 	shader* shader_ui;
 	shader* shader_filter;
+	shader* shader_debug;
 } gl_resources;
 
 struct vertex_s {

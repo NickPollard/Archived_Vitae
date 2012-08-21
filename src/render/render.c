@@ -342,6 +342,7 @@ void render_buildShaders() {
 	resources.shader_skybox		= shader_load( "dat/shaders/skybox.v.glsl",			"dat/shaders/skybox.f.glsl" );
 	resources.shader_ui			= shader_load( "dat/shaders/ui.v.glsl",				"dat/shaders/ui.f.glsl" );
 	resources.shader_filter		= shader_load( "dat/shaders/filter.v.glsl",			"dat/shaders/filter.f.glsl" );
+	resources.shader_debug		= shader_load( "dat/shaders/debug_lines.v.glsl",	"dat/shaders/debug_lines.f.glsl" );
 
 #define GET_UNIFORM_LOCATION( var ) \
 	resources.uniforms.var = shader_findConstant( mhash( #var )); \
