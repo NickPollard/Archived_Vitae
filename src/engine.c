@@ -143,10 +143,6 @@ void engine_tick( engine* e ) {
 
 	engine_tickTickers( e, dt );
 
-	vector from = Vector( 360.f, 360.f, 0.f, 1.f );
-	vector to = Vector( 480.f, 480.f, 0.f, 1.f );
-	vector green = Vector( 0.f, 1.f, 0.f, 1.f );
-	debugdraw_line2d( from, to, green );
 	//countVisibleParticleEmitters( e );
 
 	if ( e->onTick && luaCallback_enabled( e->onTick ) ) {

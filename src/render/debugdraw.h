@@ -13,6 +13,7 @@ void debugdraw_drawRect2D( vector* from, vector* to );
 void debugdraw_line2d( vector from, vector to, vector color );
 void debugdraw_line3d( vector from, vector to, vector color );
 void debugdraw_sphere( vector origin, float radius, vector color );
+void debugdraw_wireframeMesh( int vert_count, vector* verts, int index_count, uint16_t* indices, matrix trans, vector color );
 
 void debugdraw_preTick( float dt );
 

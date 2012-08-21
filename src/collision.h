@@ -1,7 +1,7 @@
 // collision.h
 
 #define kMaxCollisionEvents 256
-#define kMaxShapeTypes 2
+#define kMaxShapeTypes 3
 #define kMaxCollidingBodies 256
 
 #include "maths/maths.h"
@@ -10,13 +10,23 @@
 
 enum shapeType {
 	shapeInvalid,
-	shapeSphere
+	shapeSphere,
+	shapeMesh
 };
+
+
+typedef struct collisionMesh_s {
+	vector* verts;	
+	int vert_count;
+	uint16_t* indices;
+	int index_count;
+} collisionMesh;
 
 typedef struct shape_s {
 	enum shapeType type;
 	union {
 		float radius;
+		collisionMesh* collision_mesh;
 	};
 	vector origin;
 } shape;

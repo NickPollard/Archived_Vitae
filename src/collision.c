@@ -29,11 +29,6 @@ void collision_event( body* a, body* b ) {
 	//printf( "Collision! 0x" xPTRf " 0x" xPTRf "\n", (uintptr_t)a, (uintptr_t)b );
 }
 
-void collision_init() {
-	body_count = 0;
-	collision_clearEvents();
-}
-
 void collision_addBody( body* b ) {
 	bodies[body_count++] = b;
 }
@@ -79,12 +74,30 @@ void collision_generateEvents() {
 				collision_event( bodies[i], bodies[j] );
 }
 
-void collision_debugdraw() {
+void collisionMesh_drawWireframe( collisionMesh* m, matrix trans, vector color ) {
+	debugdraw_wireframeMesh( m->vert_count, m->verts, m->index_count, m->indices, trans, color );
+}
+
+void body_debugdraw( body* b ) {
 	vector green = Vector( 0.f, 1.f, 0.f, 1.f );
+	switch ( b->shape->type ) {
+		case shapeInvalid:
+			break;
+		case shapeSphere:
+			{
+				const vector* position = transform_getWorldPosition( b->trans );
+				debugdraw_sphere( *position, b->shape->radius, green );
+			}
+			break;
+		case shapeMesh:
+			collisionMesh_drawWireframe( b->shape->collision_mesh, b->trans->world, green );
+			break;
+	}
+}
+
+void collision_debugdraw() {
 	for ( int i = 0; i < body_count; ++i ) {
-		body* b = bodies[i];
-		const vector* position = transform_getWorldPosition( b->trans );
-		debugdraw_sphere( *position, b->shape->radius, green );
+		body_debugdraw( bodies[i] );
 	}
 }
 
@@ -100,7 +113,7 @@ void collision_tick( float dt ) {
 
 	collision_removeDeadBodies();
 
-	collision_debugdraw();
+	//collision_debugdraw();
 }
 
 bool collisionFunc_SphereSphere( shape* a, shape* b, matrix matrix_a, matrix matrix_b ) {
@@ -110,10 +123,49 @@ bool collisionFunc_SphereSphere( shape* a, shape* b, matrix matrix_a, matrix mat
 	return vector_distance( &origin_a, &origin_b ) < ( a->radius + b->radius );
 }
 
+bool collisionFunc_MeshSphere( shape* mesh_, shape* sphere_, matrix matrix_mesh, matrix matrix_sphere ) {
+	(void)mesh_;
+	(void)sphere_;
+	(void)matrix_mesh;
+	(void)matrix_sphere;
+	return false;
+}
+
+// Just swap the types around
+bool collisionFunc_SphereMesh( shape* sphere_, shape* mesh_, matrix matrix_sphere, matrix matrix_mesh ) {
+	return collisionFunc_MeshSphere( mesh_, sphere_, matrix_mesh, matrix_sphere );
+}
+
+bool collisionFunc_MeshMesh( shape* mesh_a, shape* mesh_b, matrix matrix_a, matrix matrix_b ) {
+	(void)mesh_a;
+	(void)mesh_b;
+	(void)matrix_a;
+	(void)matrix_b;
+	return false;
+}
+
+bool collisionFunc_invalid( shape* a, shape* b, matrix matrix_a, matrix matrix_b ) {
+	printf( "Error, attempting to use invalid shape collision func. Shape tpes %d and %d.\n", a->type, b->type );
+	vAssert( false );
+	(void)matrix_a;
+	(void)matrix_b;
+}
+
+
+void collision_initCollisionFuncs() {
+	for ( int i = 0; i < kMaxShapeTypes; ++i ) {
+		for ( int j = 0; j < kMaxShapeTypes; ++j ) {
+			collide_funcs[i][j] = collisionFunc_invalid;
+		}
+	}
+	collide_funcs[shapeSphere][shapeSphere] = collisionFunc_SphereSphere;
+	collide_funcs[shapeMesh][shapeSphere] = collisionFunc_MeshSphere;
+	collide_funcs[shapeSphere][shapeMesh] = collisionFunc_SphereMesh;
+	collide_funcs[shapeMesh][shapeMesh] = collisionFunc_MeshMesh;
+}
+
 collideFunc collision_func( enum shapeType type_a, enum shapeType type_b ) {
-	(void)type_a; (void)type_b;
-	return &collisionFunc_SphereSphere;
-//	return collide_funcs[type_a][type_b];
+	return collide_funcs[type_a][type_b];
 }
 
 bool shape_colliding( shape* a, shape* b, matrix matrix_a, matrix matrix_b ) {
@@ -156,6 +208,12 @@ body* body_create( shape* s, transform* t ) {
 	b->shape = s;
 	b->trans = t;
 	return b;
+}
+
+void collision_init() {
+	body_count = 0;
+	collision_clearEvents();
+	collision_initCollisionFuncs();
 }
 
 void test_collision() {

@@ -124,6 +124,40 @@ void debugdraw_sphere( vector origin, float radius, vector color ) {
 	draw->elements_mode = GL_LINES;
 }
 
+// Draw a wireframe mesh
+void debugdraw_wireframeMesh( int vert_count, vector* verts, int index_count, uint16_t* indices, matrix trans, vector color ) {
+	vAssert( index_count >= vert_count );
+	// Grab a vertex and element buffer from our static ones
+	vertex* vertex_buffer = &debugDraw_vertex_buffer[debugDraw_verts_used];
+	GLushort* element_buffer = &debugDraw_element_buffer[debugDraw_verts_used];
+	debugDraw_verts_used += index_count*2;
+
+	for ( int i = 0; i < vert_count; ++i ) {
+		vertex_buffer[i].position = verts[i];
+		vertex_buffer[i].color = color;
+	}
+
+	// For each triangle (3 indices), we draw 3 lines (6 indices)
+	for ( int j = 0; j < index_count; j+=3 ) {
+		element_buffer[j*2+0] = indices[j+0];
+		element_buffer[j*2+1] = indices[j+1];
+		
+		element_buffer[j*2+2] = indices[j+1];
+		element_buffer[j*2+3] = indices[j+2];
+	
+		element_buffer[j*2+4] = indices[j+2];
+		element_buffer[j*2+5] = indices[j+0];
+	}
+
+	render_resetModelView();
+	matrix_mul( modelview, modelview, trans );
+
+	// Make a drawcall
+	const GLuint no_texture = 0;
+	drawCall* draw = drawCall_create( &renderPass_debug, resources.shader_debug, index_count*2, element_buffer, vertex_buffer, no_texture, modelview );
+	draw->elements_mode = GL_LINES;
+}
+
 void debugdraw_preTick( float dt ) {
 	(void)dt;
 	debugDraw_verts_used = 0;
