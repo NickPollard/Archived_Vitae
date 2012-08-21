@@ -167,9 +167,4 @@ void modelInstance_draw( modelInstance* instance, camera* cam ) {
 //	render_setUniform_matrix( *resources.uniforms.modelview, modelview );
 
 	model_draw( model_fromInstance( instance ) );
-
-
-	vector green = Vector( 0.f, 1.f, 0.f, 1.f );
-	mesh* m = model_fromInstance( instance )->meshes[0];
-	debugdraw_wireframeMesh( m->vert_count, m->verts, m->index_count, m->indices, instance->trans->world, green );
 }
