@@ -601,7 +601,7 @@ void render( scene* s ) {
 	
 	matrix_setIdentity( modelview );
 
-	float aspect = window_main.width / window_main.height;
+	float aspect = ((float)window_main.width) / ((float)window_main.height);
 	camera* cam = s->cam;
 	render_perspectiveMatrix( perspective, cam->fov, aspect, cam->z_near, cam->z_far );
 	
