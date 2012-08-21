@@ -134,6 +134,7 @@ void engine_tick( engine* e ) {
 
 	//printf( "TICK: frametime %.4fms (%.2f fps)\n", time, 1.f/time );
 
+	debugdraw_preTick( dt );
 	lua_preTick( e->lua, dt );
 
 	input_tick( e->input, dt );
@@ -142,6 +143,10 @@ void engine_tick( engine* e ) {
 
 	engine_tickTickers( e, dt );
 
+	vector from = Vector( 360.f, 360.f, 0.f, 1.f );
+	vector to = Vector( 480.f, 480.f, 0.f, 1.f );
+	vector green = Vector( 0.f, 1.f, 0.f, 1.f );
+	debugdraw_line2d( from, to, green );
 	//countVisibleParticleEmitters( e );
 
 	if ( e->onTick && luaCallback_enabled( e->onTick ) ) {

@@ -29,6 +29,7 @@ SRCS =	src/camera.c \
 		src/maths/vector.c \
 		src/maths/quaternion.c \
 		src/mem/allocator.c \
+		src/render/debugdraw.c \
 		src/render/modelinstance.c \
 		src/render/render.c \
 		src/render/shader.c \

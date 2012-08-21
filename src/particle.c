@@ -45,7 +45,7 @@ particleEmitter* particleEmitter_create() {
 	memset( p, 0, sizeof( particleEmitter ));
 	p->definition = NULL;
 	p->vertex_buffer = mem_alloc( sizeof( vertex ) * kMaxParticleVerts );
-	p->element_buffer = mem_alloc( sizeof( vertex ) * kMaxParticleVerts );
+	p->element_buffer = mem_alloc( sizeof( GLushort ) * kMaxParticleVerts );
 	p->destroyed = false;
 
 	return p;
@@ -218,7 +218,8 @@ void particleEmitter_render( void* data ) {
 	int index_count = 6 * p->count;
 	// We only need to send this to the GPU if we actually have something to draw (i.e. particles have been emitted)
 	if ( index_count > 0 ) {
-		drawCall* draw = drawCall_create( &renderPass_alpha, resources.shader_particle, index_count, p->element_buffer, p->vertex_buffer, p->definition->texture_diffuse->gl_tex, modelview );
+		drawCall* draw = drawCall_create( &renderPass_alpha, resources.shader_particle, index_count, p->element_buffer, p->vertex_buffer, 
+											p->definition->texture_diffuse->gl_tex, modelview );
 		draw->depth_mask = GL_FALSE;
 	}
 }

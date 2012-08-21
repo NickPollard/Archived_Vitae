@@ -76,6 +76,7 @@ typedef struct gl_resources_s {
 	shader* shader_ui;
 	shader* shader_filter;
 	shader* shader_debug;
+	shader* shader_debug_2d;
 } gl_resources;
 
 struct vertex_s {
@@ -105,6 +106,7 @@ extern bool	render_initialised;
 extern vmutex	gl_mutex;
 extern renderPass renderPass_main;
 extern renderPass renderPass_alpha;
+extern renderPass renderPass_debug;
 extern sceneParams sceneParams_main;
 extern window window_main;
 
@@ -181,6 +183,7 @@ typedef struct drawCall_s {
 	unsigned int	element_count;
 	unsigned int	element_buffer_offset;
 	GLenum		depth_mask;
+	GLenum		elements_mode;
 } drawCall;
 
 drawCall* drawCall_create( renderPass* pass, shader* vshader, int count, GLushort* elements, vertex* verts, GLint tex, matrix mv );

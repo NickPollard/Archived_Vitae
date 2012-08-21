@@ -343,6 +343,7 @@ void render_buildShaders() {
 	resources.shader_ui			= shader_load( "dat/shaders/ui.v.glsl",				"dat/shaders/ui.f.glsl" );
 	resources.shader_filter		= shader_load( "dat/shaders/filter.v.glsl",			"dat/shaders/filter.f.glsl" );
 	resources.shader_debug		= shader_load( "dat/shaders/debug_lines.v.glsl",	"dat/shaders/debug_lines.f.glsl" );
+	resources.shader_debug_2d	= shader_load( "dat/shaders/debug_lines_2d.v.glsl",	"dat/shaders/debug_lines_2d.f.glsl" );
 
 #define GET_UNIFORM_LOCATION( var ) \
 	resources.uniforms.var = shader_findConstant( mhash( #var )); \
@@ -379,6 +380,7 @@ renderPass	render_pass[kMaxRenderPasses];
 
 renderPass renderPass_main;
 renderPass renderPass_alpha;
+renderPass renderPass_debug;
 
 sceneParams sceneParams_main;
 
@@ -392,6 +394,7 @@ void renderPass_clearBuffers( renderPass* pass ) {
 void render_clearCallBuffer( ) {
 	renderPass_clearBuffers( &renderPass_main );
 	renderPass_clearBuffers( &renderPass_alpha );
+	renderPass_clearBuffers( &renderPass_debug );
 }
 
 #define		kRenderDrawBufferSize 1 * 1024 * 1024
@@ -667,6 +670,7 @@ drawCall* drawCall_create( renderPass* pass, shader* vshader, int count, GLushor
 	draw->vertex_VBO	= resources.vertex_buffer[0];
 	draw->element_VBO	= resources.element_buffer[0];
 	draw->depth_mask = GL_TRUE;
+	draw->elements_mode = GL_TRIANGLES;
 
 	matrix_cpy( draw->modelview, mv );
 	return draw;
@@ -689,14 +693,11 @@ void render_printShader( shader* s ) {
 
 void render_drawCall_draw( drawCall* draw ) {
 	// Bind Correct buffers
-	//printf( "drawCall_draw 1\n" );
 	glBindBuffer( GL_ARRAY_BUFFER, draw->vertex_VBO );
 	glBindBuffer( GL_ELEMENT_ARRAY_BUFFER, draw->element_VBO );
 	
-	//printf( "drawCall_draw 2\n" );
 	// If required, copy our data to the GPU
 	if ( draw->vertex_VBO == resources.vertex_buffer[0] ) {
-		//printf( "Using main VBO.\n" );
 		GLsizei vertex_buffer_size	= draw->element_count * sizeof( vertex );
 		GLsizei element_buffer_size	= draw->element_count * sizeof( GLushort );
 #if 1
@@ -717,15 +718,13 @@ void render_drawCall_draw( drawCall* draw ) {
 		glUnmapBuffer( GL_ELEMENT_ARRAY_BUFFER );
 #endif
 	}
-	//printf( "drawCall_draw 3: drawcall %x, vbo: %x, element count %d, element buffer offset %d\n", (unsigned int)draw, draw->vertex_VBO, draw->element_count, draw->element_buffer_offset );
 
 	// Now Draw!
 	VERTEX_ATTRIBS( VERTEX_ATTRIB_POINTER );
 	vAssert( draw->element_count > 0 );
 	//render_printShader( draw->vitae_shader );
-	glDrawElements( GL_TRIANGLES, draw->element_count, GL_UNSIGNED_SHORT, (void*)(uintptr_t)draw->element_buffer_offset );
+	glDrawElements( draw->elements_mode, draw->element_count, GL_UNSIGNED_SHORT, (void*)(uintptr_t)draw->element_buffer_offset );
 	VERTEX_ATTRIBS( VERTEX_ATTRIB_DISABLE_ARRAY );
-	//printf( "drawCall_draw 4\n" );
 }
 
 void render_drawBatch( drawCall* draw ) {
@@ -776,11 +775,13 @@ void render_draw( window* w, engine* e ) {
 	render_clear();
 
 	glDisable( GL_BLEND );
-	//glBlendFunc( GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA );	// Standard Alpha Blending
 	render_drawPass( &renderPass_main );
+
 	glEnable( GL_BLEND );
-	//glBlendFunc( GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA );	// Standard Alpha Blending
 	render_drawPass( &renderPass_alpha );
+	
+	glEnable( GL_BLEND );
+	render_drawPass( &renderPass_debug );
 
 	render_swapBuffers( w );
 }
