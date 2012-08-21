@@ -4,6 +4,7 @@
 //---------------------
 #include "engine.h"
 #include "transform.h"
+#include "render/debugdraw.h"
 
 collideFunc collide_funcs[kMaxShapeTypes][kMaxShapeTypes];
 
@@ -78,6 +79,15 @@ void collision_generateEvents() {
 				collision_event( bodies[i], bodies[j] );
 }
 
+void collision_debugdraw() {
+	vector green = Vector( 0.f, 1.f, 0.f, 1.f );
+	for ( int i = 0; i < body_count; ++i ) {
+		body* b = bodies[i];
+		const vector* position = transform_getWorldPosition( b->trans );
+		debugdraw_sphere( *position, b->shape->radius, green );
+	}
+}
+
 // Check for any collisions this frame
 void collision_tick( float dt ) {
 	(void)dt;
@@ -89,6 +99,8 @@ void collision_tick( float dt ) {
 	collision_runCallbacks();
 
 	collision_removeDeadBodies();
+
+	collision_debugdraw();
 }
 
 bool collisionFunc_SphereSphere( shape* a, shape* b, matrix matrix_a, matrix matrix_b ) {

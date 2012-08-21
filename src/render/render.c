@@ -774,12 +774,16 @@ void render_draw( window* w, engine* e ) {
 	render_set3D( w->width, w->height );
 	render_clear();
 
+	glEnable( GL_DEPTH_TEST );
 	glDisable( GL_BLEND );
 	render_drawPass( &renderPass_main );
 
+	glEnable( GL_DEPTH_TEST );
 	glEnable( GL_BLEND );
 	render_drawPass( &renderPass_alpha );
 	
+	// No depth-test for debug
+	glDisable( GL_DEPTH_TEST );
 	glEnable( GL_BLEND );
 	render_drawPass( &renderPass_debug );
 
