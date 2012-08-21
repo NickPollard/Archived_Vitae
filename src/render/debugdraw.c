@@ -4,6 +4,7 @@
 #include "render/debugdraw.h"
 //-----------------------
 #include "maths/maths.h"
+#include "maths/vector.h"
 #include "render/render.h"
 
 #include "render/vgl.h"
@@ -31,11 +32,36 @@ void debugdraw_line2d( vector from, vector to, vector color ) {
 	element_buffer[0] = 0;
 	element_buffer[1] = 1;
 
-	matrix modelview;
-
 	// Make a drawcall
 	const GLuint no_texture = 0;
 	drawCall* draw = drawCall_create( &renderPass_debug, resources.shader_debug_2d, vert_count, element_buffer, vertex_buffer, no_texture, modelview );
+	draw->elements_mode = GL_LINES;
+}
+
+void debugdraw_line3d( vector from, vector to, vector color ) {
+	printf( "Draw 3d line!\n" );
+	vector_printf( "From: ", &from );
+	vector_printf( "To: ", &to );
+	// Grab a vertex and element buffer from our static ones
+	int vert_count = 2;
+	vertex* vertex_buffer = &debugDraw_vertex_buffer[debugDraw_verts_used];
+	GLushort* element_buffer = &debugDraw_element_buffer[debugDraw_verts_used];
+	debugDraw_verts_used += vert_count;
+
+	vertex_buffer[0].position = from;
+	vertex_buffer[1].position = to;
+	vertex_buffer[0].color = color;
+	vertex_buffer[1].color = color;
+
+	// TODO - this could be static const
+	element_buffer[0] = 0;
+	element_buffer[1] = 1;
+
+	render_resetModelView();
+
+	// Make a drawcall
+	const GLuint no_texture = 0;
+	drawCall* draw = drawCall_create( &renderPass_debug, resources.shader_debug, vert_count, element_buffer, vertex_buffer, no_texture, modelview );
 	draw->elements_mode = GL_LINES;
 }
 

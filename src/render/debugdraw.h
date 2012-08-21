@@ -10,6 +10,7 @@ void debugdraw_cross( const vector* center, float radius );
 void debugdraw_drawRect2D( vector* from, vector* to );
 
 void debugdraw_line2d( vector from, vector to, vector color );
+void debugdraw_line3d( vector from, vector to, vector color );
 
 void debugdraw_preTick( float dt );
 

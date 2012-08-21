@@ -5,6 +5,7 @@
 #include "model.h"
 #include "maths/vector.h"
 #include "mem/allocator.h"
+#include "render/debugdraw.h"
 #include "render/render.h"
 #include "render/shader.h"
 #include "render/texture.h"
@@ -191,6 +192,13 @@ void particleEmitter_render( void* data ) {
 	// particle_quad() will manually apply the modelview
 	render_resetModelView();
 	matrix_mul( modelview, modelview, p->trans->world );
+
+	const vector* from = transform_getWorldPosition( p->trans );
+	vector to;
+	vector up = Vector( 0.f, 100.f, 0.f, 0.f );
+	Add( &to, from, &up );
+	vector green = Vector( 0.f, 1.f, 0.f, 1.f );
+	debugdraw_line3d( *from, to, green );
 
 	for ( int i = 0; i < p->count; i++ ) {
 		int index = (p->start + i) % kMaxParticles;
