@@ -129,6 +129,7 @@ bool collisionFunc_MeshSphere( shape* mesh_, shape* sphere_, matrix matrix_mesh,
 	(void)sphere_;
 	(void)matrix_mesh;
 	(void)matrix_sphere;
+
 	return false;
 }
 
@@ -137,12 +138,76 @@ bool collisionFunc_SphereMesh( shape* sphere_, shape* mesh_, matrix matrix_spher
 	return collisionFunc_MeshSphere( mesh_, sphere_, matrix_mesh, matrix_sphere );
 }
 
-bool collisionFunc_MeshMesh( shape* mesh_a, shape* mesh_b, matrix matrix_a, matrix matrix_b ) {
-	(void)mesh_a;
-	(void)mesh_b;
-	(void)matrix_a;
-	(void)matrix_b;
+bool triangle_intersectingMesh( vector a, vector b, vector c, collisionMesh* m ) {
+	(void)a;
+	(void)b;
+	(void)c;
+	(void)m;
+	vAssert( 0 ); //NYI
 	return false;
+}
+
+bool vertex_insideMesh( vector v, collisionMesh* m ) {
+	(void)v;
+	(void)m;
+	vAssert( 0 ); //NYI
+	return false;
+}
+
+bool mesh_insideMesh( collisionMesh* mesh_a, collisionMesh* mesh_b, matrix matrix_a, matrix matrix_b ) {
+	// We build a combined matrix that translates verts from a-space into b-space
+	// So we can then do the collision tests purely in b-space
+	matrix a_space_to_b_space;
+	matrix inv_b;
+	matrix_inverse( inv_b, matrix_b );
+	matrix_mul( a_space_to_b_space, inv_b, matrix_a );
+
+	// Then test each vertex of MESH_A for whether it's wholly inside the other mesh
+	bool inside = false;
+	for ( int i = 0; !inside && ( i < mesh_a->vert_count ); ++i ) {
+		vector vert = matrix_vecMul( a_space_to_b_space, &mesh_a->verts[i] );
+		inside |= vertex_insideMesh( vert, mesh_b );
+	}
+	return inside;
+}
+
+bool mesh_intersectingMesh( collisionMesh* mesh_a, collisionMesh* mesh_b, matrix matrix_a, matrix matrix_b ) {
+	// We build a combined matrix that translates verts from a-space into b-space
+	// So we can then do the collision tests purely in b-space
+	matrix a_space_to_b_space;
+	matrix inv_b;
+	matrix_inverse( inv_b, matrix_b );
+	matrix_mul( a_space_to_b_space, inv_b, matrix_a );
+
+	bool intersecting = false;
+	for ( int i = 0; !intersecting && i < mesh_a->index_count; i = i+3 ) {
+		vector a = matrix_vecMul( a_space_to_b_space, &mesh_a->verts[mesh_a->indices[i+0]]);
+		vector b = matrix_vecMul( a_space_to_b_space, &mesh_a->verts[mesh_a->indices[i+1]]);
+		vector c = matrix_vecMul( a_space_to_b_space, &mesh_a->verts[mesh_a->indices[i+2]]);
+		intersecting |= triangle_intersectingMesh( a, b, c, mesh_b );
+	}
+	return intersecting;
+}
+
+bool collisionFunc_MeshMesh( shape* mesh_a, shape* mesh_b, matrix matrix_a, matrix matrix_b ) {
+	// There are 3 possible situations here
+	// 1. The meshes are not colliding at all
+	// 2. At least one mesh has at least one vertex inside the other
+	// 3. No vertices are inside the other mesh, but there are intersecting edges/tris
+	
+	bool colliding = false;
+	// Test each vertex to see if it's wholly inside the other mesh
+	// and vica versa
+	colliding |= mesh_insideMesh( mesh_a->collision_mesh, mesh_b->collision_mesh, matrix_a, matrix_b );
+	if ( !colliding ) {
+		colliding |= mesh_insideMesh( mesh_b->collision_mesh, mesh_a->collision_mesh, matrix_b, matrix_a );
+		if ( !colliding ) {
+			// Test for intersections of triangles (without intersecting vertices)
+			colliding |= mesh_intersectingMesh( mesh_b->collision_mesh, mesh_a->collision_mesh, matrix_b, matrix_a );
+		}
+	}
+	
+	return colliding;
 }
 
 bool collisionFunc_invalid( shape* a, shape* b, matrix matrix_a, matrix matrix_b ) {
@@ -151,7 +216,6 @@ bool collisionFunc_invalid( shape* a, shape* b, matrix matrix_a, matrix matrix_b
 	(void)matrix_a;
 	(void)matrix_b;
 }
-
 
 void collision_initCollisionFuncs() {
 	for ( int i = 0; i < kMaxShapeTypes; ++i ) {

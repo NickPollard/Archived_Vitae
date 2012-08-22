@@ -14,7 +14,6 @@ enum shapeType {
 	shapeMesh
 };
 
-
 typedef struct collisionMesh_s {
 	vector* verts;	
 	int vert_count;
