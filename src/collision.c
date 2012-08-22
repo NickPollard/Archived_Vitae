@@ -5,6 +5,7 @@
 #include "engine.h"
 #include "model.h"
 #include "transform.h"
+#include "maths/geometry.h"
 #include "render/debugdraw.h"
 
 collideFunc collide_funcs[kMaxShapeTypes][kMaxShapeTypes];
@@ -143,15 +144,45 @@ bool triangle_intersectingMesh( vector a, vector b, vector c, collisionMesh* m )
 	(void)b;
 	(void)c;
 	(void)m;
-	vAssert( 0 ); //NYI
+	//vAssert( 0 ); //NYI
 	return false;
 }
 
+int line_intersectsTriangle( vector point, vector line, vector a, vector b, vector c ) {
+	vAssert( isNormalized( &line ));
+
+	// Calculate the plane of the 3 points
+	vector plane_normal;
+	float plane_d;
+	plane( a, b, c, &plane_normal, &plane_d );
+
+	float line_dot_normal = Dot( &line, &plane_normal );
+	vector intersection;
+	vector_scale( &intersection, &line, line_dot_normal * plane_d );
+	Add( &intersection, &intersection, &point );
+	
+	float d = Dot( &point, &line );
+	float d_intersect = Dot( &intersection, &line );
+
+	// Test that the intersection is inside the triangle
+
+	return ( d_intersect > d ) ? 1 : 0;
+}
+
+// Vert and Mesh must be in the same coordinate space now
 bool vertex_insideMesh( vector v, collisionMesh* m ) {
-	(void)v;
-	(void)m;
-	vAssert( 0 ); //NYI
-	return false;
+	// Extend a line from the point in one direction, count how many polgyons it crosses
+	// Odd number: inside
+	// Event number: outside
+	int intersections = 0;
+	for ( int i = 0; i < m->index_count; i = i+3 ) {
+		vector a = m->verts[m->indices[i+0]];
+		vector b = m->verts[m->indices[i+1]];
+		vector c = m->verts[m->indices[i+2]];
+		intersections += line_intersectsTriangle( v, y_axis, a, b, c );
+	}
+
+	return ( intersections % 2 ) == 0;
 }
 
 bool mesh_insideMesh( collisionMesh* mesh_a, collisionMesh* mesh_b, matrix matrix_a, matrix matrix_b ) {

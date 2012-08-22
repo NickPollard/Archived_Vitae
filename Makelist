@@ -24,6 +24,7 @@ SRCS =	src/camera.c \
 		src/input/keyboard.c \
 		src/input/mouse.c \
 		src/input/touch.c \
+		src/maths/geometry.c \
 		src/maths/maths.c \
 		src/maths/matrix.c \
 		src/maths/vector.c \
