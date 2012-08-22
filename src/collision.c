@@ -156,17 +156,25 @@ int line_intersectsTriangle( vector point, vector line, vector a, vector b, vect
 	float plane_d;
 	plane( a, b, c, &plane_normal, &plane_d );
 
+	float diff = plane_d - Dot( &point, &plane_normal );
 	float line_dot_normal = Dot( &line, &plane_normal );
+	// If the plane is parallel to the line, then return true if the point is on the plane
+	if ( f_eq( line_dot_normal, 0.f )) {
+		return f_eq( diff, 0.f );
+	}
 	vector intersection;
-	vector_scale( &intersection, &line, line_dot_normal * plane_d );
+	vector_scale( &intersection, &line, diff / line_dot_normal );
 	Add( &intersection, &intersection, &point );
 	
 	float d = Dot( &point, &line );
 	float d_intersect = Dot( &intersection, &line );
 
+	if ( d_intersect < d )
+		return false;
+	else {
 	// Test that the intersection is inside the triangle
-
-	return ( d_intersect > d ) ? 1 : 0;
+		return true;
+	}
 }
 
 // Vert and Mesh must be in the same coordinate space now
