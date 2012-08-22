@@ -10,7 +10,7 @@
 #include "render/vgl.h"
 
 // The total number of verts per frame we can draw using the debug draw system
-#define kMaxDebugDrawVerts 1024
+#define kMaxDebugDrawVerts 0x1 << 20
 
 // Static buffers used to store debug draw verts and indices - these are wiped each frame
 vertex debugDraw_vertex_buffer[kMaxDebugDrawVerts];
@@ -23,6 +23,7 @@ void debugdraw_line2d( vector from, vector to, vector color ) {
 	vertex* vertex_buffer = &debugDraw_vertex_buffer[debugDraw_verts_used];
 	GLushort* element_buffer = &debugDraw_element_buffer[debugDraw_verts_used];
 	debugDraw_verts_used += vert_count;
+	vAssert( debugDraw_verts_used < kMaxDebugDrawVerts );
 
 	vertex_buffer[0].position = from;
 	vertex_buffer[1].position = to;
@@ -44,6 +45,7 @@ void debugdraw_line3d( vector from, vector to, vector color ) {
 	vertex* vertex_buffer = &debugDraw_vertex_buffer[debugDraw_verts_used];
 	GLushort* element_buffer = &debugDraw_element_buffer[debugDraw_verts_used];
 	debugDraw_verts_used += vert_count;
+	vAssert( debugDraw_verts_used < kMaxDebugDrawVerts );
 
 	vertex_buffer[0].position = from;
 	vertex_buffer[1].position = to;
@@ -68,6 +70,7 @@ void debugdraw_sphere( vector origin, float radius, vector color ) {
 	vertex* vertex_buffer = &debugDraw_vertex_buffer[debugDraw_verts_used];
 	GLushort* element_buffer = &debugDraw_element_buffer[debugDraw_verts_used];
 	debugDraw_verts_used += vert_count;
+	vAssert( debugDraw_verts_used < kMaxDebugDrawVerts );
 
 	// Set up verts
 	vector offset = Vector( 0.f, radius, 0.f, 0.f );
@@ -131,6 +134,7 @@ void debugdraw_wireframeMesh( int vert_count, vector* verts, int index_count, ui
 	vertex* vertex_buffer = &debugDraw_vertex_buffer[debugDraw_verts_used];
 	GLushort* element_buffer = &debugDraw_element_buffer[debugDraw_verts_used];
 	debugDraw_verts_used += index_count*2;
+	vAssert( debugDraw_verts_used < kMaxDebugDrawVerts );
 
 	for ( int i = 0; i < vert_count; ++i ) {
 		vertex_buffer[i].position = verts[i];

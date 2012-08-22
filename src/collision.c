@@ -3,6 +3,7 @@
 #include "collision.h"
 //---------------------
 #include "engine.h"
+#include "model.h"
 #include "transform.h"
 #include "render/debugdraw.h"
 
@@ -113,7 +114,7 @@ void collision_tick( float dt ) {
 
 	collision_removeDeadBodies();
 
-	//collision_debugdraw();
+	collision_debugdraw();
 }
 
 bool collisionFunc_SphereSphere( shape* a, shape* b, matrix matrix_a, matrix matrix_b ) {
@@ -199,6 +200,37 @@ shape* sphere_create( float radius ) {
 	s->type = shapeSphere;
 	s->radius = radius;
 	s->origin = Vector( 0.f, 0.f, 0.f, 1.f );
+	return s;
+}
+
+/*
+void vertexBuffer_asPositionsOnly( vector* verts, vertex* src_verts, int vert_count ) {
+	for ( int i = 0; i < vert_count; ++i ) {
+		verts[i] = src_verts[i].position;
+	}
+}
+*/
+
+collisionMesh* collisionMesh_fromRenderMesh( mesh* render_mesh ) {
+	collisionMesh* m = mem_alloc( sizeof( collisionMesh ));
+	m->vert_count = render_mesh->vert_count;
+	m->index_count = render_mesh->index_count;
+
+	// Allocate our buffers
+	m->verts = mem_alloc( sizeof( vector ) * m->vert_count );
+	m->indices = mem_alloc( sizeof( m->indices[0] ) * m->index_count );
+	
+	// Now fill them
+	memcpy( m->indices, render_mesh->indices, sizeof( m->indices[0] ) * m->index_count );
+	memcpy( m->verts, render_mesh->verts, sizeof( m->verts[0] ) * m->vert_count );
+	return m;
+}
+
+
+shape* mesh_createFromRenderMesh( mesh* render_mesh ) {
+	shape* s = mem_alloc( sizeof( shape ));
+	s->type = shapeMesh;
+	s->collision_mesh = collisionMesh_fromRenderMesh( render_mesh );
 	return s;
 }
 

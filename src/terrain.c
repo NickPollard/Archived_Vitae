@@ -4,6 +4,7 @@
 //-----------------------
 #include "maths/vector.h"
 #include "mem/allocator.h"
+#include "render/debugdraw.h"
 #include "render/render.h"
 #include "render/shader.h"
 #include "render/texture.h"
@@ -104,24 +105,25 @@ float terrain_detailHeight( float u, float v ) {
 			5 * sinf( u / 10.f ) * sinf( v / 10.f ) * sinf( u / 10.f ) * sinf( v / 10.f );
 }
 
+const float canyon_longitudinal_scale = 250.f;
+const float canyon_horizontal_scale = 0.2f;
+const float canyon_width_scale = 100.f;
+const float canyon_height = 40.f;
+const float width = 8.f;
+const float base_radius = 8.f;
+
 // Get the canyon height at a given world X and world Z
 float terrain_canyonHeight( float x, float z ) {
-	const float canyon_height = 40.f;
-	const float width = 4.f;
-	const float base_radius = 4.f;
-	const float canyon_longitudinal_scale = 250.f;
-	const float canyon_horizontal_scale = 5.f;
-	const float canyon_width_scale = 100.f;
 	// U = horizontal
 	// V = longitudinal
 
 	// Turn the world-space X and Z into a canyon-space U (this is the displacement from the center of the canyon)
 	float v = z / canyon_longitudinal_scale;
-	float u = x / canyon_horizontal_scale + sinf( v ) * canyon_width_scale;
+	float u = x * canyon_horizontal_scale + sinf( v ) * canyon_width_scale;
 	u = ( u < 0.f ) ? fminf( u + base_radius, 0.f ) : fmaxf( u - base_radius, 0.f );
 	
 	// Turn the canyon-space U into a height
-	float mask = cos( fclamp( u / 4.f, -PI/2.f, PI/2.f ));
+	float mask = cos( fclamp( u / width, -PI/2.f, PI/2.f ));
 	return (1.f - fclamp( powf( u / width, 4.f ), 0.f, 1.f )) * mask * canyon_height;
 }
 
@@ -130,26 +132,19 @@ float terrain_sample( float u, float v ) {
 	float mountains = terrain_mountainHeight( u, v );
 	float detail = terrain_detailHeight( u, v );
 	float canyon = terrain_canyonHeight( u, v );
-
 	return mountains + detail - canyon;
 }
 
 // Turn canyon space U and V coords into world space X and Z
 // For height, use terrain_sample( x, z ) with the X and Z returned from this function
 void terrain_canyon( float u, float v, float* x, float* z ) {
-	//const float width = 4.f;
-	//const float base_radius = 4.f;
-	const float canyon_longitudinal_scale = 250.f;
-	const float canyon_horizontal_scale = 5.f;
-	const float canyon_width_scale = 100.f;
 	// U = horizontal
 	// V = longitudinal
-
 	//float u = x / canyon_horizontal_scale + sinf( z / (canyon_longitudinal_scale) ) * canyon_width_scale;
 	
 	// Turn the canyon-space U and V into world space X and Z
 	*z = v * canyon_longitudinal_scale;
-	*x = ( u - sinf( v ) * canyon_width_scale ) * canyon_horizontal_scale;
+	*x = ( u - sinf( v ) * canyon_width_scale ) / canyon_horizontal_scale;
 }
 
 // Get the world-position of the canyon at a given canyon-distance V and canyon-x-displacement U
@@ -431,11 +426,31 @@ void terrainBlock_render( terrainBlock* b ) {
 #endif
 }
 
+void terrainBlock_debugDraw( terrainBlock* b ) {
+
+	vector green = Vector( 0.f, 1.f, 0.f, 1.f );
+	int vert_count = b->u_samples * b->v_samples;
+	vAssert( vert_count < 512 );
+	vector verts[512];
+	for ( int i = 0; i < vert_count; ++i ) {
+		verts[i] = b->vertex_buffer[i].position;
+	}
+
+	debugdraw_wireframeMesh( vert_count, verts, b->index_count, b->element_buffer, matrix_identity, green );
+}
+
 void terrain_tick( void* data, float dt, engine* eng ) {
 	(void)dt;
 	(void)eng;
 	terrain* t = data;
 	terrain_updateBlocks( t );
+
+	/*
+	for ( int i = 0; i < t->total_block_count; ++i ) {
+		terrainBlock* b = t->blocks[i];
+		terrainBlock_debugDraw( b );
+	}
+	*/
 }
 
 // Send the buffers to the GPU

@@ -179,6 +179,21 @@ int LUA_createbodySphere( lua_State* l ) {
 	return 1;
 }
 
+int LUA_createbodyMesh( lua_State* l ) {
+	// Get the mesh but then pop it, so that the object is left on the top for the lua_store command
+	modelInstance* render_model = lua_toptr( l, 2 );
+	lua_pop( l, 1 );
+	int ref = lua_store( l );	// Store top of the stack ( the object )
+
+	mesh* render_mesh = model_fromInstance( render_model )->meshes[0];
+	body* b = body_create( mesh_createFromRenderMesh( render_mesh ), NULL );
+	b->callback = NULL;
+	b->intdata = ref;
+	collision_addBody( b );
+	lua_pushptr( l, b );
+	return 1;
+}
+
 int LUA_deleteModelInstance( lua_State* l ) {
 	//printf( "Delete Model Instance.\n" );
 	modelInstance* m = lua_toptr( l, 1 );
@@ -688,6 +703,7 @@ lua_State* vlua_create( engine* e, const char* filename ) {
 	lua_registerFunction( l, LUA_deleteModelInstance, "vdeleteModelInstance" );
 	lua_registerFunction( l, LUA_createphysic, "vcreatePhysic" );
 	lua_registerFunction( l, LUA_createbodySphere, "vcreateBodySphere" );
+	lua_registerFunction( l, LUA_createbodyMesh, "vcreateBodyMesh" );
 	lua_registerFunction( l, LUA_createtransform, "vcreateTransform" );
 	lua_registerFunction( l, LUA_setWorldSpacePosition, "vsetWorldSpacePosition" );
 	lua_registerFunction( l, LUA_model_setTransform, "vmodel_setTransform" );

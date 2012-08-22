@@ -209,6 +209,4 @@ void transform_setWorldRotationMatrix( transform* t, matrix world_m ) {
 	else {
 		matrix_copyRotation( t->local, world_m );
 	}
-	printf( "transform set rotation:\n" );
-	matrix_print( t->local );
 }

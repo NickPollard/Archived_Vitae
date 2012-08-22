@@ -74,6 +74,7 @@ bool body_collidedBody( body* a, body* b );
 
 body* body_create( shape* s, transform* t );
 shape* sphere_create( float radius );
+shape* mesh_createFromRenderMesh( mesh* render_mesh );
 
 // Unit tests
 void test_collision();
