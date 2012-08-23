@@ -1,7 +1,7 @@
 // collision.h
 
 #define kMaxCollisionEvents 256
-#define kMaxShapeTypes 3
+#define kMaxShapeTypes 4
 #define kMaxCollidingBodies 256
 
 #include "maths/maths.h"
@@ -11,7 +11,8 @@
 enum shapeType {
 	shapeInvalid,
 	shapeSphere,
-	shapeMesh
+	shapeMesh,
+	shapeHeightField
 };
 
 // A full arbitrary collision mesh
@@ -29,7 +30,7 @@ typedef struct heightField_s {
 	int z_samples;		// How many verts long the field is
 	float width;		// How wide (in game units) - X - the field is
 	float length;		// How long (in game units) - Z - the field is
-	vector *verts;
+	float *verts;
 } heightField;
 
 typedef struct shape_s {
@@ -41,8 +42,6 @@ typedef struct shape_s {
 	};
 	vector origin;
 } shape;
-
-typedef struct body_s body;
 
 typedef void (*collisionCallback)( body* this, body* collided_width, void* data );
 typedef uint8_t collision_layers_t;
@@ -86,6 +85,10 @@ bool body_collidedBody( body* a, body* b );
 body* body_create( shape* s, transform* t );
 shape* sphere_create( float radius );
 shape* mesh_createFromRenderMesh( mesh* render_mesh );
+void shape_delete( shape* s );
+void heightField_delete( heightField* h );
+heightField* heightField_create( float width, float length, int x_samples, int z_samples);
+shape* shape_heightField_create( heightField* h );
 
 // Unit tests
 void test_collision();

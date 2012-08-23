@@ -16,6 +16,9 @@ typedef struct terrainBlock_s {
 	unsigned short*	element_buffer;
 	GLuint*			vertex_VBO;
 	GLuint*			element_VBO;
+
+	// For collision
+	body*			collision_body;
 } terrainBlock;
 
 typedef struct terrain_s {

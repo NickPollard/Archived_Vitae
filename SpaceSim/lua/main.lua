@@ -25,8 +25,8 @@ function gameobject_create( model_file )
 	g.model = vcreateModelInstance( model_file )
 	g.physic = vcreatePhysic()
 	g.transform = vcreateTransform()
-	--g.body = vcreateBodySphere( g )
-	g.body = vcreateBodyMesh( g, g.model )
+	g.body = vcreateBodySphere( g )
+	--g.body = vcreateBodyMesh( g, g.model )
 	vmodel_setTransform( g.model, g.transform )
 	vphysic_setTransform( g.physic, g.transform )
 	vbody_setTransform( g.body, g.transform )
@@ -329,8 +329,8 @@ function start()
 	local width = 25.0
 	while spawn_v < 3.0 do
 		spawn_v = spawn_v + 0.3
-		spawn_atCanyon( -width, spawn_v, "dat/model/skyscraper.s" )
-		spawn_atCanyon( width, spawn_v, "dat/model/skyscraper.s" )
+		--spawn_atCanyon( -width, spawn_v, "dat/model/skyscraper.s" )
+		--spawn_atCanyon( width, spawn_v, "dat/model/skyscraper.s" )
 	end
 
 	--ship_spawner()

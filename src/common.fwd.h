@@ -1,6 +1,7 @@
 #ifndef __COMMON_FWD_H__
 #define __COMMON_FWD_H__
 
+struct body_s;
 struct camera_s;
 struct debugtextframe_s;
 struct engine_s;
@@ -20,6 +21,7 @@ struct vertex_s;
 struct xwindow_s;
 union vector_u;
 
+typedef struct body_s body;
 typedef struct camera_s camera;
 typedef struct debugtextframe_s debugtextframe;
 typedef struct engine_s engine;

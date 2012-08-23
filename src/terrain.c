@@ -2,6 +2,7 @@
 #include "common.h"
 #include "terrain.h"
 //-----------------------
+#include "collision.h"
 #include "maths/vector.h"
 #include "mem/allocator.h"
 #include "render/debugdraw.h"
@@ -15,12 +16,14 @@
 // Forward declarations
 void terrain_calculateBounds( int bounds[2][2], terrain* t, vector* sample_point );
 void terrainBlock_calculateBuffers( terrain* t, terrainBlock* b );
+void terrainBlock_calculateCollision( terrain* t, terrainBlock* b );
 
 GLuint terrain_texture = 0;
 
 terrainBlock* terrainBlock_create( ) {
 	terrainBlock* b = mem_alloc( sizeof( terrainBlock ));
 	memset( b, 0, sizeof( terrainBlock ));
+	b->collision_body = NULL;
 	return b;
 }
 
@@ -86,6 +89,7 @@ void terrain_createBlocks( terrain* t ) {
 			terrainBlock_createBuffers( t, t->blocks[i] );
 			terrainBlock_calculateExtents( t->blocks[i], t, coord );
 			terrainBlock_calculateBuffers( t, t->blocks[i] );
+			terrainBlock_calculateCollision( t, t->blocks[i] );
 			i++;
 		}
 	}
@@ -404,6 +408,7 @@ void terrain_updateBlocks( terrain* t ) {
 		if ( !boundsContains( intersection, coord )) {
 			terrainBlock_calculateExtents( newBlocks[i], t, coord );
 			terrainBlock_calculateBuffers( t, newBlocks[i] );
+			terrainBlock_calculateCollision( t, newBlocks[i] );
 		}
 	}
 
@@ -468,6 +473,45 @@ void terrain_render( void* data ) {
 
 void terrain_delete( terrain* t ) {
 	mem_free( t );
+}
+
+heightField* terrainBlock_createHeightField( terrain* t, terrainBlock* b ) {
+	(void)t;
+	float width = b->u_max - b->u_min;
+	float length = b->v_max - b->v_min;
+	heightField* h = heightField_create( width, length, b->u_samples, b->v_samples );
+
+	float u_interval = ( b->u_max - b->u_min ) / ( b->u_samples - 1);
+	float v_interval = ( b->v_max - b->v_min ) / ( b->v_samples - 1);
+	// Loosen max edges to ensure final verts aren't dropped
+	float u_max = b->u_max + (u_interval * 0.5f);
+	float v_max = b->v_max + (v_interval * 0.5f);
+	int vert_index = 0;
+	for ( float u = b->u_min; u < u_max; u+= u_interval ) {
+		for ( float v = b->v_min; v < v_max; v+= v_interval ) {
+			h->verts[vert_index++] = terrain_sample( u, v );
+		}
+	}
+	
+	return h;
+}
+
+// Calculate the collision for a given block
+void terrainBlock_calculateCollision( terrain* t, terrainBlock* b ) {
+	if ( !b->collision_body ) {
+		b->collision_body = body_create( NULL, NULL );
+		b->collision_body->trans = transform_create();
+		b->collision_body->layers |= 0x2; // Enemy
+		b->collision_body->collide_with |= 0x1; // Player
+		collision_addBody( b->collision_body );
+		printf( "Adding terrain collision_Body\n" );
+	}
+	if ( b->collision_body->shape ) {
+		shape_delete( b->collision_body->shape );
+	}
+
+	heightField* h = terrainBlock_createHeightField( t, b );
+	b->collision_body->shape = shape_heightField_create( h );
 }
 
 void test_terrain() {

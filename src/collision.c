@@ -4,6 +4,7 @@
 //---------------------
 #include "engine.h"
 #include "model.h"
+#include "test.h"
 #include "transform.h"
 #include "maths/geometry.h"
 #include "render/debugdraw.h"
@@ -18,6 +19,8 @@ int body_count;
 
 // Forward Declarations
 bool body_colliding( body* a, body* b );
+bool collisionFunc_SphereHeightfield( shape* sphere_shape, shape* height_shape, matrix matrix_sphere, matrix matrix_heightfield );
+bool collisionFunc_HeightfieldSphere( shape* height_shape, shape* sphere_shape, matrix matrix_heightfield, matrix matrix_sphere );
 
 void collision_clearEvents() {
 	memset( collision_events, 0, sizeof( collisionEvent ) * kMaxCollisionEvents );
@@ -94,6 +97,8 @@ void body_debugdraw( body* b ) {
 		case shapeMesh:
 			collisionMesh_drawWireframe( b->shape->collision_mesh, b->trans->world, green );
 			break;
+		case shapeHeightField:
+			break;
 	}
 }
 
@@ -116,6 +121,8 @@ void collision_tick( float dt ) {
 	collision_removeDeadBodies();
 
 	collision_debugdraw();
+
+	//printf( "Total collision bodies: %d.\n", body_count );
 }
 
 bool collisionFunc_SphereSphere( shape* a, shape* b, matrix matrix_a, matrix matrix_b ) {
@@ -327,6 +334,9 @@ void collision_initCollisionFuncs() {
 	collide_funcs[shapeMesh][shapeSphere] = collisionFunc_MeshSphere;
 	collide_funcs[shapeSphere][shapeMesh] = collisionFunc_SphereMesh;
 	collide_funcs[shapeMesh][shapeMesh] = collisionFunc_MeshMesh;
+
+	collide_funcs[shapeSphere][shapeHeightField] = collisionFunc_SphereHeightfield;
+	collide_funcs[shapeHeightField][shapeSphere] = collisionFunc_HeightfieldSphere;
 }
 
 collideFunc collision_func( enum shapeType type_a, enum shapeType type_b ) {
@@ -408,7 +418,12 @@ shape* mesh_createFromRenderMesh( mesh* render_mesh ) {
 
 
 vector heightField_vertex( heightField* h, int x, int z ) { 
-	return h->verts[ x * h->z_samples + z ];
+	float x_per_sample = h->width / ((float)h->x_samples - 1.f );
+	float x_pos = ((float)x) * x_per_sample - ( h->width * 0.5f );
+	float z_per_sample = h->length / ((float)h->z_samples - 1.f );
+	float z_pos = ((float)z) * z_per_sample - ( h->length * 0.5f );
+	vector v = Vector( x_pos, h->verts[ x * h->z_samples + z ], z_pos, 1.f );
+	return v;
 }
 
 int heightField_xPosition( heightField* h, float x_sample ) {
@@ -454,15 +469,17 @@ float heightField_sample( heightField* h, float x, float z ) {
 
 	if ( x_offset + z_offset > 1.f ) {
 		// Far triangle
-		return heightField_plane_sample( xz, xz_, x_z, x, z );
-	} else {
-		// Near triangle
 		return heightField_plane_sample( x_z_, x_z, xz_, x, z );
+	} else {
+		// Far triangle
+		// Near triangle
+		return heightField_plane_sample( xz, xz_, x_z, x, z );
 	}
 }
 
 // Do a collision test between a sphere and a heightfield
 bool collisionFunc_SphereHeightfield( shape* sphere_shape, shape* height_shape, matrix matrix_sphere, matrix matrix_heightfield ) {
+	printf( "Collision SPHERE HEIGHTFIELD!\n" );
 	// For now, assuming that the sphere is actually a point
 	// TODO - take into account the radius
 
@@ -477,7 +494,77 @@ bool collisionFunc_SphereHeightfield( shape* sphere_shape, shape* height_shape, 
 	return ( y >= sphere_position.coord.y );
 }
 
+bool collisionFunc_HeightfieldSphere( shape* height_shape, shape* sphere_shape, matrix matrix_heightfield, matrix matrix_sphere ) {
+	return collisionFunc_SphereHeightfield( sphere_shape, height_shape, matrix_sphere, matrix_heightfield );
+}
 
+shape* shape_heightField_create( heightField* h ) {
+	shape* s = mem_alloc( sizeof( shape ));
+	s->type = shapeHeightField;
+	s->height_field = h;
+	return s;
+}
+
+heightField* heightField_create( float width, float length, int x_samples, int z_samples) {
+	printf( "Creating heightfield with %d verts.\n", x_samples * z_samples );
+	heightField* h = mem_alloc( sizeof( heightField ));
+	memset( h, 0, sizeof( heightField ));
+	h->width = width;
+	h->length = length;
+	h->x_samples = x_samples;
+	h->z_samples = z_samples;
+	int vert_count = x_samples * z_samples;
+	h->verts =  mem_alloc( sizeof( float ) * vert_count );
+	return h;
+}
+
+void heightField_delete( heightField* h ) {
+	vAssert( h );
+	vAssert( h->verts );
+	mem_free( h->verts );
+	mem_free( h );
+}
+
+void shape_delete( shape* s ) {
+	if ( s->type == shapeHeightField ) {
+		vAssert( s->height_field );
+		mem_free( s->height_field );
+	}
+	mem_free( s );
+}
+
+void test_heightField() {
+	heightField* h = heightField_create( 10.f, 8.f, 2, 2 );
+	(void)h;
+	h->verts[0] = 2.f; // Near corner
+	h->verts[1] = 1.f;
+	h->verts[2] = 0.f;
+	h->verts[3] = -2.f; // Far corner
+
+	{
+		float y;
+		y = heightField_sample( h, -5.f, -4.f );
+		test( ( y == h->verts[0] ), "heightField Sample near corner success", "heightField Sample near corner failure" );
+		y = heightField_sample( h, 4.99999f, 3.99999f );
+		test( ( f_eq( y, h->verts[3] ) ), "heightField Sample far corner success", "heightField Sample far corner failure" );
+	}
+
+	{
+		shape* sphere_shape = sphere_create( 0.f ); // No radius for now
+		shape* height_shape = shape_heightField_create( h );
+		matrix matrix_sphere;
+		matrix_setIdentity( matrix_sphere );
+		bool collision = collisionFunc_SphereHeightfield( sphere_shape, height_shape, matrix_sphere, matrix_identity );
+		test( ( collision == true ), "heightField collision test success", "heightField collision test failure" );
+	
+		vector position = Vector( 0.f, 2.f, 0.f, 1.f );
+		matrix_setTranslation( matrix_sphere, &position );
+		collision = collisionFunc_SphereHeightfield( sphere_shape, height_shape, matrix_sphere, matrix_identity );
+		test( ( collision == false ), "heightField no collision test success", "heightField no collision test failure" );
+	}
+
+	heightField_delete( h );
+}
 
 //
 //
@@ -503,6 +590,7 @@ void collision_init() {
 }
 
 void test_collision() {
+	printf( "--- Beginning Unit Test: Collision ---\n" );
 	shape sphere_a;
    	sphere_a.type = shapeSphere;
 	sphere_a.radius = 1.f;
@@ -557,8 +645,12 @@ void test_collision() {
 	collision_removeBody( body_a );
 	collision_removeBody( body_b );
 	collision_removeBody( body_c );
+	// Force remove them immediately
+	collision_removeDeadBodies();
 
 	mem_free( body_a );
 	mem_free( body_b );
 	mem_free( body_c );
+
+	test_heightField();
 }

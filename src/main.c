@@ -44,11 +44,11 @@ void runTests() {
 
 	test_input();
 
-	test_terrain();
-
 	test_aabb_calculate();
 
-	test_collision();
+	//test_collision();
+	
+	//test_terrain();
 }
 #endif // UNIT_TEST
 
