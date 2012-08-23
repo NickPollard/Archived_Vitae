@@ -148,6 +148,66 @@ bool triangle_intersectingMesh( vector a, vector b, vector c, collisionMesh* m )
 	return false;
 }
 
+
+vector line_normal( vector a, vector b ) {
+	// TODO
+	float x = b.coord.x - a.coord.x;
+	float y = b.coord.y - a.coord.y;
+	vector normal = Vector( y, -x, 0.f, 0.f );
+	Normalize( &normal, &normal );
+	return normal;
+}
+
+// Using just X and Y
+bool line_intersect2d( vector point, vector dir, vector a, vector b ) {
+	if ( vector_equal( &a, &b )) {
+		// Degenerate triangle, so no intersection
+		return false;
+	}
+	vector normal = line_normal( a, b );
+	vector offset;
+	Sub( &offset, &a, &point );
+	float dir_dot_normal = Dot( &dir, &normal );
+	if ( f_eq (dir_dot_normal, 0.f )) {
+		return false;
+	}
+	float d = Dot( &offset, &normal ) / dir_dot_normal;
+	vector intersection;
+	vector_scale( &intersection, &dir, d ); 
+	Add( &intersection, &intersection, &point );
+	//printf( "dir_dot_normal: %.2f, intersection.z %.2f\n", dir_dot_normal, intersection.coord.z );
+	vAssert( f_eq( intersection.coord.z, 0.f ));
+
+
+	return false;
+}
+
+// Is a point inside the triangle
+bool point_insideTriangle( vector point, vector a, vector b, vector c ) {
+	// Extend a line from the point in one direction, count how many edges it crosses
+	// Odd number: inside
+	// Event number: outside
+	int intersections = 0;
+
+	//project onto the plane
+	point.coord.z = 0.f;
+	a.coord.z = 0.f;
+	b.coord.z = 0.f;
+	c.coord.z = 0.f;
+
+	vector ab, bc, ca;
+	Sub( &ab, &b, &b );
+	Sub( &bc, &c, &a );
+	Sub( &ca, &a, &c );
+
+	vector dir = Vector( 0.f, 1.f, 0.f, 0.f );
+	intersections += line_intersect2d( point, dir, a, b ) ? 1 : 0;
+	intersections += line_intersect2d( point, dir, b, c ) ? 1 : 0;
+	intersections += line_intersect2d( point, dir, c, a ) ? 1 : 0;
+
+	return (intersections % 2 ) == 1;
+}
+
 int line_intersectsTriangle( vector point, vector line, vector a, vector b, vector c ) {
 	vAssert( isNormalized( &line ));
 
@@ -172,14 +232,14 @@ int line_intersectsTriangle( vector point, vector line, vector a, vector b, vect
 	if ( d_intersect < d )
 		return false;
 	else {
-	// Test that the intersection is inside the triangle
-		return true;
+		// Test that the intersection is inside the triangle
+		return point_insideTriangle( point, a, b, c );
 	}
 }
 
 // Vert and Mesh must be in the same coordinate space now
 bool vertex_insideMesh( vector v, collisionMesh* m ) {
-	// Extend a line from the point in one direction, count how many polgyons it crosses
+	// Extend a line from the point in one direction, count how many polygons it crosses
 	// Odd number: inside
 	// Event number: outside
 	int intersections = 0;
@@ -190,7 +250,7 @@ bool vertex_insideMesh( vector v, collisionMesh* m ) {
 		intersections += line_intersectsTriangle( v, y_axis, a, b, c );
 	}
 
-	return ( intersections % 2 ) == 0;
+	return ( intersections % 2 ) == 1;
 }
 
 bool mesh_insideMesh( collisionMesh* mesh_a, collisionMesh* mesh_b, matrix matrix_a, matrix matrix_b ) {
@@ -233,6 +293,7 @@ bool collisionFunc_MeshMesh( shape* mesh_a, shape* mesh_b, matrix matrix_a, matr
 	// 1. The meshes are not colliding at all
 	// 2. At least one mesh has at least one vertex inside the other
 	// 3. No vertices are inside the other mesh, but there are intersecting edges/tris
+	printf( "MeshMesh! First mesh has %d verts, second has %d\n", mesh_a->collision_mesh->vert_count, mesh_b->collision_mesh->vert_count );
 	
 	bool colliding = false;
 	// Test each vertex to see if it's wholly inside the other mesh
@@ -336,6 +397,96 @@ shape* mesh_createFromRenderMesh( mesh* render_mesh ) {
 	s->collision_mesh = collisionMesh_fromRenderMesh( render_mesh );
 	return s;
 }
+
+
+//
+//
+//
+//
+
+
+
+
+vector heightField_vertex( heightField* h, int x, int z ) { 
+	return h->verts[ x * h->z_samples + z ];
+}
+
+int heightField_xPosition( heightField* h, float x_sample ) {
+	float x_per_sample = h->width / ((float)h->x_samples - 1.f );
+	float x_min = h->width * -0.5f;
+	return floorf(( x_sample - x_min ) / x_per_sample );
+}
+
+int heightField_zPosition( heightField* h, float z_sample ) {
+	float z_per_sample = h->length / ((float)h->z_samples - 1.f );
+	float z_min = h->length * -0.5f;
+	return floorf(( z_sample - z_min ) / z_per_sample );
+}
+
+// Sample a single plane on a heightfield at X and Y
+// We assume that we already know we are above this plane
+float heightField_plane_sample( vector a, vector b, vector c, float x, float z ) {
+	vector normal;
+	float d;
+	plane( a, b, c, &normal, &d );
+	float y = ( d - normal.coord.x * x - normal.coord.z * z ) / normal.coord.y; 
+	return y;	
+}
+
+// Sample the given heightfield at the given coordinate X, Z, returning the height Y
+float heightField_sample( heightField* h, float x, float z ) {
+	// We need to find which polygon we're over
+	int x_pos = heightField_xPosition( h, x );
+	int z_pos = heightField_zPosition( h, z );
+
+	// At this point we know it lies in the square x_pos -> x_pos+1, z_pos -> z_pos + 1
+	// We need to find out which triangle it lies over out of the two possible
+	// Triangles always go the same way on a height field
+	vector xz = heightField_vertex( h, x_pos, z_pos );
+	vector xz_ = heightField_vertex( h, x_pos, z_pos + 1 );
+	vector x_z = heightField_vertex( h, x_pos + 1, z_pos );
+	vector x_z_ = heightField_vertex( h, x_pos + 1, z_pos + 1 );
+
+	float x_per_sample = h->width / ((float)h->x_samples - 1.f );
+	float z_per_sample = h->length / ((float)h->z_samples - 1.f );
+	float x_offset = ( x - xz.coord.x ) / x_per_sample;
+	float z_offset = ( z - xz.coord.z ) / z_per_sample;
+
+	if ( x_offset + z_offset > 1.f ) {
+		// Far triangle
+		return heightField_plane_sample( xz, xz_, x_z, x, z );
+	} else {
+		// Near triangle
+		return heightField_plane_sample( x_z_, x_z, xz_, x, z );
+	}
+}
+
+// Do a collision test between a sphere and a heightfield
+bool collisionFunc_SphereHeightfield( shape* sphere_shape, shape* height_shape, matrix matrix_sphere, matrix matrix_heightfield ) {
+	// For now, assuming that the sphere is actually a point
+	// TODO - take into account the radius
+
+	// Translate the sphere into heightfield space
+	matrix sphere_to_height;
+	matrix inv_b;
+	matrix_inverse( inv_b, matrix_heightfield );
+	matrix_mul( sphere_to_height, inv_b, matrix_sphere );
+	vector sphere_position = matrix_vecMul( sphere_to_height, &sphere_shape->origin );
+
+	float y = heightField_sample( height_shape->height_field, sphere_position.coord.x, sphere_position.coord.z );	
+	return ( y >= sphere_position.coord.y );
+}
+
+
+
+//
+//
+//
+//
+
+
+
+
 
 body* body_create( shape* s, transform* t ) {
 	body* b = mem_alloc( sizeof( body ));

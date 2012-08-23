@@ -14,6 +14,7 @@ enum shapeType {
 	shapeMesh
 };
 
+// A full arbitrary collision mesh
 typedef struct collisionMesh_s {
 	vector* verts;	
 	int vert_count;
@@ -21,11 +22,22 @@ typedef struct collisionMesh_s {
 	int index_count;
 } collisionMesh;
 
+// A mesh-shape defined by a heighfield - so underneath is always colliding
+// No re-entrant shapes - any given X,Z pair maps to exactly one Y
+typedef struct heightField_s {
+	int x_samples;		// How many verts wide the field is
+	int z_samples;		// How many verts long the field is
+	float width;		// How wide (in game units) - X - the field is
+	float length;		// How long (in game units) - Z - the field is
+	vector *verts;
+} heightField;
+
 typedef struct shape_s {
 	enum shapeType type;
 	union {
 		float radius;
 		collisionMesh* collision_mesh;
+		heightField* height_field;
 	};
 	vector origin;
 } shape;

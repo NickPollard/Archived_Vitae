@@ -6,6 +6,7 @@
 #include "maths/vector.h"
 
 // Calculate the normal and distance of a plane containing 3 points
+// ax + by + cz - d = 0
 void plane( vector a, vector b, vector c, vector* normal, float* d ) {
 	// Calculate the plane of the 3 points
 	vector ab, ac;
