@@ -495,6 +495,10 @@ heightField* terrainBlock_createHeightField( terrain* t, terrainBlock* b ) {
 	
 	return h;
 }
+vector terrainBlock_center ( terrainBlock* b ) {
+	vector center = Vector(( b->u_min + b->u_max ) * 0.5f, 0.f, ( b->v_min + b->v_max ) * 0.5f, 1.f );
+	return center;
+}
 
 // Calculate the collision for a given block
 void terrainBlock_calculateCollision( terrain* t, terrainBlock* b ) {
@@ -512,6 +516,9 @@ void terrainBlock_calculateCollision( terrain* t, terrainBlock* b ) {
 
 	heightField* h = terrainBlock_createHeightField( t, b );
 	b->collision_body->shape = shape_heightField_create( h );
+	// Set transform for centre of heightfield
+	vector position = terrainBlock_center( b );
+	transform_setWorldSpacePosition( b->collision_body->trans, &position );
 }
 
 void test_terrain() {

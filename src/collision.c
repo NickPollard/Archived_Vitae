@@ -471,15 +471,18 @@ float heightField_sample( heightField* h, float x, float z ) {
 		// Far triangle
 		return heightField_plane_sample( x_z_, x_z, xz_, x, z );
 	} else {
-		// Far triangle
 		// Near triangle
 		return heightField_plane_sample( xz, xz_, x_z, x, z );
 	}
 }
 
+bool heightField_contains( heightField* h, float x, float z ) {
+	return ( fabsf( x ) <= h->width * 0.5f ) &&
+			( fabsf( z ) <= h->length * 0.5f );
+}
+
 // Do a collision test between a sphere and a heightfield
 bool collisionFunc_SphereHeightfield( shape* sphere_shape, shape* height_shape, matrix matrix_sphere, matrix matrix_heightfield ) {
-	printf( "Collision SPHERE HEIGHTFIELD!\n" );
 	// For now, assuming that the sphere is actually a point
 	// TODO - take into account the radius
 
@@ -489,6 +492,11 @@ bool collisionFunc_SphereHeightfield( shape* sphere_shape, shape* height_shape, 
 	matrix_inverse( inv_b, matrix_heightfield );
 	matrix_mul( sphere_to_height, inv_b, matrix_sphere );
 	vector sphere_position = matrix_vecMul( sphere_to_height, &sphere_shape->origin );
+
+	// Check that the sphere is actually over the heightfield
+	if ( !heightField_contains( height_shape->height_field, sphere_position.coord.x, sphere_position.coord.z )) {
+		return false;
+	}
 
 	float y = heightField_sample( height_shape->height_field, sphere_position.coord.x, sphere_position.coord.z );	
 	return ( y >= sphere_position.coord.y );
