@@ -158,8 +158,13 @@ void lua_collisionCallback( body* this, body* other, void* data ) {
 	//printf( "Lua registry indices: %d %d %d\n", ref, this->intdata, other->intdata );
 
 	lua_retrieve( l, ref );
+	vAssert( this->intdata );
 	lua_retrieve( l, this->intdata );
-	lua_retrieve( l, other->intdata );
+	if ( other->intdata ) {
+		lua_retrieve( l, other->intdata );
+	} else {
+		lua_pushnumber( l, 0 );
+	}
 	lua_pcall( l, 2, 0, 0 );
 //	lua_runFunc( l, ref, 2 );
 }
@@ -284,6 +289,13 @@ int LUA_body_destroy( lua_State* l ) {
 	body* b = lua_toptr( l, 1 );
 	vAssert( b );
 	collision_removeBody( b );
+	return 0;
+}
+
+int LUA_physic_destroy( lua_State* l ) {
+	physic* p = lua_toptr( l, 1 );
+	vAssert( p );
+	physic_delete( p );
 	return 0;
 }
 
@@ -688,8 +700,11 @@ lua_State* vlua_create( engine* e, const char* filename ) {
 	// *** General
 	lua_registerFunction( l, LUA_registerCallback, "registerEventHandler" );
 	lua_registerFunction( l, LUA_print, "vprint" );
+
 	// *** Vector
 	lua_registerFunction( l, LUA_vector, "Vector" );
+	lua_registerFunction( l, LUA_vector_values, "vvector_values" );
+
 	// *** Input
 	lua_registerFunction( l, LUA_keyPressed, "vkeyPressed" );
 	lua_registerFunction( l, LUA_keyHeld, "vkeyHeld" );
@@ -698,20 +713,24 @@ lua_State* vlua_create( engine* e, const char* filename ) {
 	lua_registerFunction( l, LUA_createTouchPad, "vcreateTouchPad" );
 	lua_registerFunction( l, LUA_touchPadTouched, "vtouchPadTouched" );
 	lua_registerFunction( l, LUA_touchPadDragged, "vtouchPadDragged" );
+
 	// *** Scene
 	lua_registerFunction( l, LUA_createModelInstance, "vcreateModelInstance" );
 	lua_registerFunction( l, LUA_deleteModelInstance, "vdeleteModelInstance" );
-	lua_registerFunction( l, LUA_createphysic, "vcreatePhysic" );
-	lua_registerFunction( l, LUA_createbodySphere, "vcreateBodySphere" );
-	lua_registerFunction( l, LUA_createbodyMesh, "vcreateBodyMesh" );
-	lua_registerFunction( l, LUA_createtransform, "vcreateTransform" );
-	lua_registerFunction( l, LUA_setWorldSpacePosition, "vsetWorldSpacePosition" );
 	lua_registerFunction( l, LUA_model_setTransform, "vmodel_setTransform" );
-	lua_registerFunction( l, LUA_physic_setTransform, "vphysic_setTransform" );
+	lua_registerFunction( l, LUA_setWorldSpacePosition, "vsetWorldSpacePosition" );
 	lua_registerFunction( l, LUA_scene_addModel, "vscene_addModel" );
 	lua_registerFunction( l, LUA_scene_removeModel, "vscene_removeModel" );
-	lua_registerFunction( l, LUA_physic_activate, "vphysic_activate" );
-	lua_registerFunction( l, LUA_physic_setVelocity, "vphysic_setVelocity" );
+
+	// *** Physic
+	lua_registerFunction( l, LUA_createphysic, "vcreatePhysic" );
+	lua_registerFunction( l, LUA_physic_setTransform,	"vphysic_setTransform" );
+	lua_registerFunction( l, LUA_physic_activate,		"vphysic_activate" );
+	lua_registerFunction( l, LUA_physic_setVelocity,	"vphysic_setVelocity" );
+	lua_registerFunction( l, LUA_physic_destroy,		"vphysic_destroy" );
+
+	// *** Transform
+	lua_registerFunction( l, LUA_createtransform, "vcreateTransform" );
 	lua_registerFunction( l, LUA_transform_yaw, "vtransform_yaw" );
 	lua_registerFunction( l, LUA_transform_pitch, "vtransform_pitch" );
 	lua_registerFunction( l, LUA_transform_roll, "vtransform_roll" );
@@ -719,22 +738,27 @@ lua_State* vlua_create( engine* e, const char* filename ) {
 	lua_registerFunction( l, LUA_transform_setWorldPosition, "vtransform_setWorldPosition" );
 	lua_registerFunction( l, LUA_transform_getWorldPosition, "vtransform_getWorldPosition" );
 	lua_registerFunction( l, LUA_transform_setWorldSpaceByTransform, "vtransform_setWorldSpaceByTransform" );
+	lua_registerFunction( l, LUA_transform_destroy, "vdestroyTransform" );
 	lua_registerFunction( l, LUA_transform_facingWorld, "vtransform_facingWorld" );
 
-	lua_registerFunction( l, LUA_vector_values, "vvector_values" );
-	lua_registerFunction( l, LUA_transform_destroy, "vdestroyTransform" );
+	// *** Particles
 	lua_registerFunction( l, LUA_particle_create, "vparticle_create" );
 	lua_registerFunction( l, LUA_particle_destroy, "vparticle_destroy" );
+
 	// *** Collision
+	lua_registerFunction( l, LUA_createbodySphere, "vcreateBodySphere" );
+	lua_registerFunction( l, LUA_createbodyMesh, "vcreateBodyMesh" );
 	lua_registerFunction( l, LUA_body_setTransform, "vbody_setTransform" );
 	lua_registerFunction( l, LUA_body_registerCollisionCallback, "vbody_registerCollisionCallback" );
 	lua_registerFunction( l, LUA_body_destroy, "vdestroyBody" );
 	lua_registerFunction( l, LUA_body_setCollidableLayers, "vbody_setCollidableLayers" );
 	lua_registerFunction( l, LUA_body_setLayers, "vbody_setLayers" );
+
 	// *** Camera
 	lua_registerFunction( l, LUA_chasecam_follow, "vchasecam_follow" );
 	lua_registerFunction( l, LUA_flycam, "vflycam" );
 	lua_registerFunction( l, LUA_setCamera, "vscene_setCamera" );
+
 	// *** UI
 	lua_registerFunction( l, LUA_createUIPanel, "vcreateUIPanel" );
 

@@ -41,7 +41,7 @@ end
 function gameobject_destroy( g )
 	inTime( 0.2, function () vdeleteModelInstance( g.model ) 
 							vdestroyTransform( g.transform )
-							--vdestroyPhysic( g.physic )
+							vphysic_destroy( g.physic )
 				end )
 	vdestroyBody( g.body )
 end
@@ -87,9 +87,11 @@ function missile_collisionHandler( missile, other )
 	vparticle_destroy( missile.trail )
 end
 
+missiles  = {}
+missile_count = 0
 function fire_missile( ship, offset )
-	local projectile = {}
 	-- Create a new Projectile
+	local projectile = {}
 	projectile = gameobject_create( projectile_model );
 	vbody_setLayers( projectile.body, collision_layer_player )
 	vbody_setCollidableLayers( projectile.body, collision_layer_enemy )
@@ -109,6 +111,10 @@ function fire_missile( ship, offset )
 	ship_v = Vector( 0.0, 0.0, bullet_speed, 0.0 )
 	world_v = vtransformVector( ship.transform, ship_v )
 	vphysic_setVelocity( projectile.physic, world_v );
+
+	-- Store the projectile so it doesn't get garbage collected
+	missiles[missile_count] = projectile
+	missile_count = missile_count + 1
 end
 
 timers = {}
@@ -204,7 +210,7 @@ end
 
 ships = {}
 ship_count = 0
-
+--[[
 function ship_spawner()
 	local ship = gameobject_create( "dat/model/ship_hd.s" )
 	vbody_registerCollisionCallback( ship.body, ship_collisionHandler )
@@ -221,6 +227,7 @@ function ship_spawner()
 	inTime( 0.1, function () ship_tick( ship ) end )
 	inTime( 3, ship_spawner )
 end
+--]]
 
 function collision( this, other )
 		
@@ -307,6 +314,7 @@ function restart()
 	-- We create a player object which is a game-specific Lua class
 	-- The player class itself creates several native C classes in the engine
 	player_ship = playership_create()
+	player_ship.speed = 0.0
 	local no_velocity = Vector( 0.0, 0.0, 0.0, 0.0 )
 	vphysic_setVelocity( player_ship.physic, no_velocity )
 
@@ -321,7 +329,22 @@ function restart()
 	vscene_setCamera( chasecam )
 end
 
+function loadParticles( )
+	local t = vcreateTransform()
+	local particle
+	particle = vparticle_create( engine, t, "dat/script/lisp/missile_explosion.s" )
+	vparticle_destroy( particle )
+	particle = vparticle_create( engine, t, "dat/script/lisp/explosion.s" )
+	vparticle_destroy( particle )
+	particle = vparticle_create( engine, t, "dat/script/lisp/explosion_b.s" )
+	vparticle_destroy( particle )
+	particle = vparticle_create( engine, t, "dat/script/lisp/explosion_c.s" )
+	vparticle_destroy( particle )
+end
+
 function start()
+	loadParticles()
+
 	restart()
 
 	-- Test spawns
@@ -329,8 +352,8 @@ function start()
 	local width = 25.0
 	while spawn_v < 3.0 do
 		spawn_v = spawn_v + 0.3
-		--spawn_atCanyon( -width, spawn_v, "dat/model/skyscraper.s" )
-		--spawn_atCanyon( width, spawn_v, "dat/model/skyscraper.s" )
+		spawn_atCanyon( -width, spawn_v, "dat/model/skyscraper.s" )
+		spawn_atCanyon( width, spawn_v, "dat/model/skyscraper.s" )
 	end
 
 	--ship_spawner()

@@ -120,7 +120,7 @@ void collision_tick( float dt ) {
 
 	collision_removeDeadBodies();
 
-	collision_debugdraw();
+	//collision_debugdraw();
 
 	//printf( "Total collision bodies: %d.\n", body_count );
 }
@@ -514,7 +514,6 @@ shape* shape_heightField_create( heightField* h ) {
 }
 
 heightField* heightField_create( float width, float length, int x_samples, int z_samples) {
-	printf( "Creating heightfield with %d verts.\n", x_samples * z_samples );
 	heightField* h = mem_alloc( sizeof( heightField ));
 	memset( h, 0, sizeof( heightField ));
 	h->width = width;
