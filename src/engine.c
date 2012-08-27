@@ -117,6 +117,17 @@ void countVisibleParticleEmitters( engine* e ) {
 	}
 	printf( "Visible particle emitters: %d.\n", count );
 }
+void countActiveParticleEmitters( engine* e ) {
+	int count = 0;
+	delegatelist* d_list = e->tickers;
+	while ( d_list ) {
+		if ( d_list->head->tick == particleEmitter_tick) {
+			count += d_list->head->count;
+		}
+		d_list = d_list->tail;
+	}
+	printf( "Active particle emitters: %d.\n", count );
+}
 
 // tick - process a frame of game update
 void engine_tick( engine* e ) {
@@ -143,7 +154,8 @@ void engine_tick( engine* e ) {
 
 	engine_tickTickers( e, dt );
 
-	//countVisibleParticleEmitters( e );
+	countVisibleParticleEmitters( e );
+	countActiveParticleEmitters( e );
 
 	if ( e->onTick && luaCallback_enabled( e->onTick ) ) {
 #if DEBUG_LUA
