@@ -329,7 +329,7 @@ function restart()
 	vbody_setCollidableLayers( player_ship.body, collision_layer_enemy )
 
 	setup_controls()
-	vtransform_yaw( player_ship.transform, math.pi * 2 * 1.32 );
+	--vtransform_yaw( player_ship.transform, math.pi * 2 * 1.32 );
 	chasecam = vchasecam_follow( engine, player_ship.transform )
 	flycam = vflycam( engine )
 	vscene_setCamera( chasecam )
@@ -348,12 +348,7 @@ function loadParticles( )
 	vparticle_destroy( particle )
 end
 
-function start()
-	loadParticles()
-
-	restart()
-
-	-- Test spawns
+function testSpawns()
 	spawn_v = -3.0
 	local width = 25.0
 	while spawn_v < 3.0 do
@@ -361,7 +356,14 @@ function start()
 		spawn_atCanyon( -width, spawn_v, "dat/model/skyscraper.s" )
 		spawn_atCanyon( width, spawn_v, "dat/model/skyscraper.s" )
 	end
+end
 
+function start()
+	loadParticles()
+
+	restart()
+
+	-- testSpawns()
 	--ship_spawner()
 end
 
@@ -525,7 +527,7 @@ function tick( dt )
 
 	timers_tick( dt )
 
-	update_spawns( player_ship )
+	--update_spawns( player_ship )
 
 --[[
 	if wave_complete( current_wave ) then

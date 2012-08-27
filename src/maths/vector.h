@@ -7,6 +7,10 @@ extern const vector x_axis;
 extern const vector y_axis;
 extern const vector z_axis;
 
+extern const vector color_red;
+extern const vector color_green;
+extern const vector color_blue;
+
 vector Vector(float x, float y, float z, float w);
 
 void Set(vector* v, float x, float y, float z, float w);
@@ -16,6 +20,12 @@ void Sub(vector *dst, const vector* srcA, const vector* srcB);
 float Dot( const vector* A, const vector* B );
 float Dot4( const vector* A, const vector* B );
 void Cross(vector* dst, const vector* srcA, const vector* srcB);
+
+vector vector_add( vector a, vector b );
+vector vector_sub( vector a, vector b );
+vector vector_scaled( vector a, float f );
+vector normalized( vector a );
+float vector_lengthI( vector v );
 
 // Normalise a vector
 // No use of restrict; dst *can* alias src

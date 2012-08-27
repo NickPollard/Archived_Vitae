@@ -154,8 +154,8 @@ void engine_tick( engine* e ) {
 
 	engine_tickTickers( e, dt );
 
-	countVisibleParticleEmitters( e );
-	countActiveParticleEmitters( e );
+	//countVisibleParticleEmitters( e );
+	//countActiveParticleEmitters( e );
 
 	if ( e->onTick && luaCallback_enabled( e->onTick ) ) {
 #if DEBUG_LUA

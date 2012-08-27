@@ -8,6 +8,10 @@ const vector x_axis = {{ 1.f, 0.f, 0.f, 0.f }};
 const vector y_axis = {{ 0.f, 1.f, 0.f, 0.f }};
 const vector z_axis = {{ 0.f, 0.f, 1.f, 0.f }};
 
+const vector color_red = {{ 1.f, 0.f, 0.f, 1.f }};
+const vector color_green = {{ 0.f, 1.f, 0.f, 1.f }};
+const vector color_blue = {{ 0.f, 0.f, 1.f, 1.f }};
+
 vector Vector(float x, float y, float z, float w) {
 	vector v;
 	v.coord.x = x;
@@ -55,6 +59,45 @@ void Cross(vector* dst, const vector* srcA, const vector* srcB) {
 	dst->coord.w = 0.f; // If we're getting the cross product, it's a vector not a point
 }
 
+vector vector_add( vector a, vector b ) {
+	vector r = Vector( a.coord.x + b.coord.x,
+						a.coord.y + b.coord.y,
+						a.coord.z + b.coord.z,
+						a.coord.w + b.coord.w );
+	return r;
+}
+
+
+vector vector_sub( vector a, vector b ) {
+	vector r = Vector( a.coord.x - b.coord.x,
+						a.coord.y - b.coord.y,
+						a.coord.z - b.coord.z,
+						a.coord.w - b.coord.w );
+	return r;
+}
+
+vector normalized( vector v ) {
+	float inv_mag = 1.f / vector_length( &v );
+	vector n = Vector( v.coord.x * inv_mag,
+						v.coord.y * inv_mag,
+						v.coord.z * inv_mag,
+						v.coord.w * inv_mag );
+	return n;
+}
+vector vector_scaled( vector v, float f ) {
+	return Vector( v.coord.x * f,
+					v.coord.y * f,
+					v.coord.z * f,
+					v.coord.w * f );
+}
+
+float vector_lengthI( vector v ) {
+	float length = sqrt( v.coord.x * v.coord.x
+		  			 	  + v.coord.y * v.coord.y + 
+							v.coord.z * v.coord.z );
+	return length;
+}
+
 void vector_scale( vector* dst, vector* src, float scale ) {
 	dst->coord.x = src->coord.x * scale;
 	dst->coord.y = src->coord.y * scale;
@@ -70,10 +113,10 @@ float vector_length( const vector* v ) {
 // No use of restrict; dst *can* alias src
 void Normalize( vector* dst, const vector* src ) {
 	float length = vector_length( src );
-	float invLength = 1.f / length;
-	dst->coord.x = src->coord.x * invLength;
-	dst->coord.y = src->coord.y * invLength;
-	dst->coord.z = src->coord.z * invLength;
+	float inv_length = 1.f / length;
+	dst->coord.x = src->coord.x * inv_length;
+	dst->coord.y = src->coord.y * inv_length;
+	dst->coord.z = src->coord.z * inv_length;
 	dst->coord.w = src->coord.w; // Preserve the W coord? This seems right to me
 }
 
