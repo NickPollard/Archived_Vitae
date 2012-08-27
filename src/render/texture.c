@@ -20,7 +20,7 @@ typedef struct textureRequest_s {
 	const char* filename;
 } textureRequest;
 
-#define kMaxTextureRequests 16
+#define kMaxTextureRequests 32
 textureRequest requests[kMaxTextureRequests];
 int texture_request_count = 0;
 
