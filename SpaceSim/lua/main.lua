@@ -251,7 +251,7 @@ end
 
 function setup_controls()
 	-- Set up steering input for the player ship
-	use_drag = false
+	use_drag = true
 	if touch_enabled then
 		if use_drag then
 			-- Steering
@@ -263,7 +263,7 @@ function setup_controls()
 			player_ship.joypad = vcreateTouchPad( input, x, y, w, h )
 			player_ship.steering_input = steering_input_drag
 			-- UI drawing is upside down compared to touchpad placement - what to do about this?
-			vcreateUIPanel( engine, x, 0, w, h )
+			--vcreateUIPanel( engine, x, 0, w, h )
 
 		else
 			-- Steering
@@ -276,13 +276,13 @@ function setup_controls()
 			player_ship.joypad = vcreateTouchPad( input, x, y, w, h )
 			player_ship.steering_input = steering_input_joypad
 			-- UI drawing is upside down compared to touchpad placement - what to do about this?
-			vcreateUIPanel( engine, x, 0, w, h )
+			--vcreateUIPanel( engine, x, 0, w, h )
 
 		end			-- Firing Trigger
-		x = 0
-		y = 30
-		w = 200
-		h = 200
+		local x = 0
+		local y = 30
+		local w = 200
+		local h = 200
 		player_ship.fire_trigger = vcreateTouchPad( input, x, y, w, h )
 		vcreateUIPanel( engine, x, 720-y-h, w, h )
 		-- throttle	
@@ -291,6 +291,12 @@ function setup_controls()
 	else
 		player_ship.steering_input = steering_input_keyboard
 	end
+	-- Crosshair
+	local w = 40
+	local h = 40
+	local x = 640 - ( w / 2 )
+	local y = 360 - ( h / 2 ) - 40
+	vcreateUIPanel( engine, x, y, w, h )
 end
 
 function player_ship_collisionHandler( ship, collider )
@@ -410,6 +416,7 @@ function drag_map()
 	return function( x, y )
 		x_scale = 15.0
 		y_scale = 15.0
+		--return sign(x) * x*x / (x_scale * x_scale), sign(y) * y * y / ( y_scale * y_scale )
 		return x / x_scale, y / y_scale
 	end
 end
