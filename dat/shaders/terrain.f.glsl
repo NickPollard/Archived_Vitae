@@ -89,7 +89,7 @@ void main() {
 #endif // ENABLE_POINT_LIGHTS
 
 	vec4 tex_color = texture2D( tex, texcoord );
-	vec4 material_diffuse = vert_color * tex_color;
+	vec4 material_diffuse = vert_color; // * tex_color;
 	vec4 fragColor = (/*total_specular_color +*/ total_diffuse_color) * material_diffuse;
 
 	// sunlight on fog
