@@ -2,7 +2,7 @@
 #include "src/common.h"
 #include "src/engine.h"
 //---------------------
-#include "mem/allocator.h"
+#include "canyon.h"
 #include "collision.h"
 #include "dynamicfog.h"
 #include "font.h"
@@ -16,13 +16,14 @@
 #include "terrain.h"
 #include "transform.h"
 #include "camera/flycam.h"
+#include "debug/debug.h"
+#include "debug/debugtext.h"
 #include "input/keyboard.h"
+#include "mem/allocator.h"
 #include "render/debugdraw.h"
 #include "render/modelinstance.h"
 #include "render/render.h"
 #include "render/texture.h"
-#include "debug/debug.h"
-#include "debug/debugtext.h"
 #include "script/lisp.h"
 #include "script/parse.h"
 #include "system/thread.h"
@@ -172,6 +173,8 @@ void engine_tick( engine* e ) {
 
 	vector v = Vector( 0.0, 0.0, 30.0, 1.0 );
 	theTerrain->sample_point = matrix_vecMul( theScene->cam->trans->world, &v );
+	const vector* camera_position = matrix_getTranslation( theScene->cam->trans->world );
+	canyon_seekForWorldPosition( *camera_position );
 	PROFILE_END( PROFILE_ENGINE_TICK );
 
 }

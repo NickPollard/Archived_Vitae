@@ -77,6 +77,12 @@ vector canyonBuffer_value( window_buffer* buffer, int i ) {
 	return values[i];
 }
 
+// Returns a point from the buffer that corresponds to absolute stream position STREAM_INDEX
+vector canyon_point( window_buffer* buffer, size_t stream_index ) {
+	size_t mapped_index = windowBuffer_mappedPosition( buffer, stream_index );
+	return canyonBuffer_value( buffer, mapped_index );
+}
+
 // Generate points to fill up empty space in the buffer
 void canyonBuffer_generatePoints( window_buffer* buffer ) {
 	vector before = canyonBuffer_value( buffer, windowBuffer_index( buffer, buffer->tail - 1 ));
@@ -84,6 +90,7 @@ void canyonBuffer_generatePoints( window_buffer* buffer ) {
 	size_t next_stream_position = windowBuffer_streamPosition( buffer, buffer->tail ) + 1;
 	size_t end_position = buffer->stream_position + buffer->window_size;
 	while ( next_stream_position < end_position ) {
+		//printf( "Next stream: " dPTRf ", end stream: " dPTRf ".\n", next_stream_position, end_position );
 		size_t i = windowBuffer_mappedPosition( buffer, next_stream_position );
 		vector next = terrain_newCanyonPoint( current, before );
 		before = current;
@@ -91,11 +98,15 @@ void canyonBuffer_generatePoints( window_buffer* buffer ) {
 		canyonBuffer_setValue( buffer, i, next );
 		++next_stream_position;
 	}
+	buffer->tail = ( buffer->head + buffer->window_size - 1 ) % buffer->window_size;
 }
 
 
 // Seek the canyon window_buffer forward so that its stream_position is now SEEK_POSITION
 void canyonBuffer_seekForward( window_buffer* buffer, size_t seek_position ) {
+	if ( seek_position != buffer->stream_position )
+		printf( "seeking to " dPTRf "\n", seek_position );
+	vAssert( seek_position >= buffer->stream_position );
 	size_t stream_end_position = windowBuffer_endPosition( buffer );
 	while ( stream_end_position < seek_position ) {
 		// The seek target is not in the window so we flush everything and need to generate
@@ -119,17 +130,19 @@ void canyonBuffer_seekForward( window_buffer* buffer, size_t seek_position ) {
 // *** Canyon Geometry
 
 float canyon_v( int segment_index, float segment_prog ) {
-	return segment_prog + (float)segment_index * kCanyonSegmentLength;
+	return ( segment_prog + (float)segment_index ) * kCanyonSegmentLength;
 }
 
 // Convert world-space X and Z coords into canyon space U and V
 void terrain_canyonSpaceFromWorld( float x, float z, float* u, float* v ) {
 	vector point = Vector( x, 0.f, z, 1.f );
-	int closest_i = 0;
+	int closest_i = 0;	// Closest point - in absolute stream position
 	float closest_d = FLT_MAX;
 	// We need to find the closest segment
-	for ( int i = 1; i + 1 < kMaxCanyonPoints; ++i ) {
-		vector displacement = vector_sub( point, canyon_points[i] );
+	size_t start = canyon_streaming_buffer.stream_position + 1;
+	size_t end = canyon_streaming_buffer.stream_position + canyon_streaming_buffer.window_size;
+	for ( size_t i = start; i + 1 < end; ++i ) {
+		vector displacement = vector_sub( point, canyon_point( &canyon_streaming_buffer, i ) );
 		float d = vector_length( &displacement );
 		if ( d < closest_d ) {
 			closest_d = d;
@@ -138,8 +151,8 @@ void terrain_canyonSpaceFromWorld( float x, float z, float* u, float* v ) {
 	}
 	// find closest points on the two segments using that point
 	vector closest_a, closest_b;
-	float seg_pos_a = segment_closestPoint( canyon_points[closest_i], canyon_points[closest_i+1], point, &closest_a );
-	float seg_pos_b = segment_closestPoint( canyon_points[closest_i-1], canyon_points[closest_i], point, &closest_b );
+	float seg_pos_a = segment_closestPoint( canyon_point( &canyon_streaming_buffer, closest_i ), canyon_point( &canyon_streaming_buffer, closest_i+1 ), point, &closest_a );
+	float seg_pos_b = segment_closestPoint( canyon_point( &canyon_streaming_buffer, closest_i-1 ), canyon_point( &canyon_streaming_buffer, closest_i ), point, &closest_b );
 	// use the closest
 	float length_a = vector_lengthI( vector_sub( point, closest_a ));
 	float length_b = vector_lengthI( vector_sub( point, closest_b ));
@@ -155,11 +168,6 @@ void terrain_canyonSpaceFromWorld( float x, float z, float* u, float* v ) {
 
 int terrainCanyon_segmentAtDistance( float v ) {
 	return (float)floorf(v / kCanyonSegmentLength);
-}
-
-vector canyon_point( window_buffer* buffer, size_t stream_index ) {
-	size_t mapped_index = windowBuffer_mappedPosition( buffer, stream_index );
-	return canyonBuffer_value( buffer, mapped_index );
 }
 
 // Convert canyon-space U and V coords into world space X and Z
@@ -228,9 +236,18 @@ void terrain_generatePoints() {
 	canyonBuffer_generatePoints( &canyon_streaming_buffer );	
 }
 
+
+void canyon_seekForWorldPosition( vector position ) {
+	float u, v;
+	terrain_canyonSpaceFromWorld( position.coord.x, position.coord.z, &u, &v );
+	printf( "v: %.2f\n", v );
+	size_t seek_position = max( canyon_streaming_buffer.stream_position, terrainCanyon_segmentAtDistance( v ) - kTrailingCanyonSegments );
+	canyonBuffer_seekForward( &canyon_streaming_buffer, seek_position );
+}
+
 vector  terrainSegment_toScreen( window* w, vector world ) {
-	const float visible_width = 200.f;
-	const float visible_length = 200.f;
+	const float visible_width = 4000.f;
+	const float visible_length = 4000.f;
 	const float x_pos = 400.f;
 	const float y_pos = 50.f;
 	vector screen = Vector( x_pos + ( world.coord.x / visible_width ) * w->width,
@@ -252,6 +269,8 @@ void terrain_debugDraw( window* w ) {
 
 	for ( int i = 0; i+1 < total_points; ++i ) {
 		// draw line segment from (i) to (i+1)
-		terrain_drawSegment( w, canyon_points[i], canyon_points[i+1] );
+		terrain_drawSegment( w,
+				canyon_point( &canyon_streaming_buffer, canyon_streaming_buffer.head + i ),
+			   	canyon_point( &canyon_streaming_buffer, canyon_streaming_buffer.head + i + 1 ));
 	}
 }
