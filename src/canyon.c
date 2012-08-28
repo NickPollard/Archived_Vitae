@@ -114,6 +114,10 @@ void canyonBuffer_seekForward( window_buffer* buffer, size_t seek_position ) {
 	canyonBuffer_generatePoints( buffer );
 }
 
+
+
+// *** Canyon Geometry
+
 float canyon_v( int segment_index, float segment_prog ) {
 	return segment_prog + (float)segment_index * kCanyonSegmentLength;
 }
@@ -153,13 +157,21 @@ int terrainCanyon_segmentAtDistance( float v ) {
 	return (float)floorf(v / kCanyonSegmentLength);
 }
 
+vector canyon_point( window_buffer* buffer, size_t stream_index ) {
+	size_t mapped_index = windowBuffer_mappedPosition( buffer, stream_index );
+	return canyonBuffer_value( buffer, mapped_index );
+}
+
 // Convert canyon-space U and V coords into world space X and Z
 void terrain_worldSpaceFromCanyon( float u, float v, float* x, float* z ) {
 	int i = terrainCanyon_segmentAtDistance( v );
 	float segment_position = v - (float)i * kCanyonSegmentLength;
+	
+	vector canyon_next = canyon_point( &canyon_streaming_buffer, i + 1 );
+	vector canyon_previous = canyon_point( &canyon_streaming_buffer, i );
 
-	vector canyon_position = vector_lerp( &canyon_points[i+1], &canyon_points[i], segment_position );
-	vector segment = normalized( vector_sub( canyon_points[i+1], canyon_points[i] ));
+	vector canyon_position = vector_lerp( &canyon_next, &canyon_previous, segment_position );
+	vector segment = normalized( vector_sub( canyon_next, canyon_previous ));
 	vector normal = Vector( segment.coord.z, 0.f, segment.coord.x, 0.f );
 	vAssert( isNormalized( &normal ));
 	vector u_offset = vector_scaled( normal, u );
@@ -203,29 +215,13 @@ vector terrain_newCanyonPoint( vector current, vector previous ) {
 	float angle = frand( min_angle, max_angle );
 	vector offset = Vector( cosf( angle ) * kCanyonSegmentLength, 0.f, sinf( angle ) * kCanyonSegmentLength, 0.f );
 
-	/*
-	// Temp just walk forward
-	vector next = current;
-	next.coord.z = next.coord.z + kCanyonSegmentLength;
-	*/
-	vector next;
-	Add( &next, &current, &offset );
-	
+	vector next = vector_add( current, offset );
 	return next;
 }
 
 
 // Generate X points of the canyon
 void terrain_generatePoints() {
-	/*
-	// Each point is a given distance and angle from the previous point/segment
-	canyon_points[0] = Vector( 0.f, 0.f, 0.f, 1.f );
-	canyon_points[1] = Vector( 0.f, 0.f, kCanyonSegmentLength, 1.f );
-	for ( int i = 2; i < kMaxCanyonPoints; ++i ) {
-		canyon_points[i] = terrain_newCanyonPoint( canyon_points[i-1], canyon_points[i-2] );
-	}
-	*/
-
 	canyon_points[0] = Vector( 0.f, 0.f, 0.f, 1.f );
 	canyon_points[1] = Vector( 0.f, 0.f, kCanyonSegmentLength, 1.f );
 	canyon_streaming_buffer.tail = 1;
