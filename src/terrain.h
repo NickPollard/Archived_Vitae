@@ -10,6 +10,9 @@ typedef struct terrainBlock_s {
 	int		u_samples;
 	int		v_samples;
 
+	// If true, we need to uild buffers and collision etc. for this block
+	bool	pending;
+
 	// For Rendering
 	int				index_count;
 	vertex*			vertex_buffer;

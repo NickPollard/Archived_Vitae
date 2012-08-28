@@ -412,15 +412,23 @@ void terrain_updateBlocks( terrain* t ) {
 		// if not in old bounds
 		if ( !boundsContains( intersection, coord )) {
 			terrainBlock_calculateExtents( newBlocks[i], t, coord );
-			terrainBlock_calculateBuffers( t, newBlocks[i] );
-			terrainBlock_calculateCollision( t, newBlocks[i] );
+			// mark it as new, buffers will be filled in later
+			newBlocks[i]->pending = true;
 		}
 	}
 
 	memcpy( t->bounds, bounds, sizeof( int ) * 2 * 2 );
 	memcpy( t->blocks, newBlocks, sizeof( terrainBlock* ) * t->total_block_count );
 
-	//mem_free( newBlocks );
+	for ( int i = 0; i < t->total_block_count; ++i ) {
+		terrainBlock* b = t->blocks[i];
+		if ( b->pending ) {
+			terrainBlock_calculateBuffers( t, b );
+			terrainBlock_calculateCollision( t, b );
+			b->pending = false;
+			break;
+		}
+	}
 }
 
 void terrainBlock_render( terrainBlock* b ) {
