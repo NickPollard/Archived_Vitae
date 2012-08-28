@@ -369,8 +369,8 @@ void terrain_updateBlocks( terrain* t ) {
 	terrain_calculateBounds( bounds, t, &t->sample_point );
 	terrain_boundsIntersection( intersection, bounds, t->bounds );
 
-	// Could double buffer this and avoid a mem_alloc/free?
-	terrainBlock**	newBlocks = mem_alloc( sizeof( terrainBlock* ) * t->total_block_count );
+	// Using alloca for dynamic stack allocation (just moves the stack pointer up)
+	terrainBlock** newBlocks = alloca( sizeof( terrainBlock* ) * t->total_block_count );
 
 	int empty_index = 0;
 	// For Each old block
@@ -420,7 +420,7 @@ void terrain_updateBlocks( terrain* t ) {
 	memcpy( t->bounds, bounds, sizeof( int ) * 2 * 2 );
 	memcpy( t->blocks, newBlocks, sizeof( terrainBlock* ) * t->total_block_count );
 
-	mem_free( newBlocks );
+	//mem_free( newBlocks );
 }
 
 void terrainBlock_render( terrainBlock* b ) {
