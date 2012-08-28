@@ -499,13 +499,8 @@ void matrix_fromAxisAngle( matrix m, vector axis, float angle ) {
 
 // Build a rotation matrix from given Euler Angles
 void matrix_fromEuler( matrix m, vector* euler_angles ) {
-	// Compose from 3 indivual rotations;
-	matrix m_yaw, m_pitch, m_roll;
-	matrix_fromAxisAngle( m_yaw, y_axis, euler_angles->coord.x );
-	matrix_fromAxisAngle( m_pitch, x_axis, euler_angles->coord.y );
-	matrix_fromAxisAngle( m_roll, z_axis, euler_angles->coord.z );
-
-	matrix_compose3( m, m_roll, m_pitch, m_yaw );
+	quaternion q = quaternion_fromEuler( euler_angles );
+	matrix_fromQuaternion( m, q );
 }
 
 // Quaternion->Matrix conversion, inspired by http://en.wikipedia.org/wiki/Rotation_matrix#Quaternion
