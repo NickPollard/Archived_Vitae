@@ -67,6 +67,40 @@ modelInstance* modelInstance_create( modelHandle m ) {
 	return instance;
 }
 
+aabb aabb_calculate( obb bb, matrix m ) {
+	vector points[8];
+	points[0] = bb.min;
+	points[1] = bb.max;
+	points[2] = Vector( bb.max.coord.x, bb.min.coord.y, bb.min.coord.z, 1.f );
+	points[3] = Vector( bb.min.coord.x, bb.max.coord.y, bb.min.coord.z, 1.f );
+	points[4] = Vector( bb.min.coord.x, bb.min.coord.y, bb.max.coord.z, 1.f );
+	points[5] = Vector( bb.max.coord.x, bb.max.coord.y, bb.min.coord.z, 1.f );
+	points[6] = Vector( bb.min.coord.x, bb.max.coord.y, bb.max.coord.z, 1.f );
+	points[7] = Vector( bb.max.coord.x, bb.min.coord.y, bb.max.coord.z, 1.f );
+	
+	aabb aligned_bb;
+
+	vector vert = points[0];
+	if ( m )
+		vert = matrix_vecMul( m, &points[0] );
+	aligned_bb.min = vert;
+	aligned_bb.max = vert;
+
+	for ( int i = 1; i < 8; ++i ) {
+		vert = points[i];
+		if ( m )
+			vert = matrix_vecMul( m, &points[i] );
+		aligned_bb.min.coord.x = fminf( aligned_bb.min.coord.x, vert.coord.x );
+		aligned_bb.min.coord.y = fminf( aligned_bb.min.coord.y, vert.coord.y );
+		aligned_bb.min.coord.z = fminf( aligned_bb.min.coord.z, vert.coord.z );
+
+		aligned_bb.max.coord.x = fmaxf( aligned_bb.max.coord.x, vert.coord.x );
+		aligned_bb.max.coord.y = fmaxf( aligned_bb.max.coord.y, vert.coord.y );
+		aligned_bb.max.coord.z = fmaxf( aligned_bb.max.coord.z, vert.coord.z );
+	}
+	return aligned_bb;
+}
+	/*
 aabb aabb_calculate( int vert_count, vector* verts, matrix m ) {
 	vAssert( vert_count > 1 );
 	aabb bb;
@@ -80,13 +114,24 @@ aabb aabb_calculate( int vert_count, vector* verts, matrix m ) {
 		if ( m )
 			vert = matrix_vecMul( m, &verts[i] );
 
-		bb.min = vector_min( &bb.min, &vert );
-		bb.max = vector_max( &bb.max, &vert );
+   	//INLINED:
+		//bb.min = vector_min( &bb.min, &vert );
+		//bb.max = vector_max( &bb.max, &vert );
+		
+		bb.min.coord.x = fminf( bb.min.coord.x, vert.coord.x );
+		bb.min.coord.y = fminf( bb.min.coord.y, vert.coord.y );
+		bb.min.coord.z = fminf( bb.min.coord.z, vert.coord.z );
+		
+		bb.max.coord.x = fmaxf( bb.max.coord.x, vert.coord.x );
+		bb.max.coord.y = fmaxf( bb.max.coord.y, vert.coord.y );
+		bb.max.coord.z = fmaxf( bb.max.coord.z, vert.coord.z );
 	}
 	return bb;
 }
+	*/
 
 void test_aabb_calculate( ) {
+/*
 	vector verts[] = {
 		{{ 1.f, 0.f, -1.f, 1.f }},
 		{{ -1.f, 1.f, 0.f, 1.f }},
@@ -104,13 +149,14 @@ void test_aabb_calculate( ) {
 	vector v_max = Vector( 1.f, 1.f, 1.f, 1.f );
 	vAssert( vector_equal( &bb.min, &v_min ));
 	vAssert( vector_equal( &bb.max, &v_max ));
+*/
 }
 
 void modelInstance_calculateBoundingBox( modelInstance* instance ) {
 	instance->bb.min = Vector( 0.0, 0.0, 0.0, 1.0 );
 	instance->bb.max = Vector( 0.0, 0.0, 0.0, 1.0 );
-	mesh* m = model_fromInstance( instance )->meshes[0];
-	instance->bb = aabb_calculate( m->vert_count, m->verts, instance->trans->world );
+	model* m = model_fromInstance( instance );
+	instance->bb = aabb_calculate( m->obb, instance->trans->world );
 #if 0
 	printf( "AABB: ( " );
 	vector_print( &bb.min );
@@ -153,9 +199,29 @@ bool frustum_cull( aabb* bb, vector* frustum ) {
 	return false;
 }
 
+void debugdraw_aabb( aabb bb ) {
+	vector points[8];
+	aabb_expand( &bb, points );
+	debugdraw_line3d( points[0], points[3], color_green );
+	debugdraw_line3d( points[0], points[4], color_green );
+	debugdraw_line3d( points[3], points[6], color_green );
+	debugdraw_line3d( points[4], points[6], color_green );
+
+	debugdraw_line3d( points[1], points[5], color_green );
+	debugdraw_line3d( points[1], points[7], color_green );
+	debugdraw_line3d( points[5], points[2], color_green );
+	debugdraw_line3d( points[7], points[2], color_green );
+
+	debugdraw_line3d( points[0], points[2], color_green );
+	debugdraw_line3d( points[1], points[6], color_green );
+	debugdraw_line3d( points[3], points[5], color_green );
+	debugdraw_line3d( points[4], points[7], color_green );
+}
+
 void modelInstance_draw( modelInstance* instance, camera* cam ) {
 	// Bounding box cull
 	modelInstance_calculateBoundingBox( instance );
+	debugdraw_aabb( instance->bb );
 
 	vector frustum[6];
 	camera_calculateFrustum( cam, frustum );
@@ -164,7 +230,6 @@ void modelInstance_draw( modelInstance* instance, camera* cam ) {
 
 	render_resetModelView();
 	matrix_mul( modelview, modelview, instance->trans->world );
-//	render_setUniform_matrix( *resources.uniforms.modelview, modelview );
 
 	model_draw( model_fromInstance( instance ) );
 }

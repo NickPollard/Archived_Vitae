@@ -43,6 +43,11 @@ struct mesh_s {
 	GLuint*		element_VBO;
 };
 
+typedef struct obb_s {
+	vector min;
+	vector max;
+} obb;
+
 // *** Model ***
 /*
    A Model contains many meshes, each of which use a given shader
@@ -56,6 +61,7 @@ struct model_s {
 	int emitter_count;
 	transform*			transforms[kMaxSubTransforms];
 	particleEmitter*	emitters[kMaxSubEmitters];
+	obb					obb;
 };
 
 
@@ -72,6 +78,8 @@ void mesh_calculateNormals( mesh* m );
 
 void mesh_buildBuffers( mesh* m );
 
+// Build an oriented bounding box for the model
+obb obb_calculate( int vert_count, vector* verts );
 
 
 // *** Model Functions

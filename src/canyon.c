@@ -240,7 +240,6 @@ void terrain_generatePoints() {
 void canyon_seekForWorldPosition( vector position ) {
 	float u, v;
 	terrain_canyonSpaceFromWorld( position.coord.x, position.coord.z, &u, &v );
-	printf( "v: %.2f\n", v );
 	size_t seek_position = max( canyon_streaming_buffer.stream_position, terrainCanyon_segmentAtDistance( v ) - kTrailingCanyonSegments );
 	canyonBuffer_seekForward( &canyon_streaming_buffer, seek_position );
 }

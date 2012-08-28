@@ -235,3 +235,28 @@ int model_transformIndex( model* m, transform* ptr ) {
 	}
 	return -1;
 }
+
+obb obb_calculate( int vert_count, vector* verts ) {
+	printf( "obb calculate!\n" );
+	vAssert( vert_count > 1 );
+	obb bb;
+	vector vert = verts[0];
+	bb.min = vert;
+	bb.max = vert;
+	for ( int i = 1; i < vert_count; i++ ) {
+		vert = verts[i];
+/*
+   	INLINED:
+		bb.min = vector_min( &bb.min, &vert );
+		bb.max = vector_max( &bb.max, &vert );
+		*/
+		bb.min.coord.x = fminf( bb.min.coord.x, vert.coord.x );
+		bb.min.coord.y = fminf( bb.min.coord.y, vert.coord.y );
+		bb.min.coord.z = fminf( bb.min.coord.z, vert.coord.z );
+		
+		bb.max.coord.x = fmaxf( bb.max.coord.x, vert.coord.x );
+		bb.max.coord.y = fmaxf( bb.max.coord.y, vert.coord.y );
+		bb.max.coord.z = fmaxf( bb.max.coord.z, vert.coord.z );
+	}
+	return bb;
+}

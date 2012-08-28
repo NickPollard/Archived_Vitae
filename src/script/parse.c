@@ -789,6 +789,8 @@ void* s_model( sterm* raw_args ) {
 
 	map_vv( args, model_processObject, mdl, NULL ); // Initial transform is NULL
 
+	mdl->obb = obb_calculate( mdl->meshes[0]->vert_count, mdl->meshes[0]->verts );
+
 	return mdl;
 }
 

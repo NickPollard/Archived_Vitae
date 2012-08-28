@@ -1051,6 +1051,8 @@ term* lisp_func_model( context* c, term* raw_args ) {
 	model* m = model_createModel( 1 ); // default to one mesh
 	m->meshes[0] = head( args )->data;
 	term* ret = term_create( _typeObject, m );
+
+	m->obb = obb_calculate( m->meshes[0]->vert_count, m->meshes[0]->verts );
 	//term_deref( args );	
 	return ret;
 }
