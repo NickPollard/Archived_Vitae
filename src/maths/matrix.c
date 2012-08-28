@@ -367,10 +367,14 @@ void matrix_mul( matrix dst, matrix a, matrix b ) {
 
 // Copy one matrix to another
 void matrix_cpy( matrix dst, matrix src ) { 
+	/*
 	float* a = (float*)dst;
 	float* b = (float*)src;
 	for (int i = 0; i < 16; i++) {
 		*a++ = *b++; } }
+		*/
+	memcpy( dst, src, sizeof( matrix ));
+}
 
 // Normalize the axes to be unit axes
 void matrix_normalize( matrix m ) {
