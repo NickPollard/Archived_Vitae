@@ -58,6 +58,7 @@ terrain* terrain_create() {
 		texture_request( &terrain_texture, "dat/3rdparty/img/rock02_tile_small.tga" );
 	}
 
+	canyon_staticInit();
 	terrain_generatePoints();
 
 	return t;
