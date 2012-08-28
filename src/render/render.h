@@ -89,14 +89,14 @@ struct vertex_s {
 
 typedef struct vertex_s particle_vertex;
 
-typedef struct window_s {
+struct window_s {
 	int width;
 	int height;
 	EGLDisplay display;
 	EGLSurface surface;
 	EGLContext context;
 	bool open;
-} window;
+};
 
 extern gl_resources resources;
 extern matrix modelview;

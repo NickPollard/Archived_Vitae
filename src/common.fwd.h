@@ -18,6 +18,7 @@ struct shader_s;
 struct texture_s;
 struct transform_s;
 struct vertex_s;
+struct window_s;
 struct xwindow_s;
 union vector_u;
 
@@ -38,6 +39,7 @@ typedef struct shader_s shader;
 typedef struct texture_s texture;
 typedef struct transform_s transform;
 typedef struct vertex_s vertex;
+typedef struct window_s window;
 typedef struct xwindow_s xwindow;
 
 typedef union vector_u vector;
