@@ -133,21 +133,72 @@ float canyon_v( int segment_index, float segment_prog ) {
 	return ( segment_prog + (float)segment_index ) * kCanyonSegmentLength;
 }
 
+// Estimate the closest z point, based on an even distribution of Zs
+int canyon_estimatePointForZ( window_buffer* buffer, float z ) {
+	float min_z = canyonBuffer_value( buffer, buffer->head ).coord.z;
+	float max_z = canyonBuffer_value( buffer, buffer->tail ).coord.z;
+	return (int)( fclamp(( z - min_z ) / ( max_z - min_z ), 0.f, 1.f ) * (float)buffer->window_size ) + buffer->stream_position;
+}
+
 // Convert world-space X and Z coords into canyon space U and V
 void terrain_canyonSpaceFromWorld( float x, float z, float* u, float* v ) {
 	vector point = Vector( x, 0.f, z, 1.f );
 	int closest_i = 0;	// Closest point - in absolute stream position
 	float closest_d = FLT_MAX;
 	// We need to find the closest segment
-	size_t start = canyon_streaming_buffer.stream_position + 1;
-	size_t end = canyon_streaming_buffer.stream_position + canyon_streaming_buffer.window_size;
-	for ( size_t i = start; i + 1 < end; ++i ) {
+	int default_start = canyon_streaming_buffer.stream_position + 1;
+	int default_end = canyon_streaming_buffer.stream_position + canyon_streaming_buffer.window_size;
+
+	int start = default_start;
+	int end = default_end;
+#if 1
+	/*
+	float min_z = canyon_point( &canyon_streaming_buffer, start - 1 ).coord.z;
+	float max_z = canyon_point( &canyon_streaming_buffer, end - 1 ).coord.z;
+	int search_index = (int)( fclamp(( z - min_z ) / ( max_z - min_z ), 0.f, 1.f ) * (float)canyon_streaming_buffer.window_size ) + canyon_streaming_buffer.stream_position;
+	*/
+	{
+		// Estimate the closest z point, based on an even distribution of Zs
+		int search_index = max( canyon_streaming_buffer.stream_position + 1, canyon_estimatePointForZ( &canyon_streaming_buffer, z ));
+		vector search_point = canyon_point( &canyon_streaming_buffer, search_index );
+		// initialize the closest distance from that
+		vector displacement = vector_sub( point, search_point );
+		closest_d = vector_lengthSq( &displacement );
+		closest_i = search_index;
+		// Then walk backwards until the earliest possible Z
+		float earliest_z = z - sqrt( closest_d );
+		start = search_index;
+		float current_z = canyon_point( &canyon_streaming_buffer, start ).coord.z;
+		while ( current_z > earliest_z && start > default_start ) {
+			int min_delta = (int)fmax( 1.f, ( current_z - earliest_z ) / kCanyonSegmentLength );
+			start = max( start - min_delta, default_start );
+			vAssert( start >= default_start );
+			current_z = canyon_point( &canyon_streaming_buffer, start ).coord.z;
+		}
+		//printf( "search z: %.2f, min z: %.2f.\n", z, current_z );
+		//vAssert( start < end );
+		// TEMP
+		// Test all points we wouldn't normally test
+		/*
+		for ( size_t i = default_start; i < (size_t)start; ++i ) {
+			vector test_point = canyon_point( &canyon_streaming_buffer, i );
+			vector displacement = vector_sub( point, test_point );
+			vAssert( vector_lengthSq( &displacement ) > closest_d );
+		}
+		*/
+	}
+	//vAssert( end == default_end );
+#endif	
+
+	// Iterate from there
+	for ( size_t i = (size_t)start; i + 1 < (size_t)end; ++i ) {
 		vector test_point = canyon_point( &canyon_streaming_buffer, i );
 		
 		// We know that Z values are always increasing as we force canyon segments in the forward arc
 		// If the distance from Z-component alone is greater than closest, we can break out of the loop
 		// as all later points must be at least that far away
-		if ( (test_point.coord.z - point.coord.z) * (test_point.coord.z - point.coord.z) > closest_d ) {
+		// * Use fabsf on one argument to preserve the sign of the square
+		if ( fabsf(test_point.coord.z - point.coord.z) * (test_point.coord.z - point.coord.z) > closest_d ) {
 			break;
 		}
 
@@ -158,6 +209,7 @@ void terrain_canyonSpaceFromWorld( float x, float z, float* u, float* v ) {
 			closest_i = i;
 		}
 	}
+
 	// find closest points on the two segments using that point
 	vector closest_a, closest_b;
 	float seg_pos_a = segment_closestPoint( canyon_point( &canyon_streaming_buffer, closest_i ), canyon_point( &canyon_streaming_buffer, closest_i+1 ), point, &closest_a );
