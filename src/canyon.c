@@ -142,8 +142,17 @@ void terrain_canyonSpaceFromWorld( float x, float z, float* u, float* v ) {
 	size_t start = canyon_streaming_buffer.stream_position + 1;
 	size_t end = canyon_streaming_buffer.stream_position + canyon_streaming_buffer.window_size;
 	for ( size_t i = start; i + 1 < end; ++i ) {
-		vector displacement = vector_sub( point, canyon_point( &canyon_streaming_buffer, i ) );
-		float d = vector_length( &displacement );
+		vector test_point = canyon_point( &canyon_streaming_buffer, i );
+		
+		// We know that Z values are always increasing as we force canyon segments in the forward arc
+		// If the distance from Z-component alone is greater than closest, we can break out of the loop
+		// as all later points must be at least that far away
+		if ( (test_point.coord.z - point.coord.z) * (test_point.coord.z - point.coord.z) > closest_d ) {
+			break;
+		}
+
+		vector displacement = vector_sub( point, test_point );
+		float d = vector_lengthSq( &displacement );
 		if ( d < closest_d ) {
 			closest_d = d;
 			closest_i = i;
@@ -206,10 +215,6 @@ float terrain_newCanyonHeight( float x, float z ) {
 
 vector terrain_newCanyonPoint( vector current, vector previous ) {
 	// We want to generate a point in front
-	// TODO
-
-	(void)previous;
-
 	// Generate a forward facing angle
 	vector direction = vector_sub( current, previous );
 	Normalize( &direction, &direction );

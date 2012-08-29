@@ -74,13 +74,14 @@ void test_engine_init( engine* e ) {
 	// Terrain
 	{
 		terrain* t = terrain_create();
-		theTerrain = t;
 		t->trans = transform_createAndAdd( theScene );
 		terrain_setSize( t, 400.f, 800.f );
 		terrain_setResolution( t, 20, 20 );
 
 		engine_addRender( e, (void*)t, terrain_render );
 		startTick( e, (void*)t, terrain_tick );
+
+		theTerrain = t;
 	}
 
 
