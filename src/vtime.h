@@ -14,11 +14,19 @@ typedef struct {
 	float fps;
 } frame_timer;
 
+typedef struct randSeq_s {
+	struct drand48_data buffer;
+} randSeq;
+
 // Seed the RNG, using a time-based seed
 void rand_init();
 
 // Return a random float between floor and ceiling
 float frand( float floor, float ceiling );
+
+// Deterministic frand using a given seed
+float deterministic_frand( randSeq* r, float floor, float ceiling );
+void deterministic_seedRandSeq( long int seed, randSeq* r );
 
 // Initialise the timer
 void timer_init(frame_timer* timer);

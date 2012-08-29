@@ -90,7 +90,7 @@ void main() {
 
 	vec4 tex_color = texture2D( tex, texcoord );
 	vec4 material_diffuse = vert_color; // * tex_color;
-	vec4 fragColor = (/*total_specular_color +*/ total_diffuse_color) * material_diffuse;
+	vec4 fragColor = (total_specular_color + total_diffuse_color) * material_diffuse;
 
 	// sunlight on fog
 	float fog_sun_factor = sun_fog( camera_space_sun_direction, frag_position );

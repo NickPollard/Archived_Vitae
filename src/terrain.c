@@ -207,6 +207,7 @@ void terrainBlock_calculateBuffers( terrain* t, terrainBlock* b ) {
 
 	vector* verts	= mem_alloc( vert_count * sizeof( vector ));
 	vector* normals	= mem_alloc( vert_count * sizeof( vector ));
+	vector* colors	= mem_alloc( vert_count * sizeof( vector ));
 
 	int vert_index = 0;
 	for ( float u = b->u_min; u < u_max; u+= u_interval ) {
@@ -258,6 +259,15 @@ void terrainBlock_calculateBuffers( terrain* t, terrainBlock* b ) {
 		normals[i] = total;
 	}
 
+	for ( int i = 0; i < vert_count; ++i ) {
+		vector position = verts[i];
+
+		float u, v;
+		terrain_canyonSpaceFromWorld( position.coord.x, position.coord.z, &u, &v );
+		float b = ( sinf( v / 1000.f ) + 1.f ) / 2.f;
+		colors[i] = Vector( 0.2f, 0.2f, b, 1.f );
+	}
+
 	int element_count = 0;
 	// Calculate elements
 	int tw = ( t->u_samples - 1 ) * 2; // Triangles per row
@@ -288,10 +298,12 @@ void terrainBlock_calculateBuffers( terrain* t, terrainBlock* b ) {
 		b->vertex_buffer[i].position = verts[b->element_buffer[i]];
 		b->vertex_buffer[i].normal = normals[b->element_buffer[i]];
 		b->vertex_buffer[i].uv = Vector( verts[b->element_buffer[i]].coord.x * texture_scale, verts[b->element_buffer[i]].coord.z * texture_scale, 0.f, 0.f );
+		b->vertex_buffer[i].color = colors[b->element_buffer[i]];
 		b->element_buffer[i] = i;
 	}
 	mem_free( verts );
 	mem_free( normals );
+	mem_free( colors );
 
 	// Create GPU 
 #if TERRAIN_USE_VBO
@@ -482,10 +494,6 @@ void terrain_render( void* data ) {
 	for ( int i = 0; i < t->total_block_count; i++ ) {
 		terrainBlock_render( t->blocks[i] );
 	}
-
-
-	// Debug - testing the new canyon
-	terrain_debugDraw( &window_main );
 }
 
 void terrain_delete( terrain* t ) {

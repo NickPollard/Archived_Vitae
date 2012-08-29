@@ -37,6 +37,8 @@ vector terrain_newCanyonPoint( vector current, vector previous );
 window_buffer canyon_streaming_buffer;
 vector	canyon_points[kMaxCanyonPoints];
 
+randSeq canyon_random_seed;
+
 void canyonBuffer_init( window_buffer* buffer, size_t size, void* elements ) {
 	buffer->head = 0;
 	buffer->stream_position = 0;
@@ -46,6 +48,8 @@ void canyonBuffer_init( window_buffer* buffer, size_t size, void* elements ) {
 
 void canyon_staticInit() {
 	canyonBuffer_init( &canyon_streaming_buffer, kMaxCanyonPoints, &canyon_points );
+	long int seed = 0x0;
+	deterministic_seedRandSeq( seed, &canyon_random_seed );
 }
 
 // Return the last stream position currently mapped in the window
@@ -277,7 +281,8 @@ vector terrain_newCanyonPoint( vector current, vector previous ) {
 
 	float min_angle = fmaxf( 0.f, previous_angle - max_angle_delta );
 	float max_angle = fminf( PI, previous_angle + max_angle_delta );
-	float angle = frand( min_angle, max_angle );
+	//float angle = frand( min_angle, max_angle );
+	float angle = deterministic_frand( &canyon_random_seed, min_angle, max_angle );
 	vector offset = Vector( cosf( angle ) * kCanyonSegmentLength, 0.f, sinf( angle ) * kCanyonSegmentLength, 0.f );
 
 	vector next = vector_add( current, offset );

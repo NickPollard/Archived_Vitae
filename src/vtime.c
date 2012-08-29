@@ -17,6 +17,20 @@ float frand( float floor, float ceiling ) {
 	return ( f * ( ceiling - floor ) + floor );
 }
 
+// Return a random float between floor and ceiling
+float deterministic_frand( randSeq* r, float floor, float ceiling ) {
+	assert( ceiling > floor );
+	double random;
+	drand48_r( &r->buffer, &random );
+	assert( random <= 1.f );
+	assert( random >= 0.f );
+	return ( random * ( ceiling - floor ) + floor );
+}
+	
+void deterministic_seedRandSeq( long int seed, randSeq* r ) {
+	srand48_r( seed, &r->buffer );
+}
+
 void timer_init(frame_timer* timer) {
 	time_v t;
 	gettimeofday(&t, NULL);

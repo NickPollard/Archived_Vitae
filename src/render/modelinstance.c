@@ -221,7 +221,7 @@ void debugdraw_aabb( aabb bb ) {
 void modelInstance_draw( modelInstance* instance, camera* cam ) {
 	// Bounding box cull
 	modelInstance_calculateBoundingBox( instance );
-	debugdraw_aabb( instance->bb );
+	//debugdraw_aabb( instance->bb );
 
 	vector frustum[6];
 	camera_calculateFrustum( cam, frustum );

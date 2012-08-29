@@ -30,3 +30,5 @@ void terrain_generatePoints();
 float terrain_newCanyonHeight( float x, float z );
 void canyon_staticInit();
 void canyon_seekForWorldPosition( vector position );
+// For colouring
+void terrain_canyonSpaceFromWorld( float x, float z, float* u, float* v );
