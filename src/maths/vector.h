@@ -40,6 +40,7 @@ vector vector_max( vector* a, vector* b );
 vector vector_min( vector* a, vector* b );
 
 float vector_length( const vector* v );
+float vector_lengthSq( const vector* v );
 float vector_distance( const vector* a, const vector* b );
 
 bool vector_equal( const vector* a, const vector* b );

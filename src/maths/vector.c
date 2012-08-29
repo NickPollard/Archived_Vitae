@@ -105,10 +105,16 @@ void vector_scale( vector* dst, vector* src, float scale ) {
 	dst->coord.w = src->coord.w;
 }
 
+float vector_lengthSq( const vector* v ) {
+	float length_sq = v->coord.x * v->coord.x + v->coord.y * v->coord.y + v->coord.z * v->coord.z;
+	return length_sq;
+}
+
 float vector_length( const vector* v ) {
 	float length = sqrt( v->coord.x * v->coord.x + v->coord.y * v->coord.y + v->coord.z * v->coord.z );
 	return length;
 }
+
 // Normalise a vector
 // No use of restrict; dst *can* alias src
 void Normalize( vector* dst, const vector* src ) {
