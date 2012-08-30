@@ -21,14 +21,18 @@ float frand( float floor, float ceiling ) {
 float deterministic_frand( randSeq* r, float floor, float ceiling ) {
 	assert( ceiling > floor );
 	double random;
-	drand48_r( &r->buffer, &random );
+	random = erand48( r->buffer );
 	assert( random <= 1.f );
 	assert( random >= 0.f );
 	return ( random * ( ceiling - floor ) + floor );
 }
-	
+
 void deterministic_seedRandSeq( long int seed, randSeq* r ) {
-	srand48_r( seed, &r->buffer );
+//		srand48_r( seed, &r->buffer );
+	r->buffer[0] = 0x0;
+	r->buffer[1] = 0x0;
+	r->buffer[2] = 0x0;
+	memcpy( r->buffer, &seed, sizeof( long int ));
 }
 
 void timer_init(frame_timer* timer) {

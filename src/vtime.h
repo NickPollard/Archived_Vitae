@@ -15,7 +15,7 @@ typedef struct {
 } frame_timer;
 
 typedef struct randSeq_s {
-	struct drand48_data buffer;
+	unsigned short buffer[3];	// For storing random seed
 } randSeq;
 
 // Seed the RNG, using a time-based seed
