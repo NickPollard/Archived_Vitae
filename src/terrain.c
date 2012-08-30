@@ -19,6 +19,7 @@
 void terrain_calculateBounds( int bounds[2][2], terrain* t, vector* sample_point );
 void terrainBlock_calculateBuffers( terrain* t, terrainBlock* b );
 void terrainBlock_calculateCollision( terrain* t, terrainBlock* b );
+void terrainBlock_fillTrianglesForVertex( terrainBlock* b, vertex* vertices, int u_index, int v_index, vertex* vert );
 
 GLuint terrain_texture = 0;
 
@@ -183,6 +184,46 @@ void terrain_setResolution( terrain* t, int u, int v ) {
 	terrain_createBlocks( t );
 }
 
+
+
+
+// Create GPU vertex buffer objects to hold our data and save transferring to the GPU each frame
+void terrainBlock_initVBO( terrainBlock* b ) {
+	if ( !b->vertex_VBO ) {
+		b->vertex_VBO = render_requestBuffer( GL_ARRAY_BUFFER, b->vertex_buffer, sizeof( vertex ) * b->index_count );
+	} else {
+		// If we've already allocated a buffer at some point, just re-use it
+		render_bufferCopy( GL_ARRAY_BUFFER, *b->vertex_VBO, b->vertex_buffer, sizeof( vertex ) * b->index_count );
+	}
+	if ( !b->element_VBO ) {
+		b->element_VBO = render_requestBuffer( GL_ELEMENT_ARRAY_BUFFER, b->element_buffer, sizeof( GLushort ) * b->index_count );
+	} else {
+		// If we've already allocated a buffer at some point, just re-use it
+		render_bufferCopy( GL_ELEMENT_ARRAY_BUFFER, *b->element_VBO, b->element_buffer, sizeof( GLushort ) * b->index_count );
+	}
+}
+
+int terrainBlock_triangleCount( terrainBlock* b ) {
+	return ( b->u_samples - 1 ) * ( b->v_samples - 1 ) * 2;
+}
+
+
+int terrainBlock_vertCount( terrainBlock* b ) {
+	return b->u_samples * b->v_samples;
+}
+
+float terrainBlock_uInterval( terrainBlock* b ) {
+	return ( b->u_max - b->u_min ) / ( b->u_samples - 1);
+}
+
+float terrainBlock_vInterval( terrainBlock* b ) {
+	return ( b->v_max - b->v_min ) / ( b->v_samples - 1);
+}
+
+
+
+
+
 /*
    Calculate vertex and element buffers for a given block from a given
    terrain
@@ -193,14 +234,14 @@ void terrainBlock_calculateBuffers( terrain* t, terrainBlock* b ) {
 	So (x-1) * (y-1) * 2 tris
 	So (x-1) * (y-1) * 6 indices */
 
-	int triangle_count = ( b->u_samples - 1 ) * ( b->v_samples - 1 ) * 2;
-	int vert_count = b->u_samples * b->v_samples;
+	int triangle_count = terrainBlock_triangleCount( b );
+	int vert_count = terrainBlock_vertCount( b );
 
 	// Calculate bounds and intervals
 	vAssert( b->u_max > b->u_min );
 	vAssert( b->v_max > b->v_min );
-	float u_interval = ( b->u_max - b->u_min ) / ( b->u_samples - 1);
-	float v_interval = ( b->v_max - b->v_min ) / ( b->v_samples - 1);
+	float u_interval = terrainBlock_uInterval( b );
+	float v_interval = terrainBlock_vInterval( b );
 	// Loosen max edges to ensure final verts aren't dropped
 	float u_max = b->u_max + (u_interval * 0.5f);
 	float v_max = b->v_max + (v_interval * 0.5f);
@@ -209,6 +250,9 @@ void terrainBlock_calculateBuffers( terrain* t, terrainBlock* b ) {
 	vector* normals	= mem_alloc( vert_count * sizeof( vector ));
 	vector* colors	= mem_alloc( vert_count * sizeof( vector ));
 
+
+
+	// *** Calculate height positions
 	int vert_index = 0;
 	for ( float u = b->u_min; u < u_max; u+= u_interval ) {
 		for ( float v = b->v_min; v < v_max; v+= v_interval ) {
@@ -216,8 +260,11 @@ void terrainBlock_calculateBuffers( terrain* t, terrainBlock* b ) {
 			verts[vert_index++] = Vector( u, h, v, 1.f );
 		}
 	}
-	assert( vert_index == vert_count );
+	vAssert( vert_index == vert_count );
 
+
+
+	// *** Generate Normals
 	// Do top and bottom edges first
 	for ( int i = 0; i < t->u_samples; i++ )
 		normals[i] = Vector( 0.f, 1.f, 0.f, 0.f );
@@ -259,6 +306,9 @@ void terrainBlock_calculateBuffers( terrain* t, terrainBlock* b ) {
 		normals[i] = total;
 	}
 
+	
+
+	// *** Colors
 	for ( int i = 0; i < vert_count; ++i ) {
 		vector position = verts[i];
 
@@ -268,6 +318,8 @@ void terrainBlock_calculateBuffers( terrain* t, terrainBlock* b ) {
 		colors[i] = Vector( 0.2f, 0.2f, b, 1.f );
 	}
 
+	
+	// ** Unroll
 	int element_count = 0;
 	// Calculate elements
 	int tw = ( t->u_samples - 1 ) * 2; // Triangles per row
@@ -289,8 +341,9 @@ void terrainBlock_calculateBuffers( terrain* t, terrainBlock* b ) {
 		element_count += 6;
 	}
 
-	float texture_scale = 0.125f;
+	const float texture_scale = 0.125f;
 
+#if 0
 	// For each element index
 	// Unroll the vertex/index bindings
 	for ( int i = 0; i < b->index_count; i++ ) {
@@ -301,27 +354,91 @@ void terrainBlock_calculateBuffers( terrain* t, terrainBlock* b ) {
 		b->vertex_buffer[i].color = colors[b->element_buffer[i]];
 		b->element_buffer[i] = i;
 	}
+
+#else
+	int i = 0;
+	for ( int u = 0; u < b->u_samples; ++u ) {
+		for ( int v = 0; v < b->v_samples; ++v ) {
+			vertex vert;
+			vert.position = verts[i];
+			vert.normal = normals[i];
+			vert.uv = Vector( vert.position.coord.x * texture_scale, vert.position.coord.z * texture_scale, 0.f, 0.f );
+			vert.color = colors[i];
+			terrainBlock_fillTrianglesForVertex( b, b->vertex_buffer, u, v, &vert );
+			++i;
+		}
+	}
+	vAssert( i == vert_count );
+
+	for ( int i = 0; i < b->index_count; i++ ) {
+		b->element_buffer[i] = i;
+	}
+#endif
+
 	mem_free( verts );
 	mem_free( normals );
 	mem_free( colors );
 
-	// Create GPU 
 #if TERRAIN_USE_VBO
-	if ( !b->vertex_VBO ) {
-		b->vertex_VBO = render_requestBuffer( GL_ARRAY_BUFFER, b->vertex_buffer, sizeof( vertex ) * b->index_count );
-	} else {
-		// If we've already allocated a buffer at some point, just re-use it
-		render_bufferCopy( GL_ARRAY_BUFFER, *b->vertex_VBO, b->vertex_buffer, sizeof( vertex ) * b->index_count );
-	}
-	if ( !b->element_VBO ) {
-		b->element_VBO = render_requestBuffer( GL_ELEMENT_ARRAY_BUFFER, b->element_buffer, sizeof( GLushort ) * b->index_count );
-	} else {
-		// If we've already allocated a buffer at some point, just re-use it
-		render_bufferCopy( GL_ELEMENT_ARRAY_BUFFER, *b->element_VBO, b->element_buffer, sizeof( GLushort ) * b->index_count );
-	}
-	//printf( "Terrain: Allocated new GPU Buffer Objects: Vertex %x Element %x.\n", b->vertex_VBO, b->element_VBO );
+	terrainBlock_initVBO( b );
 #endif
 }
+
+bool terrainBlock_triangleInvalid( terrainBlock* b, int u_index, int v_index, int u_offset, int v_offset ) {
+	u_offset = u_offset / 2 + u_offset % 2;
+	u_offset = min( u_offset, 0 );
+	return ( u_index + u_offset >= b->u_samples - 1 ) ||
+		( u_index + u_offset < 0 ) ||
+		( v_index + v_offset >= b->v_samples - 1 ) ||
+		( v_index + v_offset < 0 );
+}
+
+// Given a vertex that has been generated, fill in the correct triangles for it after it has been unrolled
+void terrainBlock_fillTrianglesForVertex( terrainBlock* b, vertex* vertices, int u_index, int v_index, vertex* vert ) {
+	// Each vertex is in a maximum of 6 triangles
+	// The triangle indices can be computed as: (where row == ( u_samples - 1 ) * 2)
+	//  first row:
+	//    row * (v_index - 1) + 2 * u_index - 1
+	//    row * (v_index - 1) + 2 * u_index
+	//    row * (v_index - 1) + 2 * u_index + 1
+	//	second row:
+	//    row * v_index + 2 * u_index - 2
+	//    row * v_index + 2 * u_index - 1
+	//    row * v_index + 2 * u_index
+	// (discarding any that fall outside the range 0 -> tri_count)
+	// Triangle vert index:
+	// top: 0, 2, 1
+	// bottom: 1, 2, 0
+	// finished index = triangle_index * 3 + triangle_vert_index
+	const int triangle_vert_indices[6] = { 0, 1, 2, 2, 1, 0 };
+	const int v_offset[6] = { -1, -1, -1, 0, 0, 0 };
+	const int u_offset[6] = { -1, 0, 1, -2, -1, 0 };
+	int triangles_per_row = ( b->u_samples - 1 ) * 2;
+	
+	//printf( "uv: %d, %d.\n", u_index, v_index );
+
+	for ( int i = 0; i < 6; ++i ) {
+		// Calculate triangle index
+		int triangle_index = triangles_per_row * ( v_index + v_offset[i] ) + ( 2 * u_index ) + u_offset[i];
+		if ( terrainBlock_triangleInvalid( b, u_index, v_index, u_offset[i], v_offset[i]) )
+			continue;
+		// if it's a valid triangle (not out-of-bounds)
+		int vert_index = triangle_index * 3 + triangle_vert_indices[i];
+		//printf( "i: %d, triangle index: %d. Vert index: %d.\n", i, triangle_index, vert_index );
+		vertices[vert_index] = *vert;
+	}
+
+}
+
+
+
+
+
+
+
+
+
+
 
 // Calculate the intersection of the two block bounds specified
 void terrain_boundsIntersection( int intersection[2][2], int a[2][2], int b[2][2] ) {
