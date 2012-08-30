@@ -19,7 +19,7 @@
 void terrain_calculateBounds( int bounds[2][2], terrain* t, vector* sample_point );
 void terrainBlock_calculateBuffers( terrain* t, terrainBlock* b );
 void terrainBlock_calculateCollision( terrain* t, terrainBlock* b );
-void terrainBlock_fillTrianglesForVertex( terrainBlock* b, vertex* vertices, int u_index, int v_index, vertex* vert );
+void terrainBlock_fillTrianglesForVertex( terrainBlock* b, vector* positions, vertex* vertices, int u_index, int v_index, vertex* vert );
 
 GLuint terrain_texture = 0;
 
@@ -364,7 +364,7 @@ void terrainBlock_calculateBuffers( terrain* t, terrainBlock* b ) {
 			vert.normal = normals[i];
 			vert.uv = Vector( vert.position.coord.x * texture_scale, vert.position.coord.z * texture_scale, 0.f, 0.f );
 			vert.color = colors[i];
-			terrainBlock_fillTrianglesForVertex( b, b->vertex_buffer, u, v, &vert );
+			terrainBlock_fillTrianglesForVertex( b, verts, b->vertex_buffer, u, v, &vert );
 			++i;
 		}
 	}
@@ -393,8 +393,12 @@ bool terrainBlock_triangleInvalid( terrainBlock* b, int u_index, int v_index, in
 		( v_index + v_offset < 0 );
 }
 
+int terrainBlock_indexFromUV( terrainBlock* b, int u, int v  ) {
+	return v + ( u * b->v_samples );
+}
+
 // Given a vertex that has been generated, fill in the correct triangles for it after it has been unrolled
-void terrainBlock_fillTrianglesForVertex( terrainBlock* b, vertex* vertices, int u_index, int v_index, vertex* vert ) {
+void terrainBlock_fillTrianglesForVertex( terrainBlock* b, vector* positions, vertex* vertices, int u_index, int v_index, vertex* vert ) {
 	// Each vertex is in a maximum of 6 triangles
 	// The triangle indices can be computed as: (where row == ( u_samples - 1 ) * 2)
 	//  first row:
@@ -426,6 +430,31 @@ void terrainBlock_fillTrianglesForVertex( terrainBlock* b, vertex* vertices, int
 		int vert_index = triangle_index * 3 + triangle_vert_indices[i];
 		//printf( "i: %d, triangle index: %d. Vert index: %d.\n", i, triangle_index, vert_index );
 		vertices[vert_index] = *vert;
+
+		// Cliff coloring
+		vector normal;
+		float d;
+		
+		const int triangle_u_offset[6][2] = { { 0, -1 }, { 1, 0 }, { 1, 1 }, { -1, -1 }, { -1, 0 }, { 0, 1 } };
+		const int triangle_v_offset[6][2] = { { -1, 0 }, { -1, -1 }, { 0, -1 }, { 0, 1 }, { 1, 1 }, { 1, 0 } };
+		
+		// Calculate indices of other 2 triangle verts
+		int index_b = terrainBlock_indexFromUV( b, u_index + triangle_u_offset[i][0], v_index + triangle_v_offset[i][0] );
+		int index_c = terrainBlock_indexFromUV( b, u_index + triangle_u_offset[i][1], v_index + triangle_v_offset[i][1] );
+
+		vector v_b = positions[index_b];
+		vector v_c = positions[index_c];
+		plane( vertices[vert_index].position, v_b, v_c, &normal, &d );
+		//float dot = ( Dot( &normal, &y_axis ));
+		float angle = acosf( Dot( &normal, &y_axis ));
+		const float cliff_angle = PI / 4.f;
+		bool cliff = angle > cliff_angle;
+		if ( cliff ) {
+			vertices[vert_index].color = Vector( 0.0f, 0.2f, 1.0f, 1.f );
+		} else {
+			vertices[vert_index].color = Vector( 0.8f, 0.9f, 1.0f, 1.f );
+		}
+		//vertices[vert_index].color = Vector( 0.f, 0.f, dot, 1.f );
 	}
 
 }
