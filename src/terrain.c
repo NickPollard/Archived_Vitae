@@ -19,7 +19,7 @@
 void terrain_calculateBounds( int bounds[2][2], terrain* t, vector* sample_point );
 void terrainBlock_calculateBuffers( terrain* t, terrainBlock* b );
 void terrainBlock_calculateCollision( terrain* t, terrainBlock* b );
-void terrainBlock_fillTrianglesForVertex( terrainBlock* b, vector* positions, vertex* vertices, int u_index, int v_index, vertex* vert );
+void terrainBlock_fillTrianglesForVertex( terrainBlock* b, vector* positions, vertex* vertices, int lod_interval, int u_index, int v_index, vertex* vert );
 void terrainBlock_cliffSmooth( terrainBlock* b, int vert_count, vector* verts );
 
 GLuint terrain_texture = 0;
@@ -166,8 +166,8 @@ void terrainBlock_initVBO( terrainBlock* b ) {
 
 // *** Utility Functions
 
-int terrainBlock_triangleCount( terrainBlock* b ) {
-	return ( b->u_samples - 1 ) * ( b->v_samples - 1 ) * 2;
+int terrainBlock_triangleCount( terrainBlock* b, int lod_interval ) {
+	return ( b->u_samples - 1 ) * ( b->v_samples - 1 ) * 2 / ( lod_interval * lod_interval );
 }
 
 int terrainBlock_vertCount( terrainBlock* b ) {
@@ -261,10 +261,8 @@ void terrainBlock_calculateNormals( terrainBlock* b, int vert_count, vector* ver
 	}
 }
 
-void terrainBlock_generateVertices( terrainBlock* b, int vert_count, vector* verts, vector* normals ) {
-	(void)vert_count;
+void terrainBlock_generateVertices( terrainBlock* b, int lod_interval, vector* verts, vector* normals ) {
 	const float texture_scale = 0.0325f;
-	int lod_interval = 1;
 	for ( int u = 0; u < b->u_samples; u += lod_interval ) {
 		for ( int v = 0; v < b->v_samples; v += lod_interval ) {
 			int i = terrainBlock_indexFromUV( b, u, v );
@@ -272,7 +270,7 @@ void terrainBlock_generateVertices( terrainBlock* b, int vert_count, vector* ver
 			vert.position = verts[i];
 			vert.normal = normals[i];
 			vert.uv = Vector( vert.position.coord.x * texture_scale, vert.position.coord.z * texture_scale, 0.f, 0.f );
-			terrainBlock_fillTrianglesForVertex( b, verts, b->vertex_buffer, u, v, &vert );
+			terrainBlock_fillTrianglesForVertex( b, verts, b->vertex_buffer, lod_interval, u, v, &vert );
 		}
 	}
 }
@@ -293,8 +291,10 @@ void terrainBlock_calculateBuffers( terrain* t, terrainBlock* b ) {
 
 	terrainBlock_calculateNormals( b, vert_count, verts, normals );
 
-	terrainBlock_generateVertices( b, vert_count, verts, normals );
+	int lod_interval = 1;
+	terrainBlock_generateVertices( b, lod_interval, verts, normals );
 
+	b->index_count = terrainBlock_triangleCount( b, lod_interval ) * 3;
 	terrainBlock_initialiseElementBuffer( b->index_count, b->element_buffer );
 
 	mem_free( verts );
@@ -360,9 +360,11 @@ void terrainBlock_cliffSmooth( terrainBlock* b, int vert_count, vector* verts ) 
 	memcpy( verts, new_verts, sizeof( vector ) * vert_count );
 }
 
-bool terrainBlock_triangleInvalid( terrainBlock* b, int u_index, int v_index, int u_offset, int v_offset ) {
+bool terrainBlock_triangleInvalid( terrainBlock* b, int lod_interval, int u_index, int v_index, int u_offset, int v_offset ) {
 	u_offset = u_offset / 2 + u_offset % 2;
 	u_offset = min( u_offset, 0 );
+	u_offset *= lod_interval;
+	v_offset *= lod_interval;
 	return ( u_index + u_offset >= b->u_samples - 1 ) ||
 		( u_index + u_offset < 0 ) ||
 		( v_index + v_offset >= b->v_samples - 1 ) ||
@@ -370,7 +372,7 @@ bool terrainBlock_triangleInvalid( terrainBlock* b, int u_index, int v_index, in
 }
 
 // Given a vertex that has been generated, fill in the correct triangles for it after it has been unrolled
-void terrainBlock_fillTrianglesForVertex( terrainBlock* b, vector* positions, vertex* vertices, int u_index, int v_index, vertex* vert ) {
+void terrainBlock_fillTrianglesForVertex( terrainBlock* b, vector* positions, vertex* vertices, int lod_interval, int u_index, int v_index, vertex* vert ) {
 	// Each vertex is in a maximum of 6 triangles
 	// The triangle indices can be computed as: (where row == ( u_samples - 1 ) * 2)
 	//  first row:
@@ -389,32 +391,36 @@ void terrainBlock_fillTrianglesForVertex( terrainBlock* b, vector* positions, ve
 	const int triangle_vert_indices[6] = { 0, 1, 2, 2, 1, 0 };
 	const int v_offset[6] = { -1, -1, -1, 0, 0, 0 };
 	const int u_offset[6] = { -1, 0, 1, -2, -1, 0 };
-	int triangles_per_row = ( b->u_samples - 1 ) * 2;
+	
+	int triangles_per_row = (( b->u_samples - 1 ) / lod_interval ) * 2;
 	
 	for ( int i = 0; i < 6; ++i ) {
 		// Calculate triangle index
-		int triangle_index = triangles_per_row * ( v_index + v_offset[i] ) + ( 2 * u_index ) + u_offset[i];
-		if ( terrainBlock_triangleInvalid( b, u_index, v_index, u_offset[i], v_offset[i]) )
+		int row = v_index + ( v_offset[i] * lod_interval );
+		int column = ( 2 * u_index ) + ( u_offset[i] * lod_interval );
+		int triangle_index = triangles_per_row * row + column; 
+
+		if ( terrainBlock_triangleInvalid( b, lod_interval, u_index, v_index, u_offset[i], v_offset[i]) )
 			continue;
+
 		// if it's a valid triangle (not out-of-bounds)
 		int vert_index = triangle_index * 3 + triangle_vert_indices[i];
 		vertices[vert_index] = *vert;
 
 		// Cliff coloring
-		vector normal;
-		float d;
-		
 		const int triangle_u_offset[6][2] = { { 0, -1 }, { 1, 0 }, { 1, 1 }, { -1, -1 }, { -1, 0 }, { 0, 1 } };
 		const int triangle_v_offset[6][2] = { { -1, 0 }, { -1, -1 }, { 0, -1 }, { 0, 1 }, { 1, 1 }, { 1, 0 } };
 		
 		// Calculate indices of other 2 triangle verts
-		int index_b = terrainBlock_indexFromUV( b, u_index + triangle_u_offset[i][0], v_index + triangle_v_offset[i][0] );
-		int index_c = terrainBlock_indexFromUV( b, u_index + triangle_u_offset[i][1], v_index + triangle_v_offset[i][1] );
+		int index_b = terrainBlock_indexFromUV( b, u_index + triangle_u_offset[i][0] * lod_interval, v_index + triangle_v_offset[i][0] * lod_interval );
+		int index_c = terrainBlock_indexFromUV( b, u_index + triangle_u_offset[i][1] * lod_interval, v_index + triangle_v_offset[i][1] * lod_interval );
 
 		vector v_b = positions[index_b];
 		vector v_c = positions[index_c];
+
+		vector normal;
+		float d;
 		plane( vertices[vert_index].position, v_b, v_c, &normal, &d );
-		//float dot = ( Dot( &normal, &y_axis ));
 		float angle = acosf( Dot( &normal, &y_axis ));
 		const float cliff_angle = PI / 4.f;
 		bool cliff = angle > cliff_angle;
