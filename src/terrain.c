@@ -22,6 +22,7 @@ void terrainBlock_calculateCollision( terrain* t, terrainBlock* b );
 void terrainBlock_fillTrianglesForVertex( terrainBlock* b, vector* positions, vertex* vertices, int u_index, int v_index, vertex* vert );
 
 GLuint terrain_texture = 0;
+GLuint terrain_texture_cliff = 0;
 
 terrainBlock* terrainBlock_create( ) {
 	terrainBlock* b = mem_alloc( sizeof( terrainBlock ));
@@ -56,7 +57,10 @@ terrain* terrain_create() {
 	t->v_block_count = 5;
 
 	if ( terrain_texture == 0 ) {
-		texture_request( &terrain_texture, "dat/3rdparty/img/rock02_tile_small.tga" );
+		texture_request( &terrain_texture, "dat/img/terrain/snow_rgba.tga" );
+	}
+	if ( terrain_texture_cliff == 0 ) {
+		texture_request( &terrain_texture_cliff, "dat/img/terrain/cliffs_rgba.tga" );
 	}
 
 	canyon_staticInit();
@@ -307,7 +311,7 @@ void terrainBlock_calculateBuffers( terrain* t, terrainBlock* b ) {
 	}
 
 	
-
+/*
 	// *** Colors
 	for ( int i = 0; i < vert_count; ++i ) {
 		vector position = verts[i];
@@ -317,6 +321,7 @@ void terrainBlock_calculateBuffers( terrain* t, terrainBlock* b ) {
 		float b = ( sinf( v / 1000.f ) + 1.f ) / 2.f;
 		colors[i] = Vector( 0.2f, 0.2f, b, 1.f );
 	}
+	*/
 
 	
 	// ** Unroll
@@ -341,7 +346,7 @@ void terrainBlock_calculateBuffers( terrain* t, terrainBlock* b ) {
 		element_count += 6;
 	}
 
-	const float texture_scale = 0.125f;
+	const float texture_scale = 0.0125f;
 
 #if 0
 	// For each element index
@@ -450,11 +455,16 @@ void terrainBlock_fillTrianglesForVertex( terrainBlock* b, vector* positions, ve
 		const float cliff_angle = PI / 4.f;
 		bool cliff = angle > cliff_angle;
 		if ( cliff ) {
-			vertices[vert_index].color = Vector( 0.0f, 0.2f, 1.0f, 1.f );
+			vertices[vert_index].color = Vector( 0.2f, 0.3f, 0.5f, 1.f );
 		} else {
-			vertices[vert_index].color = Vector( 0.8f, 0.9f, 1.0f, 1.f );
+			vertices[vert_index].color = Vector( 0.8f, 0.9f, 1.0f, 0.f );
 		}
 		//vertices[vert_index].color = Vector( 0.f, 0.f, dot, 1.f );
+		/*
+		if ( cliff ) {
+			vertices[vert_index].normal = normal;
+		}
+		*/
 	}
 
 }
@@ -591,6 +601,7 @@ void terrain_updateBlocks( terrain* t ) {
 
 void terrainBlock_render( terrainBlock* b ) {
 	drawCall* draw = drawCall_create( &renderPass_main, resources.shader_terrain, b->index_count, b->element_buffer, b->vertex_buffer, terrain_texture, modelview );
+	draw->texture_b = terrain_texture_cliff;
 	(void)draw;
 #if TERRAIN_USE_VBO
 	//vAssert( *b->vertex_VBO != 0 );

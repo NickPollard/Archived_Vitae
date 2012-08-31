@@ -129,15 +129,16 @@ FILE* vfile_open( const char* path, const char* mode ) {
 	char asset_path[kVfileMaxPathLength];
 	vfile_assetPath( asset_path, path );
 
-	// Store last modified time
-	vfile_storeModifiedTime( asset_path );
-
 	FILE* file = fopen( asset_path, mode );
 	if ( !file ) {
 		printf( "Error loading file: \"%s\"\n", asset_path );
 		assert( file );
 		return NULL;
 	}
+	
+	// Store last modified time
+	vfile_storeModifiedTime( asset_path );
+
 	return file;
 }
 

@@ -76,7 +76,7 @@ void test_engine_init( engine* e ) {
 		terrain* t = terrain_create();
 		t->trans = transform_createAndAdd( theScene );
 		terrain_setSize( t, 400.f, 800.f );
-		terrain_setResolution( t, 20, 20 );
+		terrain_setResolution( t, 40, 40 );
 
 		engine_addRender( e, (void*)t, terrain_render );
 		startTick( e, (void*)t, terrain_tick );
@@ -145,7 +145,7 @@ void engine_tick( engine* e ) {
 	time += dt;
 	time = time / 10.f;
 
-	//printf( "TICK: frametime %.4fms (%.2f fps)\n", time, 1.f/time );
+	printf( "TICK: frametime %.4fms (%.2f fps)\n", time, 1.f/time );
 
 	debugdraw_preTick( dt );
 	lua_preTick( e->lua, dt );

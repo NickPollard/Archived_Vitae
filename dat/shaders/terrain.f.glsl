@@ -9,6 +9,7 @@ varying vec4 cameraSpace_frag_normal;
 varying vec2 texcoord;
 varying vec4 vert_color;
 varying float fog;
+varying float cliff;
 
 const int LIGHT_COUNT = 2;
 
@@ -18,6 +19,7 @@ uniform mat4 modelview;
 //uniform vec4 light_diffuse[LIGHT_COUNT];
 //uniform vec4 light_specular[LIGHT_COUNT];
 uniform sampler2D tex;
+uniform sampler2D tex_b;
 uniform vec4 fog_color;
 uniform vec4 camera_space_sun_direction;
 
@@ -30,6 +32,14 @@ const vec4 directional_light_specular = vec4( 0.5, 0.5, 0.5, 1.0 );
 const vec4 sun_color = vec4( 1.0, 0.5, 0.0, 0.0 );
 
 const float light_radius = 20.0;
+
+
+const float diffuse_scale = 0.5;
+const float diffuse_bias = 0.5;
+
+float diffuse_warp( float diffuse ) {
+	return diffuse * diffuse_scale + diffuse_bias;
+}
 
 float sun_fog( vec4 local_sun_dir, vec4 fragment_position ) {
 	return max( 0.0, dot( local_sun_dir, normalize( fragment_position )));
@@ -53,6 +63,7 @@ void main() {
 		// TODO: Can this be done in the vertex shader?
 		// how does dot( -light_direction, cameraSpace_frag_normal ) vary accross a poly?
 		float diffuse = max( 0.0, dot( -light_direction, cameraSpace_frag_normal ));
+		diffuse = diffuse_warp( diffuse );
 		vec4 diffuse_color = directional_light_diffuse * diffuse;
 		total_diffuse_color += diffuse_color;
 		
@@ -88,8 +99,11 @@ void main() {
 	}
 #endif // ENABLE_POINT_LIGHTS
 
-	vec4 tex_color = texture2D( tex, texcoord );
-	vec4 material_diffuse = vert_color; // * tex_color;
+	vec4 flat_tex_color = texture2D( tex, texcoord );
+	//vec4 cliff_tex_color = texture2D( tex_b, texcoord );
+	vec4 cliff_tex_color = vec4( 1.f, 1.f, 1.f, 1.f );
+	vec4 material_diffuse = mix( vert_color * flat_tex_color, vert_color * cliff_tex_color, cliff );
+	//vec4 material_diffuse = vert_color * flat_tex_color;
 	vec4 fragColor = (total_specular_color + total_diffuse_color) * material_diffuse;
 
 	// sunlight on fog

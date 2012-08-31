@@ -108,8 +108,6 @@ void canyonBuffer_generatePoints( window_buffer* buffer ) {
 
 // Seek the canyon window_buffer forward so that its stream_position is now SEEK_POSITION
 void canyonBuffer_seekForward( window_buffer* buffer, size_t seek_position ) {
-	if ( seek_position != buffer->stream_position )
-		printf( "seeking to " dPTRf "\n", seek_position );
 	vAssert( seek_position >= buffer->stream_position );
 	size_t stream_end_position = windowBuffer_endPosition( buffer );
 	while ( stream_end_position < seek_position ) {

@@ -576,15 +576,23 @@ void render_setUniform_matrix( GLuint uniform, matrix m ) {
 	glUniformMatrix4fv( uniform, 1, /*transpose*/false, (GLfloat*)m );
 }
 
+int render_current_texture_unit = 0;
 // Takes a uniform and an OpenGL texture name (GLuint)
 // It binds the given texture to an available texture unit
 // and sets the uniform to that
 void render_setUniform_texture( GLuint uniform, GLuint texture ) {
 	// Activate a texture unit
-	glActiveTexture( GL_TEXTURE0 );
+	if ( render_current_texture_unit == 0 ) {
+		glActiveTexture( GL_TEXTURE0 );
+	}
+	else if ( render_current_texture_unit == 1 ) {
+		glActiveTexture( GL_TEXTURE1 );
+	}
+
 	// Bind the texture to that texture unit
 	glBindTexture( GL_TEXTURE_2D, texture );
-	glUniform1i( uniform, 0 );
+	glUniform1i( uniform, render_current_texture_unit );
+	render_current_texture_unit++;
 }
 
 void render_setUniform_vector( GLuint uniform, vector* v ) {
@@ -728,9 +736,14 @@ void render_drawCall_draw( drawCall* draw ) {
 }
 
 void render_drawBatch( drawCall* draw ) {
+	// Reset the current texture unit so we have as many as we need for this batch
+	render_current_texture_unit = 0;
 	// Only draw if we have a valid texture
 	if ( draw->texture != kInvalidGLTexture ) {
 		render_setUniform_texture( *resources.uniforms.tex,			draw->texture );
+		if ( *resources.uniforms.tex_b ) {
+			render_setUniform_texture( *resources.uniforms.tex_b,		draw->texture_b );
+		}
 		render_setUniform_matrix( *resources.uniforms.modelview,	draw->modelview );
 		render_drawCall_draw( draw );
 	}
