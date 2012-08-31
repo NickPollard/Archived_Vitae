@@ -20,6 +20,7 @@ void terrain_calculateBounds( int bounds[2][2], terrain* t, vector* sample_point
 void terrainBlock_calculateBuffers( terrain* t, terrainBlock* b );
 void terrainBlock_calculateCollision( terrain* t, terrainBlock* b );
 void terrainBlock_fillTrianglesForVertex( terrainBlock* b, vector* positions, vertex* vertices, int u_index, int v_index, vertex* vert );
+void terrainBlock_cliffSmooth( terrainBlock* b, int vert_count, vector* verts );
 
 GLuint terrain_texture = 0;
 GLuint terrain_texture_cliff = 0;
@@ -57,10 +58,10 @@ terrain* terrain_create() {
 	t->v_block_count = 5;
 
 	if ( terrain_texture == 0 ) {
-		texture_request( &terrain_texture, "dat/img/terrain/snow_rgba.tga" );
+		texture_request( &terrain_texture, "dat/img/terrain/snow_2_rgba.tga" );
 	}
 	if ( terrain_texture_cliff == 0 ) {
-		texture_request( &terrain_texture_cliff, "dat/img/terrain/cliffs_rgba.tga" );
+		texture_request( &terrain_texture_cliff, "dat/img/terrain/cliffs_2_rgba.tga" );
 	}
 
 	canyon_staticInit();
@@ -144,7 +145,7 @@ float terrain_canyonHeight( float x, float z ) {
 // The procedural function
 float terrain_sample( float u, float v ) {
 	float mountains = terrain_mountainHeight( u, v );
-	float detail = terrain_detailHeight( u, v );
+	float detail = 0.f; //terrain_detailHeight( u, v );
 	float canyon = terrain_newCanyonHeight( u, v );
 	return mountains + detail - canyon;
 }
@@ -267,6 +268,10 @@ void terrainBlock_calculateBuffers( terrain* t, terrainBlock* b ) {
 	vAssert( vert_index == vert_count );
 
 
+	// *** Cliff Smooth
+	terrainBlock_cliffSmooth( b, vert_count, verts );
+
+
 
 	// *** Generate Normals
 	// Do top and bottom edges first
@@ -346,7 +351,7 @@ void terrainBlock_calculateBuffers( terrain* t, terrainBlock* b ) {
 		element_count += 6;
 	}
 
-	const float texture_scale = 0.0125f;
+	const float texture_scale = 0.0325f;
 
 #if 0
 	// For each element index
@@ -388,6 +393,66 @@ void terrainBlock_calculateBuffers( terrain* t, terrainBlock* b ) {
 	terrainBlock_initVBO( b );
 #endif
 }
+
+
+// Do a smoothing operation by averaging positions against their neighbours, weighted by how close in Y they are
+void terrainBlock_cliffSmooth( terrainBlock* b, int vert_count, vector* verts ) {
+	vector* new_verts = mem_alloc( sizeof( vector ) * vert_count );
+	int vert_index = 0;
+	for ( int u = 0; u < b->u_samples; ++u ) {
+		for ( int v = 0; v < b->v_samples; ++v ) {
+			if (( u == 0 || u == b->u_samples - 1 ) ||
+				( v == 0 || v == b->v_samples - 1 )) {
+				new_verts[vert_index] = verts[vert_index];
+				++vert_index;
+			}
+			else {
+				vector v = verts[vert_index];
+				vector left		= verts[vert_index - b->u_samples];
+				vector right	= verts[vert_index + b->u_samples];
+				vector top		= verts[vert_index - 1];
+				vector bottom	= verts[vert_index + 1];
+				float right_k = 1.f / fabsf( right.coord.y - v.coord.y );
+				float left_k = 1.f / fabsf( left.coord.y - v.coord.y );
+				float top_k = 1.f / fabsf( top.coord.y - v.coord.y );
+				float bottom_k = 1.f / fabsf( bottom.coord.y - v.coord.y );
+				float k = right_k + left_k + top_k + bottom_k;
+				right_k = right_k / k;
+				left_k = left_k / k;
+				top_k = top_k / k;
+				bottom_k = bottom_k / k;
+				// Clamping
+				const float min = 0.05f;
+				const float max = 0.4f;
+				right_k = fclamp( right_k, min, max );
+				left_k = fclamp( left_k, min, max );
+				top_k = fclamp( top_k, min, max );
+				bottom_k = fclamp( bottom_k, min, max );
+				k = right_k + left_k + top_k + bottom_k;
+				right_k = right_k / k;
+				left_k = left_k / k;
+				top_k = top_k / k;
+				bottom_k = bottom_k / k;
+
+
+				v.coord.x = right.coord.x * right_k + 
+					left.coord.x * left_k + 
+					top.coord.x * top_k + 
+					bottom.coord.x * bottom_k;
+				v.coord.z = right.coord.z * right_k + 
+					left.coord.z * left_k + 
+					top.coord.z * top_k + 
+					bottom.coord.z * bottom_k;
+				new_verts[vert_index] = v;
+				++vert_index;
+			}
+		}
+	}
+	memcpy( verts, new_verts, sizeof( vector ) * vert_count );
+}
+
+
+
 
 bool terrainBlock_triangleInvalid( terrainBlock* b, int u_index, int v_index, int u_offset, int v_offset ) {
 	u_offset = u_offset / 2 + u_offset % 2;

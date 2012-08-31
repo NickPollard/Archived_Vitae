@@ -28,7 +28,7 @@ void main() {
 	texcoord = uv.xy;
 
 	//vert_color = vec4( 0.8, 0.9, 1.0, 1.0 );
-	vert_color = vec4( color.xyz, 1.f );
+	vert_color = vec4( color.xyz, 1.0 );
 	cliff = color.w;
 
 	// We can calculate fog per vertex as we know polys will be small for terrain

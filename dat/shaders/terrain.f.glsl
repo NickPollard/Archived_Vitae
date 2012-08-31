@@ -27,7 +27,7 @@ uniform vec4 camera_space_sun_direction;
 const vec4 light_ambient = vec4( 0.4, 0.4, 0.4, 1.0 );
 // Directional Light
 const vec4 directional_light_direction = vec4( 1.0, -0.5, 1.0, 0.0 );
-const vec4 directional_light_diffuse = vec4( 1.0, 1.0, 0.4, 1.0 );
+const vec4 directional_light_diffuse = vec4( 1.0, 1.0, 0.8, 1.0 );
 const vec4 directional_light_specular = vec4( 0.5, 0.5, 0.5, 1.0 );
 const vec4 sun_color = vec4( 1.0, 0.5, 0.0, 0.0 );
 
@@ -99,11 +99,21 @@ void main() {
 	}
 #endif // ENABLE_POINT_LIGHTS
 
-	vec4 flat_tex_color = texture2D( tex, texcoord );
-	//vec4 cliff_tex_color = texture2D( tex_b, texcoord );
-	vec4 cliff_tex_color = vec4( 1.f, 1.f, 1.f, 1.f );
-	vec4 material_diffuse = mix( vert_color * flat_tex_color, vert_color * cliff_tex_color, cliff );
-	//vec4 material_diffuse = vert_color * flat_tex_color;
+	vec4 cliff_tex_color = texture2D( tex_b, texcoord );
+	vec4 flat_color = texture2D( tex, texcoord ) * vec4( 0.8, 0.9, 1.0, 1.0 );
+	vec4 cliff_color = cliff_tex_color * vec4( 0.2, 0.3, 0.6, 1.0 );
+	vec4 edge_color = vec4( 0.4, 0.55, 0.8, 1.0 ) * cliff_tex_color;
+
+	vec4 up = modelview * vec4( 0.0, 1.0, 0.0, 0.0 );
+	float edge_snow = 0.03;
+	float edge = 0.08;
+	float edge_cliff = 0.15;
+	float d = 1.0 - clamp( dot( cameraSpace_frag_normal, up ), 0.0, 1.0 );
+	float cliffyb = smoothstep( edge, edge_cliff, d );
+	float snow = smoothstep( edge_snow, edge, d );
+	
+	vec4 material_diffuse = mix( flat_color, mix( edge_color, cliff_color, cliffyb ), snow );
+	//vec4 material_diffuse = vec4( 0.5, 0.5, 0.5, 1.0 );
 	vec4 fragColor = (total_specular_color + total_diffuse_color) * material_diffuse;
 
 	// sunlight on fog
