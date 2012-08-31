@@ -165,6 +165,7 @@ void terrainBlock_initVBO( terrainBlock* b ) {
 }
 
 // *** Utility Functions
+
 int terrainBlock_triangleCount( terrainBlock* b ) {
 	return ( b->u_samples - 1 ) * ( b->v_samples - 1 ) * 2;
 }
@@ -185,6 +186,11 @@ vector terrainBlock_center ( terrainBlock* b ) {
 	vector center = Vector(( b->u_min + b->u_max ) * 0.5f, 0.f, ( b->v_min + b->v_max ) * 0.5f, 1.f );
 	return center;
 }
+
+int terrainBlock_indexFromUV( terrainBlock* b, int u, int v  ) {
+	return v + ( u * b->v_samples );
+}
+
 // ***
 
 void terrainBlock_calculateHeights( terrainBlock* b, int vert_count, vector* verts ) {
@@ -256,19 +262,19 @@ void terrainBlock_calculateNormals( terrainBlock* b, int vert_count, vector* ver
 }
 
 void terrainBlock_generateVertices( terrainBlock* b, int vert_count, vector* verts, vector* normals ) {
+	(void)vert_count;
 	const float texture_scale = 0.0325f;
-	int i = 0;
-	for ( int u = 0; u < b->u_samples; ++u ) {
-		for ( int v = 0; v < b->v_samples; ++v ) {
+	int lod_interval = 1;
+	for ( int u = 0; u < b->u_samples; u += lod_interval ) {
+		for ( int v = 0; v < b->v_samples; v += lod_interval ) {
+			int i = terrainBlock_indexFromUV( b, u, v );
 			vertex vert;
 			vert.position = verts[i];
 			vert.normal = normals[i];
 			vert.uv = Vector( vert.position.coord.x * texture_scale, vert.position.coord.z * texture_scale, 0.f, 0.f );
 			terrainBlock_fillTrianglesForVertex( b, verts, b->vertex_buffer, u, v, &vert );
-			++i;
 		}
 	}
-	vAssert( i == vert_count );
 }
 
 /*
@@ -361,10 +367,6 @@ bool terrainBlock_triangleInvalid( terrainBlock* b, int u_index, int v_index, in
 		( u_index + u_offset < 0 ) ||
 		( v_index + v_offset >= b->v_samples - 1 ) ||
 		( v_index + v_offset < 0 );
-}
-
-int terrainBlock_indexFromUV( terrainBlock* b, int u, int v  ) {
-	return v + ( u * b->v_samples );
 }
 
 // Given a vertex that has been generated, fill in the correct triangles for it after it has been unrolled
