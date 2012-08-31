@@ -65,7 +65,7 @@ terrain* terrain_create() {
 	}
 
 	canyon_staticInit();
-	terrain_generatePoints();
+	canyon_generatePoints();
 
 	return t;
 }
@@ -81,8 +81,10 @@ void terrainBlock_calculateExtents( terrainBlock* b, terrain* t, int coord[2] ) 
 
 void terrain_createBlocks( terrain* t ) {
 	vAssert( !t->blocks );
+
 	t->total_block_count = t->u_block_count * t->v_block_count;
 	vAssert( t->total_block_count > 0 );
+
 	t->blocks = mem_alloc( sizeof( terrainBlock* ) * t->total_block_count );
 
 	// Ensure the block bounds are initialised;
@@ -120,28 +122,6 @@ float terrain_detailHeight( float u, float v ) {
 			5 * sinf( u / 10.f ) * sinf( v / 10.f ) * sinf( u / 10.f ) * sinf( v / 10.f );
 }
 
-const float canyon_longitudinal_scale = 250.f;
-const float canyon_horizontal_scale = 0.2f;
-const float canyon_width_scale = 100.f;
-const float canyon_height = 40.f;
-const float canyon_width = 8.f;
-const float base_radius = 8.f;
-
-// Get the canyon height at a given world X and world Z
-float terrain_canyonHeight( float x, float z ) {
-	// U = horizontal
-	// V = longitudinal
-
-	// Turn the world-space X and Z into a canyon-space U (this is the displacement from the center of the canyon)
-	float v = z / canyon_longitudinal_scale;
-	float u = x * canyon_horizontal_scale + sinf( v ) * canyon_width_scale;
-	u = ( u < 0.f ) ? fminf( u + base_radius, 0.f ) : fmaxf( u - base_radius, 0.f );
-	
-	// Turn the canyon-space U into a height
-	float mask = cos( fclamp( u / canyon_width, -PI/2.f, PI/2.f ));
-	return (1.f - fclamp( powf( u / canyon_width, 4.f ), 0.f, 1.f )) * mask * canyon_height;
-}
-
 // The procedural function
 float terrain_sample( float u, float v ) {
 	float mountains = terrain_mountainHeight( u, v );
@@ -150,33 +130,12 @@ float terrain_sample( float u, float v ) {
 	return mountains + detail - canyon;
 }
 
-// Turn canyon space U and V coords into world space X and Z
-// For height, use terrain_sample( x, z ) with the X and Z returned from this function
-void terrain_canyon( float u, float v, float* x, float* z ) {
-	// U = horizontal
-	// V = longitudinal
-	//float u = x / canyon_horizontal_scale + sinf( z / (canyon_longitudinal_scale) ) * canyon_width_scale;
-	
-	// Turn the canyon-space U and V into world space X and Z
-	*z = v * canyon_longitudinal_scale;
-	*x = ( u - sinf( v ) * canyon_width_scale ) / canyon_horizontal_scale;
-}
-
-// Get the world-position of the canyon at a given canyon-distance V and canyon-x-displacement U
-vector terrain_canyonPosition( float u, float v ) {
-	float x, z;
-	terrain_canyon( u, v, &x, &z );
-	float y = terrain_sample( x, z );
-	return Vector( x, y, z, 1.f );
-}
-
 // Could be called during runtime, in which case reinit render variables
 void terrain_setSize( terrain* t, float u, float v ) {
 	t->u_radius = u;
 	t->v_radius = v;
 
-	// TODO:
-	// Could be called during runtime, in which case reinit render variables
+	// TODO: Could be called during runtime, in which case reinit render variables
 	// For now just disallow that
 	vAssert( !t->blocks );
 }
@@ -208,10 +167,10 @@ void terrainBlock_initVBO( terrainBlock* b ) {
 	}
 }
 
+// *** Utility Functions
 int terrainBlock_triangleCount( terrainBlock* b ) {
 	return ( b->u_samples - 1 ) * ( b->v_samples - 1 ) * 2;
 }
-
 
 int terrainBlock_vertCount( terrainBlock* b ) {
 	return b->u_samples * b->v_samples;
@@ -225,23 +184,13 @@ float terrainBlock_vInterval( terrainBlock* b ) {
 	return ( b->v_max - b->v_min ) / ( b->v_samples - 1);
 }
 
+vector terrainBlock_center ( terrainBlock* b ) {
+	vector center = Vector(( b->u_min + b->u_max ) * 0.5f, 0.f, ( b->v_min + b->v_max ) * 0.5f, 1.f );
+	return center;
+}
+// ***
 
-
-
-
-/*
-   Calculate vertex and element buffers for a given block from a given
-   terrain
-   */
-void terrainBlock_calculateBuffers( terrain* t, terrainBlock* b ) {
-/*	We have a grid of x * y points
-	So (x-1) * (y-1) quads
-	So (x-1) * (y-1) * 2 tris
-	So (x-1) * (y-1) * 6 indices */
-
-	int triangle_count = terrainBlock_triangleCount( b );
-	int vert_count = terrainBlock_vertCount( b );
-
+void terrainBlock_calculateHeights( terrainBlock* b, int vert_count, vector* verts ) {
 	// Calculate bounds and intervals
 	vAssert( b->u_max > b->u_min );
 	vAssert( b->v_max > b->v_min );
@@ -250,14 +199,6 @@ void terrainBlock_calculateBuffers( terrain* t, terrainBlock* b ) {
 	// Loosen max edges to ensure final verts aren't dropped
 	float u_max = b->u_max + (u_interval * 0.5f);
 	float v_max = b->v_max + (v_interval * 0.5f);
-
-	vector* verts	= mem_alloc( vert_count * sizeof( vector ));
-	vector* normals	= mem_alloc( vert_count * sizeof( vector ));
-	vector* colors	= mem_alloc( vert_count * sizeof( vector ));
-
-
-
-	// *** Calculate height positions
 	int vert_index = 0;
 	for ( float u = b->u_min; u < u_max; u+= u_interval ) {
 		for ( float v = b->v_min; v < v_max; v+= v_interval ) {
@@ -266,29 +207,30 @@ void terrainBlock_calculateBuffers( terrain* t, terrainBlock* b ) {
 		}
 	}
 	vAssert( vert_index == vert_count );
+}
 
+void terrainBlock_initialiseElementBuffer( int count, unsigned short* buffer ) {
+	for ( int i = 0; i < count; i++ )
+		buffer[i] = i;
+}
 
-	// *** Cliff Smooth
-	terrainBlock_cliffSmooth( b, vert_count, verts );
-
-
-
+void terrainBlock_calculateNormals( terrainBlock* b, int vert_count, vector* verts, vector* normals ) {
 	// *** Generate Normals
 	// Do top and bottom edges first
-	for ( int i = 0; i < t->u_samples; i++ )
-		normals[i] = Vector( 0.f, 1.f, 0.f, 0.f );
-	for ( int i = vert_count - t->u_samples; i < vert_count; i++ )
-		normals[i] = Vector( 0.f, 1.f, 0.f, 0.f );
+	for ( int i = 0; i < b->u_samples; i++ )
+		normals[i] = y_axis;
+	for ( int i = vert_count - b->u_samples; i < vert_count; i++ )
+		normals[i] = y_axis;
 
 	//Now the rest
-	for ( int i = t->u_samples; i < ( vert_count - t->u_samples ); i++ ) {
+	for ( int i = b->u_samples; i < ( vert_count - b->u_samples ); i++ ) {
 		// Ignoring Left and Right Edges
-		if ( i % t->u_samples == 0 || i % t->u_samples == ( t->u_samples - 1 ) ) {    
-			normals[i] = Vector( 0.f, 1.f, 0.f, 0.f );
+		if ( i % b->u_samples == 0 || i % b->u_samples == ( b->u_samples - 1 ) ) {    
+			normals[i] = y_axis;
 			continue;
 		}
-		vector left		= verts[i - t->u_samples];
-		vector right	= verts[i + t->u_samples];
+		vector left		= verts[i - b->u_samples];
+		vector right	= verts[i + b->u_samples];
 		vector top		= verts[i - 1];
 		vector bottom	= verts[i + 1];
 
@@ -314,58 +256,28 @@ void terrainBlock_calculateBuffers( terrain* t, terrainBlock* b ) {
 		Normalize( &total, &total );
 		normals[i] = total;
 	}
+}
 
-	
 /*
-	// *** Colors
-	for ( int i = 0; i < vert_count; ++i ) {
-		vector position = verts[i];
+   Calculate vertex and element buffers for a given block from a given
+   terrain
+   */
+void terrainBlock_calculateBuffers( terrain* t, terrainBlock* b ) {
+	(void)t;
+	int vert_count = terrainBlock_vertCount( b );
+	vector* verts	= mem_alloc( vert_count * sizeof( vector ));
+	vector* normals	= mem_alloc( vert_count * sizeof( vector ));
 
-		float u, v;
-		terrain_canyonSpaceFromWorld( position.coord.x, position.coord.z, &u, &v );
-		float b = ( sinf( v / 1000.f ) + 1.f ) / 2.f;
-		colors[i] = Vector( 0.2f, 0.2f, b, 1.f );
-	}
-	*/
+	terrainBlock_calculateHeights( b, vert_count, verts );
 
-	
-	// ** Unroll
-	int element_count = 0;
-	// Calculate elements
-	int tw = ( t->u_samples - 1 ) * 2; // Triangles per row
-	for ( int i = 0; i < triangle_count; i+=2 ) {
-		GLushort tl = ( i / 2 ) + i / tw;
-		GLushort tr = tl + 1;
-		GLushort bl = tl + t->u_samples;
-		GLushort br = bl + 1;
+	// *** Cliff Smooth
+	terrainBlock_cliffSmooth( b, vert_count, verts );
 
-		// Unroll this, do two triangles at a time
-		// bottom right triangle - br, bl, tr
-		b->element_buffer[element_count+0] = br;
-		b->element_buffer[element_count+1] = bl;
-		b->element_buffer[element_count+2] = tr;
-		// top left triangle - tl, tr, bl
-		b->element_buffer[element_count+3] = tl;
-		b->element_buffer[element_count+4] = tr;
-		b->element_buffer[element_count+5] = bl;
-		element_count += 6;
-	}
+	// *** Generate Normals
+	terrainBlock_calculateNormals( b, vert_count, verts, normals );
 
 	const float texture_scale = 0.0325f;
 
-#if 0
-	// For each element index
-	// Unroll the vertex/index bindings
-	for ( int i = 0; i < b->index_count; i++ ) {
-		// Copy the required vertex position, normal, and uv
-		b->vertex_buffer[i].position = verts[b->element_buffer[i]];
-		b->vertex_buffer[i].normal = normals[b->element_buffer[i]];
-		b->vertex_buffer[i].uv = Vector( verts[b->element_buffer[i]].coord.x * texture_scale, verts[b->element_buffer[i]].coord.z * texture_scale, 0.f, 0.f );
-		b->vertex_buffer[i].color = colors[b->element_buffer[i]];
-		b->element_buffer[i] = i;
-	}
-
-#else
 	int i = 0;
 	for ( int u = 0; u < b->u_samples; ++u ) {
 		for ( int v = 0; v < b->v_samples; ++v ) {
@@ -373,27 +285,21 @@ void terrainBlock_calculateBuffers( terrain* t, terrainBlock* b ) {
 			vert.position = verts[i];
 			vert.normal = normals[i];
 			vert.uv = Vector( vert.position.coord.x * texture_scale, vert.position.coord.z * texture_scale, 0.f, 0.f );
-			vert.color = colors[i];
 			terrainBlock_fillTrianglesForVertex( b, verts, b->vertex_buffer, u, v, &vert );
 			++i;
 		}
 	}
 	vAssert( i == vert_count );
 
-	for ( int i = 0; i < b->index_count; i++ ) {
-		b->element_buffer[i] = i;
-	}
-#endif
+	terrainBlock_initialiseElementBuffer( b->index_count, b->element_buffer );
 
 	mem_free( verts );
 	mem_free( normals );
-	mem_free( colors );
 
 #if TERRAIN_USE_VBO
 	terrainBlock_initVBO( b );
 #endif
 }
-
 
 // Do a smoothing operation by averaging positions against their neighbours, weighted by how close in Y they are
 void terrainBlock_cliffSmooth( terrainBlock* b, int vert_count, vector* verts ) {
@@ -434,7 +340,6 @@ void terrainBlock_cliffSmooth( terrainBlock* b, int vert_count, vector* verts ) 
 				top_k = top_k / k;
 				bottom_k = bottom_k / k;
 
-
 				v.coord.x = right.coord.x * right_k + 
 					left.coord.x * left_k + 
 					top.coord.x * top_k + 
@@ -450,9 +355,6 @@ void terrainBlock_cliffSmooth( terrainBlock* b, int vert_count, vector* verts ) 
 	}
 	memcpy( verts, new_verts, sizeof( vector ) * vert_count );
 }
-
-
-
 
 bool terrainBlock_triangleInvalid( terrainBlock* b, int u_index, int v_index, int u_offset, int v_offset ) {
 	u_offset = u_offset / 2 + u_offset % 2;
@@ -489,8 +391,6 @@ void terrainBlock_fillTrianglesForVertex( terrainBlock* b, vector* positions, ve
 	const int u_offset[6] = { -1, 0, 1, -2, -1, 0 };
 	int triangles_per_row = ( b->u_samples - 1 ) * 2;
 	
-	//printf( "uv: %d, %d.\n", u_index, v_index );
-
 	for ( int i = 0; i < 6; ++i ) {
 		// Calculate triangle index
 		int triangle_index = triangles_per_row * ( v_index + v_offset[i] ) + ( 2 * u_index ) + u_offset[i];
@@ -498,7 +398,6 @@ void terrainBlock_fillTrianglesForVertex( terrainBlock* b, vector* positions, ve
 			continue;
 		// if it's a valid triangle (not out-of-bounds)
 		int vert_index = triangle_index * 3 + triangle_vert_indices[i];
-		//printf( "i: %d, triangle index: %d. Vert index: %d.\n", i, triangle_index, vert_index );
 		vertices[vert_index] = *vert;
 
 		// Cliff coloring
@@ -524,24 +423,8 @@ void terrainBlock_fillTrianglesForVertex( terrainBlock* b, vector* positions, ve
 		} else {
 			vertices[vert_index].color = Vector( 0.8f, 0.9f, 1.0f, 0.f );
 		}
-		//vertices[vert_index].color = Vector( 0.f, 0.f, dot, 1.f );
-		/*
-		if ( cliff ) {
-			vertices[vert_index].normal = normal;
-		}
-		*/
 	}
-
 }
-
-
-
-
-
-
-
-
-
 
 
 // Calculate the intersection of the two block bounds specified
@@ -669,8 +552,6 @@ void terrainBlock_render( terrainBlock* b ) {
 	draw->texture_b = terrain_texture_cliff;
 	(void)draw;
 #if TERRAIN_USE_VBO
-	//vAssert( *b->vertex_VBO != 0 );
-	//vAssert( *b->element_VBO != 0 );
 	if ( *b->vertex_VBO != 0 ) {
 		draw->vertex_VBO = *b->vertex_VBO;
 		draw->element_VBO = *b->element_VBO;
@@ -696,13 +577,6 @@ void terrain_tick( void* data, float dt, engine* eng ) {
 	(void)eng;
 	terrain* t = data;
 	terrain_updateBlocks( t );
-
-	/*
-	for ( int i = 0; i < t->total_block_count; ++i ) {
-		terrainBlock* b = t->blocks[i];
-		terrainBlock_debugDraw( b );
-	}
-	*/
 }
 
 // Send the buffers to the GPU
@@ -741,10 +615,6 @@ heightField* terrainBlock_createHeightField( terrain* t, terrainBlock* b ) {
 	}
 	
 	return h;
-}
-vector terrainBlock_center ( terrainBlock* b ) {
-	vector center = Vector(( b->u_min + b->u_max ) * 0.5f, 0.f, ( b->v_min + b->v_max ) * 0.5f, 1.f );
-	return center;
 }
 
 // Calculate the collision for a given block

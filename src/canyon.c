@@ -289,7 +289,7 @@ vector terrain_newCanyonPoint( vector current, vector previous ) {
 
 
 // Generate X points of the canyon
-void terrain_generatePoints() {
+void canyon_generatePoints() {
 	canyon_points[0] = Vector( 0.f, 0.f, 0.f, 1.f );
 	canyon_points[1] = Vector( 0.f, 0.f, kCanyonSegmentLength, 1.f );
 	canyon_streaming_buffer.tail = 1;

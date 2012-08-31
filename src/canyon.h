@@ -26,9 +26,12 @@ typedef struct window_buffer_s {
 
 // Canyon functions
 void terrain_debugDraw( window* w );
-void terrain_generatePoints();
+void canyon_generatePoints();
 float terrain_newCanyonHeight( float x, float z );
 void canyon_staticInit();
 void canyon_seekForWorldPosition( vector position );
 // For colouring
 void terrain_canyonSpaceFromWorld( float x, float z, float* u, float* v );
+
+// Convert canyon-space U and V coords into world space X and Z
+void terrain_worldSpaceFromCanyon( float u, float v, float* x, float* z );

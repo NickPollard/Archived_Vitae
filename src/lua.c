@@ -5,8 +5,7 @@
 #include "mem/allocator.h"
 
 // temp
-#include "camera/chasecam.h"
-#include "camera/flycam.h"
+#include "canyon.h"
 #include "collision.h"
 #include "model.h"
 #include "scene.h"
@@ -16,6 +15,8 @@
 #include "physic.h"
 #include "terrain.h"
 #include "transform.h"
+#include "camera/chasecam.h"
+#include "camera/flycam.h"
 #include "input/keyboard.h"
 #include "render/modelinstance.h"
 #include "render/texture.h"
@@ -626,10 +627,8 @@ int LUA_canyonPosition( lua_State* l ) {
 	float u = lua_tonumber( l, 1 );
 	float v = lua_tonumber( l, 2 );
 	float x, y, z;
-	vector position = terrain_canyonPosition( u, v );
-	x = position.coord.x;
-	y = position.coord.y;
-	z = position.coord.z;
+	terrain_worldSpaceFromCanyon( u, v, &x, &z );
+	y = terrain_sample( x, z );
 	lua_pushnumber( l, x );
 	lua_pushnumber( l, y );
 	lua_pushnumber( l, z );
