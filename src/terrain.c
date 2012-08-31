@@ -64,9 +64,6 @@ terrain* terrain_create() {
 		texture_request( &terrain_texture_cliff, "dat/img/terrain/cliffs_2_rgba.tga" );
 	}
 
-	canyon_staticInit();
-	canyon_generatePoints();
-
 	return t;
 }
 

@@ -236,16 +236,20 @@ int terrainCanyon_segmentAtDistance( float v ) {
 // Convert canyon-space U and V coords into world space X and Z
 void terrain_worldSpaceFromCanyon( float u, float v, float* x, float* z ) {
 	int i = terrainCanyon_segmentAtDistance( v );
-	float segment_position = v - (float)i * kCanyonSegmentLength;
+	float segment_position = ( v - (float)i * kCanyonSegmentLength ) / kCanyonSegmentLength; 
 	
 	vector canyon_next = canyon_point( &canyon_streaming_buffer, i + 1 );
 	vector canyon_previous = canyon_point( &canyon_streaming_buffer, i );
 
-	vector canyon_position = vector_lerp( &canyon_next, &canyon_previous, segment_position );
+	vAssert( segment_position >= 0.f );
+	vAssert( segment_position <= 1.f );
+
+	vector canyon_position = vector_lerp( &canyon_previous, &canyon_next, segment_position );
 	vector segment = normalized( vector_sub( canyon_next, canyon_previous ));
-	vector normal = Vector( segment.coord.z, 0.f, segment.coord.x, 0.f );
+	vector normal = Vector( -segment.coord.z, 0.f, segment.coord.x, 0.f );
 	vAssert( isNormalized( &normal ));
 	vector u_offset = vector_scaled( normal, u );
+	(void)u_offset;
 	vector position = vector_add( canyon_position, u_offset );
 	*x = position.coord.x;
 	*z = position.coord.z;

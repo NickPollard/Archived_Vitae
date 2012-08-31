@@ -39,6 +39,9 @@ typedef struct terrain_s {
 	int				bounds[2][2];
 } terrain;
 
+extern GLuint terrain_texture;
+extern GLuint terrain_texture_cliff;
+
 // Create a procedural terrain
 terrain* terrain_create();
 

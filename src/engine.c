@@ -3,6 +3,7 @@
 #include "src/engine.h"
 //---------------------
 #include "canyon.h"
+#include "canyon_terrain.h"
 #include "collision.h"
 #include "dynamicfog.h"
 #include "font.h"
@@ -42,6 +43,8 @@ IMPLEMENT_LIST(delegate)
 // *** Static Hacks
 scene* theScene = NULL;
 terrain* theTerrain = NULL;
+canyonTerrain* theCanyonTerrain = NULL;
+
 #ifdef LINUX_X
 xwindow xwindow_main = { NULL, 0x0, false };
 #endif
@@ -72,6 +75,7 @@ void test_engine_init( engine* e ) {
 	lua_setScene( e->lua, theScene );
 
 	// Terrain
+	/*
 	{
 		terrain* t = terrain_create();
 		t->trans = transform_createAndAdd( theScene );
@@ -83,7 +87,13 @@ void test_engine_init( engine* e ) {
 
 		theTerrain = t;
 	}
+	*/
 
+	{
+		canyonTerrain* t = canyonTerrain_create();
+		canyonTerrain_init( t );
+		theCanyonTerrain = t;
+	}
 
 	// Dynamic fog
 	{
@@ -172,8 +182,8 @@ void engine_tick( engine* e ) {
 				/* error handler */ 0);
 	}
 
-	vector v = Vector( 0.0, 0.0, 30.0, 1.0 );
-	theTerrain->sample_point = matrix_vecMul( theScene->cam->trans->world, &v );
+	//vector v = Vector( 0.0, 0.0, 30.0, 1.0 );
+	//theTerrain->sample_point = matrix_vecMul( theScene->cam->trans->world, &v );
 	const vector* camera_position = matrix_getTranslation( theScene->cam->trans->world );
 	canyon_seekForWorldPosition( *camera_position );
 	PROFILE_END( PROFILE_ENGINE_TICK );
@@ -256,6 +266,10 @@ void engine_init(engine* e, int argc, char** argv) {
 	engine_initLua(e, argc, argv);
 	luaInterface_registerCallback(e->callbacks, "onTick", "tick");
 
+	// *** Canyon
+	canyon_staticInit();
+	canyon_generatePoints();
+
 	// TEST
 	test_engine_init( e );
 }
@@ -312,6 +326,10 @@ void engine_render( engine* e ) {
 	skybox_render( NULL );
 	engine_renderRenders( e );
 #endif // ANDROID
+
+	// TEMP
+	canyonTerrain_render( theCanyonTerrain );
+
 	// Allow the render thread to start
 	vthread_signalCondition( start_render );
 	PROFILE_END( PROFILE_ENGINE_RENDER );
