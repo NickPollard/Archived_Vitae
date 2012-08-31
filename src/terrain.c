@@ -148,9 +148,6 @@ void terrain_setResolution( terrain* t, int u, int v ) {
 	terrain_createBlocks( t );
 }
 
-
-
-
 // Create GPU vertex buffer objects to hold our data and save transferring to the GPU each frame
 void terrainBlock_initVBO( terrainBlock* b ) {
 	if ( !b->vertex_VBO ) {
@@ -258,26 +255,8 @@ void terrainBlock_calculateNormals( terrainBlock* b, int vert_count, vector* ver
 	}
 }
 
-/*
-   Calculate vertex and element buffers for a given block from a given
-   terrain
-   */
-void terrainBlock_calculateBuffers( terrain* t, terrainBlock* b ) {
-	(void)t;
-	int vert_count = terrainBlock_vertCount( b );
-	vector* verts	= mem_alloc( vert_count * sizeof( vector ));
-	vector* normals	= mem_alloc( vert_count * sizeof( vector ));
-
-	terrainBlock_calculateHeights( b, vert_count, verts );
-
-	// *** Cliff Smooth
-	terrainBlock_cliffSmooth( b, vert_count, verts );
-
-	// *** Generate Normals
-	terrainBlock_calculateNormals( b, vert_count, verts, normals );
-
+void terrainBlock_generateVertices( terrainBlock* b, int vert_count, vector* verts, vector* normals ) {
 	const float texture_scale = 0.0325f;
-
 	int i = 0;
 	for ( int u = 0; u < b->u_samples; ++u ) {
 		for ( int v = 0; v < b->v_samples; ++v ) {
@@ -290,6 +269,25 @@ void terrainBlock_calculateBuffers( terrain* t, terrainBlock* b ) {
 		}
 	}
 	vAssert( i == vert_count );
+}
+
+/*
+   Calculate vertex and element buffers for a given block from a given
+   terrain
+   */
+void terrainBlock_calculateBuffers( terrain* t, terrainBlock* b ) {
+	(void)t;
+	int vert_count = terrainBlock_vertCount( b );
+	vector* verts	= mem_alloc( vert_count * sizeof( vector ));
+	vector* normals	= mem_alloc( vert_count * sizeof( vector ));
+
+	terrainBlock_calculateHeights( b, vert_count, verts );
+
+	terrainBlock_cliffSmooth( b, vert_count, verts );
+
+	terrainBlock_calculateNormals( b, vert_count, verts, normals );
+
+	terrainBlock_generateVertices( b, vert_count, verts, normals );
 
 	terrainBlock_initialiseElementBuffer( b->index_count, b->element_buffer );
 
