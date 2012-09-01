@@ -8,6 +8,7 @@
 #include "maths/vector.h"
 #include "mem/allocator.h"
 #include "render/debugdraw.h"
+#include "render/texture.h"
 
 // *** Forward declarations
 void canyonTerrainBlock_initVBO( canyonTerrainBlock* b );
@@ -45,11 +46,13 @@ void canyonTerrainBlock_render( canyonTerrainBlock* b ) {
 		draw->element_VBO = *b->element_VBO;
 	}
 
+	/* 
 	int vert_count = canyonTerrainBlock_vertCount( b );
 	const float radius = 2.f;
 	for ( int i = 0; i < vert_count; ++i ) {
 		debugdraw_sphere( b->verts[i], radius, color_green );
 	}
+	*/
 }
 
 void canyonTerrain_render( canyonTerrain* t ) {
@@ -73,6 +76,14 @@ canyonTerrain* canyonTerrain_create() {
 	t->blocks = mem_alloc( sizeof( canyonTerrainBlock* ) * block_count );
 	t->blocks[0] = canyonTerrainBlock_create();
 	t->trans = transform_create();
+
+	if ( terrain_texture == 0 ) {
+		texture_request( &terrain_texture, "dat/img/terrain/snow_2_rgba.tga" );
+	}
+	if ( terrain_texture_cliff == 0 ) {
+		texture_request( &terrain_texture_cliff, "dat/img/terrain/cliffs_2_rgba.tga" );
+	}
+
 	return t;
 }
 
@@ -102,7 +113,7 @@ void canyonTerrainBlock_fillTrianglesForVertex( canyonTerrainBlock* b, vector* p
 	// top: 0, 2, 1
 	// bottom: 1, 2, 0
 	// finished index = triangle_index * 3 + triangle_vert_index
-	const int triangle_vert_indices[6] = { 0, 1, 2, 2, 1, 0 };
+	const int triangle_vert_indices[6] = { 0, 2, 1, 1, 2, 0 };
 	const int v_offset[6] = { -1, -1, -1, 0, 0, 0 };
 	const int u_offset[6] = { -1, 0, 1, -2, -1, 0 };
 	
@@ -160,6 +171,55 @@ void canyonTerrainBlock_generateVertices( canyonTerrainBlock* b, vector* verts, 
 	}
 }
 
+void canyonTerrainBlock_calculateNormals( canyonTerrainBlock* b, int vert_count, vector* verts, vector* normals ) {
+	// *** Generate Normals
+	// Do top and bottom edges first
+	for ( int i = 0; i < b->u_samples; i++ )
+		normals[i] = y_axis;
+	for ( int i = vert_count - b->u_samples; i < vert_count; i++ )
+		normals[i] = y_axis;
+
+	//Now the rest
+	for ( int i = b->u_samples; i < ( vert_count - b->u_samples ); i++ ) {
+		// Ignoring Left and Right Edges
+		if ( i % b->u_samples == 0 || i % b->u_samples == ( b->u_samples - 1 ) ) {    
+			normals[i] = y_axis;
+			continue;
+		}
+		vector left		= verts[i - b->u_samples];
+		vector right	= verts[i + b->u_samples];
+		vector top		= verts[i - 1];
+		vector bottom	= verts[i + 1];
+
+		vector a, b, c, x, y;
+		//x = Vector( -1.f, 0.f, 0.f, 0.f ); // Negative to ensure cross products come out correctly
+		//y = Vector( 0.f, 0.f, 1.f, 0.f );
+
+		// Calculate vertical vector
+		// Take cross product to calculate normals
+		Sub( &a, &bottom, &top );
+		Cross( &x, &a, &y_axis );
+		Cross( &b, &x, &a );
+
+		// Calculate horizontal vector
+		// Take cross product to calculate normals
+		Sub( &a, &right, &left );
+		Cross( &y, &a, &y_axis );
+		Cross( &c, &y, &a );
+
+		Normalize( &b, &b );
+		Normalize( &c, &c );
+
+		// Average normals
+		vector total = Vector( 0.f, 0.f, 0.f, 0.f );
+		Add( &total, &total, &b );
+		Add( &total, &total, &c );
+		total.coord.w = 0.f;
+		Normalize( &total, &total );
+		normals[i] = total;
+	}
+}
+
 void initialiseDefaultElementBuffer( int count, unsigned short* buffer ) {
 	for ( int i = 0; i < count; i++ )
 		buffer[i] = i;
@@ -169,12 +229,12 @@ void canyonTerrainBlock_init( canyonTerrainBlock* b ) {
 	b->vertex_VBO = NULL;
 	b->element_VBO = NULL;
 
-	b->u_samples = 10;
-	b->v_samples = 80;
+	b->u_samples = 80;
+	b->v_samples = 60;
 
-	b->u_min = -40.f;
+	b->u_min = -180.f;
 	b->v_min = 0.f;
-	b->u_max = 40.f;
+	b->u_max = 180.f;
 	b->v_max = 640.f;
 
 	int vert_count = canyonTerrainBlock_vertCount( b );
@@ -196,6 +256,9 @@ void canyonTerrainBlock_init( canyonTerrainBlock* b ) {
 			normals[i] = y_axis;
 		}
 	}
+
+	canyonTerrainBlock_calculateNormals( b, vert_count, verts, normals );
+
 	// Element List
 	b->element_count = canyonTerrainBlock_triangleCount( b ) * 3;
 	b->element_buffer = mem_alloc( sizeof( unsigned short ) * b->element_count );

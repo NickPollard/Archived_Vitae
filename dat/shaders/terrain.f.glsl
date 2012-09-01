@@ -123,6 +123,8 @@ void main() {
 	gl_FragColor = mix( fragColor, local_fog_color, fog );
 	gl_FragColor.w = 1.0;
 
+	//gl_FragColor = cameraSpace_frag_normal;
+
 #else
 	gl_FragColor = vec4( 1.0, 1.0, 0.5, 1.0 );
 #endif
