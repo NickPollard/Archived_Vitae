@@ -12,6 +12,9 @@
 
 // *** Forward declarations
 void canyonTerrainBlock_initVBO( canyonTerrainBlock* b );
+void canyonTerrainBlock_calculateBuffers( canyonTerrainBlock* b );
+void canyonTerrainBlock_createBuffers( canyonTerrainBlock* b );
+void canyonTerrainBlock_init( canyonTerrainBlock* b );
 
 // *** Utility functions
 
@@ -59,22 +62,103 @@ void canyonTerrain_render( canyonTerrain* t ) {
 	render_resetModelView();
 	matrix_mul( modelview, modelview, t->trans->world );
 
-	canyonTerrainBlock_render( t->blocks[0] );
+	/*
+	for ( int i = 0; i < t->total_block_count; ++i ) {
+		canyonTerrainBlock_render( t->blocks[i] );
+	}
+	*/
+
+	canyonTerrainBlock_render( t->blocks[1] );
 }
 
-
-canyonTerrainBlock* canyonTerrainBlock_create() {
+canyonTerrainBlock* canyonTerrainBlock_create( canyonTerrain* t ) {
 	canyonTerrainBlock* b = mem_alloc( sizeof( canyonTerrainBlock ));
 	memset( b, 0, sizeof( canyonTerrainBlock ));
+	b->vertex_VBO = NULL;
+	b->element_VBO = NULL;
+	b->u_samples = t->u_samples_per_block;
+	b->v_samples = t->v_samples_per_block;
 	return b;
 }
 
-canyonTerrain* canyonTerrain_create() {
+int canyonTerrain_blockIndexFromUV( canyonTerrain* t, int u, int v ) {
+	return u + v * t->u_block_count;
+}
+
+void canyonTerrainBlock_calculateExtents( canyonTerrainBlock* b, canyonTerrain* t, int coord[2] ) {
+	float u_size = (2 * t->u_radius) / (float)t->u_block_count;
+	float v_size = (2 * t->v_radius) / (float)t->v_block_count;
+	b->u_min = ((float)coord[0] - 0.5f) * u_size;
+	b->v_min = ((float)coord[1] - 0.5f) * v_size;
+	b->u_max = b->u_min + u_size;
+	b->v_max = b->v_min + v_size;
+}
+
+void canyonTerrain_blockContaining( int coord[2], canyonTerrain* t, vector* point ) {
+	float block_width = (2 * t->u_radius) / (float)t->u_block_count;
+	float block_height = (2 * t->v_radius) / (float)t->v_block_count;
+	coord[0] = fround( point->coord.x / block_width, 1.f );
+	coord[1] = fround( point->coord.z / block_height, 1.f );
+}
+
+// Calculate the block bounds for the terrain, at a given sample point
+void canyonTerrain_calculateBounds( int bounds[2][2], canyonTerrain* t, vector* sample_point ) {
+	/*
+	   Find the block we are in
+	   Then extend by the correct radius
+
+	   The center block [0] is from -half_block_width to half_block_width
+	   */
+	int block[2];
+	canyonTerrain_blockContaining( block, t, sample_point );
+	int rx = ( t->u_block_count - 1 ) / 2;
+	int ry = ( t->v_block_count - 1 ) / 2;
+	bounds[0][0] = block[0] - rx;
+	bounds[0][1] = block[1] - ry;
+	bounds[1][0] = block[0] + rx;
+	bounds[1][1] = block[1] + ry;
+}
+
+void canyonTerrain_createBlocks( canyonTerrain* t ) {
+	vAssert( !t->blocks );
+
+	t->total_block_count = t->u_block_count * t->v_block_count;
+	vAssert( t->total_block_count > 0 );
+
+	t->blocks = mem_alloc( sizeof( canyonTerrainBlock* ) * t->total_block_count );
+
+	// Ensure the block bounds are initialised;
+	canyonTerrain_calculateBounds( t->bounds, t, &t->sample_point );
+
+	// Calculate block extents
+	for ( int v = 0; v < t->v_block_count; v++ ) {
+		for ( int u = 0; u < t->u_block_count; u++ ) {
+			int coord[2];
+			coord[0] = t->bounds[0][0] + u;
+			coord[1] = t->bounds[0][1] + v;
+			int i = canyonTerrain_blockIndexFromUV( t, u, v );
+
+			t->blocks[i] = canyonTerrainBlock_create( t );
+			//canyonTerrainBlock_init( t->blocks[i] );
+			canyonTerrainBlock_createBuffers( t->blocks[i] );
+			canyonTerrainBlock_calculateExtents( t->blocks[i], t, coord );
+			canyonTerrainBlock_calculateBuffers( t->blocks[i] );
+		}
+	}
+}
+
+canyonTerrain* canyonTerrain_create( int u_blocks, int v_blocks ) {
 	canyonTerrain* t = mem_alloc( sizeof( canyonTerrain ));
 	memset( t, 0, sizeof( canyonTerrain ));
-	int block_count = 1;
-	t->blocks = mem_alloc( sizeof( canyonTerrainBlock* ) * block_count );
-	t->blocks[0] = canyonTerrainBlock_create();
+	t->u_block_count = u_blocks;
+	t->v_block_count = v_blocks;
+	t->u_samples_per_block = 40;
+	t->v_samples_per_block = 40;
+	t->u_radius = 80.f;
+	t->v_radius = 80.f;
+
+	canyonTerrain_createBlocks( t );
+
 	t->trans = transform_create();
 
 	if ( terrain_texture == 0 ) {
@@ -226,17 +310,25 @@ void initialiseDefaultElementBuffer( int count, unsigned short* buffer ) {
 }
 
 void canyonTerrainBlock_init( canyonTerrainBlock* b ) {
-	b->vertex_VBO = NULL;
-	b->element_VBO = NULL;
-
-	b->u_samples = 80;
-	b->v_samples = 60;
-
 	b->u_min = -180.f;
 	b->v_min = 0.f;
 	b->u_max = 180.f;
 	b->v_max = 640.f;
+}
 
+void canyonTerrainBlock_createBuffers( canyonTerrainBlock* b ) {
+	b->element_count = canyonTerrainBlock_triangleCount( b ) * 3;
+	vAssert( b->element_count > 0 );
+	
+	// Element Buffer
+	b->element_buffer = mem_alloc( sizeof( unsigned short ) * b->element_count );
+	initialiseDefaultElementBuffer( b->element_count, b->element_buffer );
+	// Vertex Buffer
+	b->vertex_buffer = mem_alloc( sizeof( vertex ) * b->element_count );
+
+}
+
+void canyonTerrainBlock_calculateBuffers( canyonTerrainBlock* b ) {
 	int vert_count = canyonTerrainBlock_vertCount( b );
 	
 	vector* verts = mem_alloc( sizeof( vector ) * vert_count );
@@ -259,13 +351,7 @@ void canyonTerrainBlock_init( canyonTerrainBlock* b ) {
 
 	canyonTerrainBlock_calculateNormals( b, vert_count, verts, normals );
 
-	// Element List
-	b->element_count = canyonTerrainBlock_triangleCount( b ) * 3;
-	b->element_buffer = mem_alloc( sizeof( unsigned short ) * b->element_count );
-	initialiseDefaultElementBuffer( b->element_count, b->element_buffer );
-
 	// Unroll Verts
-	b->vertex_buffer = mem_alloc( sizeof( vertex ) * b->element_count );
 	canyonTerrainBlock_generateVertices( b, verts, normals );
 	
 	// Store verts
@@ -276,10 +362,6 @@ void canyonTerrainBlock_init( canyonTerrainBlock* b ) {
 	mem_free( normals );
 
 	canyonTerrainBlock_initVBO( b );
-}
-
-void canyonTerrain_init( canyonTerrain* t ) {
-	canyonTerrainBlock_init( t->blocks[0] );
 }
 
 // Create GPU vertex buffer objects to hold our data and save transferring to the GPU each frame
@@ -294,3 +376,4 @@ void canyonTerrainBlock_initVBO( canyonTerrainBlock* b ) {
 	else
 		render_bufferCopy( GL_ELEMENT_ARRAY_BUFFER, *b->element_VBO, b->element_buffer, sizeof( GLushort ) * b->element_count );
 }
+

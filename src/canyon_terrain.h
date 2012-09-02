@@ -25,12 +25,22 @@ typedef struct canyonTerrainBlock_s {
 
 typedef struct canyonTerrain_s {
 	transform* trans;
-	int block_count;
+
+	float	u_radius;
+	float	v_radius;
+	int u_block_count;
+	int v_block_count;
+	int total_block_count;
 	canyonTerrainBlock** blocks;
+	
+	int u_samples_per_block;
+	int v_samples_per_block;
+	
+	int				bounds[2][2];
+	vector			sample_point;
 } canyonTerrain;
 
 // *** Functions 
 
 canyonTerrain* canyonTerrain_create();
-void canyonTerrain_init( canyonTerrain* t );
 void canyonTerrain_render( canyonTerrain* t );

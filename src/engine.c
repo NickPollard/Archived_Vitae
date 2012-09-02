@@ -90,8 +90,7 @@ void test_engine_init( engine* e ) {
 	*/
 
 	{
-		canyonTerrain* t = canyonTerrain_create();
-		canyonTerrain_init( t );
+		canyonTerrain* t = canyonTerrain_create( 5, 5 );
 		theCanyonTerrain = t;
 	}
 
