@@ -28,9 +28,9 @@ uniform vec4 camera_space_sun_direction;
 // Test Light values
 const vec4 light_ambient = vec4( 0.4, 0.4, 0.4, 0.0 );
 // Directional Light
-const vec4 directional_light_direction = vec4( 1.0, -1.0, 1.0, 0.0 );
-const vec4 directional_light_diffuse = vec4( 0.4, 0.4, 0.2, 1.0 );
-const vec4 directional_light_specular = vec4( 0.4, 0.4, 0.2, 1.0 );
+const vec4 directional_light_direction = vec4( 1.0, -0.5, 1.0, 0.0 );
+const vec4 directional_light_diffuse = vec4( 1.0, 1.0, 0.8, 1.0 );
+const vec4 directional_light_specular = vec4( 0.5, 0.5, 0.5, 1.0 );
 const vec4 sun_color = vec4( 1.0, 0.5, 0.0, 0.0 );
 
 const vec4 material_specular = vec4( 0.5, 0.5, 0.5, 1.0 );
