@@ -57,5 +57,8 @@ void terrain_tick( void* data, float dt, engine* eng );
 
 float terrain_sample( float u, float v );
 
+void terrain_boundsIntersection( int intersection[2][2], int a[2][2], int b[2][2] );
+bool boundsContains( int bounds[2][2], int coord[2] );
+
 // *** Test
 void test_terrain();

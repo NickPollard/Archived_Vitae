@@ -91,6 +91,8 @@ void test_engine_init( engine* e ) {
 
 	{
 		canyonTerrain* t = canyonTerrain_create( 5, 5 );
+		startTick( e, (void*)t, canyonTerrain_tick );
+		engine_addRender( e, (void*)t, canyonTerrain_render );
 		theCanyonTerrain = t;
 	}
 
@@ -154,7 +156,7 @@ void engine_tick( engine* e ) {
 	time += dt;
 	time = time / 10.f;
 
-	printf( "TICK: frametime %.4fms (%.2f fps)\n", time, 1.f/time );
+	//printf( "TICK: frametime %.4fms (%.2f fps)\n", time, 1.f/time );
 
 	debugdraw_preTick( dt );
 	lua_preTick( e->lua, dt );
@@ -181,10 +183,11 @@ void engine_tick( engine* e ) {
 				/* error handler */ 0);
 	}
 
-	//vector v = Vector( 0.0, 0.0, 30.0, 1.0 );
-	//theTerrain->sample_point = matrix_vecMul( theScene->cam->trans->world, &v );
-	const vector* camera_position = matrix_getTranslation( theScene->cam->trans->world );
-	canyon_seekForWorldPosition( *camera_position );
+	vector v = Vector( 0.0, 0.0, 30.0, 1.0 );
+	theCanyonTerrain->sample_point = matrix_vecMul( theScene->cam->trans->world, &v );
+	//const vector* camera_position = matrix_getTranslation( theScene->cam->trans->world );
+	//canyon_seekForWorldPosition( *camera_position );
+	canyon_seekForWorldPosition( theCanyonTerrain->sample_point );
 	PROFILE_END( PROFILE_ENGINE_TICK );
 
 }
@@ -325,9 +328,6 @@ void engine_render( engine* e ) {
 	skybox_render( NULL );
 	engine_renderRenders( e );
 #endif // ANDROID
-
-	// TEMP
-	canyonTerrain_render( theCanyonTerrain );
 
 	// Allow the render thread to start
 	vthread_signalCondition( start_render );

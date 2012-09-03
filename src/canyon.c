@@ -108,6 +108,7 @@ void canyonBuffer_generatePoints( window_buffer* buffer ) {
 
 // Seek the canyon window_buffer forward so that its stream_position is now SEEK_POSITION
 void canyonBuffer_seekForward( window_buffer* buffer, size_t seek_position ) {
+	printf( "Seeking to " dPTRf ".\n", seek_position );
 	vAssert( seek_position >= buffer->stream_position );
 	size_t stream_end_position = windowBuffer_endPosition( buffer );
 	while ( stream_end_position < seek_position ) {
@@ -220,9 +221,11 @@ void terrain_canyonSpaceFromWorld( float x, float z, float* u, float* v ) {
 	float length_a = vector_lengthI( vector_sub( point, closest_a ));
 	float length_b = vector_lengthI( vector_sub( point, closest_b ));
 	if ( length_a < length_b ) {
+		//vector_printf( "Closest point: ", &closest_a );
 		*u = length_a;
 		*v = canyon_v( closest_i, seg_pos_a );
 	} else {
+		//vector_printf( "Closest point: ", &closest_b );
 		*u = length_a;
 		*v = canyon_v( closest_i - 1, seg_pos_b );
 	}
@@ -237,6 +240,10 @@ int terrainCanyon_segmentAtDistance( float v ) {
 void terrain_worldSpaceFromCanyon( float u, float v, float* x, float* z ) {
 	int i = terrainCanyon_segmentAtDistance( v );
 	float segment_position = ( v - (float)i * kCanyonSegmentLength ) / kCanyonSegmentLength; 
+	if ( i < 0 ) {
+		i = 0;
+		segment_position = 0.f;
+	}
 	
 	vector canyon_next = canyon_point( &canyon_streaming_buffer, i + 1 );
 	vector canyon_previous = canyon_point( &canyon_streaming_buffer, i );

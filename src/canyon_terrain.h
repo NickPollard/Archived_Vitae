@@ -13,7 +13,6 @@ typedef struct canyonTerrainBlock_s {
 
 	int element_count;
 	unsigned short* element_buffer;
-	int vert_count;
 	vertex* vertex_buffer;
 
 	GLuint*			vertex_VBO;
@@ -21,6 +20,9 @@ typedef struct canyonTerrainBlock_s {
 
 	//temp
 	vector* verts;
+
+	bool pending;	// Whether we need to recalculate the block
+
 } canyonTerrainBlock;
 
 typedef struct canyonTerrain_s {
@@ -43,4 +45,5 @@ typedef struct canyonTerrain_s {
 // *** Functions 
 
 canyonTerrain* canyonTerrain_create();
-void canyonTerrain_render( canyonTerrain* t );
+void canyonTerrain_render( void* data );
+void canyonTerrain_tick( void* data, float dt, engine* eng );
