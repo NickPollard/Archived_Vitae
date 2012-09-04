@@ -156,7 +156,7 @@ void engine_tick( engine* e ) {
 	time += dt;
 	time = time / 10.f;
 
-	//printf( "TICK: frametime %.4fms (%.2f fps)\n", time, 1.f/time );
+	printf( "TICK: frametime %.4fms (%.2f fps)\n", time, 1.f/time );
 
 	debugdraw_preTick( dt );
 	lua_preTick( e->lua, dt );
@@ -318,16 +318,13 @@ void engine_waitForRenderThread() {
 void engine_render( engine* e ) {
 	PROFILE_BEGIN( PROFILE_ENGINE_RENDER );
 #ifdef ANDROID
-	if ( window_main.context != 0 ) {
-		render( theScene );
-		skybox_render( NULL );
-		engine_renderRenders( e );
-	}
-#else
-	render( theScene );
-	skybox_render( NULL );
-	engine_renderRenders( e );
+	if ( window_main.context != 0 )
 #endif // ANDROID
+	{
+		render( theScene );
+		engine_renderRenders( e );
+		skybox_render( NULL );
+	}
 
 	// Allow the render thread to start
 	vthread_signalCondition( start_render );

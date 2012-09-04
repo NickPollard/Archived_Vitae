@@ -32,16 +32,6 @@ void main() {
 	// light-invariant calculations
 	vec4 material_diffuse = texture2D( tex, texcoord );
 
-#if 0
-	float brightness = min( sky_color_top.x +
-						sky_color_top.y +
-						sky_color_top.z, 
-						1.0 );
-
-	vec4 cloud_color = vec4( brightness, brightness, brightness, 1.0 );
-#else
-#endif
-
 	// color = top * blue
 	// then blend in cloud (white * green, blend alpha )
 	vec4 fragColor = mix( sky_color_top * material_diffuse.z, cloud_color * material_diffuse.y, material_diffuse.w );
@@ -50,14 +40,12 @@ void main() {
 	fragColor.w = 1.0;
 
 	// sunlight on fog
-#if 0
-	float fog_sun_factor = sun_fog( camera_space_sun_direction, frag_position );
-	vec4 local_fog_color = mix( fog_color, sun_color, fog_sun_factor );
+#if 1
+	vec4 local_fog_color = mix( fog_color, sun_color, sun_fog( camera_space_sun_direction, frag_position ));
 #else
 	vec4 local_fog_color = fog_color;
 #endif
 	
-	//gl_FragColor = vec4( fog, fog, fog, 1.0 );
 	gl_FragColor = mix( fragColor, local_fog_color, fog );
 #endif
 }

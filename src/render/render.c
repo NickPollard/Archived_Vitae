@@ -612,14 +612,14 @@ void render( scene* s ) {
 	float aspect = ((float)window_main.width) / ((float)window_main.height);
 	camera* cam = s->cam;
 	render_perspectiveMatrix( perspective, cam->fov, aspect, cam->z_near, cam->z_far );
-	
+
 	vector frustum[6];
 	camera_calculateFrustum( cam, frustum );
 
 	render_validateMatrix( cam->trans->world );
 	matrix_inverse( camera_inverse, cam->trans->world );
-	render_validateMatrix( modelview );
 	render_resetModelView();
+	render_validateMatrix( modelview );
 
 	render_lighting( s );
 
@@ -741,9 +741,11 @@ void render_drawBatch( drawCall* draw ) {
 	// Only draw if we have a valid texture
 	if ( draw->texture != kInvalidGLTexture ) {
 		render_setUniform_texture( *resources.uniforms.tex,			draw->texture );
-		if ( *resources.uniforms.tex_b ) {
+		/*
+		   if ( *resources.uniforms.tex_b ) {
 			render_setUniform_texture( *resources.uniforms.tex_b,		draw->texture_b );
 		}
+		*/
 		render_setUniform_matrix( *resources.uniforms.modelview,	draw->modelview );
 		render_drawCall_draw( draw );
 	}
