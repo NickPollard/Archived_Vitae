@@ -16,6 +16,7 @@
 #include "skybox.h"
 #include "terrain.h"
 #include "transform.h"
+#include "worker.h"
 #include "camera/flycam.h"
 #include "debug/debug.h"
 #include "debug/debugtext.h"
@@ -271,6 +272,9 @@ void engine_init(engine* e, int argc, char** argv) {
 	// *** Canyon
 	canyon_staticInit();
 	canyon_generatePoints();
+
+	vthread worker_thread = vthread_create( worker_threadFunc, NULL );
+	(void)worker_thread;
 
 	// TEST
 	test_engine_init( e );

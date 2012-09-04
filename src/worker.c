@@ -42,6 +42,7 @@ void* worker_threadFunc( void* args ) {
 	(void)args;
 	while ( true ) {
 		while ( worker_task_count > 0 ) {
+			//printf( "Worker performing task.\n" );
 			// Grab the first task
 			worker_task task = worker_nextTask();
 			task.func( task.args );

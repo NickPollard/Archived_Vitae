@@ -4,6 +4,7 @@
 //-----------------------
 #include "canyon.h"
 #include "terrain.h"
+#include "worker.h"
 #include "maths/geometry.h"
 #include "maths/vector.h"
 #include "mem/allocator.h"
@@ -11,6 +12,7 @@
 #include "render/texture.h"
 
 #define CANYON_TERRAIN_INDEXED 1
+#define TERRAIN_USE_WORKER_THREAD 1
 	
 const float texture_scale = 0.0325f;
 
@@ -497,6 +499,24 @@ void canyonTerrainBlock_initVBO( canyonTerrainBlock* b ) {
 		render_bufferCopy( GL_ELEMENT_ARRAY_BUFFER, *b->element_VBO, b->element_buffer, sizeof( GLushort ) * b->element_count );
 }
 
+void* canyonTerrain_workerGenerateBlock( void* args ) {
+	canyonTerrainBlock* b = args;
+	if ( b->pending ) {
+		canyonTerrainBlock_calculateBuffers( b );
+		//canyonTerrainBlock_calculateCollision( t, b );
+		b->pending = false;
+	}
+	return NULL;
+}
+
+// Set up a task for the worker thread to generate the terrain block
+void canyonTerrain_queueWorkerTaskGenerateBlock( canyonTerrainBlock* b ) {
+	worker_task terrain_block_task;
+	terrain_block_task.func = canyonTerrain_workerGenerateBlock;
+	terrain_block_task.args = b;
+	worker_addTask( terrain_block_task );
+}
+
 void canyonTerrain_updateBlocks( canyonTerrain* t ) {
 	/*
 	   We have a set of current blocks, B
@@ -516,7 +536,7 @@ void canyonTerrain_updateBlocks( canyonTerrain* t ) {
 	terrain_boundsIntersection( intersection, bounds, t->bounds );
 
 	// Using alloca for dynamic stack allocation (just moves the stack pointer up)
-	canyonTerrainBlock** newBlocks = alloca( sizeof( terrainBlock* ) * t->total_block_count );
+	canyonTerrainBlock** new_blocks = alloca( sizeof( terrainBlock* ) * t->total_block_count );
 
 	int empty_index = 0;
 	// For Each old block
@@ -532,7 +552,7 @@ void canyonTerrain_updateBlocks( canyonTerrain* t ) {
 			int new_index = new_u + ( new_v * t->u_block_count );
 			vAssert( new_index >= 0 );
 			vAssert( new_index < t->total_block_count );
-			newBlocks[new_index] = t->blocks[i];
+			new_blocks[new_index] = t->blocks[i];
 		}
 		else {
 			// Copy unused blocks
@@ -545,7 +565,7 @@ void canyonTerrain_updateBlocks( canyonTerrain* t ) {
 					break;
 				empty_index++;
 			}
-			newBlocks[empty_index] = t->blocks[i];
+			new_blocks[empty_index] = t->blocks[i];
 			empty_index++;
 		}
 	}
@@ -557,15 +577,20 @@ void canyonTerrain_updateBlocks( canyonTerrain* t ) {
 		coord[1] = bounds[0][1] + ( i / t->u_block_count );
 		// if not in old bounds
 		if ( !boundsContains( intersection, coord )) {
-			canyonTerrainBlock_calculateExtents( newBlocks[i], t, coord );
+			canyonTerrainBlock_calculateExtents( new_blocks[i], t, coord );
 			// mark it as new, buffers will be filled in later
-			newBlocks[i]->pending = true;
+			new_blocks[i]->pending = true;
+#if TERRAIN_USE_WORKER_THREAD
+			canyonTerrain_queueWorkerTaskGenerateBlock( new_blocks[i] );
+#endif // TERRAIN_USE_WORKER_THREAD
 		}
 	}
 
 	memcpy( t->bounds, bounds, sizeof( int ) * 2 * 2 );
-	memcpy( t->blocks, newBlocks, sizeof( canyonTerrainBlock* ) * t->total_block_count );
+	memcpy( t->blocks, new_blocks, sizeof( canyonTerrainBlock* ) * t->total_block_count );
 
+#if TERRAIN_USE_WORKER_THREAD
+#else
 	for ( int i = 0; i < t->total_block_count; ++i ) {
 		canyonTerrainBlock* b = t->blocks[i];
 		if ( b->pending ) {
@@ -575,6 +600,7 @@ void canyonTerrain_updateBlocks( canyonTerrain* t ) {
 			break;
 		}
 	}
+#endif // TERRAIN_USE_WORKER_THREAD
 }
 
 void canyonTerrain_tick( void* data, float dt, engine* eng ) {
