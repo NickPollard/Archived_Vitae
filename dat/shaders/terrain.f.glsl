@@ -103,6 +103,11 @@ void main() {
 	vec4 flat_color = texture2D( tex, texcoord ) * vec4( 0.8, 0.9, 1.0, 1.0 );
 	vec4 cliff_color = cliff_tex_color * vec4( 0.2, 0.3, 0.6, 1.0 );
 	vec4 edge_color = vec4( 0.4, 0.55, 0.8, 1.0 ) * cliff_tex_color;
+	/*
+	vec4 flat_color = texture2D( tex, texcoord ) * vec4( 0.7, 0.3, 0.2, 1.0 );
+	vec4 cliff_color = cliff_tex_color * vec4( 0.3, 0.1, 0.1, 1.0 );
+	vec4 edge_color = vec4( 0.6, 0.2, 0.2, 1.0 ) * cliff_tex_color;
+*/	
 
 	vec4 up = modelview * vec4( 0.0, 1.0, 0.0, 0.0 );
 	float edge_snow = 0.03;
