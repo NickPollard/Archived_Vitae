@@ -108,7 +108,6 @@ void canyonBuffer_generatePoints( window_buffer* buffer ) {
 
 // Seek the canyon window_buffer forward so that its stream_position is now SEEK_POSITION
 void canyonBuffer_seekForward( window_buffer* buffer, size_t seek_position ) {
-	printf( "Seeking to " dPTRf ".\n", seek_position );
 	vAssert( seek_position >= buffer->stream_position );
 	size_t stream_end_position = windowBuffer_endPosition( buffer );
 	while ( stream_end_position < seek_position ) {
@@ -236,6 +235,15 @@ int terrainCanyon_segmentAtDistance( float v ) {
 	return (float)floorf(v / kCanyonSegmentLength);
 }
 
+vector segment_normal( window_buffer* b, int i ) {
+	vector next = canyon_point( b, i + 1 );
+	vector previous = canyon_point( b, i );
+	vector segment = normalized( vector_sub( next, previous ));
+	vector normal = Vector( -segment.coord.z, 0.f, segment.coord.x, 0.f );
+	vAssert( isNormalized( &normal ));
+	return normal;
+}
+
 // Convert canyon-space U and V coords into world space X and Z
 void terrain_worldSpaceFromCanyon( float u, float v, float* x, float* z ) {
 	int i = terrainCanyon_segmentAtDistance( v );
@@ -245,6 +253,7 @@ void terrain_worldSpaceFromCanyon( float u, float v, float* x, float* z ) {
 		segment_position = 0.f;
 	}
 	
+	// For this segment
 	vector canyon_next = canyon_point( &canyon_streaming_buffer, i + 1 );
 	vector canyon_previous = canyon_point( &canyon_streaming_buffer, i );
 
@@ -252,12 +261,42 @@ void terrain_worldSpaceFromCanyon( float u, float v, float* x, float* z ) {
 	vAssert( segment_position <= 1.f );
 
 	vector canyon_position = vector_lerp( &canyon_previous, &canyon_next, segment_position );
+
+	vector normal = segment_normal( &canyon_streaming_buffer, i );
+
+	/*
 	vector segment = normalized( vector_sub( canyon_next, canyon_previous ));
 	vector normal = Vector( -segment.coord.z, 0.f, segment.coord.x, 0.f );
 	vAssert( isNormalized( &normal ));
-	vector u_offset = vector_scaled( normal, u );
-	(void)u_offset;
-	vector position = vector_add( canyon_position, u_offset );
+	*/
+
+	/*
+	   We use a warped grid system, where near the canyon the U-axis lines run perpendicular to the canyon
+	   but further away (more than max_perpendicular_u) they run parallel to the X axis.
+	   This is to prevent overlapping artifacts in the terrain generation.
+	   We actually lerp the perpendicular U-axis lines to blend from the previous and next segements
+	   to prevent overlapping.
+	   */
+	vector normal_next = segment_normal( &canyon_streaming_buffer, i + 1);
+	vector normal_previous = segment_normal( &canyon_streaming_buffer, i - 1);
+
+	// Begin and end vectors for tweening the normal
+	vector normal_begin = normalized( vector_add( normal_previous, normal ));
+	vector normal_end = normalized( vector_add( normal_next, normal ));
+	//vector sampled_normal = vector_lerp( &normal_begin, &normal_end, segment_position );
+
+	const float max_perpendicular_u = 100.f;
+	vector target_begin = vector_add( canyon_previous, vector_scaled( normal_begin, max_perpendicular_u ));
+	vector target_end = vector_add( canyon_next, vector_scaled( normal_end, max_perpendicular_u ));
+	vector target = vector_lerp( &target_begin, &target_end, segment_position );
+	vector sampled_normal = normalized( vector_sub( target, canyon_position ));
+
+	float perpendicular_u = fclamp( u, -max_perpendicular_u, max_perpendicular_u );
+	float flat_u = u - perpendicular_u;
+
+	vector u_offset = vector_scaled( sampled_normal, perpendicular_u );
+	vector flat_u_offset = vector_scaled( x_axis, -flat_u );
+	vector position = vector_add( canyon_position, vector_add( u_offset, flat_u_offset ));
 	*x = position.coord.x;
 	*z = position.coord.z;
 }

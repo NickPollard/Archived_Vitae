@@ -4,7 +4,7 @@
 // The maximum canyon points loaded in the buffer at one time
 #define kMaxCanyonPoints 96
 // How long (in world space units) each canyon segment is
-#define kCanyonSegmentLength 20.f
+#define kCanyonSegmentLength 40.f
 // How many segments behind the current position to keep in the buffer
 #define kTrailingCanyonSegments 10
 

@@ -19,11 +19,12 @@ void canyonTerrainBlock_init( canyonTerrainBlock* b );
 // *** Utility functions
 
 int canyonTerrainBlock_indexFromUV( canyonTerrainBlock* b, int u, int v ) {
-	return u + v * b->u_samples ;
+	// Adjusted as we have a 1-vert margin for normal calculation at edges
+	return ( u + 1 ) + ( v + 1 ) * ( b->u_samples + 2 );
 }
 
 int canyonTerrainBlock_vertCount( canyonTerrainBlock* b ) {
-	return b->u_samples * b->v_samples;
+	return ( b->u_samples + 2 ) * ( b->v_samples + 2);
 }
 
 void canyonTerrainBlock_positionsFromUV( canyonTerrainBlock* b, int u_index, int v_index, float* u, float* v ) {
@@ -49,11 +50,16 @@ void canyonTerrainBlock_render( canyonTerrainBlock* b ) {
 		draw->element_VBO = *b->element_VBO;
 	}
 
-	/* 
-	int vert_count = canyonTerrainBlock_vertCount( b );
-	const float radius = 2.f;
-	for ( int i = 0; i < vert_count; ++i ) {
-		debugdraw_sphere( b->verts[i], radius, color_green );
+	/*
+	for ( int v = 0; v < b->v_samples; v += 2 ) {
+		for ( int u = 0; u < b->u_samples; u += 1 ) {
+			int i;
+			i = canyonTerrainBlock_indexFromUV( b, u, v );
+			vector from = b->verts[i];
+			i = canyonTerrainBlock_indexFromUV( b, u + 1, v );
+			vector to = b->verts[i];
+			debugdraw_line3d( from, to, color_green );
+		}
 	}
 	*/
 }
@@ -66,8 +72,6 @@ void canyonTerrain_render( void* data ) {
 	for ( int i = 0; i < t->total_block_count; ++i ) {
 		canyonTerrainBlock_render( t->blocks[i] );
 	}
-
-	//canyonTerrainBlock_render( t->blocks[1] );
 }
 
 canyonTerrainBlock* canyonTerrainBlock_create( canyonTerrain* t ) {
@@ -98,7 +102,6 @@ void canyonTerrain_blockContaining( int coord[2], canyonTerrain* t, vector* poin
 	terrain_canyonSpaceFromWorld( point->coord.x, point->coord.z, &u, &v );
 	float block_width = (2 * t->u_radius) / (float)t->u_block_count;
 	float block_height = (2 * t->v_radius) / (float)t->v_block_count;
-	printf( "u: %.2f\n", u );
 	coord[0] = fround( u / block_width, 1.f );
 	coord[1] = fround( v / block_height, 1.f );
 }
@@ -113,7 +116,6 @@ void canyonTerrain_calculateBounds( int bounds[2][2], canyonTerrain* t, vector* 
 	   */
 	int block[2];
 	canyonTerrain_blockContaining( block, t, sample_point );
-	printf( "Sample point in block: %d, %d.\n", block[0], block[1] );
 	int rx = ( t->u_block_count - 1 ) / 2;
 	int ry = ( t->v_block_count - 1 ) / 2;
 	bounds[0][0] = block[0] - rx;
@@ -155,8 +157,8 @@ canyonTerrain* canyonTerrain_create( int u_blocks, int v_blocks ) {
 	memset( t, 0, sizeof( canyonTerrain ));
 	t->u_block_count = u_blocks;
 	t->v_block_count = v_blocks;
-	t->u_samples_per_block = 20;
-	t->v_samples_per_block = 20;
+	t->u_samples_per_block = 40;
+	t->v_samples_per_block = 40;
 	t->u_radius = 320.f;
 	t->v_radius = 640.f;
 
@@ -258,52 +260,73 @@ void canyonTerrainBlock_generateVertices( canyonTerrainBlock* b, vector* verts, 
 	}
 }
 
+// Generate Normals
 void canyonTerrainBlock_calculateNormals( canyonTerrainBlock* b, int vert_count, vector* verts, vector* normals ) {
-	// *** Generate Normals
+	
+	/*
 	// Do top and bottom edges first
 	for ( int i = 0; i < b->u_samples; i++ )
 		normals[i] = y_axis;
 	for ( int i = vert_count - b->u_samples; i < vert_count; i++ )
 		normals[i] = y_axis;
+	*/
 
 	//Now the rest
-	for ( int i = b->u_samples; i < ( vert_count - b->u_samples ); i++ ) {
+	//for ( int i = b->u_samples; i < ( vert_count - b->u_samples ); i++ ) {
+
+		/*
 		// Ignoring Left and Right Edges
 		if ( i % b->u_samples == 0 || i % b->u_samples == ( b->u_samples - 1 ) ) {    
 			normals[i] = y_axis;
 			continue;
 		}
-		vector left		= verts[i - b->u_samples];
-		vector right	= verts[i + b->u_samples];
-		vector top		= verts[i - 1];
-		vector bottom	= verts[i + 1];
+		*/
 
-		vector a, b, c, x, y;
-		//x = Vector( -1.f, 0.f, 0.f, 0.f ); // Negative to ensure cross products come out correctly
-		//y = Vector( 0.f, 0.f, 1.f, 0.f );
+	(void)vert_count;
 
-		// Calculate vertical vector
-		// Take cross product to calculate normals
-		Sub( &a, &bottom, &top );
-		Cross( &x, &a, &y_axis );
-		Cross( &b, &x, &a );
+	for ( int v = 0; v < b->v_samples; ++v ) {
+		for ( int u = 0; u < b->u_samples; ++u ) {
+			int index = canyonTerrainBlock_indexFromUV( b, u, v - 1 );
+			vector left		= verts[index];
+			index = canyonTerrainBlock_indexFromUV( b, u, v + 1 );
+			vector right	= verts[index];
+			index = canyonTerrainBlock_indexFromUV( b, u - 1, v );
+			vector top		= verts[index];
+			index = canyonTerrainBlock_indexFromUV( b, u + 1, v );
+			vector bottom	= verts[index];
+			int i = canyonTerrainBlock_indexFromUV( b, u, v );
+			/*
+			vector left		= verts[i - b->u_samples];
+			vector right	= verts[i + b->u_samples];
+			vector top		= verts[i - 1];
+			vector bottom	= verts[i + 1];
+*/
 
-		// Calculate horizontal vector
-		// Take cross product to calculate normals
-		Sub( &a, &right, &left );
-		Cross( &y, &a, &y_axis );
-		Cross( &c, &y, &a );
+			vector a, b, c, x, y;
 
-		Normalize( &b, &b );
-		Normalize( &c, &c );
+			// Calculate vertical vector
+			// Take cross product to calculate normals
+			Sub( &a, &bottom, &top );
+			Cross( &x, &a, &y_axis );
+			Cross( &b, &x, &a );
 
-		// Average normals
-		vector total = Vector( 0.f, 0.f, 0.f, 0.f );
-		Add( &total, &total, &b );
-		Add( &total, &total, &c );
-		total.coord.w = 0.f;
-		Normalize( &total, &total );
-		normals[i] = total;
+			// Calculate horizontal vector
+			// Take cross product to calculate normals
+			Sub( &a, &right, &left );
+			Cross( &y, &a, &y_axis );
+			Cross( &c, &y, &a );
+
+			Normalize( &b, &b );
+			Normalize( &c, &c );
+
+			// Average normals
+			vector total = Vector( 0.f, 0.f, 0.f, 0.f );
+			Add( &total, &total, &b );
+			Add( &total, &total, &c );
+			total.coord.w = 0.f;
+			Normalize( &total, &total );
+			normals[i] = total;
+		}
 	}
 }
 
@@ -337,10 +360,11 @@ void canyonTerrainBlock_calculateBuffers( canyonTerrainBlock* b ) {
 	vector* verts = mem_alloc( sizeof( vector ) * vert_count );
 	vector* normals = mem_alloc( sizeof( vector ) * vert_count );
 
-	for ( int v_index = 0; v_index < b->v_samples; ++v_index ) {
-		for ( int u_index = 0; u_index < b->u_samples; ++u_index ) {
+	for ( int v_index = -1; v_index < b->v_samples + 1; ++v_index ) {
+		for ( int u_index = -1; u_index < b->u_samples + 1; ++u_index ) {
 			// Generate a vertex
 			int i = canyonTerrainBlock_indexFromUV( b, u_index, v_index );
+			vAssert( i < vert_count );
 			float u, v;
 			canyonTerrainBlock_positionsFromUV( b, u_index, v_index, &u, &v );
 			float vert_x, vert_z;

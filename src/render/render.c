@@ -352,7 +352,7 @@ void render_buildShaders() {
 	VERTEX_ATTRIBS( VERTEX_ATTRIB_LOOKUP );
 }
 
-#define kMaxDrawCalls 1024
+#define kMaxDrawCalls 2048
 #define kCallBufferCount 8		// Needs to be at least as many as we have shaders
 // Each shader has it's own buffer for drawcalls
 // This means drawcalls get batched by shader
