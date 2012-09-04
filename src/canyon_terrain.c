@@ -10,6 +10,10 @@
 #include "render/debugdraw.h"
 #include "render/texture.h"
 
+#define CANYON_TERRAIN_INDEXED 1
+	
+const float texture_scale = 0.0325f;
+
 // *** Forward declarations
 void canyonTerrainBlock_initVBO( canyonTerrainBlock* b );
 void canyonTerrainBlock_calculateBuffers( canyonTerrainBlock* b );
@@ -18,11 +22,21 @@ void canyonTerrainBlock_init( canyonTerrainBlock* b );
 
 // *** Utility functions
 
+int canyonTerrainBlock_renderIndexFromUV( canyonTerrainBlock* b, int u, int v ) {
+	// Not adjusted as this is for renderable verts only
+	return u  +  v  * b->u_samples;
+}
 int canyonTerrainBlock_indexFromUV( canyonTerrainBlock* b, int u, int v ) {
 	// Adjusted as we have a 1-vert margin for normal calculation at edges
 	return ( u + 1 ) + ( v + 1 ) * ( b->u_samples + 2 );
 }
 
+// As this is just renderable verts, we dont have the extra buffer space for normal generation
+int canyonTerrainBlock_renderVertCount( canyonTerrainBlock* b ) {
+	return ( b->u_samples ) * ( b->v_samples );
+}
+
+// total verts, including those not rendered but that are generated for correct normal generation at block boundaries
 int canyonTerrainBlock_vertCount( canyonTerrainBlock* b ) {
 	return ( b->u_samples + 2 ) * ( b->v_samples + 2);
 }
@@ -64,14 +78,40 @@ void canyonTerrainBlock_render( canyonTerrainBlock* b ) {
 	*/
 }
 
+int canyonTerrain_blockIndexFromUV( canyonTerrain* t, int u, int v ) {
+	return u + v * t->u_block_count;
+}
+
 void canyonTerrain_render( void* data ) {
 	canyonTerrain* t = data;
 	render_resetModelView();
 	matrix_mul( modelview, modelview, t->trans->world );
 
+#if 0
+	// Draw center line first
+	int centre_u = ( t->u_block_count + 1 ) / 2;
+	for ( int v = 0; v < t->v_block_count; ++v ) {
+		int i = canyonTerrain_blockIndexFromUV( t, centre_u, v );
+		canyonTerrainBlock_render( t->blocks[i] );
+	}
+	// Then the two sides
+	for ( int v = 0; v < t->v_block_count; ++v ) {
+		for ( int u = centre_u - 1; u >= 0; --u ) {
+			int i = canyonTerrain_blockIndexFromUV( t, u, v );
+			canyonTerrainBlock_render( t->blocks[i] );
+		}
+	}
+	for ( int v = 0; v < t->v_block_count; ++v ) {
+		for ( int u = centre_u + 1; u < t->u_block_count; ++u ) {
+			int i = canyonTerrain_blockIndexFromUV( t, u, v );
+			canyonTerrainBlock_render( t->blocks[i] );
+		}
+	}
+#else
 	for ( int i = 0; i < t->total_block_count; ++i ) {
 		canyonTerrainBlock_render( t->blocks[i] );
 	}
+#endif
 }
 
 canyonTerrainBlock* canyonTerrainBlock_create( canyonTerrain* t ) {
@@ -84,10 +124,6 @@ canyonTerrainBlock* canyonTerrainBlock_create( canyonTerrain* t ) {
 	return b;
 }
 
-int canyonTerrain_blockIndexFromUV( canyonTerrain* t, int u, int v ) {
-	return u + v * t->u_block_count;
-}
-
 void canyonTerrainBlock_calculateExtents( canyonTerrainBlock* b, canyonTerrain* t, int coord[2] ) {
 	float u_size = (2 * t->u_radius) / (float)t->u_block_count;
 	float v_size = (2 * t->v_radius) / (float)t->v_block_count;
@@ -95,6 +131,17 @@ void canyonTerrainBlock_calculateExtents( canyonTerrainBlock* b, canyonTerrain* 
 	b->v_min = ((float)coord[1] - 0.5f) * v_size;
 	b->u_max = b->u_min + u_size;
 	b->v_max = b->v_min + v_size;
+
+	// Set samples based on U offset
+	if ( coord[0] == 0 ) {
+		b->u_samples = t->u_samples_per_block;
+		b->v_samples = t->v_samples_per_block;
+	}
+	else {
+		b->u_samples = t->u_samples_per_block / 2;
+		b->v_samples = t->v_samples_per_block / 2;
+	}
+
 }
 
 void canyonTerrain_blockContaining( int coord[2], canyonTerrain* t, vector* point ) {
@@ -145,8 +192,8 @@ void canyonTerrain_createBlocks( canyonTerrain* t ) {
 
 			t->blocks[i] = canyonTerrainBlock_create( t );
 			//canyonTerrainBlock_init( t->blocks[i] );
-			canyonTerrainBlock_createBuffers( t->blocks[i] );
 			canyonTerrainBlock_calculateExtents( t->blocks[i], t, coord );
+			canyonTerrainBlock_createBuffers( t->blocks[i] );
 			canyonTerrainBlock_calculateBuffers( t->blocks[i] );
 		}
 	}
@@ -247,7 +294,6 @@ void canyonTerrainBlock_fillTrianglesForVertex( canyonTerrainBlock* b, vector* p
 }
 
 void canyonTerrainBlock_generateVertices( canyonTerrainBlock* b, vector* verts, vector* normals ) {
-	const float texture_scale = 0.0325f;
 	for ( int v = 0; v < b->v_samples; v ++ ) {
 		for ( int u = 0; u < b->u_samples; u ++  ) {
 			int i = canyonTerrainBlock_indexFromUV( b, u, v );
@@ -260,23 +306,29 @@ void canyonTerrainBlock_generateVertices( canyonTerrainBlock* b, vector* verts, 
 	}
 }
 
+int vertexBufferIndexFromUV( canyonTerrainBlock* b, int u, int v ) {
+	vAssert( u >= 0 && u < b->u_samples );
+	vAssert( v >= 0 && v < b->v_samples );
+	return ( u + v * b->u_samples );
+}
+
 // Generate Normals
-void canyonTerrainBlock_calculateNormals( canyonTerrainBlock* b, int vert_count, vector* verts, vector* normals ) {
+void canyonTerrainBlock_calculateNormals( canyonTerrainBlock* block, int vert_count, vector* verts, vector* normals ) {
 	
 	/*
 	// Do top and bottom edges first
-	for ( int i = 0; i < b->u_samples; i++ )
+	for ( int i = 0; i < block->u_samples; i++ )
 		normals[i] = y_axis;
-	for ( int i = vert_count - b->u_samples; i < vert_count; i++ )
+	for ( int i = vert_count - block->u_samples; i < vert_count; i++ )
 		normals[i] = y_axis;
 	*/
 
 	//Now the rest
-	//for ( int i = b->u_samples; i < ( vert_count - b->u_samples ); i++ ) {
+	//for ( int i = block->u_samples; i < ( vert_count - block->u_samples ); i++ ) {
 
 		/*
 		// Ignoring Left and Right Edges
-		if ( i % b->u_samples == 0 || i % b->u_samples == ( b->u_samples - 1 ) ) {    
+		if ( i % block->u_samples == 0 || i % block->u_samples == ( block->u_samples - 1 ) ) {    
 			normals[i] = y_axis;
 			continue;
 		}
@@ -284,20 +336,20 @@ void canyonTerrainBlock_calculateNormals( canyonTerrainBlock* b, int vert_count,
 
 	(void)vert_count;
 
-	for ( int v = 0; v < b->v_samples; ++v ) {
-		for ( int u = 0; u < b->u_samples; ++u ) {
-			int index = canyonTerrainBlock_indexFromUV( b, u, v - 1 );
+	for ( int v = 0; v < block->v_samples; ++v ) {
+		for ( int u = 0; u < block->u_samples; ++u ) {
+			int index = canyonTerrainBlock_indexFromUV( block, u, v - 1 );
 			vector left		= verts[index];
-			index = canyonTerrainBlock_indexFromUV( b, u, v + 1 );
+			index = canyonTerrainBlock_indexFromUV( block, u, v + 1 );
 			vector right	= verts[index];
-			index = canyonTerrainBlock_indexFromUV( b, u - 1, v );
+			index = canyonTerrainBlock_indexFromUV( block, u - 1, v );
 			vector top		= verts[index];
-			index = canyonTerrainBlock_indexFromUV( b, u + 1, v );
+			index = canyonTerrainBlock_indexFromUV( block, u + 1, v );
 			vector bottom	= verts[index];
-			int i = canyonTerrainBlock_indexFromUV( b, u, v );
+			int i = canyonTerrainBlock_indexFromUV( block, u, v );
 			/*
-			vector left		= verts[i - b->u_samples];
-			vector right	= verts[i + b->u_samples];
+			vector left		= verts[i - block->u_samples];
+			vector right	= verts[i + block->u_samples];
 			vector top		= verts[i - 1];
 			vector bottom	= verts[i + 1];
 */
@@ -326,6 +378,12 @@ void canyonTerrainBlock_calculateNormals( canyonTerrainBlock* b, int vert_count,
 			total.coord.w = 0.f;
 			Normalize( &total, &total );
 			normals[i] = total;
+
+#if CANYON_TERRAIN_INDEXED
+			int buffer_index = vertexBufferIndexFromUV( block, u, v );
+			block->vertex_buffer[buffer_index].normal = normals[i];
+			block->vertex_buffer[buffer_index].color = Vector( 0.8f, 0.9f, 1.0f, 0.f );
+#endif // CANYON_TERRAIN_INDEXED
 		}
 	}
 }
@@ -346,13 +404,20 @@ void canyonTerrainBlock_createBuffers( canyonTerrainBlock* b ) {
 	b->element_count = canyonTerrainBlock_triangleCount( b ) * 3;
 	vAssert( b->element_count > 0 );
 	
-	// Element Buffer
 	b->element_buffer = mem_alloc( sizeof( unsigned short ) * b->element_count );
+
+#if CANYON_TERRAIN_INDEXED
+	int vert_count = canyonTerrainBlock_renderVertCount( b );
+	b->vertex_buffer = mem_alloc( sizeof( vertex ) * vert_count );
+#else
+	// Element Buffer
 	initialiseDefaultElementBuffer( b->element_count, b->element_buffer );
 	// Vertex Buffer
 	b->vertex_buffer = mem_alloc( sizeof( vertex ) * b->element_count );
+#endif // CANYON_TERRAIN_INDEXED
 
 }
+
 
 void canyonTerrainBlock_calculateBuffers( canyonTerrainBlock* b ) {
 	int vert_count = canyonTerrainBlock_vertCount( b );
@@ -373,13 +438,41 @@ void canyonTerrainBlock_calculateBuffers( canyonTerrainBlock* b ) {
 
 			verts[i] = Vector( vert_x, vert_y, vert_z, 1.f );
 			normals[i] = y_axis;
+
+#if CANYON_TERRAIN_INDEXED
+			if ( v_index >= 0 && v_index < b->v_samples &&
+					u_index >= 0 && u_index < b->u_samples ) {
+				int buffer_index = vertexBufferIndexFromUV( b, u_index, v_index );
+				b->vertex_buffer[buffer_index].position = verts[i];
+				b->vertex_buffer[buffer_index].uv = Vector( verts[i].coord.x * texture_scale, verts[i].coord.z * texture_scale, 0.f, 0.f );
+			}
+#endif // CANYON_TERRAIN_INDEXED
 		}
 	}
 
 	canyonTerrainBlock_calculateNormals( b, vert_count, verts, normals );
 
+	
+#if CANYON_TERRAIN_INDEXED
+	int triangle_count = canyonTerrainBlock_triangleCount( b );
+	int i = 0;
+	for ( int v = 0; v + 1 < b->v_samples; ++v ) {
+		for ( int u = 0; u + 1 < b->u_samples; ++u ) {
+			b->element_buffer[ i * 3 + 0 ] = canyonTerrainBlock_renderIndexFromUV( b, u, v );
+			b->element_buffer[ i * 3 + 1 ] = canyonTerrainBlock_renderIndexFromUV( b, u + 1, v );
+			b->element_buffer[ i * 3 + 2 ] = canyonTerrainBlock_renderIndexFromUV( b, u, v + 1 );
+			i++;
+			b->element_buffer[ i * 3 + 0 ] = canyonTerrainBlock_renderIndexFromUV( b, u + 1, v );
+			b->element_buffer[ i * 3 + 1 ] = canyonTerrainBlock_renderIndexFromUV( b, u + 1, v + 1 );
+			b->element_buffer[ i * 3 + 2 ] = canyonTerrainBlock_renderIndexFromUV( b, u, v + 1 );
+			i++;
+		}
+	}
+	vAssert( i == triangle_count );
+#else
 	// Unroll Verts
 	canyonTerrainBlock_generateVertices( b, verts, normals );
+#endif // CANYON_TERRAIN_INDEXED
 	
 	// Store verts
 	b->verts = mem_alloc( sizeof( vector ) * vert_count );

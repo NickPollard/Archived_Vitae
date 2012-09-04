@@ -44,6 +44,8 @@ bool	render_initialised = false;
 
 matrix modelview, camera_inverse;
 matrix perspective;
+vector viewspace_up;
+vector directional_light_direction;
 
 gl_resources resources;
 
@@ -621,6 +623,11 @@ void render( scene* s ) {
 	render_resetModelView();
 	render_validateMatrix( modelview );
 
+	viewspace_up = matrix_vecMul( modelview, &y_axis );
+	vector light_direction = Vector( 1.f, -0.5f, 1.f, 0.f );
+	// TODO this probably needs going per shader/draw batch
+	directional_light_direction = normalized( matrix_vecMul( modelview, &light_direction ));
+	
 	render_lighting( s );
 
 	render_scene( s );
@@ -741,11 +748,9 @@ void render_drawBatch( drawCall* draw ) {
 	// Only draw if we have a valid texture
 	if ( draw->texture != kInvalidGLTexture ) {
 		render_setUniform_texture( *resources.uniforms.tex,			draw->texture );
-		/*
-		   if ( *resources.uniforms.tex_b ) {
+		if ( *resources.uniforms.tex_b ) {
 			render_setUniform_texture( *resources.uniforms.tex_b,		draw->texture_b );
 		}
-		*/
 		render_setUniform_matrix( *resources.uniforms.modelview,	draw->modelview );
 		render_drawCall_draw( draw );
 	}
@@ -758,6 +763,8 @@ void render_drawCallBatch( int count, drawCall* calls ) {
 	// Set up uniform matrices
 	render_setUniform_matrix( *resources.uniforms.projection,	perspective );
 	render_setUniform_matrix( *resources.uniforms.worldspace,	modelview );
+	render_setUniform_vector( *resources.uniforms.viewspace_up, &viewspace_up );
+	render_setUniform_vector( *resources.uniforms.directional_light_direction, &directional_light_direction );
 
 	render_sceneParams( &sceneParams_main );
 
