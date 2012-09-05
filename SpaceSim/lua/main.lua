@@ -409,7 +409,7 @@ function steering_input_drag()
 	dragged, drag_x, drag_y = vtouchPadDragged( player_ship.joypad )
 	if dragged then
 		yaw, pitch = player_ship.joypad_mapper( drag_x, drag_y )
-		vprint( "inputs mapped " .. yaw .. " " .. pitch )
+		--vprint( "inputs mapped " .. yaw .. " " .. pitch )
 	end
 	return yaw, pitch
 end
@@ -527,7 +527,7 @@ function tick( dt )
 
 	timers_tick( dt )
 
-	--update_spawns( player_ship )
+	update_spawns( player_ship )
 
 --[[
 	if wave_complete( current_wave ) then
@@ -683,8 +683,8 @@ end
 
 -- spawn properties
 spawn_offset = 0.0
-spawn_interval = 0.3
-spawn_distance = -300.0
+spawn_interval = 100.0
+spawn_distance = 1000.0
 -- spawn tracking
 last_spawn = 0.0
 
@@ -695,7 +695,7 @@ function contains( value, range_a, range_b )
 	return ( value < range_max ) and ( value >= range_min )
 end
 
-canyon_v_scale = 250.0
+canyon_v_scale = 1.0
 
 -- Spawn all entities in the given range
 function entities_spawnAll( near, far )
