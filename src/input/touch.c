@@ -222,6 +222,11 @@ touchPad* touchPad_create( int x, int y, int w, int h ) {
 	p->x = x; p->y = y;
 	p->width = w; p->height = h;
 	p->active = true;
+
+	for ( int i = 0; i < kMaxMultiTouch; ++i ) {
+		p->touches[i].uid = kInvalidTouchUid;
+	}
+
 	return p;
 }
 
