@@ -91,7 +91,7 @@ void test_engine_init( engine* e ) {
 	*/
 
 	{
-		canyonTerrain* t = canyonTerrain_create( 5, 5 );
+		canyonTerrain* t = canyonTerrain_create( 9, 9, 40, 40, 480.f, 960.f );
 		startTick( e, (void*)t, canyonTerrain_tick );
 		engine_addRender( e, (void*)t, canyonTerrain_render );
 		theCanyonTerrain = t;
@@ -157,7 +157,7 @@ void engine_tick( engine* e ) {
 	time += dt;
 	time = time / 10.f;
 
-	printf( "TICK: frametime %.4fms (%.2f fps)\n", time, 1.f/time );
+	//printf( "TICK: frametime %.4fms (%.2f fps)\n", time, 1.f/time );
 
 	debugdraw_preTick( dt );
 	lua_preTick( e->lua, dt );

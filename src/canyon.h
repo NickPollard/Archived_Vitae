@@ -6,7 +6,7 @@
 // How long (in world space units) each canyon segment is
 #define kCanyonSegmentLength 40.f
 // How many segments behind the current position to keep in the buffer
-#define kTrailingCanyonSegments 10
+#define kTrailingCanyonSegments 30
 
 typedef struct window_buffer_s {
 	// This is the index of the window buffer that corresponds to the first element in the window

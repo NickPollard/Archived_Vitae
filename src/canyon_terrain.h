@@ -19,9 +19,10 @@ typedef struct canyonTerrainBlock_s {
 	GLuint*			element_VBO;
 
 	//temp
-	vector* verts;
+//	vector* verts;
 
 	bool pending;	// Whether we need to recalculate the block
+	int	lod_level;	// Current lod-level
 
 } canyonTerrainBlock;
 
@@ -37,6 +38,9 @@ typedef struct canyonTerrain_s {
 	
 	int u_samples_per_block;
 	int v_samples_per_block;
+
+	int lod_interval_u;
+	int lod_interval_v;
 	
 	int				bounds[2][2];
 	vector			sample_point;
@@ -44,6 +48,6 @@ typedef struct canyonTerrain_s {
 
 // *** Functions 
 
-canyonTerrain* canyonTerrain_create();
+canyonTerrain* canyonTerrain_create( int u_blocks, int v_blocks, int u_samples, int v_samples, float u_radius, float v_radius );
 void canyonTerrain_render( void* data );
 void canyonTerrain_tick( void* data, float dt, engine* eng );
