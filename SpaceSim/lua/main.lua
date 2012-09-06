@@ -181,6 +181,7 @@ function playership_create()
 	p.yaw = 0
 	p.pitch = 0
 	p.roll = 0
+	p.camera_transform = vcreateTransform()
 	return p
 end
 
@@ -333,7 +334,7 @@ function restart()
 
 	setup_controls()
 	--vtransform_yaw( player_ship.transform, math.pi * 2 * 1.32 );
-	chasecam = vchasecam_follow( engine, player_ship.transform )
+	chasecam = vchasecam_follow( engine, player_ship.camera_transform )
 	flycam = vflycam( engine )
 	vscene_setCamera( chasecam )
 end
@@ -457,6 +458,14 @@ function playership_weaponsTick( ship, dt )
 	ship.cooldown = ship.cooldown - dt
 end
 
+function clamp( min, max, value )
+	return math.min( max, math.max( min, value ))
+end
+
+function lerp( a, b, k )
+	return a + ( b - a ) * k
+end
+
 function playership_tick( ship, dt )
 	yaw_per_second = 1.5 
 	pitch_per_second = 1.5
@@ -470,13 +479,21 @@ function playership_tick( ship, dt )
 	pitch = invert_pitch * input_pitch * pitch_per_second * dt;
 	yaw = input_yaw * yaw_per_second * dt;
 
-	--vtransform_yaw( ship.transform, yaw );
-	--vtransform_pitch( ship.transform, pitch );
 	ship.yaw = ship.yaw + yaw
 	ship.pitch = ship.pitch + pitch
-	ship.roll = 0
+	target_roll = yaw * -60.0;
+	max_roll = 1.0
+	max_roll_delta = 2.0 * dt
+	delta = target_roll - ship.roll
+	roll_delta = clamp( -max_roll_delta, max_roll_delta, delta )
+	roll = ship.roll + roll_delta
+	ship.roll = clamp( -max_roll, max_roll, roll )
+	vprint( "blarg" )
 	
 	vtransform_eulerAngles( ship.transform, ship.yaw, ship.pitch, ship.roll )
+	-- Camera transform shares ship position and yaw, pitch; but not roll
+	vtransform_setWorldSpaceByTransform( ship.camera_transform, ship.transform )
+	vtransform_eulerAngles( ship.camera_transform, ship.yaw, ship.pitch, 0.0 )
 
 	-- throttle
 	width = 100

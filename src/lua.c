@@ -238,9 +238,15 @@ int LUA_create##type( lua_State* l ) { \
 	return 1; \
 }
 
-LUA_CREATE_( transform, transform_create )
-LUA_CREATE_( physic, physic_create )
+//LUA_CREATE_( transform, transform_create )
 
+int LUA_createTransform( lua_State* l ) {
+	transform* t = transform_createAndAdd( theScene );
+	lua_pushptr( l, t );
+	return 1;
+}
+
+LUA_CREATE_( physic, physic_create )
 
 int LUA_model_setTransform( lua_State* l ) {
 	LUA_DEBUG_PRINT( "lua model set transform\n" );
@@ -743,7 +749,7 @@ lua_State* vlua_create( engine* e, const char* filename ) {
 	lua_registerFunction( l, LUA_physic_destroy,		"vphysic_destroy" );
 
 	// *** Transform
-	lua_registerFunction( l, LUA_createtransform, "vcreateTransform" );
+	lua_registerFunction( l, LUA_createTransform, "vcreateTransform" );
 	lua_registerFunction( l, LUA_transform_yaw, "vtransform_yaw" );
 	lua_registerFunction( l, LUA_transform_pitch, "vtransform_pitch" );
 	lua_registerFunction( l, LUA_transform_roll, "vtransform_roll" );
