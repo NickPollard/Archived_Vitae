@@ -12,7 +12,7 @@
 #include "render/texture.h"
 
 #define CANYON_TERRAIN_INDEXED 1
-#define TERRAIN_USE_WORKER_THREAD 0
+#define TERRAIN_USE_WORKER_THREAD 1
 	
 const float texture_scale = 0.0325f;
 
@@ -59,11 +59,30 @@ int canyonTerrainBlock_triangleCount( canyonTerrainBlock* b ) {
 
 
 void canyonTerrainBlock_render( canyonTerrainBlock* b ) {
-	if ( !b->pending && b->vertex_VBO && *b->vertex_VBO ) {
-		drawCall* draw = drawCall_create( &renderPass_main, resources.shader_terrain, b->element_count, b->element_buffer, b->vertex_buffer, terrain_texture, modelview );
+	// If we have new render buffers, free the old ones and switch to the new
+	if (( b->vertex_VBO_alt && *b->vertex_VBO_alt ) &&
+			( b->element_VBO_alt && *b->element_VBO_alt )) {
+		if ( b->vertex_VBO )
+			render_freeBuffer( b->vertex_VBO );
+		if ( b->element_VBO )
+		render_freeBuffer( b->element_VBO );
+
+		b->vertex_VBO = b->vertex_VBO_alt;
+		b->element_VBO = b->element_VBO_alt;
+		b->element_count_render = b->element_count;
+
+		b->vertex_VBO_alt = NULL;
+		b->element_VBO_alt = NULL;
+	}
+
+	if ( b->vertex_VBO && *b->vertex_VBO ) {
+		drawCall* draw = drawCall_create( &renderPass_main, resources.shader_terrain, b->element_count_render, b->element_buffer, b->vertex_buffer, terrain_texture, modelview );
 		draw->texture_b = terrain_texture_cliff;
 		draw->vertex_VBO = *b->vertex_VBO;
 		draw->element_VBO = *b->element_VBO;
+	}
+	else {
+		printf( "Skipping\n" );
 	}
 }
 
@@ -108,6 +127,8 @@ canyonTerrainBlock* canyonTerrainBlock_create( canyonTerrain* t ) {
 	memset( b, 0, sizeof( canyonTerrainBlock ));
 	b->vertex_VBO = NULL;
 	b->element_VBO = NULL;
+	b->vertex_VBO_alt = NULL;
+	b->element_VBO_alt = NULL;
 	b->u_samples = t->u_samples_per_block;
 	b->v_samples = t->v_samples_per_block;
 	return b;
@@ -478,11 +499,11 @@ void canyonTerrainBlock_initVBO( canyonTerrainBlock* b ) {
 	int vert_count = b->element_count;
 #endif // CANYON_TERRAIN_INDEXED
 	//if ( !b->vertex_VBO )
-		b->vertex_VBO = render_requestBuffer( GL_ARRAY_BUFFER, b->vertex_buffer, sizeof( vertex ) * vert_count );
+		b->vertex_VBO_alt = render_requestBuffer( GL_ARRAY_BUFFER, b->vertex_buffer, sizeof( vertex ) * vert_count );
 	//else
 		//render_bufferCopy( GL_ARRAY_BUFFER, *b->vertex_VBO, b->vertex_buffer, sizeof( vertex ) * vert_count );
 	//if ( !b->element_VBO )
-		b->element_VBO = render_requestBuffer( GL_ELEMENT_ARRAY_BUFFER, b->element_buffer, sizeof( GLushort ) * b->element_count );
+		b->element_VBO_alt = render_requestBuffer( GL_ELEMENT_ARRAY_BUFFER, b->element_buffer, sizeof( GLushort ) * b->element_count );
 	//else
 		//render_bufferCopy( GL_ELEMENT_ARRAY_BUFFER, *b->element_VBO, b->element_buffer, sizeof( GLushort ) * b->element_count );
 }

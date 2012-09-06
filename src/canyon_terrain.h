@@ -12,11 +12,15 @@ typedef struct canyonTerrainBlock_s {
 	float v_max;
 
 	int element_count;
+	int element_count_render; // The one currently used to render with; for smooth LoD switching
 	unsigned short* element_buffer;
 	vertex* vertex_buffer;
 
+	// We double-buffer the terrain blocks for LOD purposes, so we can switch instantaneously
 	GLuint*			vertex_VBO;
 	GLuint*			element_VBO;
+	GLuint*			vertex_VBO_alt;
+	GLuint*			element_VBO_alt;
 
 	//temp
 //	vector* verts;

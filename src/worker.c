@@ -8,7 +8,7 @@
 #include "system/thread.h"
 #include <unistd.h>
 
-#define kMaxWorkerTasks 16
+#define kMaxWorkerTasks 64
 int worker_task_count = 0;
 vmutex worker_task_mutex = kMutexInitialiser;
 worker_task worker_tasks[kMaxWorkerTasks];

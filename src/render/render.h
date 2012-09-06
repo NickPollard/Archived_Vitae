@@ -163,6 +163,8 @@ GLuint render_glBufferCreate( GLenum target, const void* data, GLsizei size );
 
 // Asynchronosuly create a GPU buffer
 GLuint* render_requestBuffer( GLenum target, const void* data, GLsizei size );
+// Free it
+void render_freeBuffer( void* buffer );
 
 // Asynchronously copy data to a GPU  buffer
 void render_bufferCopy( GLenum target, GLuint buffer, const void* data, GLsizei size );

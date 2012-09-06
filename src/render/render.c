@@ -61,7 +61,7 @@ GLuint render_glBufferCreate( GLenum target, const void* data, GLsizei size ) {
 	// Use: DRAW / READ / COPY
 	// OpenGL ES only supports dynamic/static draw
 	glBufferData( target, size, data, /*Usage hint*/ GL_STATIC_DRAW );	// Allocate the buffer, optionally copying data
-//	printf( "render_glBufferCreate: Generated VBO name %u.\n", buffer );
+	//glFinish();
 	return buffer;
 }
 
@@ -136,6 +136,10 @@ GLuint* render_requestBuffer( GLenum target, const void* data, GLsizei size ) {
 	}
 	vmutex_unlock( &buffer_mutex );
 	return b->ptr;
+}
+
+void render_freeBuffer( void* buffer ) {
+	mem_free( buffer );
 }
 
 // Load any waiting buffer requests
