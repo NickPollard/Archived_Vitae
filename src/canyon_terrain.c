@@ -259,6 +259,11 @@ canyonTerrain* canyonTerrain_create( int u_blocks, int v_blocks, int u_samples, 
 	return t;
 }
 
+void canyonTerrain_setLodIntervals( canyonTerrain* t, int u, int v ) {
+	t->lod_interval_u = u;
+	t->lod_interval_v = v;
+}
+
 bool canyonTerrainBlock_triangleInvalid( canyonTerrainBlock* b, int u_index, int v_index, int u_offset, int v_offset ) {
 	u_offset = u_offset / 2 + u_offset % 2;
 	u_offset = min( u_offset, 0 );

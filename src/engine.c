@@ -75,23 +75,9 @@ void test_engine_init( engine* e ) {
 //	theScene->debugtext = e->debugtext;
 	lua_setScene( e->lua, theScene );
 
-	// Terrain
-	/*
 	{
-		terrain* t = terrain_create();
-		t->trans = transform_createAndAdd( theScene );
-		terrain_setSize( t, 400.f, 800.f );
-		terrain_setResolution( t, 40, 40 );
-
-		engine_addRender( e, (void*)t, terrain_render );
-		startTick( e, (void*)t, terrain_tick );
-
-		theTerrain = t;
-	}
-	*/
-
-	{
-		canyonTerrain* t = canyonTerrain_create( 9, 9, 40, 40, 480.f, 960.f );
+		canyonTerrain* t = canyonTerrain_create( 7, 9, 40, 40, 360.f, 960.f );
+		canyonTerrain_setLodIntervals( t, 1, 3 );
 		startTick( e, (void*)t, canyonTerrain_tick );
 		engine_addRender( e, (void*)t, canyonTerrain_render );
 		theCanyonTerrain = t;
@@ -157,7 +143,7 @@ void engine_tick( engine* e ) {
 	time += dt;
 	time = time / 10.f;
 
-	//printf( "TICK: frametime %.4fms (%.2f fps)\n", time, 1.f/time );
+	printf( "TICK: frametime %.4fms (%.2f fps)\n", time, 1.f/time );
 
 	debugdraw_preTick( dt );
 	lua_preTick( e->lua, dt );

@@ -53,5 +53,6 @@ typedef struct canyonTerrain_s {
 // *** Functions 
 
 canyonTerrain* canyonTerrain_create( int u_blocks, int v_blocks, int u_samples, int v_samples, float u_radius, float v_radius );
+void canyonTerrain_setLodIntervals( canyonTerrain* t, int u, int v );
 void canyonTerrain_render( void* data );
 void canyonTerrain_tick( void* data, float dt, engine* eng );
