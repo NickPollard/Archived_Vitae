@@ -178,6 +178,9 @@ function playership_create()
 	local p = gameobject_create( "dat/model/ship_hd.s" )
 	p.speed = 0.0
 	p.cooldown = 0.0
+	p.yaw = 0
+	p.pitch = 0
+	p.roll = 0
 	return p
 end
 
@@ -409,7 +412,6 @@ function steering_input_drag()
 	dragged, drag_x, drag_y = vtouchPadDragged( player_ship.joypad )
 	if dragged then
 		yaw, pitch = player_ship.joypad_mapper( drag_x, drag_y )
-		--vprint( "inputs mapped " .. yaw .. " " .. pitch )
 	end
 	return yaw, pitch
 end
@@ -418,7 +420,6 @@ function drag_map()
 	return function( x, y )
 		x_scale = 15.0
 		y_scale = 15.0
-		--return sign(x) * x*x / (x_scale * x_scale), sign(y) * y * y / ( y_scale * y_scale )
 		return x / x_scale, y / y_scale
 	end
 end
@@ -442,34 +443,7 @@ function steering_input_keyboard()
 	end
 	return yaw, pitch
 end
-
-function playership_tick( ship, dt )
-	acceleration = 16.0
-	yaw_per_second = 1.5 
-	pitch_per_second = 1.5
-	width = 100
-
-	local input_yaw = 0.0
-	local input_pitch = 0.0
-	input_yaw, input_pitch = ship.steering_input()
-
-	-- set to -1.0 to invert
-	invert_pitch = 1.0
-	pitch = invert_pitch * input_pitch * pitch_per_second * dt;
-	yaw = input_yaw * yaw_per_second * dt;
-	delta_speed = acceleration * dt;
-
-	-- throttle
-	if vkeyHeld( input, key.w )  or vtouchHeld( input, 000.0, -width*3, 100.0, -width*2 ) then
-		ship.speed = ship.speed + delta_speed
-	end
-	if vkeyHeld( input, key.s )  or vtouchHeld( input, 000.0, -width, 100.0, -1.0 ) then
-		ship.speed = ship.speed - delta_speed
-	end
-
-	vtransform_yaw( ship.transform, yaw );
-	vtransform_pitch( ship.transform, pitch );
-
+function playership_weaponsTick( ship, dt )
 	-- Gunfire
 	local fired = false
 	if touch_enabled then
@@ -481,10 +455,44 @@ function playership_tick( ship, dt )
 		player_fire( ship )
 	end
 	ship.cooldown = ship.cooldown - dt
+end
+
+function playership_tick( ship, dt )
+	yaw_per_second = 1.5 
+	pitch_per_second = 1.5
+
+	local input_yaw = 0.0
+	local input_pitch = 0.0
+	input_yaw, input_pitch = ship.steering_input()
+
+	-- set to -1.0 to invert
+	invert_pitch = 1.0
+	pitch = invert_pitch * input_pitch * pitch_per_second * dt;
+	yaw = input_yaw * yaw_per_second * dt;
+
+	--vtransform_yaw( ship.transform, yaw );
+	--vtransform_pitch( ship.transform, pitch );
+	ship.yaw = ship.yaw + yaw
+	ship.pitch = ship.pitch + pitch
+	ship.roll = 0
+	
+	vtransform_eulerAngles( ship.transform, ship.yaw, ship.pitch, ship.roll )
+
+	-- throttle
+	width = 100
+	acceleration = 16.0
+	delta_speed = acceleration * dt;
+	if vkeyHeld( input, key.w )  or vtouchHeld( input, 000.0, -width*3, 100.0, -width*2 ) then
+		ship.speed = ship.speed + delta_speed
+	end
+	if vkeyHeld( input, key.s )  or vtouchHeld( input, 000.0, -width, 100.0, -1.0 ) then
+		ship.speed = ship.speed - delta_speed
+	end
+
+	playership_weaponsTick( ship, dt )
 
 	-- Physics
-	ship_v = Vector( 0.0, 0.0, ship.speed, 0.0 )
-	world_v = vtransformVector( ship.transform, ship_v )
+	world_v = vtransformVector( ship.transform, Vector( 0.0, 0.0, ship.speed, 0.0 ))
 	vphysic_setVelocity( ship.physic, world_v )
 end
 

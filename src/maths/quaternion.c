@@ -90,15 +90,17 @@ quaternion quaternion_multiply( quaternion a, quaternion b ) {
 //   Pitch is the angle between the z-axis and the Z-axis
 //   Roll is the angle between the line of nodes and the X-axis
 quaternion quaternion_fromEuler( vector* euler_angles ) {
-	vector x_axis = Vector( 1.f, 0.f, 0.f, 0.f );
-	vector y_axis = Vector( 0.f, 1.f, 0.f, 0.f );
-	vector z_axis = Vector( 0.f, 0.f, 1.f, 0.f );
+	//vector y_axis = Vector( 0.f, 1.f, 0.f, 0.f );
 	// Compose it as 3 subsequent rotations
 	quaternion yaw = quaternion_fromAxisAngle( y_axis, euler_angles->coord.y );
-	quaternion pitch = quaternion_fromAxisAngle( x_axis, euler_angles->coord.x );
-	quaternion roll = quaternion_fromAxisAngle( z_axis, euler_angles->coord.z );
+	vector X_axis = quaternion_rotation( yaw, Vector( 1.f, 0.f, 0.f, 0.f ));
+	quaternion pitch = quaternion_fromAxisAngle( X_axis, euler_angles->coord.x );
+	quaternion yaw_pitch = quaternion_multiply( pitch, yaw );
+	vector Z_axis = quaternion_rotation( yaw_pitch, Vector( 0.f, 0.f, 1.f, 0.f ));
+	//vector Z_axis = Vector( 0.f, 0.f, 1.f, 0.f );
+	quaternion roll = quaternion_fromAxisAngle( Z_axis, euler_angles->coord.z );
 
-	quaternion q = quaternion_conjugation( pitch, quaternion_conjugation( yaw, roll ));
+	quaternion q = quaternion_multiply( roll, quaternion_multiply( pitch, yaw ));
 
 	return q;
 }

@@ -6,3 +6,5 @@
 void plane( vector a, vector b, vector c, vector* normal, float* d );
 
 float segment_closestPoint( vector a, vector b, vector point, vector* closest );
+
+vector eulerAngles( float yaw, float pitch, float roll );

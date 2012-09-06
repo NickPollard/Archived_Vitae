@@ -35,3 +35,7 @@ float segment_closestPoint( vector a, vector b, vector point, vector* closest ) 
 
 	return ( d - a_d ) / ( b_d - a_d );
 }
+
+vector eulerAngles( float yaw, float pitch, float roll ) {
+	return Vector( pitch, yaw, roll, 0.f );
+}

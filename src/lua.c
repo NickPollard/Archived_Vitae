@@ -18,6 +18,7 @@
 #include "camera/chasecam.h"
 #include "camera/flycam.h"
 #include "input/keyboard.h"
+#include "maths/geometry.h"
 #include "render/modelinstance.h"
 #include "render/texture.h"
 #include "script/lisp.h"
@@ -579,6 +580,19 @@ int LUA_transform_setWorldSpaceByTransform( lua_State* l ) {
 	transform_setWorldSpace( dst, src->world );
 	return 0;
 }
+int LUA_transform_eulerAngles( lua_State* l ) {
+	transform* t = lua_toptr( l, 1 );
+	float yaw = lua_tonumber( l, 2 );
+	float pitch = lua_tonumber( l, 3 );
+	float roll = lua_tonumber( l, 4 );
+	printf( "yaw: %.2f pitch %.2f roll %.2f \n", yaw, pitch, roll );
+	vector angles = eulerAngles( yaw, pitch, roll );
+	matrix m;
+	matrix_fromEuler( m, &angles );
+	matrix_copyRotation( t->local, m );
+	//transform_setWorldRotationMatrix( t, m );
+	return 0;
+}
 
 int LUA_transform_facingWorld( lua_State* l ) {
 	transform* t = lua_toptr( l, 1 );
@@ -739,6 +753,7 @@ lua_State* vlua_create( engine* e, const char* filename ) {
 	lua_registerFunction( l, LUA_transform_setWorldSpaceByTransform, "vtransform_setWorldSpaceByTransform" );
 	lua_registerFunction( l, LUA_transform_destroy, "vdestroyTransform" );
 	lua_registerFunction( l, LUA_transform_facingWorld, "vtransform_facingWorld" );
+	lua_registerFunction( l, LUA_transform_eulerAngles, "vtransform_eulerAngles" );
 
 	// *** Particles
 	lua_registerFunction( l, LUA_particle_create, "vparticle_create" );
