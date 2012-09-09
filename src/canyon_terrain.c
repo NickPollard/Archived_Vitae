@@ -81,9 +81,6 @@ void canyonTerrainBlock_render( canyonTerrainBlock* b ) {
 		draw->vertex_VBO = *b->vertex_VBO;
 		draw->element_VBO = *b->element_VBO;
 	}
-	else {
-		printf( "Skipping\n" );
-	}
 }
 
 int canyonTerrain_blockIndexFromUV( canyonTerrain* t, int u, int v ) {

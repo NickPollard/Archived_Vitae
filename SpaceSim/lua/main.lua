@@ -324,10 +324,17 @@ function restart()
 	-- We create a player object which is a game-specific Lua class
 	-- The player class itself creates several native C classes in the engine
 	player_ship = playership_create()
+
+	-- Init position
+	local start_position = Vector( 0.0, 0.0, 20.0, 1.0 ) 
+	vtransform_setWorldPosition( player_ship.transform, start_position )
+
+	-- Init velocity
 	player_ship.speed = 0.0
 	local no_velocity = Vector( 0.0, 0.0, 0.0, 0.0 )
 	vphysic_setVelocity( player_ship.physic, no_velocity )
 
+	-- Init Collision
 	vbody_registerCollisionCallback( player_ship.body, player_ship_collisionHandler )
 	vbody_setLayers( player_ship.body, collision_layer_player )
 	vbody_setCollidableLayers( player_ship.body, collision_layer_enemy )
@@ -728,7 +735,7 @@ canyon_v_scale = 1.0
 function entities_spawnAll( near, far )
 	near = near / canyon_v_scale
 	far = far / canyon_v_scale
-	i = spawn_index( near )
+	i = spawn_index( near ) + 1
 	--vprint( "Evaluating spawn index: " .. i )
 	spawn_v = i * spawn_interval
 	--vprint( "spawn_v " .. spawn_v .. ", near " .. near .. ", far " .. far )
@@ -744,8 +751,9 @@ end
 -- Spawn all entities that need to be spawned this frame
 function update_spawns( ship )
 	ship_pos = vtransform_getWorldPosition( ship.transform )
-	x,y,z,w = vvector_values( ship_pos )
-	far = z + spawn_distance
+	u,v = vworldPositionFromCanyon( ship_pos )
+	--x,y,z,w = vvector_values( ship_pos )
+	far = v + spawn_distance
 	entities_spawnAll( last_spawn, far )
 	last_spawn = far;
 end

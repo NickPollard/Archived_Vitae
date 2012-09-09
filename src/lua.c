@@ -664,6 +664,19 @@ int LUA_canyonPosition( lua_State* l ) {
 	return 3;
 }
 
+// Get the Canyon U,V position of a point from a given world position
+int LUA_worldPositionFromCanyon( lua_State* l ) {
+	vector* world_position = lua_toptr( l, 1 );
+	float u, v;
+	terrain_canyonSpaceFromWorld( world_position->coord.x, world_position->coord.z, &u, &v );
+	lua_pushnumber( l, u );
+	lua_pushnumber( l, v );
+	return 2;
+}
+
+
+
+
 int LUA_createUIPanel( lua_State* l ) {
 	engine* e = lua_toptr( l, 1 );
 	float x = lua_tonumber( l, 2 );
@@ -793,7 +806,8 @@ lua_State* vlua_create( engine* e, const char* filename ) {
 	lua_registerFunction( l, LUA_createUIPanel, "vcreateUIPanel" );
 
 	// *** Game
-	lua_registerFunction( l , LUA_canyonPosition, "vcanyon_position" );
+	lua_registerFunction( l, LUA_canyonPosition, "vcanyon_position" );
+	lua_registerFunction( l, LUA_worldPositionFromCanyon, "vworldPositionFromCanyon" );
 
 	lua_makeConstantPtr( l, "engine", e );
 	lua_makeConstantPtr( l, "input", e->input );

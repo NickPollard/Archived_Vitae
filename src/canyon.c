@@ -247,17 +247,17 @@ vector segment_normal( window_buffer* b, int i ) {
 // Convert canyon-space U and V coords into world space X and Z
 void terrain_worldSpaceFromCanyon( float u, float v, float* x, float* z ) {
 	int i = terrainCanyon_segmentAtDistance( v );
-	float segment_position = ( v - (float)i * kCanyonSegmentLength ) / kCanyonSegmentLength; 
 	if ( i < 0 ) {
 		i = 0;
-		segment_position = 0.f;
+		//segment_position = 0.f;
 	}
+	float segment_position = ( v - (float)i * kCanyonSegmentLength ) / kCanyonSegmentLength; 
 	
 	// For this segment
 	vector canyon_next = canyon_point( &canyon_streaming_buffer, i + 1 );
 	vector canyon_previous = canyon_point( &canyon_streaming_buffer, i );
 
-	vAssert( segment_position >= 0.f );
+	//vAssert( segment_position >= 0.f );
 	vAssert( segment_position <= 1.f );
 
 	vector canyon_position = vector_lerp( &canyon_previous, &canyon_next, segment_position );
@@ -278,7 +278,11 @@ void terrain_worldSpaceFromCanyon( float u, float v, float* x, float* z ) {
 	   to prevent overlapping.
 	   */
 	vector normal_next = segment_normal( &canyon_streaming_buffer, i + 1);
-	vector normal_previous = segment_normal( &canyon_streaming_buffer, i - 1);
+	vector normal_previous;
+	if ( i == 0 )
+		normal_previous = normal;
+	else
+		normal_previous = segment_normal( &canyon_streaming_buffer, i - 1);
 
 	// Begin and end vectors for tweening the normal
 	vector normal_begin = normalized( vector_add( normal_previous, normal ));
@@ -338,11 +342,16 @@ vector terrain_newCanyonPoint( vector current, vector previous ) {
 }
 
 
+const vector canyon_start = {{ 0.f, 0.f, 0.f, 1.f }};
+
 // Generate X points of the canyon
 void canyon_generatePoints() {
-	canyon_points[0] = Vector( 0.f, 0.f, 0.f, 1.f );
-	canyon_points[1] = Vector( 0.f, 0.f, kCanyonSegmentLength, 1.f );
-	canyon_streaming_buffer.tail = 1;
+	canyon_points[0] = canyon_start;
+	int initial_straight_segments = 2;
+	for ( int i = 1; i < initial_straight_segments + 1; ++i ) {
+		canyon_points[i] = Vector( 0.f, 0.f, i * kCanyonSegmentLength, 1.f );
+	}
+	canyon_streaming_buffer.tail = initial_straight_segments;
 	canyonBuffer_generatePoints( &canyon_streaming_buffer );	
 }
 
