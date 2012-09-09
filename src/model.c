@@ -224,6 +224,12 @@ modelHandle model_getHandleFromFilename( const char* filename ) {
 	return handle;
 }
 
+void model_preload( const char* filename ) {
+	// Just load it but don't do anything with the handle
+	model_getHandleFromFilename( filename );
+	return;
+}
+
 model* model_fromInstance( modelInstance* instance ) {
 	return model_getByHandle( instance->model );
 }

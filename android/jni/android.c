@@ -162,16 +162,38 @@ static int32_t handle_input(struct android_app* app, AInputEvent* event) {
 				break;
 		}
 		
-		int pointer_count = AMotionEvent_getPointerCount( event );
-		for ( int i = 0; i < pointer_count; ++i ) {
-			int pointer_x = AMotionEvent_getX( event, i );
-			int pointer_y = AMotionEvent_getY( event, i );
-			int uid = AMotionEvent_getPointerId( event, i );
-			input_registerTouch( e->input, uid, pointer_x, pointer_y, action );
+		// Differentiate between events for a single pointer and for multiple pointers
+		switch ( action_code ) {
+			case AMOTION_EVENT_ACTION_POINTER_UP:
+			case AMOTION_EVENT_ACTION_POINTER_DOWN:
+				{
+					int i = android_motionAction_getPointerIndex( motion_action );
+					int pointer_x = AMotionEvent_getX( event, i );
+					int pointer_y = AMotionEvent_getY( event, i );
+					int uid = AMotionEvent_getPointerId( event, i );
+					input_registerTouch( e->input, uid, pointer_x, pointer_y, action );
+					printf( "Pointer action %d. uid %d.\n", action_code, uid );
+				}
+				break;
+			default:
+				{
+					int pointer_count = AMotionEvent_getPointerCount( event );
+					for ( int i = 0; i < pointer_count; ++i ) {
+						int pointer_x = AMotionEvent_getX( event, i );
+						int pointer_y = AMotionEvent_getY( event, i );
+						int uid = AMotionEvent_getPointerId( event, i );
+						input_registerTouch( e->input, uid, pointer_x, pointer_y, action );
+					}
+				}
+				break;
 		}
-	
-	/*	
+		if ( action_code == AMOTION_EVENT_ACTION_UP )
+			printf( "Touch Action Up\n" );
+		if ( action_code == AMOTION_EVENT_ACTION_CANCEL )
+			printf( "Touch Action Cancel\n" );
+
 		printf( "touch_event %d\n", action_code );
+	/*	
 		for ( int i = 0; i < pointer_count; ++i ) {
 			int pointer_x = AMotionEvent_getX( event, i );
 			int pointer_y = AMotionEvent_getY( event, i );
@@ -191,7 +213,7 @@ static int32_t handle_input(struct android_app* app, AInputEvent* event) {
 		input_registerTouch( e->input, uid, x, y, action );
 		*/
 
-        return 1;
+        return 0;
     }
     return 0;
 }

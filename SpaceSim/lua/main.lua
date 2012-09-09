@@ -64,13 +64,13 @@ function spawn_explosion( position )
 end
 
 projectile_model = "dat/model/missile.s"
-weapons_cooldown = 0.5
+weapons_cooldown = 0.15
 
 function player_fire( ship )
 	if ship.cooldown <= 0.0 then
-		muzzle_pos = Vector( 3.0, 0.0, 0.0, 1.0 );
+		muzzle_pos = Vector( 1.2, 0.0, 0.0, 1.0 );
 		fire_missile( ship, muzzle_pos );
-		muzzle_pos = Vector( -3.0, 0.0, 0.0, 1.0 );
+		muzzle_pos = Vector( -1.2, 0.0, 0.0, 1.0 );
 		fire_missile( ship, muzzle_pos );
 		ship.cooldown = weapons_cooldown
 	end
@@ -84,7 +84,7 @@ function missile_collisionHandler( missile, other )
 	vdestroyTransform( missile.transform )
 	vdestroyBody( missile.body )
 	vparticle_destroy( missile.glow )
-	vparticle_destroy( missile.trail )
+	--vparticle_destroy( missile.trail )
 end
 
 missiles  = {}
@@ -103,11 +103,11 @@ function fire_missile( ship, offset )
 	vtransform_setWorldPosition( projectile.transform, muzzle_world_pos )
 
 	-- Attach a particle effect to the object
-	projectile.glow = vparticle_create( engine, projectile.transform, "dat/script/lisp/missile_glow.s" )
-	inTime( 0.2, function () projectile.trail = vparticle_create( engine, projectile.transform, "dat/script/lisp/missile_particle.s" ) end )
+	projectile.glow = vparticle_create( engine, projectile.transform, "dat/script/lisp/bullet.s" )
+	--inTime( 0.2, function () projectile.trail = vparticle_create( engine, projectile.transform, "dat/script/lisp/missile_particle.s" ) end )
 
 	-- Apply initial velocity
-	bullet_speed = 150.0;
+	bullet_speed = 250.0;
 	ship_v = Vector( 0.0, 0.0, bullet_speed, 0.0 )
 	world_v = vtransformVector( ship.transform, ship_v )
 	vphysic_setVelocity( projectile.physic, world_v );
@@ -350,6 +350,9 @@ function loadParticles( )
 	vparticle_destroy( particle )
 	particle = vparticle_create( engine, t, "dat/script/lisp/explosion_c.s" )
 	vparticle_destroy( particle )
+	particle = vparticle_create( engine, t, "dat/script/lisp/bullet.s" )
+	vparticle_destroy( particle )
+	vmodel_preload( projectile_model )
 end
 
 function testSpawns()
@@ -488,7 +491,6 @@ function playership_tick( ship, dt )
 	roll_delta = clamp( -max_roll_delta, max_roll_delta, delta )
 	roll = ship.roll + roll_delta
 	ship.roll = clamp( -max_roll, max_roll, roll )
-	vprint( "blarg" )
 	
 	vtransform_eulerAngles( ship.transform, ship.yaw, ship.pitch, ship.roll )
 	-- Camera transform shares ship position and yaw, pitch; but not roll

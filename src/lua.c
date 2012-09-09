@@ -142,6 +142,17 @@ int LUA_createModelInstance( lua_State* l ) {
 	}
 }
 
+int LUA_modelPreload( lua_State* l ) {
+	if ( lua_isstring( l, 1 ) ) {
+		const char* filename = lua_tostring( l, 1 );
+		model_preload( filename );
+		return 0;
+	} else {
+		printf( "Error: LUA: No filename specified for vmodel_preload().\n" );
+		return 0;
+	}
+}
+
 void testcallback( body* this, body* other, void* data ) {
 	(void)this;
 	(void)other;
@@ -591,12 +602,10 @@ int LUA_transform_eulerAngles( lua_State* l ) {
 	float yaw = lua_tonumber( l, 2 );
 	float pitch = lua_tonumber( l, 3 );
 	float roll = lua_tonumber( l, 4 );
-	printf( "yaw: %.2f pitch %.2f roll %.2f \n", yaw, pitch, roll );
 	vector angles = eulerAngles( yaw, pitch, roll );
 	matrix m;
 	matrix_fromEuler( m, &angles );
 	matrix_copyRotation( t->local, m );
-	//transform_setWorldRotationMatrix( t, m );
 	return 0;
 }
 
@@ -735,6 +744,7 @@ lua_State* vlua_create( engine* e, const char* filename ) {
 
 	// *** Scene
 	lua_registerFunction( l, LUA_createModelInstance, "vcreateModelInstance" );
+	lua_registerFunction( l, LUA_modelPreload, "vmodel_preload" );
 	lua_registerFunction( l, LUA_deleteModelInstance, "vdeleteModelInstance" );
 	lua_registerFunction( l, LUA_model_setTransform, "vmodel_setTransform" );
 	lua_registerFunction( l, LUA_setWorldSpacePosition, "vsetWorldSpacePosition" );

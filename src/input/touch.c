@@ -136,7 +136,7 @@ void input_touchTick( input* in, float dt ) {
 	for ( int i = 0; i < kMaxMultiTouch; ++i ) {
 		touch* old = &in->data[1 - in->active].touch.touches[i];
 		if ( old->uid != kInvalidTouchUid && old->released ) {
-			//printf( "touch %d released\n", old->uid );
+			printf( "touch %d released\n", old->uid );
 		}
 		if ( old->uid != kInvalidTouchUid && !old->released ) {
 			*new = *old;
