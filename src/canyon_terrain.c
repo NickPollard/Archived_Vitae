@@ -3,6 +3,7 @@
 #include "canyon_terrain.h"
 //-----------------------
 #include "canyon.h"
+#include "canyon_zone.h"
 #include "terrain.h"
 #include "worker.h"
 #include "maths/geometry.h"
@@ -78,6 +79,7 @@ void canyonTerrainBlock_render( canyonTerrainBlock* b ) {
 	if ( b->vertex_VBO && *b->vertex_VBO ) {
 		drawCall* draw = drawCall_create( &renderPass_main, resources.shader_terrain, b->element_count_render, b->element_buffer, b->vertex_buffer, terrain_texture, modelview );
 		draw->texture_b = terrain_texture_cliff;
+		draw->texture_lookup = canyonZone_lookup_texture->gl_tex;
 		draw->vertex_VBO = *b->vertex_VBO;
 		draw->element_VBO = *b->element_VBO;
 	}
@@ -247,10 +249,10 @@ canyonTerrain* canyonTerrain_create( int u_blocks, int v_blocks, int u_samples, 
 	t->trans = transform_create();
 
 	if ( terrain_texture == 0 ) {
-		texture_request( &terrain_texture, "dat/img/terrain/snow_2_rgba.tga" );
+		texture_requestFile( &terrain_texture, "dat/img/terrain/snow_2_rgba.tga" );
 	}
 	if ( terrain_texture_cliff == 0 ) {
-		texture_request( &terrain_texture_cliff, "dat/img/terrain/cliffs_2_rgba.tga" );
+		texture_requestFile( &terrain_texture_cliff, "dat/img/terrain/cliffs_2_rgba.tga" );
 	}
 
 	return t;
@@ -391,7 +393,6 @@ void canyonTerrainBlock_calculateNormals( canyonTerrainBlock* block, int vert_co
 #if CANYON_TERRAIN_INDEXED
 			int buffer_index = canyonTerrainBlock_renderIndexFromUV( block, u, v );
 			block->vertex_buffer[buffer_index].normal = normals[i];
-			block->vertex_buffer[buffer_index].color = Vector( 0.8f, 0.9f, 1.0f, 0.f );
 #endif // CANYON_TERRAIN_INDEXED
 		}
 	}
@@ -456,6 +457,7 @@ void canyonTerrainBlock_calculateBuffers( canyonTerrainBlock* b ) {
 				vAssert( buffer_index >= 0 );
 				b->vertex_buffer[buffer_index].position = verts[i];
 				b->vertex_buffer[buffer_index].uv = Vector( verts[i].coord.x * texture_scale, verts[i].coord.z * texture_scale, 0.f, 0.f );
+				b->vertex_buffer[buffer_index].color = Vector( (float)canyon_zoneType( v ), 0.f, 0.f, 1.f );
 			}
 #endif // CANYON_TERRAIN_INDEXED
 		}

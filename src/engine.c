@@ -4,6 +4,7 @@
 //---------------------
 #include "canyon.h"
 #include "canyon_terrain.h"
+#include "canyon_zone.h"
 #include "collision.h"
 #include "dynamicfog.h"
 #include "font.h"
@@ -258,6 +259,7 @@ void engine_init(engine* e, int argc, char** argv) {
 	// *** Canyon
 	canyon_staticInit();
 	canyon_generatePoints();
+	canyonZone_staticInit();
 
 	vthread worker_thread = vthread_create( worker_threadFunc, NULL );
 	(void)worker_thread;

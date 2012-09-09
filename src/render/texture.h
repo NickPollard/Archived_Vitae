@@ -11,6 +11,7 @@ extern GLuint g_texture_default;
 
 void texture_staticInit();
 
+GLuint texture_loadBitmap( int w, int h, int stride, uint8_t* bitmap );
 GLuint texture_loadTGA(const char* filename);
 
 	// TGA format
@@ -48,6 +49,10 @@ typedef struct tga_header_s {
 	uint8_t image_desc;
 } tga_header;
 
+enum textureRequestType {
+	kTextureFileRequest,
+	kTextureMemRequest
+};
 
 struct texture_s {
 	GLuint gl_tex;
@@ -55,8 +60,9 @@ struct texture_s {
 };
 
 void texture_tick();
-void texture_request( GLuint* tex, const char* filename );
+void texture_requestFile( GLuint* tex, const char* filename );
 
 texture* texture_load( const char* filename );
+texture* texture_loadFromMem( int w, int h, int stride, uint8_t* bitmap );
 
 #endif // __TEXTURE_H__

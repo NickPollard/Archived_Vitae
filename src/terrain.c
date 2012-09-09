@@ -58,10 +58,10 @@ terrain* terrain_create() {
 	t->v_block_count = 5;
 
 	if ( terrain_texture == 0 ) {
-		texture_request( &terrain_texture, "dat/img/terrain/snow_2_rgba.tga" );
+		texture_requestFile( &terrain_texture, "dat/img/terrain/snow_2_rgba.tga" );
 	}
 	if ( terrain_texture_cliff == 0 ) {
-		texture_request( &terrain_texture_cliff, "dat/img/terrain/cliffs_2_rgba.tga" );
+		texture_requestFile( &terrain_texture_cliff, "dat/img/terrain/cliffs_2_rgba.tga" );
 	}
 
 	return t;

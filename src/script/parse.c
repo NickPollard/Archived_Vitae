@@ -802,7 +802,7 @@ void* s_mesh( sterm* raw_properties ) {
 	mesh* m = mesh_loadObj( filename );
 	if ( diffuse_texture ) {
 		printf( "Diffuse Texture: \"%s\"\n", diffuse_texture );
-		texture_request( &m->texture_diffuse, diffuse_texture );
+		texture_requestFile( &m->texture_diffuse, diffuse_texture );
 //		m->texture_diffuse = texture_loadTGA( diffuse_texture );
 	}
 	sterm* sm = sterm_createProperty( "mesh", typeObject, m );
@@ -835,7 +835,7 @@ void* s_particle_emitter( sterm* raw_args ) {
 	p->definition->spawn_rate = property_create( 2 );
 	property_addf( p->definition->spawn_rate, 0.f, 30.f );
 	//p->trans = t;
-	//texture_request( &p->definition->texture_diffuse, "dat/img/star_rgba64.tga" );
+	//texture_requestFile( &p->definition->texture_diffuse, "dat/img/star_rgba64.tga" );
 	def->texture_diffuse = texture_load( "dat/img/star_rgba64.tga" );
 
 	return sterm_createProperty( "particle_emitter", typeObject, p );

@@ -12,7 +12,7 @@ IMPLEMENT_POOL( transform )
 pool_transform* static_transform_pool = NULL;
 
 void transform_initPool() {
-	static_transform_pool = pool_transform_create( 256 );
+	static_transform_pool = pool_transform_create( 1024 );
 }
 
 void transform_setWorldSpace( transform* t, matrix world ) {

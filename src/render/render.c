@@ -587,13 +587,9 @@ int render_current_texture_unit = 0;
 // It binds the given texture to an available texture unit
 // and sets the uniform to that
 void render_setUniform_texture( GLuint uniform, GLuint texture ) {
+	vAssert( render_current_texture_unit < GL_MAX_TEXTURE_UNITS );
 	// Activate a texture unit
-	if ( render_current_texture_unit == 0 ) {
-		glActiveTexture( GL_TEXTURE0 );
-	}
-	else if ( render_current_texture_unit == 1 ) {
-		glActiveTexture( GL_TEXTURE1 );
-	}
+	glActiveTexture( GL_TEXTURE0 + render_current_texture_unit );
 
 	// Bind the texture to that texture unit
 	glBindTexture( GL_TEXTURE_2D, texture );
@@ -754,6 +750,9 @@ void render_drawBatch( drawCall* draw ) {
 		render_setUniform_texture( *resources.uniforms.tex,			draw->texture );
 		if ( *resources.uniforms.tex_b ) {
 			render_setUniform_texture( *resources.uniforms.tex_b,		draw->texture_b );
+		}
+		if ( *resources.uniforms.tex_lookup ) {
+			render_setUniform_texture( *resources.uniforms.tex_lookup,		draw->texture_lookup );
 		}
 		render_setUniform_matrix( *resources.uniforms.modelview,	draw->modelview );
 		render_drawCall_draw( draw );

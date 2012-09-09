@@ -688,7 +688,7 @@ int LUA_createUIPanel( lua_State* l ) {
 	p->y = y;
 	p->width = w;
 	p->height = h;
-	texture_request( &p->texture, "dat/img/circle.tga" );
+	texture_requestFile( &p->texture, "dat/img/circle.tga" );
 	engine_addRender( e, p, panel_render );
 	return 0;
 }

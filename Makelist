@@ -1,6 +1,7 @@
 SRCS =	src/camera.c \
 		src/canyon.c \
 		src/canyon_terrain.c \
+		src/canyon_zone.c \
 		src/collision.c \
 		src/dynamicfog.c \
 		src/engine.c \

@@ -17,7 +17,12 @@ vmutex	texture_mutex = kMutexInitialiser;
 
 typedef struct textureRequest_s {
 	GLuint* tex;
+	enum textureRequestType type;
 	const char* filename;
+	uint8_t*	bitmap;
+	int			width;
+	int			height;
+	int			stride;
 } textureRequest;
 
 #define kMaxTextureRequests 32
@@ -30,15 +35,24 @@ void texture_tick() {
 	{
 		// TODO: This could be a lock-free queue
 		for ( int i = 0; i < texture_request_count; i++ ) {
-			*(requests[i].tex) = texture_loadTGA( requests[i].filename );
-			mem_free( (void*)requests[i].filename );
+			textureRequest r = requests[i];
+			switch ( requests[i].type ) {
+				case kTextureFileRequest:
+					*(r.tex) = texture_loadTGA( r.filename );
+					mem_free( (void*)r.filename );
+					break;
+				case kTextureMemRequest:
+					*(r.tex) = texture_loadBitmap( r.width, r.height, r.stride, r.bitmap );
+					mem_free( r.bitmap );
+					break;
+			}
 		}
 		texture_request_count = 0;
 	}
 	vmutex_unlock( &texture_mutex );
 }
 
-void texture_request( GLuint* tex, const char* filename ) {
+void texture_requestFile( GLuint* tex, const char* filename ) {
 	// TODO - check if we've already loaded it
 	vmutex_lock( &texture_mutex );
 	{
@@ -46,7 +60,27 @@ void texture_request( GLuint* tex, const char* filename ) {
 		textureRequest* request = &requests[texture_request_count++];
 		request->tex = tex;
 		*request->tex = kInvalidGLTexture;
+		request->type = kTextureFileRequest;
 		request->filename = string_createCopy( filename );
+	}
+	vmutex_unlock( &texture_mutex );
+}
+
+// Load a texture from an internal block of memory as a bitmap
+void texture_requestMem( GLuint* tex, int w, int h, int stride, uint8_t* bitmap ) {
+	vmutex_lock( &texture_mutex );
+	{
+		vAssert( texture_request_count < kMaxTextureRequests );
+		textureRequest* request = &requests[texture_request_count++];
+		request->tex = tex;
+		*request->tex = kInvalidGLTexture;
+		request->type = kTextureMemRequest;
+		size_t bitmap_size = sizeof( uint8_t ) * w * h * stride;
+		request->bitmap = mem_alloc( bitmap_size );
+		memcpy( request->bitmap, bitmap, bitmap_size );
+		request->width = w;
+		request->height = h;
+		request->stride = stride;
 	}
 	vmutex_unlock( &texture_mutex );
 }
@@ -100,11 +134,16 @@ texture* texture_load( const char* filename ) {
 		texture_init( t, filename );
 		textureCache_add( t, filename );
 		// temp
-		texture_request( &t->gl_tex, filename );
+		texture_requestFile( &t->gl_tex, filename );
 	}
 	return t;
 }
 
+texture* texture_loadFromMem( int w, int h, int stride, uint8_t* bitmap ) {
+	texture* t = texture_nextEmpty();
+	texture_requestMem( &t->gl_tex, w, h, stride, bitmap );
+	return t;
+}
 
 uint8_t* read_tga( const char* file, int* w, int* h ) {
 	size_t length = 0;
@@ -188,6 +227,40 @@ GLuint texture_loadTGA( const char* filename ) {
 
 	mem_free( img );	// OpenGL copies the data, so we can free this here
 
+	return tex;
+}
+
+GLuint texture_loadBitmap( int w, int h, int stride, uint8_t* bitmap ) {
+	GLuint tex;
+
+	vAssert( isPowerOf2( w ) );
+	vAssert( isPowerOf2( h ) );
+
+	vAssert( bitmap );
+	vAssert( stride == 4 ); // Only support RGBA8 right now
+
+	// Generate a texture name and bind to that
+	glGenTextures( 1, &tex );
+	glBindTexture( GL_TEXTURE_2D, tex );
+
+	// Set up sampling parameters, use defaults for now
+	// Bilinear interpolation, clamped
+	glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR );
+    glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR );
+	// TODO - set this properly. For now force to clamp for loadBitmap, for the terrain lookup texture
+    glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_WRAP_S,     GL_CLAMP_TO_EDGE );
+    glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_WRAP_T,     GL_CLAMP_TO_EDGE );
+
+	glTexImage2D( GL_TEXTURE_2D,
+		   			0,			// No Mipmaps for now
+					GL_RGBA,	// 3-channel, 8-bits per channel (32-bit stride)
+					(GLsizei)w, (GLsizei)h,
+					0,			// Border, unused
+					GL_RGBA,		// 
+					GL_UNSIGNED_BYTE,	// 8-bits per channel
+					bitmap );
+
+	mem_free( bitmap );	// OpenGL copies the data, so we can free this here
 	return tex;
 }
 

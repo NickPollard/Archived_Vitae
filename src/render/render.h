@@ -21,6 +21,7 @@ typedef struct sceneParams_s sceneParams;
 	f( light_specular ) \
 	f( tex ) \
 	f( tex_b ) \
+	f( tex_lookup ) \
 	f( fog_color ) \
 	f( sky_color_top ) \
 	f( sky_color_bottom ) \
@@ -178,6 +179,7 @@ typedef struct drawCall_s {
 	matrix		modelview;
 	GLuint		texture;
 	GLuint		texture_b;
+	GLuint		texture_lookup;
 	vector		fog_color;
 
 	// Buffer data
