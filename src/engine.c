@@ -259,7 +259,7 @@ void engine_init(engine* e, int argc, char** argv) {
 
 	// *** Canyon
 	canyon_staticInit();
-	canyon_generatePoints();
+	canyon_generateInitialPoints();
 	canyonZone_staticInit();
 
 	vthread worker_thread = vthread_create( worker_threadFunc, NULL );

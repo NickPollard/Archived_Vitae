@@ -38,18 +38,23 @@ window_buffer canyon_streaming_buffer;
 vector	canyon_points[kMaxCanyonPoints];
 
 randSeq canyon_random_seed;
+long int initial_seed = 0x0;
 
 void canyonBuffer_init( window_buffer* buffer, size_t size, void* elements ) {
 	buffer->head = 0;
+	buffer->tail = 0;
 	buffer->stream_position = 0;
 	buffer->window_size = size;
 	buffer->elements = elements;
 }
 
+void canyon_seedRandom( long int seed ) {
+	deterministic_seedRandSeq( seed, &canyon_random_seed );
+}
+
 void canyon_staticInit() {
 	canyonBuffer_init( &canyon_streaming_buffer, kMaxCanyonPoints, &canyon_points );
-	long int seed = 0x0;
-	deterministic_seedRandSeq( seed, &canyon_random_seed );
+	canyon_seedRandom( initial_seed );
 }
 
 // Return the last stream position currently mapped in the window
@@ -105,7 +110,6 @@ void canyonBuffer_generatePoints( window_buffer* buffer ) {
 	buffer->tail = ( buffer->head + buffer->window_size - 1 ) % buffer->window_size;
 }
 
-
 // Seek the canyon window_buffer forward so that its stream_position is now SEEK_POSITION
 void canyonBuffer_seekForward( window_buffer* buffer, size_t seek_position ) {
 	vAssert( seek_position >= buffer->stream_position );
@@ -117,6 +121,7 @@ void canyonBuffer_seekForward( window_buffer* buffer, size_t seek_position ) {
 		buffer->stream_position = windowBuffer_streamPosition( buffer, new_head );
 		buffer->head = new_head;
 		canyonBuffer_generatePoints( buffer );
+		stream_end_position = windowBuffer_endPosition( buffer );
 	}
 
 	// The seek target is already in the window
@@ -126,6 +131,22 @@ void canyonBuffer_seekForward( window_buffer* buffer, size_t seek_position ) {
 	// Update all data
 	canyonBuffer_generatePoints( buffer );
 }
+
+// Seek the canyon window_buffer so that its stream_position is now SEEK_POSITION - can seek forwards or backwards
+void canyonBuffer_seek( window_buffer* buffer, size_t seek_position ) {
+	if ( seek_position >= buffer->stream_position ) {
+		canyonBuffer_seekForward( buffer, seek_position );
+	}
+	else {
+		// go back to the beginning and seek forward from there
+		buffer->head = 0;
+		buffer->tail = 0;
+		buffer->stream_position = 0;
+		canyon_generateInitialPoints();
+		canyonBuffer_seekForward( buffer, seek_position );
+	}
+}
+
 
 
 
@@ -345,7 +366,8 @@ vector terrain_newCanyonPoint( vector current, vector previous ) {
 const vector canyon_start = {{ 0.f, 0.f, 0.f, 1.f }};
 
 // Generate X points of the canyon
-void canyon_generatePoints() {
+void canyon_generateInitialPoints() {
+	canyon_seedRandom( initial_seed );
 	canyon_points[0] = canyon_start;
 	int initial_straight_segments = 2;
 	for ( int i = 1; i < initial_straight_segments + 1; ++i ) {
@@ -359,8 +381,10 @@ void canyon_generatePoints() {
 void canyon_seekForWorldPosition( vector position ) {
 	float u, v;
 	terrain_canyonSpaceFromWorld( position.coord.x, position.coord.z, &u, &v );
-	size_t seek_position = max( canyon_streaming_buffer.stream_position, terrainCanyon_segmentAtDistance( v ) - kTrailingCanyonSegments );
-	canyonBuffer_seekForward( &canyon_streaming_buffer, seek_position );
+	size_t seek_position = max( 0, terrainCanyon_segmentAtDistance( v ) - kTrailingCanyonSegments );
+	//size_t seek_position = max( canyon_streaming_buffer.stream_position, terrainCanyon_segmentAtDistance( v ) - kTrailingCanyonSegments );
+	printf( "seeking canyon to " dPTRf ".\n", seek_position );
+	canyonBuffer_seek( &canyon_streaming_buffer, seek_position );
 }
 
 vector  terrainSegment_toScreen( window* w, vector world ) {
