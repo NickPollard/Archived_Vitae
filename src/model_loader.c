@@ -137,16 +137,16 @@ mesh* mesh_loadObj( const char* filename ) {
 }
 
 model* model_load( const char* filename ) {
+	/*
 	sterm* s = parse_file( filename );
 	model* mdl = eval( s );
+	*/
 
-	/*
 	context* c = lisp_newContext();
-	term* t = lisp_parse_file( filename );
-	term* m = _eval( t, c );
+	term* m = lisp_eval_file( c, filename );
 	term_takeRef( m );
 	model* mdl = m->data;
 	term_deref( m );
-*/
+
 	return mdl;
 }

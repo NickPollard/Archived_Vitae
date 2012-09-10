@@ -28,7 +28,8 @@
 #include "render/render.h"
 #include "render/texture.h"
 #include "script/lisp.h"
-#include "script/parse.h"
+#include "system/file.h"
+#include "system/string.h"
 #include "system/thread.h"
 
 // Lua Libraries
@@ -275,6 +276,7 @@ void init(int argc, char** argv) {
 
 	// *** Initialise Memory
 	mem_init( argc, argv );
+	string_staticInit();
 	// Pools
 	transform_initPool();
 	modelInstance_initPool();
@@ -282,7 +284,6 @@ void init(int argc, char** argv) {
 	// *** Static Module initialization
 	scene_initStatic();
 	lisp_init();
-	parse_init();
 	collision_init();
 }
 

@@ -66,7 +66,7 @@ mesh* mesh_createMesh( int vertCount, int index_count, int normal_count, int uv_
 	m->vertex_buffer = NULL;
 	m->element_buffer = NULL;
 
-	texture_requestFile( &m->texture_diffuse, "dat/img/ship_hd_2.tga" );
+	m->texture_diffuse = texture_load( "dat/img/ship_hd_2.tga" );
 	m->shader = resources.shader_default;
 	vAssert( m->shader );
 
@@ -150,7 +150,7 @@ void mesh_render( mesh* m ) {
 	if (( *m->vertex_VBO != kInvalidBuffer ) && ( *m->element_VBO != kInvalidBuffer )) {
 		vAssert( *m->vertex_VBO != 0 );
 		vAssert( *m->element_VBO != 0 );
-		drawCall* draw = drawCall_create( &renderPass_main, m->shader, m->index_count, m->element_buffer, m->vertex_buffer, m->texture_diffuse, modelview );
+		drawCall* draw = drawCall_create( &renderPass_main, m->shader, m->index_count, m->element_buffer, m->vertex_buffer, m->texture_diffuse->gl_tex, modelview );
 		draw->vertex_VBO = *m->vertex_VBO;
 		draw->element_VBO = *m->element_VBO;
 		(void)draw;

@@ -1,1 +1,1 @@
-(model (mesh (filename "dat/model/smoothsphere2.obj" )))
+(model (meshFromFile (filename "dat/model/smoothsphere2.obj" )))

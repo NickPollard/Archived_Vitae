@@ -12,11 +12,11 @@
 #include "system/hash.h"
 
 model*			skybox_model = NULL;
-GLint			skybox_texture = -1;
+texture*		skybox_texture = NULL;
 
 // Initialise static data for the skybox system
 void skybox_init( ) {
-	skybox_texture = texture_loadTGA( "dat/img/vitae_sky2_export_flattened.tga" );
+	skybox_texture = texture_load( "dat/img/vitae_sky2_export_flattened.tga" );
 
 	skybox_model = model_load( "dat/model/inverse_cube.s" );
 	skybox_model->meshes[0]->texture_diffuse = skybox_texture;

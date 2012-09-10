@@ -32,8 +32,6 @@ void runTests() {
 	test_hash();
 
 	// System Tests
-	test_sfile();
-	
 	test_lisp();
 
 	test_maths();

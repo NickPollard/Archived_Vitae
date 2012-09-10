@@ -152,29 +152,28 @@ void scene_free( scene* s ) {
 // Initialise a scene with some test data
 scene* test_scene_init( engine* e ) { 
 
+	/*
 	sterm* stree = parse_file( "dat/scene/testscene.s" );
 	scene* s = eval( stree );
 	sterm_free( stree );
 	s->eng = e;
+	*/
 
 	/*
-	// Activate emitters
-	for ( int i = 0; i < s->emitter_count; i++ ) {
-		particleEmitter* p = s->emitters[i];
-		engine_addRender( s->eng, p, particleEmitter_render );
-		startTick( s->eng, p, particleEmitter_tick );
-	}
-*/
+	context* c = lisp_newContext();
+	term* t = lisp_parse_file( filename );
+	term* m = _eval( t, c );
+	term_takeRef( m );
+	model* mdl = m->data;
+	term_deref( m );
+	*/
 
 	// Test Misc scene setup
+	(void)e;
+	scene* s = scene_create();
 	scene_setAmbient( s, 0.2f, 0.2f, 0.2f, 1.f );
 
 	return s;
-
-//	scene_saveFile( s, "dat/test_scene.s" );
-//	scene* s2 = scene_loadFile( "dat/test_scene.s" );
-
-//	return s2;
 }
 
 void scene_setAmbient(scene* s, float r, float g, float b, float a) {

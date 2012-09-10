@@ -8,6 +8,20 @@
 #include <stdarg.h>
 #include <strings.h>
 
+/*
+   A heap specifically for string allocations
+   This is to keep string allocations organised,
+   prevent them from fragmenting the main pool,
+   and let me track them (string allocations should *only* be required
+   for parsing or scripting
+   */
+#define kStringHeapSize 64 * 1024
+heapAllocator* global_string_heap = NULL;
+
+void string_staticInit() {
+	global_string_heap = heap_create( kStringHeapSize );
+}
+
 // Allocates and copies a standard null-terminated c string, then returns the new copy
 const char* string_createCopy( const char* src ) {
 	int length = strlen( src );

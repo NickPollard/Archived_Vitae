@@ -114,6 +114,8 @@ void attr_particle_setLifetime( term* definition_term, term* lifetime );
 void attr_particle_setSpawnRate( term* definition_term, term* spawn_rate );
 void attr_particle_flags( term* definition_term, term* flags );
 void attr_particle_texture( term* definition_term, term* texture_attr );
+
+void attr_mesh_diffuseTexture( term* mesh_term, term* texture_attr );
 //// Attribute functions /////////////////////////////////////////
 
 bool isType( term* t, enum termType type ) {
@@ -1029,6 +1031,8 @@ void lisp_init() {
 	attributeFunction_set( "flags", attr_particle_flags );
 	attributeFunction_set( "texture", attr_particle_texture );
 
+	attributeFunction_set( "diffuse_texture", attr_mesh_diffuseTexture );
+
 	lisp_global_context = lisp_newContext();
 }
 
@@ -1091,6 +1095,20 @@ term* lisp_func_mesh_create( context* c, term* raw_args ) {
 	assert( isType( head( args ), _typeObject )); // Looking for a mesh
 
 	mesh* msh = NULL;
+	term* ret = term_create( _typeObject, msh );
+	term_deref( args );	
+	return ret;
+}
+
+term* lisp_func_mesh_loadFile( context* c, term* raw_args ) {
+	assert( isType( raw_args, _typeList ));
+	term* args = fmap_1( _eval, c, raw_args );
+	term_takeRef( args );
+	assert( isType( args, _typeList ));
+	assert( isType( head( args ), _typeString )); // Looking for a mesh
+
+	const char* filename = head( args )->string;
+	mesh* msh = mesh_loadObj( filename );
 	term* ret = term_create( _typeObject, msh );
 	term_deref( args );	
 	return ret;
@@ -1208,7 +1226,7 @@ term* foldl( fold_func f, term* initial, term* list ) {
 
 void attr_particle_flags( term* definition_term, term* flags_attr ) {
 	particleEmitterDef* def = definition_term->data;
-	lisp_assert( def != 0x0 );
+	lisp_assert( def );
 
 	int* zero = mem_alloc( sizeof( int ));
 	*zero = 0;
@@ -1222,16 +1240,15 @@ void attr_particle_flags( term* definition_term, term* flags_attr ) {
 
 void attr_particle_texture( term* definition_term, term* texture_attr ) {
 	particleEmitterDef* def = definition_term->data;
-	lisp_assert( def != 0x0 );
+	lisp_assert( def );
 	lisp_assert( isType( texture_attr, _typeString ));
-
 	def->texture_diffuse = texture_load( texture_attr->string );
 }
 
 void attr_particle_setSpawnRate( term* definition_term, term* spawn_rate_attr ) {
 	// TODO - we need to copy and preserve this correctly
 	particleEmitterDef* def = definition_term->data;
-	lisp_assert( def != 0x0 );
+	lisp_assert( def );
 	property* spawn_rate = property_copy( spawn_rate_attr->data );
 	def->spawn_rate = spawn_rate;
 }
@@ -1239,7 +1256,7 @@ void attr_particle_setSpawnRate( term* definition_term, term* spawn_rate_attr ) 
 void attr_particle_setLifetime( term* definition_term, term* lifetime ) {
 	// TODO - we need to copy and preserve this correctly
 	particleEmitterDef* def = definition_term->data;
-	lisp_assert( def != 0x0 );
+	lisp_assert( def );
 	def->lifetime = *(lifetime->number);
 }
 
@@ -1247,7 +1264,7 @@ void attr_particle_setColor( term* definition_term, term* color_attr ) {
 	// TODO - we need to copy and preserve this correctly
 	particleEmitterDef* def = definition_term->data;
 	property* color = property_copy( color_attr->data );
-	lisp_assert( def != 0x0 );
+	lisp_assert( def );
 	def->color = color;
 }
 
@@ -1256,8 +1273,15 @@ void attr_particle_setSize( term* definition_term, term* size_attr ) {
 	// TODO - we need to copy and preserve this correctly
 	property* size = property_copy( size_attr->data );
 	particleEmitterDef* def = definition_term->data;
-	lisp_assert( def != 0x0 );
+	lisp_assert( def );
 	def->size = size;
+}
+
+void attr_mesh_diffuseTexture( term* mesh_term, term* texture_attr ) {
+	lisp_assert( isType( texture_attr, _typeString ));
+	mesh* m = mesh_term->data;
+	lisp_assert( m );
+	m->texture_diffuse = texture_load( texture_attr->string );
 }
 
 // (particle_create)
@@ -1370,6 +1394,7 @@ void lisp_initContext( context* c ) {
 	// Model loading functions
 	define_cfunction( c, "model", lisp_func_model );
 	//define_cfunction( c, "mesh", lisp_func_mesh );
+	define_cfunction( c, "meshLoadFile", lisp_func_mesh_loadFile );
 	define_cfunction( c, "transform", lisp_func_transform );
 	define_cfunction( c, "mesh_create", lisp_func_mesh_create );
 	define_cfunction( c, "filename", lisp_func_filename );
@@ -1378,9 +1403,6 @@ void lisp_initContext( context* c ) {
 	
 	define_cfunction( c, "attribute", lisp_func_attribute );
 	define_cfunction( c, "particle_emitter_definition_create", lisp_func_particle_emitter_definition_create );
-
-	define_function( c, "mesh", "( args ) (foldl object_process (mesh_create) args)" );
-	//define_function( c, "filename", "(() b )" );
 
 	// load the default vlisp library
 	lisp_eval_file( c, "dat/script/lisp/vliblisp.s" );

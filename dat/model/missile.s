@@ -1,1 +1,1 @@
-(model (mesh (filename "dat/model/missile.obj" )))
+(model (meshLoadFile "dat/model/missile.obj" ))
