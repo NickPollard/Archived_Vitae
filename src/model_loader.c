@@ -4,7 +4,6 @@
 #include "scene.h"
 #include "model.h"
 #include "script/lisp.h"
-#include "script/parse.h"
 #include "system/file.h"
 #include "system/string.h"
 

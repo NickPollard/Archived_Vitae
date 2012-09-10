@@ -23,14 +23,14 @@
    all terms aside from LIST and ATOM are considered to be value terms
    */
 enum termType {
-	_typeList,
-	_typeAtom,
-	_typeString,
+	typeList,
+	typeAtom,
+	typeString,
 	typeFloat,
 	typeInt,
-	_typeVector,
+	typeVector,
 	typeIntrinsic,
-	_typeObject,
+	typeObject,
 	typeFalse,		// Special FALSE datatype
 	typeTrue		// Special TRUE datatype
 	};

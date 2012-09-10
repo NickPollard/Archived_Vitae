@@ -4,20 +4,20 @@
 #include "scene.h"
 //-----------------------
 #include "camera.h"
+#include "font.h"
 #include "input.h"
 #include "light.h"
 #include "model.h"
 #include "model_loader.h"
 #include "particle.h"
 #include "physic.h"
+#include "debug/debugtext.h"
 #include "input/keyboard.h"
 #include "maths/vector.h"
 #include "mem/allocator.h"
 #include "render/debugdraw.h"
 #include "render/modelinstance.h"
-#include "script/parse.h"
-#include "font.h"
-#include "debug/debugtext.h"
+#include "system/file.h"
 
 #define INVALID_TRANSFORM_INDEX UINT_MAX
 

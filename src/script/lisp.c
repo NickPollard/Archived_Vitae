@@ -1,73 +1,3 @@
-// TODO
-
-// lisp_assertType (with stringified type output)
-// lisp argument validation (arg count, arg types)
-
-/*
-	What we want to do:
-
-	(object (property-name (property-type (property-value))))
-
-	eg.
-
-	(particle (diffuse (color (1.0 1.0 1.0 1.0))))
-
-	This says we want to create a [particle], with a property called [diffuse], set to type [color] with value [1.0 1.0 1.0 1.0]
-
-	The idea of using type functions means we can easily construct different type values. Eg. vector, matrix, colour. We can also construct them
-	differently, ie.
-	(color (1.0, 1.0, 1.0, 1.0))
-	(color "red")
-	(color (256 256 256))
-	Would all result in the same final type (color)
-
-	Evaluation steps:
-	(color (1.0 1.0 1.0 1.0)) -> Calls color() function with a list of values. This creates a node of type color, with the value 1.0 1.0 1.0 1.0
-	This is a simple, standard function call. We don't want to evaluate the list, so we backquote it
-	(color `(1.0 1.0 1.0 1.0))
-
-	The result is a typed value, NOT a list
-	(diffuse [color]) -> creates a property pair with the atom tag 'diffuse' and the value [color] (Which is a typed object). 
-	This is just passing a list, so backquote it.
-	`(diffuse (color `(1.0 1.0 1.0 1.0)))
-
-	(particle (property)) -> calls particle() with a list of properties. Each property has a name atom-tag and a typed-value - enough to identify
-	the variable.
-	The same as doing:
-	color diffuse = color( 1.0, 1.0, 1.0, 1.0 );
-
-	struct typeValue {
-		enum type,
-		void* value
-		}
-
-	struct list {
-		void* head;
-		list* tail;
-		}
-
-	struct value {
-		enum type;
-		void* value;
-		value* tail;
-		}
-
-	list( a, b ) {
-			value( type, a );
-			value( type, b );
-			value( list, a );
-			value( list, b );
-			list_a->tail = list_b;
-		}
-
-	l = (a, b)
-
-	head( l ) == a
-	tail( l ) == ( b )
-	head(tail( l )) == b
-
-   */
-
 #include "common.h"
 #include "lisp.h"
 //--------------------------------------------------------
@@ -123,7 +53,7 @@ bool isType( term* t, enum termType type ) {
 	}
 
 bool isValue( term* t ) {
-	return !isType( t, _typeList ) && !isType( t, _typeAtom );
+	return !isType( t, typeList ) && !isType( t, typeAtom );
 	}
 
 void term_delete( term* t );
@@ -182,7 +112,7 @@ term* term_create( enum termType type, void* value ) {
 	mem_popStack();
 	t->type = type;
 	t->head = value;
-	if (( type == _typeList ) && value ) {
+	if (( type == typeList ) && value ) {
 		term_takeRef( (term*)value );
 		}
 	t->tail = NULL;
@@ -195,7 +125,7 @@ term* term_copy( term* t ) {
 }
 
 void term_delete( term* t ) {
-	if ( isType( t, _typeList )) {
+	if ( isType( t, typeList )) {
 		// If, not assert, as it could be the empty list
 		if( t->head )
 			term_deref( t->head );
@@ -231,21 +161,21 @@ void* value_create( size_t size ) {
    list must not be NULL
 
    Head - returns the head pointer of a list, which must be another term
-   Tail - returns the tail pointer of a list, which must be another term of _typeList, or NULL;
+   Tail - returns the tail pointer of a list, which must be another term of typeList, or NULL;
    */
 
 term* head( term* list ) {
 	lisp_assert( list );
-	lisp_assert( isType( list, _typeList ));
+	lisp_assert( isType( list, typeList ));
 	lisp_assert( list->head );
 	return (term*)list->head;
 	}
 
 term* tail( term* list ) {
 	assert( list );
-	assert( isType( list, _typeList ));
+	assert( isType( list, typeList ));
 	// If there is a tail, it must be a list
-	assert( !list->tail || isType( list->tail, _typeList ));
+	assert( !list->tail || isType( list->tail, typeList ));
 	return list->tail;
 	}
 
@@ -253,7 +183,7 @@ term* tail( term* list ) {
    List Constructors
    */
 term* _cons( void* head, term* tail ) {
-	term* t = term_create( _typeList, head );
+	term* t = term_create( typeList, head );
 	t->tail = tail;
 	if ( tail )
 		term_takeRef( tail );
@@ -303,7 +233,7 @@ term* lisp_parse( inputStream* stream ) {
 		}
 	if ( _isListStart( *token ) ) {
 		mem_free( token ); // It's a bracket, discard it
-		term* list = term_create( _typeList, lisp_parse( stream ));
+		term* list = term_create( typeList, lisp_parse( stream ));
 		term* s = list;
 
 		if ( !s->head ) { // The Empty list () 
@@ -313,7 +243,7 @@ term* lisp_parse( inputStream* stream ) {
 		while ( true ) {
 			term* sub_expr = lisp_parse( stream );				// parse a subexpr
 			if ( sub_expr ) {								// If a valid return
-				s->tail = term_create( _typeList, sub_expr );	// Add it to the tail
+				s->tail = term_create( typeList, sub_expr );	// Add it to the tail
 				term_takeRef( s->tail );						// Take a ref (from the head to the tail)
 				s = s->tail;
 			} else {
@@ -323,7 +253,7 @@ term* lisp_parse( inputStream* stream ) {
 		}
 	if ( token_isString( token )) {
 		const char* string = sstring_create( token );
-		return term_create( _typeString, (char*)string );
+		return term_create( typeString, (char*)string );
 		}
 	if ( token_isFloat( token )) {
 		float* f = value_create( sizeof( float ));
@@ -331,7 +261,7 @@ term* lisp_parse( inputStream* stream ) {
 		return term_create( typeFloat, f );
 		}
 	// When it's an atom, we keep the token, don't free it
-	return term_create( _typeAtom, (void*)token );
+	return term_create( typeAtom, (void*)token );
 }
 
 term* lisp_parse_string( const char* string ) {
@@ -371,7 +301,7 @@ term* lisp_parse_file( const char* filename ) {
 }
 
 term* _eval_list( term* list, context* c ) {
-	lisp_assert( isType( list, _typeList ));
+	lisp_assert( isType( list, typeList ));
 	term* s = _eval( head( list ), c );
 	if ( tail( list ))
 		return _eval_list( tail( list ), c );
@@ -384,7 +314,7 @@ term* lisp_eval_file( context* c, const char* filename ) {
 }
 
 void list_delete( term* t ) {
-	assert( isType( t, _typeList ));
+	assert( isType( t, typeList ));
 	if ( t->tail ) {
 		list_delete( t->tail );
 		}
@@ -392,7 +322,7 @@ void list_delete( term* t ) {
 	}
 
 void list_deref( term* t ) {
-	assert( isType( t, _typeList ));
+	assert( isType( t, typeList ));
 	if ( t->tail ) {
 		list_deref( t->tail );
 		}
@@ -401,7 +331,7 @@ void list_deref( term* t ) {
 
 int list_length( term* t ) {
 	if ( t ) {
-		assert( isType( t, _typeList ));
+		assert( isType( t, typeList ));
 		return 1 + list_length( t->tail );
 	}
 	else {
@@ -413,7 +343,7 @@ int list_length( term* t ) {
    */
 void* value( term* atom ) {
 	assert( atom );
-	assert( !isType( atom, _typeList ));
+	assert( !isType( atom, typeList ));
 	return atom->head;
 	}
 
@@ -439,11 +369,11 @@ void term_debugPrint( term* t ) {
 	if ( !t )
 		return;
 
-	if ( isType( t, _typeList )) {
+	if ( isType( t, typeList )) {
 		printf( "(" );
 		term* tmp = t;
 		while ( tmp ) {
-			assert( isType( tmp, _typeList ));
+			assert( isType( tmp, typeList ));
 			if ( tmp->head )
 				term_debugPrint( head( tmp ));
 			tmp = tmp->tail;
@@ -451,24 +381,24 @@ void term_debugPrint( term* t ) {
 		printf( ")" );
 		}
 
-	if ( isType( t, _typeAtom ) )
+	if ( isType( t, typeAtom ) )
 		printf( "%s ", (const char*)t->head );
-	if ( isType( t, _typeString ) )
+	if ( isType( t, typeString ) )
 		printf( "\"%s\" ", (const char*)t->head );
 	if ( isType( t, typeFloat ))
 		printf( "%.2f ", *(float*)t->head );
-	if ( isType( t, _typeObject ))
+	if ( isType( t, typeObject ))
 		printf( "[Object] " );
 }
 void term_debugStreamPrint( streamWriter* s, term* t ) {
 	if ( !t )
 		return;
 
-	if ( isType( t, _typeList )) {
+	if ( isType( t, typeList )) {
 		stream_printf( s, "(" );
 		term* tmp = t;
 		while ( tmp ) {
-			assert( isType( tmp, _typeList ));
+			assert( isType( tmp, typeList ));
 			if ( tmp->head )
 				term_debugStreamPrint( s, head( tmp ));
 			tmp = tmp->tail;
@@ -476,13 +406,13 @@ void term_debugStreamPrint( streamWriter* s, term* t ) {
 		stream_printf( s, ")" );
 		}
 
-	if ( isType( t, _typeAtom ) )
+	if ( isType( t, typeAtom ) )
 		stream_printf( s, "%s ", (const char*)t->head );
-	if ( isType( t, _typeString ) )
+	if ( isType( t, typeString ) )
 		stream_printf( s, "\"%s\" ", (const char*)t->head );
 	if ( isType( t, typeFloat ))
 		stream_printf( s, "%.2f ", *(float*)t->head );
-	if ( isType( t, _typeObject ))
+	if ( isType( t, typeObject ))
 		stream_printf( s, "[Object] " );
 	if ( isType( t, typeIntrinsic ))
 		stream_printf( s, "[Intrinsic] " );
@@ -491,10 +421,10 @@ void term_debugStreamPrint( streamWriter* s, term* t ) {
 void term_validate( term* t ) {
 	const int kDepth = 5;
 	int outer_depth = 0;
-	while( isType( t, _typeList ) && t->head && outer_depth < kDepth ) {
+	while( isType( t, typeList ) && t->head && outer_depth < kDepth ) {
 		term* t_ = head( t );
 		int inner_depth = 0;
-		while( isType( t_, _typeList ) && t_->head && inner_depth < kDepth ) {
+		while( isType( t_, typeList ) && t_->head && inner_depth < kDepth ) {
 			lisp_assert( t != t_ );
 			t_ = head( t_ );
 			++inner_depth;
@@ -511,7 +441,7 @@ typedef term* (*lisp_func)( context*, term* );
 term* fmap_1( fmap_func f, void* arg, term* expr ) {
 	if ( !expr )
 		return NULL;
-	vAssert( isType( expr, _typeList ));
+	vAssert( isType( expr, typeList ));
 	return _cons( f( head( expr ), arg ),
 		   			fmap_1( f, arg, tail( expr )));
 }
@@ -550,7 +480,7 @@ term* _eval( term* expr, void* _context ) {
 	term_takeRef( expr );
 	term* result = NULL;
 	// Eval arguments, then pass arguments to the binding of the first element and run
-	if ( isType( expr, _typeAtom )) {
+	if ( isType( expr, typeAtom )) {
 		term* value = context_lookup(_context, mhash(expr->string));
 		if ( !value )
 		{
@@ -563,7 +493,7 @@ term* _eval( term* expr, void* _context ) {
 		// Do we return as a term of typeValue, or just return the value itself? Probably the first, for macros and hijinks
 		result = term_copy( expr );
 		}
-	if ( isType( expr, _typeList )) {
+	if ( isType( expr, typeList )) {
 		// TODO - need to check for intrinsic here
 		// as if it's a special form, we might not want to eval all (eg. if)
 		term* h = _eval( head( expr ), _context );
@@ -640,8 +570,8 @@ context* def( context* c, const char* atom, void* value ) {
 typedef void (*zip1_func)( term*, term*, void* );
 
 void zip1( term* a_list, term* b_list, zip1_func func, void* arg ) {
-	assert( isType( a_list, _typeList ));
-	assert( isType( b_list, _typeList ));
+	assert( isType( a_list, typeList ));
+	assert( isType( b_list, typeList ));
 	func( head( a_list ), head( b_list ), arg );
 	if ( tail( a_list )) {
 		assert( tail( b_list ));
@@ -656,10 +586,10 @@ void define_arg( term* symbol, term* value, void* _context ) {
 
 void* exec( context* c, term* func, term* args ) {
 	lisp_assert( func );
-	lisp_assert( isType( func, _typeList ) || isType( func, typeIntrinsic ));
-	lisp_assert( !args || isType( args, _typeList ));
+	lisp_assert( isType( func, typeList ) || isType( func, typeIntrinsic ));
+	lisp_assert( !args || isType( args, typeList ));
 
-	if ( isType( func, _typeList )) {
+	if ( isType( func, typeList )) {
 		lisp_assert( head( func ));			// The argument binding
 		term* arg_list = head( func );
 		term* expr = head( tail( func ));
@@ -705,12 +635,12 @@ void define_cfunction( context* c, const char* name, lisp_func implementation ) 
 
 // Intrinsic Maths functions
 term* lisp_func_add( context* c, term* raw_args ) {
-	assert( isType( raw_args, _typeList ));
+	assert( isType( raw_args, typeList ));
 	assert( raw_args->tail );	
-	assert( isType( raw_args->tail, _typeList ));	
+	assert( isType( raw_args->tail, typeList ));	
 	term* args = fmap_1( _eval, c, raw_args );
 	term_takeRef( args );
-	assert( isType( args, _typeList ));
+	assert( isType( args, typeList ));
 	assert( isType( head( args ), typeFloat ));
 	assert( isType( head( tail( args )), typeFloat ));
 
@@ -728,7 +658,7 @@ term* lisp_func_add( context* c, term* raw_args ) {
 term* lisp_func_sub( context* c, term* raw_args ) {
 	term* args = fmap_1( _eval, c, raw_args );
 	term_takeRef( args );
-	assert( isType( args, _typeList ));
+	assert( isType( args, typeList ));
 	assert( isType( head( args ), typeFloat ));
 	assert( isType( head( tail( args )), typeFloat ));
 
@@ -746,7 +676,7 @@ term* lisp_func_sub( context* c, term* raw_args ) {
 term* lisp_func_mul( context* c, term* raw_args ) {
 	term* args = fmap_1( _eval, c, raw_args );
 	term_takeRef( args );
-	assert( isType( args, _typeList ));
+	assert( isType( args, typeList ));
 	assert( isType( head( args ), typeFloat ));
 	assert( isType( head( tail( args )), typeFloat ));
 
@@ -764,7 +694,7 @@ term* lisp_func_mul( context* c, term* raw_args ) {
 term* lisp_func_div( context* c, term* raw_args ) {
 	term* args = fmap_1( _eval, c, raw_args );
 	term_takeRef( args );
-	assert( isType( args, _typeList ));
+	assert( isType( args, typeList ));
 	assert( isType( head( args ), typeFloat ));
 	assert( isType( head( tail( args )), typeFloat ));
 
@@ -782,7 +712,7 @@ term* lisp_func_div( context* c, term* raw_args ) {
 term* lisp_func_greaterthan( context* c, term* raw_args ) {
 	term* args = fmap_1( _eval, c, raw_args );
 	term_takeRef( args );
-	assert( isType( args, _typeList ));
+	assert( isType( args, typeList ));
 	assert( isType( head( args ), typeFloat ));
 	assert( isType( head( tail( args )), typeFloat ));
 	float a = *(float*)head( args )->head;
@@ -827,7 +757,7 @@ term* lisp_func_vector( context* c, term* raw_args ) {
 		t = t->tail;
 	}
 	
-	term* vec = term_create( _typeVector, v );;
+	term* vec = term_create( typeVector, v );;
 	term_deref( args );
 	return vec;
 	}
@@ -839,9 +769,9 @@ term* lisp_func_color( context* c, term* raw_args ) {
 	//	> A Vector ( the rgba values from 0->1, eg. [1.0 0.0 0.0 1.0] )
 	//	> A list of floats ( the rgba values from 0->1, eg. (1.0 0.0 0.0 1.0) )
 	//	> A string ( name of the color, eg. "red" )
-	assert( isType( args, _typeList ) && list_length( args ) == 1 );
-	assert( isType( head( args ), _typeVector ) || isType( head( args ), _typeList ) || isType( head( args ), _typeString ) );
-	term* color = term_create( _typeVector, NULL );
+	assert( isType( args, typeList ) && list_length( args ) == 1 );
+	assert( isType( head( args ), typeVector ) || isType( head( args ), typeList ) || isType( head( args ), typeString ) );
+	term* color = term_create( typeVector, NULL );
 	color->head = value_create( sizeof( vector ));
 	vector v;
 	*(vector*)color->head = v;
@@ -925,9 +855,9 @@ term* lisp_func_new( context* c, term* raw_args ) {
 	term* args = fmap_1( _eval, c, raw_args );
 	term_takeRef( args );
 	term* type = head( args );
-	vAssert( type && isType( type, _typeAtom ));
+	vAssert( type && isType( type, typeAtom ));
 	void* object = object_createType( type->string );
-	term* ret = term_create( _typeObject, object );
+	term* ret = term_create( typeObject, object );
 	term_deref( args );
 	return ret;
 	}
@@ -939,8 +869,8 @@ term* lisp_func_object_process( context *c, term* raw_args ) {
 	term* args = fmap_1( _eval, c, raw_args );
 	term_takeRef( args );
 	lisp_assert( list_length( args ) == 2 );
-	lisp_assert( isType( head( tail( args )), _typeList ));
-	lisp_assert( isType( head( args ), _typeObject ));
+	lisp_assert( isType( head( tail( args )), typeList ));
+	lisp_assert( isType( head( args ), typeObject ));
 
 	// Alias args
 	term* ret = head( args );
@@ -979,7 +909,7 @@ term* lisp_func_tail( context* c, term* raw_args ) {
 	term* args = fmap_1( _eval, c, raw_args );
 	term_takeRef( args );
 	term* list = head( args );
-	vAssert( isType( list, _typeList ));
+	vAssert( isType( list, typeList ));
 	term* t = tail( list );
 	if ( !t )
 		t = &lisp_false;
@@ -996,7 +926,7 @@ term* lisp_func_head( context* c, term* raw_args ) {
 	term* list = head( args );
 	term* h = head( list );
 	term* ret = NULL;
-	if ( isType( h, _typeList )) {
+	if ( isType( h, typeList )) {
 		ret = list_copy( h );
 	}
 	else {
@@ -1047,14 +977,14 @@ void lisp_init() {
 
 term* lisp_func_model( context* c, term* raw_args ) {
 	(void)c;
-	assert( isType( raw_args, _typeList ));
+	assert( isType( raw_args, typeList ));
 	term* args = fmap_1( _eval, c, raw_args );
 	term_takeRef( args );
-	assert( isType( args, _typeList ));
-	assert( isType( head( args ), _typeObject )); // Looking for a mesh
+	assert( isType( args, typeList ));
+	assert( isType( head( args ), typeObject )); // Looking for a mesh
 	model* m = model_createModel( 1 ); // default to one mesh
 	m->meshes[0] = head( args )->data;
-	term* ret = term_create( _typeObject, m );
+	term* ret = term_create( typeObject, m );
 
 	m->obb = obb_calculate( m->meshes[0]->vert_count, m->meshes[0]->verts );
 	//term_deref( args );	
@@ -1074,55 +1004,55 @@ term* lisp_func_model( context* c, term* raw_args ) {
 
    */
 term* lisp_func_mesh( context* c, term* raw_args ) {
-	assert( isType( raw_args, _typeList ));
+	assert( isType( raw_args, typeList ));
 	term* args = fmap_1( _eval, c, raw_args );
 	term_takeRef( args );
-	assert( isType( args, _typeList ));
-	assert( isType( head( args ), _typeObject )); // Looking for a mesh
+	assert( isType( args, typeList ));
+	assert( isType( head( args ), typeObject )); // Looking for a mesh
 
 	mesh* msh = mesh_loadObj( "dat/model/sphere.obj" );
-	term* ret = term_create( _typeObject, msh );
+	term* ret = term_create( typeObject, msh );
 	term_deref( args );	
 	return ret;
 }
 
 // Create an empty mesh
 term* lisp_func_mesh_create( context* c, term* raw_args ) {
-	assert( isType( raw_args, _typeList ));
+	assert( isType( raw_args, typeList ));
 	term* args = fmap_1( _eval, c, raw_args );
 	term_takeRef( args );
-	assert( isType( args, _typeList ));
-	assert( isType( head( args ), _typeObject )); // Looking for a mesh
+	assert( isType( args, typeList ));
+	assert( isType( head( args ), typeObject )); // Looking for a mesh
 
 	mesh* msh = NULL;
-	term* ret = term_create( _typeObject, msh );
+	term* ret = term_create( typeObject, msh );
 	term_deref( args );	
 	return ret;
 }
 
 term* lisp_func_mesh_loadFile( context* c, term* raw_args ) {
-	assert( isType( raw_args, _typeList ));
+	assert( isType( raw_args, typeList ));
 	term* args = fmap_1( _eval, c, raw_args );
 	term_takeRef( args );
-	assert( isType( args, _typeList ));
-	assert( isType( head( args ), _typeString )); // Looking for a mesh
+	assert( isType( args, typeList ));
+	assert( isType( head( args ), typeString )); // Looking for a mesh
 
 	const char* filename = head( args )->string;
 	mesh* msh = mesh_loadObj( filename );
-	term* ret = term_create( _typeObject, msh );
+	term* ret = term_create( typeObject, msh );
 	term_deref( args );	
 	return ret;
 }
 
 term* lisp_func_filename( context* c, term* raw_args ) {
-	lisp_assert( isType( raw_args, _typeList ));
+	lisp_assert( isType( raw_args, typeList ));
 	term* args = fmap_1( _eval, c, raw_args );
 	term_takeRef( args );
-	lisp_assert( isType( args, _typeList ));
-	lisp_assert( isType( head( args ), _typeString ));
+	lisp_assert( isType( args, typeList ));
+	lisp_assert( isType( head( args ), typeString ));
 
 	mesh* msh = mesh_loadObj( "dat/model/sphere.obj" );
-	term* ret = term_create( _typeObject, msh );
+	term* ret = term_create( typeObject, msh );
 	term_deref( args );	
 	return ret;
 }
@@ -1130,19 +1060,19 @@ term* lisp_func_filename( context* c, term* raw_args ) {
 // PLACEHOLDER
 term* lisp_func_transform( context* c, term* raw_args ) {
 	(void)c;
-	assert( isType( raw_args, _typeList ));
+	assert( isType( raw_args, typeList ));
 	/*
 	term* args = fmap_1( _eval, c, raw_args );
 	term_takeRef( args );
-	assert( isType( args, _typeList ));
-	assert( isType( head( args ), _typeObject )); // Looking for a mesh
+	assert( isType( args, typeList ));
+	assert( isType( head( args ), typeObject )); // Looking for a mesh
 	*/
 	//term_deref( args );	
 	return &lisp_false;
 }
 
 void lisp_assertArgs_1( term* t, enum termType type ) {
-	lisp_assert( isType( t, _typeList ));
+	lisp_assert( isType( t, typeList ));
 	lisp_assert( list_length( t ) == 1 );
 	lisp_assert( isType( head( t ), type ));
 }
@@ -1156,7 +1086,7 @@ term* lisp_func_attribute( context* c, term* raw_args ) {
 	(void)c;
 	(void)raw_args;
 	
-	lisp_assert( isType( raw_args, _typeList ));
+	lisp_assert( isType( raw_args, typeList ));
 	lisp_assert( list_length( raw_args ) ==  3 );
 	term* args = fmap_1( _eval, c, raw_args );
 	term* value = head( tail( args ));
@@ -1164,7 +1094,7 @@ term* lisp_func_attribute( context* c, term* raw_args ) {
 	term_takeRef( args );
 
 	const char* attribute_name = head( args )->string;
-	lisp_assert( isType( tail( args ), _typeList ));
+	lisp_assert( isType( tail( args ), typeList ));
 	term* ob = head( tail( tail( args )));
 
 	attributeSetter attr = attributeFunction( /* object, */ attribute_name );
@@ -1174,16 +1104,6 @@ term* lisp_func_attribute( context* c, term* raw_args ) {
 	//term_deref( args );	
 	return &lisp_false;
 }
-
-/*
-term* setParticleFlags( term* flag_term, void* flag_ptr ) {
-	(void)flag_term;
-	particle_flags_t* flags = flag_ptr;
-	particle_flags_t flag = 0x0;
-	*flags = *flags | flag;
-	return NULL;
-}
-*/
 
 // Turn a flag atom into a bitmask number
 term* parseFlag( term* flag_atom, void* unused /* to fit fmap_func signature */ ) {
@@ -1241,7 +1161,7 @@ void attr_particle_flags( term* definition_term, term* flags_attr ) {
 void attr_particle_texture( term* definition_term, term* texture_attr ) {
 	particleEmitterDef* def = definition_term->data;
 	lisp_assert( def );
-	lisp_assert( isType( texture_attr, _typeString ));
+	lisp_assert( isType( texture_attr, typeString ));
 	def->texture_diffuse = texture_load( texture_attr->string );
 }
 
@@ -1269,7 +1189,7 @@ void attr_particle_setColor( term* definition_term, term* color_attr ) {
 }
 
 void attr_particle_setSize( term* definition_term, term* size_attr ) {
-	lisp_assert( isType( size_attr, _typeObject ));
+	lisp_assert( isType( size_attr, typeObject ));
 	// TODO - we need to copy and preserve this correctly
 	property* size = property_copy( size_attr->data );
 	particleEmitterDef* def = definition_term->data;
@@ -1278,7 +1198,7 @@ void attr_particle_setSize( term* definition_term, term* size_attr ) {
 }
 
 void attr_mesh_diffuseTexture( term* mesh_term, term* texture_attr ) {
-	lisp_assert( isType( texture_attr, _typeString ));
+	lisp_assert( isType( texture_attr, typeString ));
 	mesh* m = mesh_term->data;
 	lisp_assert( m );
 	m->texture_diffuse = texture_load( texture_attr->string );
@@ -1290,12 +1210,12 @@ term* lisp_func_particle_emitter_definition_create( context* c, term* raw_args )
 	(void)raw_args;
 
 	particleEmitterDef* def = particleEmitterDef_create();
-	return term_create( _typeObject, def );	
+	return term_create( typeObject, def );	
 }
 
 // (property_create stride)
 term* lisp_func_property_create( context* c, term* raw_args ) {
-	lisp_assert( isType( raw_args, _typeList ));
+	lisp_assert( isType( raw_args, typeList ));
 	term* args = fmap_1( _eval, c, raw_args );
 	term_takeRef( args );
 	
@@ -1305,7 +1225,7 @@ term* lisp_func_property_create( context* c, term* raw_args ) {
 	term* s = head( args );
 	int stride = (int)(*s->number);
 	property* p = property_create( stride );
-	term* tp = term_create( _typeObject, p );
+	term* tp = term_create( typeObject, p );
 
 	term_deref( args );	
 	return tp;
@@ -1313,16 +1233,16 @@ term* lisp_func_property_create( context* c, term* raw_args ) {
 
 term* lisp_func_property_addkey( context* c, term* raw_args ) {
 	(void)c;
-	lisp_assert( isType( raw_args, _typeList ));
+	lisp_assert( isType( raw_args, typeList ));
 	term* args = fmap_1( _eval, c, raw_args );
 	term_takeRef( args );
-	lisp_assert( isType( args, _typeList ));
+	lisp_assert( isType( args, typeList ));
 
 	term* tp = head( args );
 	property* p = tp->data;
 	// get first key for now
 	term* key = head( tail( args ));
-	lisp_assert( isType( key, _typeList ));
+	lisp_assert( isType( key, typeList ));
 	// get the two floats out;
 	float k = *head( key )->number;
 	int stride = list_length( key );
@@ -1344,7 +1264,7 @@ term* lisp_func_property_addkey( context* c, term* raw_args ) {
 	args->head = NULL;
 	term_deref( args );	
 
-	lisp_assert( isType( tp, _typeObject ));
+	lisp_assert( isType( tp, typeObject ));
 	vAssert( tp->data == p );
 	return tp;
 }
@@ -1356,7 +1276,7 @@ term* lisp_func_property_addkey( context* c, term* raw_args ) {
    			(some code (using args)))
    */
 term* lisp_func_defun( context* c, term* raw_args ) {
-	lisp_assert( isType( head( raw_args ), _typeAtom ));
+	lisp_assert( isType( head( raw_args ), typeAtom ));
 	const char* name = head( raw_args )->string;
 	term* value = tail( raw_args );
 	PARSE_PRINT( "LISP: DEFUN \"%s\"\n", name );
@@ -1420,10 +1340,10 @@ void test_lisp() {
 	term* script = lisp_parse_string( "(a b)" );
 	term_takeRef( script );
 	// Type tests
-	assert( isType( script, _typeList ));
-	assert( isType( head( script ), _typeAtom ));
-	assert( isType( tail( script ), _typeList ));
-	assert( isType( head( tail( script )), _typeAtom ));
+	assert( isType( script, typeList ));
+	assert( isType( head( script ), typeAtom ));
+	assert( isType( tail( script ), typeList ));
+	assert( isType( head( tail( script )), typeAtom ));
 	// Value tests
 	assert( string_equal( value( head( script )) , "a" ));
 	assert( string_equal( value( head( tail( script ))) , "b" ));
@@ -1433,8 +1353,8 @@ void test_lisp() {
 	//assert( lisp_heap->allocations == 0 );
 	
 	context* c = lisp_newContext();
-	term* hello = term_create( _typeString, "Hello World" );
-	term* goodbye = term_create( _typeString, "Goodbye World" );
+	term* hello = term_create( typeString, "Hello World" );
+	term* goodbye = term_create( typeString, "Goodbye World" );
 	context_add( c, "b", hello );
 	context_add( c, "goodbye", goodbye );
 
@@ -1444,7 +1364,7 @@ void test_lisp() {
 	// Test #1 - Variable binding
 	term* result = _eval( lisp_parse_string( "b" ), c );
 	term_takeRef( result );
-	assert( isType( result, _typeString ) && string_equal( result->string, "Hello World" ));
+	assert( isType( result, typeString ) && string_equal( result->string, "Hello World" ));
 	term_deref( result );
 
 	//assert( lisp_heap->allocations == 3 );
@@ -1557,7 +1477,7 @@ void test_lisp() {
 
 	term* vec = _eval( lisp_parse_string( "(vector 0.0 0.0 1.0)" ), c );
 	term_takeRef( vec );
-	assert( isType( vec, _typeVector ));
+	assert( isType( vec, typeVector ));
 	term_deref( vec );
 
 	define_cfunction( c, "new", lisp_func_new );
@@ -1576,7 +1496,7 @@ void test_lisp() {
 	term_deref( h );
 
 	term* test = _eval( lisp_parse_string( "(new (quote test_struct))" ), c );
-	vAssert( isType( test, _typeObject ));
+	vAssert( isType( test, typeObject ));
 	test_struct* object = test->data;
 
 	term* test_b = _eval( lisp_parse_string( "(object_process (new (quote test_struct)) (quote (test_a 1.0)))" ), c );
@@ -1597,7 +1517,7 @@ void test_lisp() {
 	//heap_dumpUsedBlocks( lisp_heap );
 	{
 		term* t = _eval( lisp_parse_string( "(property (quote ((0.0 1.0) (0.3 2.0) (0.6 2.0) (2.0 4.0))))" ), c );
-		lisp_assert( isType( t, _typeObject ));
+		lisp_assert( isType( t, typeObject ));
 		lisp_assert( ((property*)t->data)->stride == 2 );
 	}
 

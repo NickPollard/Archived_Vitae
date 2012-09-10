@@ -382,8 +382,6 @@ void canyon_seekForWorldPosition( vector position ) {
 	float u, v;
 	terrain_canyonSpaceFromWorld( position.coord.x, position.coord.z, &u, &v );
 	size_t seek_position = max( 0, terrainCanyon_segmentAtDistance( v ) - kTrailingCanyonSegments );
-	//size_t seek_position = max( canyon_streaming_buffer.stream_position, terrainCanyon_segmentAtDistance( v ) - kTrailingCanyonSegments );
-	printf( "seeking canyon to " dPTRf ".\n", seek_position );
 	canyonBuffer_seek( &canyon_streaming_buffer, seek_position );
 }
 
