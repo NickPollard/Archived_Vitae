@@ -88,6 +88,7 @@ void test_engine_init( engine* e ) {
 	{
 		dynamicFog* f = dynamicFog_create();
 		f->scene = theScene;
+		theScene->fog = f;
 		startTick( e, (void*)f, dynamicFog_tick );
 	}
 }

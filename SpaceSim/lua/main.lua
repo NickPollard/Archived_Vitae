@@ -296,11 +296,11 @@ function setup_controls()
 		player_ship.steering_input = steering_input_keyboard
 	end
 	-- Crosshair
-	local w = 40
-	local h = 40
+	local w = 128
+	local h = 128
 	local x = 640 - ( w / 2 )
 	local y = 360 - ( h / 2 ) - 40
-	vcreateUIPanel( engine, x, y, w, h )
+	vcreateCrosshair( engine, x, y, w, h )
 end
 
 function player_ship_collisionHandler( ship, collider )
@@ -538,14 +538,12 @@ function debug_tick()
 	if vkeyPressed( input, key.c ) then
 		toggle_camera()
 	end
---[[
-	array_a = { 6, 5, 3, 4, 2, 1 }
-	array_b = filter( array_a, function( e ) return (e % 2 == 0) end )
-	vprint( "array_b:" )
-	for key, value in ipairs(array_b) do
-		vprint( tostring( value ))
-	end
-	--]]
+end
+
+function sky_tick( camera, dt )
+	camera_position = vcamera_position( camera )
+	u,v = vworldPositionFromCanyon( camera_position )
+	vdynamicSky_blend( v )
 end
 
 -- Called once per frame to update the current Lua State
@@ -555,6 +553,8 @@ function tick( dt )
 		start()
 	end
 
+	sky_tick( chasecam, dt )
+
 	playership_tick( player_ship, dt )
 
 	debug_tick()
@@ -563,76 +563,11 @@ function tick( dt )
 
 	update_spawns( player_ship )
 
---[[
-	if wave_complete( current_wave ) then
-		current_wave = current_wave + 1
-		vitae_countdown_trigger( wave_interval_time, spawn_wave( current_wave ))
-	end
---]]
 end
 
 -- Called on termination to clean up after itself
 function terminate()
 	player = nil
-end
-
--- We want to have set waves
--- Waves spawn only when the previous wave is complete
--- In a wave, not everything spawns immediately
--- Want to be able to set up spawners and tag them with waves to be active on
-
---[[
-function spawner( spawn_type, amount, time )
-	local spawner = {
-		spawn_type = spawn_type,
-		amount = amount,
-		time = time
-	}
-	return spawner
-end
---]]
-
-function spawn( spawner )
-	for i=1,spawner.amount do
-		gameobject( spawner.spawn_type )
-	end
-end
-
-function wave_add_spawn( wave, spawner )
-	wave[wave.count] = spawner
-	wave.count = wave.count + 1
-end
-
-function wave()
-	wave = {}
-	return wave
-end
-
-function setup_wave_spawns()
-	--[[
-	wave_1 = wave()
-	wave_add_spawn( wave_1, spawner( "rocket_fighter", 5, 10.0 ) )
-	--]]
-
-	wave = { count = 0 }
-	wave[wave.count] = spawner( "rocket_fighter", 5, 10.0 )
-	wave[wave.count] = function ( count, repeat_time )
-		spawn_gameobject( "rocket_fighter", repeat_time )
-		if count > 1 then
-			delayed_trigger( wave[wave.count]( count-1, repeat_time ) )
-		end
-	end
-	wave.count = wave.count + 1
-
-	function start_spawn_countdown( spawner )
-		vitae_countdown_trigger( spawner.time, spawn( spawner ))
-	end
-end
-
-function start_wave( wave )
-	for i=1,wave.count do
-		start_spawn_countdown( wave[i] )
-	end
 end
 
 function delay( time, command )
@@ -643,35 +578,6 @@ function delay( time, command )
 		delay( time-1, command )
 	end
 end
-
-function test( )
-	--[[
-	func = function( a, b )
-		if a > 0 then
-			print( b )
-			func( a - 1, b )
-		end	
-	end
-	func( z, y )
-
-	--]]
-
-	wave = { count = 0 }
-	wave[wave.count] = function () 
-		spawner = function ( spawn_type, count, repeat_time )
-			print( string.format( "Spawning %s", spawn_type ) )
-			if count > 1 then
-				delay( repeat_time, function ()
-					spawner( spawn_type, count-1, repeat_time ) 
-				end )
-			end
-		end 
-		spawner( "rocket", 5, 10 )
-	end
-
-	wave[0]()
-end
-
 
 function spawn_index( pos )
 	return math.floor( ( pos - spawn_offset ) / spawn_interval )

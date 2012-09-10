@@ -40,6 +40,7 @@ struct scene_s {
 	vector		fog_color;
 	vector		sky_color;
 	camera*		cam;
+	dynamicFog*	fog;
 
 	// Debug
 	debugtextframe* debugtext;

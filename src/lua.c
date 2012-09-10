@@ -6,7 +6,9 @@
 
 // temp
 #include "canyon.h"
+#include "canyon_zone.h"
 #include "collision.h"
+#include "dynamicfog.h"
 #include "model.h"
 #include "scene.h"
 #include "engine.h"
@@ -591,6 +593,14 @@ int LUA_setCamera( lua_State* l ) {
 	return 0;
 }
 
+int LUA_cameraPosition( lua_State* l ) {
+	camera* c = lua_toptr( l, 1 );
+	vector* v = lua_createVector();
+	*v = *transform_getWorldPosition( c->trans );
+	lua_pushptr( l, v );
+	return 1;
+}
+
 int LUA_transform_setWorldSpaceByTransform( lua_State* l ) {
 	transform* dst = lua_toptr( l, 1 );
 	transform* src = lua_toptr( l, 2 );
@@ -674,8 +684,32 @@ int LUA_worldPositionFromCanyon( lua_State* l ) {
 	return 2;
 }
 
+int LUA_dynamicSky_blend( lua_State* l ) {
+	float v = lua_tonumber( l, 1 );
+	(void)v;
+	float blend = canyonZone_blend( v );
+	int previous = canyon_zone( v );
+	int next = 1 - previous;
+	dynamicFog_blend( theScene->fog, previous, next, blend );
+	return 0;
+}
 
-
+// TODO: TEMP
+int LUA_createCrosshair( lua_State* l ) {
+	engine* e = lua_toptr( l, 1 );
+	float x = lua_tonumber( l, 2 );
+	float y = lua_tonumber( l, 3 );
+	float w = lua_tonumber( l, 4 );
+	float h = lua_tonumber( l, 5 );
+	panel* p = panel_create();
+	p->x = x;
+	p->y = y;
+	p->width = w;
+	p->height = h;
+	texture_requestFile( &p->texture, "dat/img/crosshair_rgba128.tga" );
+	engine_addRender( e, p, panel_render );
+	return 0;
+}
 
 int LUA_createUIPanel( lua_State* l ) {
 	engine* e = lua_toptr( l, 1 );
@@ -801,13 +835,18 @@ lua_State* vlua_create( engine* e, const char* filename ) {
 	lua_registerFunction( l, LUA_chasecam_follow, "vchasecam_follow" );
 	lua_registerFunction( l, LUA_flycam, "vflycam" );
 	lua_registerFunction( l, LUA_setCamera, "vscene_setCamera" );
+	lua_registerFunction( l, LUA_cameraPosition, "vcamera_position" );
 
 	// *** UI
 	lua_registerFunction( l, LUA_createUIPanel, "vcreateUIPanel" );
+	lua_registerFunction( l, LUA_createCrosshair, "vcreateCrosshair" );
 
 	// *** Game
 	lua_registerFunction( l, LUA_canyonPosition, "vcanyon_position" );
 	lua_registerFunction( l, LUA_worldPositionFromCanyon, "vworldPositionFromCanyon" );
+	lua_registerFunction( l, LUA_dynamicSky_blend, "vdynamicSky_blend" );
+
+
 
 	lua_makeConstantPtr( l, "engine", e );
 	lua_makeConstantPtr( l, "input", e->input );

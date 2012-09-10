@@ -23,8 +23,12 @@ dynamicFog* dynamicFog_create() {
 	return f;
 }
 
+// the dynamicFog tick function implementation
 void dynamicFog_tick( void* v, float dt, engine* eng ) {
 	(void)eng;
+	(void)dt;
+	(void)v;
+	/*
 	dynamicFog* fog = v;
 	fog->time += dt;
 	const float timeCycle = 120.f;
@@ -38,8 +42,15 @@ void dynamicFog_tick( void* v, float dt, engine* eng ) {
 	int new = (old + 1) % fog->fog_count;
 
 	float blend = f - floorf( f );
-	vector fog_color = vector_lerp( &fog->fog_colors[old], &fog->fog_colors[new], blend );
-	vector sky_color = vector_lerp( &fog->sky_colors[old], &fog->sky_colors[new], blend );
+	dynamicFog_blend( fog, old, new, blend );
+	*/
+}
+
+// blend the sky and fog to the correct interpolated value
+void dynamicFog_blend( dynamicFog* fog, int previous, int next, float blend ) {
+	printf( "Fog blend: %.2f\n", blend );
+	vector fog_color = vector_lerp( &fog->fog_colors[previous], &fog->fog_colors[next], blend );
+	vector sky_color = vector_lerp( &fog->sky_colors[previous], &fog->sky_colors[next], blend );
 	scene_setFogColor( fog->scene, &fog_color );
 	scene_setSkyColor( fog->scene, &sky_color );
 }

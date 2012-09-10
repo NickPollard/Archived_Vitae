@@ -4,6 +4,7 @@
 
 #define kZoneLength 2000.f
 #define kNumZones	2
+#define kZoneBlendDistance 200.f
 
 // Texture
 #define kZoneTextureWidth 128
@@ -24,6 +25,14 @@ void canyonZone_staticInit();
 
 int canyon_zone( float v );
 int canyon_zoneType( float v );
+
+float canyonZone_progress( float v );
+float canyonZone_totalBlend( float v );
+float canyonZone_blend( float v );
+
+// A float ratio for how strongly in the zone we are, use for zone colouring
+float canyonZone_terrainBlend( float v );
+
 vector canyonZone_cliffColor( int zone );
 vector canyonZone_terrainColor( int zone );
 vector canyonZone_edgeColor( int zone );

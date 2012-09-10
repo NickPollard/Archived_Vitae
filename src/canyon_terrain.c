@@ -457,7 +457,7 @@ void canyonTerrainBlock_calculateBuffers( canyonTerrainBlock* b ) {
 				vAssert( buffer_index >= 0 );
 				b->vertex_buffer[buffer_index].position = verts[i];
 				b->vertex_buffer[buffer_index].uv = Vector( verts[i].coord.x * texture_scale, verts[i].coord.z * texture_scale, 0.f, 0.f );
-				b->vertex_buffer[buffer_index].color = Vector( (float)canyon_zoneType( v ), 0.f, 0.f, 1.f );
+				b->vertex_buffer[buffer_index].color = Vector( canyonZone_terrainBlend( v ), 0.f, 0.f, 1.f );
 			}
 #endif // CANYON_TERRAIN_INDEXED
 		}

@@ -587,7 +587,15 @@ int render_current_texture_unit = 0;
 // It binds the given texture to an available texture unit
 // and sets the uniform to that
 void render_setUniform_texture( GLuint uniform, GLuint texture ) {
-	vAssert( render_current_texture_unit < GL_MAX_TEXTURE_UNITS );
+	GLint max_texture_units = 0;
+#ifdef RENDER_OPENGL
+	glGetIntegerv( GL_MAX_TEXTURE_UNITS, &max_texture_units );
+#endif
+#ifdef RENDER_OPENGL_ES
+	glGetIntegerv( GL_MAX_COMBINED_TEXTURE_IMAGE_UNITS, &max_texture_units );
+#endif
+	vAssert( render_current_texture_unit < max_texture_units );
+
 	// Activate a texture unit
 	glActiveTexture( GL_TEXTURE0 + render_current_texture_unit );
 

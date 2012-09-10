@@ -172,7 +172,7 @@ static int32_t handle_input(struct android_app* app, AInputEvent* event) {
 					int pointer_y = AMotionEvent_getY( event, i );
 					int uid = AMotionEvent_getPointerId( event, i );
 					input_registerTouch( e->input, uid, pointer_x, pointer_y, action );
-					printf( "Pointer action %d. uid %d.\n", action_code, uid );
+					//printf( "Pointer action %d. uid %d.\n", action_code, uid );
 				}
 				break;
 			default:
@@ -187,12 +187,14 @@ static int32_t handle_input(struct android_app* app, AInputEvent* event) {
 				}
 				break;
 		}
+		/*
 		if ( action_code == AMOTION_EVENT_ACTION_UP )
 			printf( "Touch Action Up\n" );
 		if ( action_code == AMOTION_EVENT_ACTION_CANCEL )
 			printf( "Touch Action Cancel\n" );
 
 		printf( "touch_event %d\n", action_code );
+		*/
 	/*	
 		for ( int i = 0; i < pointer_count; ++i ) {
 			int pointer_x = AMotionEvent_getX( event, i );
