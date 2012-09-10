@@ -330,8 +330,8 @@ function restart()
 	vtransform_setWorldPosition( player_ship.transform, start_position )
 
 	-- Init velocity
-	player_ship.speed = 0.0
-	local no_velocity = Vector( 0.0, 0.0, 0.0, 0.0 )
+	player_ship.speed = 30.0
+	local no_velocity = Vector( 0.0, 0.0, player_ship.speed, 0.0 )
 	vphysic_setVelocity( player_ship.physic, no_velocity )
 
 	-- Init Collision
@@ -506,14 +506,9 @@ function playership_tick( ship, dt )
 
 	-- throttle
 	width = 100
-	acceleration = 16.0
+	acceleration = 1.0
 	delta_speed = acceleration * dt;
-	if vkeyHeld( input, key.w )  or vtouchHeld( input, 000.0, -width*3, 100.0, -width*2 ) then
-		ship.speed = ship.speed + delta_speed
-	end
-	if vkeyHeld( input, key.s )  or vtouchHeld( input, 000.0, -width, 100.0, -1.0 ) then
-		ship.speed = ship.speed - delta_speed
-	end
+	ship.speed = ship.speed + delta_speed
 
 	playership_weaponsTick( ship, dt )
 
