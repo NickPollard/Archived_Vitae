@@ -255,43 +255,24 @@ end
 
 function setup_controls()
 	-- Set up steering input for the player ship
-	use_drag = true
 	if touch_enabled then
-		if use_drag then
-			-- Steering
-			local w = 720
-			local h = 720
-			local x = 1280 - w
-			local y = 720 - h
-			player_ship.joypad_mapper = drag_map()
-			player_ship.joypad = vcreateTouchPad( input, x, y, w, h )
-			player_ship.steering_input = steering_input_drag
-			-- UI drawing is upside down compared to touchpad placement - what to do about this?
-			--vcreateUIPanel( engine, x, 0, w, h )
+		-- Steering
+		local w = 720
+		local h = 720
+		local x = 1280 - w
+		local y = 720 - h
+		player_ship.joypad_mapper = drag_map()
+		player_ship.joypad = vcreateTouchPad( input, x, y, w, h )
+		player_ship.steering_input = steering_input_drag
+		-- UI drawing is upside down compared to touchpad placement - what to do about this?
 
-		else
-			-- Steering
-			local w = 360
-			local h = 360
-			local x = 1280 - w
-			local y = 720 - h
-			local deadzone = 30
-			player_ship.joypad_mapper = joypad_mapSquare( w, h, deadzone, deadzone )
-			player_ship.joypad = vcreateTouchPad( input, x, y, w, h )
-			player_ship.steering_input = steering_input_joypad
-			-- UI drawing is upside down compared to touchpad placement - what to do about this?
-			--vcreateUIPanel( engine, x, 0, w, h )
-
-		end			-- Firing Trigger
+		-- Firing Trigger
 		local x = 0
-		local y = 30
-		local w = 200
-		local h = 200
+		local y = 0
+		local w = 1280 - 720
+		local h = 720
 		player_ship.fire_trigger = vcreateTouchPad( input, x, y, w, h )
-		vcreateUIPanel( engine, x, 720-y-h, w, h )
-		-- throttle	
-		vcreateUIPanel( engine, 0, 200, 100, 100 )
-		vcreateUIPanel( engine, 0, 0, 100, 100 )
+		--vcreateUIPanel( engine, x, 720-y-h, w, h )
 	else
 		player_ship.steering_input = steering_input_keyboard
 	end
