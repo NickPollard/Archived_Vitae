@@ -49,6 +49,8 @@ void dynamicFog_tick( void* v, float dt, engine* eng ) {
 // blend the sky and fog to the correct interpolated value
 void dynamicFog_blend( dynamicFog* fog, int previous, int next, float blend ) {
 	printf( "Fog blend: %.2f\n", blend );
+	previous = previous % fog->fog_count;
+	next = next % fog->fog_count;
 	vector fog_color = vector_lerp( &fog->fog_colors[previous], &fog->fog_colors[next], blend );
 	vector sky_color = vector_lerp( &fog->sky_colors[previous], &fog->sky_colors[next], blend );
 	scene_setFogColor( fog->scene, &fog_color );

@@ -689,7 +689,7 @@ int LUA_dynamicSky_blend( lua_State* l ) {
 	(void)v;
 	float blend = canyonZone_blend( v );
 	int previous = canyon_zone( v );
-	int next = 1 - previous;
+	int next = previous + 1;
 	dynamicFog_blend( theScene->fog, previous, next, blend );
 	return 0;
 }

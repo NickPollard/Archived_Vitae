@@ -15,7 +15,7 @@ IMPLEMENT_POOL( modelInstance )
 pool_modelInstance* static_modelInstance_pool = NULL;
 
 void modelInstance_initPool() {
-	static_modelInstance_pool = pool_modelInstance_create( 256 );
+	static_modelInstance_pool = pool_modelInstance_create( 1024 );
 }
 
 modelInstance* modelInstance_createEmpty( ) {

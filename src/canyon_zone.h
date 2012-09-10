@@ -4,7 +4,7 @@
 
 #define kZoneLength 2000.f
 #define kNumZones	2
-#define kZoneBlendDistance 200.f
+#define kZoneBlendDistance 400.f
 
 // Texture
 #define kZoneTextureWidth 128

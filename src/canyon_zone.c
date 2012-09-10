@@ -27,21 +27,13 @@ float canyonZone_distance( float v ) {
 	return v - floorf( v / kZoneLength ) * kZoneLength;
 }
 
-// A float ratio for how strongly in the zone we are, use for zone colouring
+// A float ratio for how strongly in the zone we are, use for zone terrain colouring
+// See-saws back and forth between 1.f and 0.f to deal with our texture building
 float canyonZone_terrainBlend( float v ) {
 	int zone_type = canyon_zoneType( v );
 	float this = (float)(zone_type % 2);
 	float next = 1.f - this;
-
-	float blend = 0.f;
-	float zone_distance = canyonZone_distance( v ); //v - floorf( v / kZoneLength ) * kZoneLength;
-	if ( zone_distance < kZoneBlendDistance ) {
-		blend = 0.5f - ( zone_distance / kZoneBlendDistance ) * 0.5f;
-	}
-	if ( zone_distance > kZoneLength - kZoneBlendDistance ) {
-		blend = 0.5f - (( kZoneLength - zone_distance ) / kZoneBlendDistance ) * 0.5f;
-	}
-	return lerp( this, next, blend );
+	return lerp( this, next, canyonZone_blend( v ));
 }
 
 // Returns a blend value from x to x + 1.f, of how much we should blend to the next zone
