@@ -27,6 +27,12 @@
 #include "system/file.h"
 #include "ui/panel.h"
 
+#if LUA_DEBUG
+#define LUA_DEBUG_PRINT(...) printf(__VA_ARGS__)
+#else
+#define LUA_DEBUG_PRINT(...)
+#endif
+
 #define MAX_LUA_VECTORS 64
 vector lua_vectors[MAX_LUA_VECTORS];
 int lua_vector_count;
@@ -36,14 +42,13 @@ void lua_keycodes( lua_State* l );
 // *** Helpers ***
 
 void lua_assertnumber( lua_State* l, int index ) {
-	assert( lua_isnumber( l, index ));
+	vAssert( lua_isnumber( l, index ));
 }
 void* lua_toptr( lua_State* l, int index ) {
 	lua_assertnumber( l, index );
 	uintptr_t ptr = lua_tonumber( l, index );
 	return (void*)ptr;
 }
-
 
 // ***
 
@@ -61,7 +66,6 @@ void lua_preTick( lua_State* l, float dt ) {
 	lua_pushnumber( l, dt );
 	lua_setglobal( l, "dt" ); // store the table in the 'key' global variable
 }
-
 
 // Is the luaCallback currently enabled?
 int luaCallback_enabled(luaCallback* l) {
@@ -127,6 +131,10 @@ void lua_retrieve( lua_State* l, int ref ) {
 	lua_rawgeti( l, LUA_REGISTRYINDEX, ref );
 }
 
+int lua_store( lua_State* l ) {
+	return luaL_ref( l, LUA_REGISTRYINDEX );
+}
+
 void lua_runFunc( lua_State* l, int ref, int args ) {
 	lua_retrieve( l, ref );
 	lua_pcall( l, args, 0, 0 );
@@ -155,22 +163,15 @@ int LUA_modelPreload( lua_State* l ) {
 	}
 }
 
-void testcallback( body* this, body* other, void* data ) {
-	(void)this;
-	(void)other;
-	(void)data;
-}
-
 typedef struct luaCollisionCallbackData_s {
-	lua_State* l;
+	lua_State* lua_state;
 	int callback_ref;
 } luaCollisionCallbackData;
 
 void lua_collisionCallback( body* this, body* other, void* data ) {
 	luaCollisionCallbackData* callback_data = (luaCollisionCallbackData*)data;
-	lua_State* l = callback_data->l;
+	lua_State* l = callback_data->lua_state;
 	int ref = callback_data->callback_ref;
-	//printf( "Lua registry indices: %d %d %d\n", ref, this->intdata, other->intdata );
 
 	lua_retrieve( l, ref );
 	vAssert( this->intdata );
@@ -181,11 +182,6 @@ void lua_collisionCallback( body* this, body* other, void* data ) {
 		lua_pushnumber( l, 0 );
 	}
 	lua_pcall( l, 2, 0, 0 );
-//	lua_runFunc( l, ref, 2 );
-}
-
-int lua_store( lua_State* l ) {
-	return luaL_ref( l, LUA_REGISTRYINDEX );
 }
 
 int LUA_createbodySphere( lua_State* l ) {
@@ -237,12 +233,6 @@ int LUA_scene_removeModel( lua_State* l ) {
 	return 0;
 }
 
-#if LUA_DEBUG
-#define LUA_DEBUG_PRINT(...) printf(__VA_ARGS__)
-#else
-#define LUA_DEBUG_PRINT(...)
-#endif
-
 #define LUA_CREATE_( type, func ) \
 int LUA_create##type( lua_State* l ) { \
 	LUA_DEBUG_PRINT( "Create %s\n", #type ); \
@@ -292,15 +282,12 @@ int LUA_body_registerCollisionCallback( lua_State* l ) {
 	// Store the lua func callback in the Lua registry
 	// and keep a reference to it so we can resolve it later
 	int ref = lua_store( l ); // Must be top of the stack
-	//printf( "Callback ref: %d.\n", ref );
 	b->callback = lua_collisionCallback;
-	// Store the Lua ref (which resolves to the function)
-	// in the callback_data for the body
-	// This allows us to call the correct lua func (or closure)
-	// for this body
+	// Store the Lua ref (which resolves to the function) in the callback_data for the body
+	// This allows us to call the correct lua func (or closure) for this body
 	// TODO: fix this temp hack
 	luaCollisionCallbackData* data = mem_alloc( sizeof( luaCollisionCallbackData ));
-	data->l = l;
+	data->lua_state = l;
 	data->callback_ref = ref;
 	b->callback_data = data;
 	return 0;
