@@ -1,5 +1,7 @@
 // canyon.h
 #pragma once
+#include "canyon_zone.h"
+#include "maths/vector.h"
 
 // The maximum canyon points loaded in the buffer at one time
 #define kMaxCanyonPoints 96
@@ -23,6 +25,17 @@ typedef struct window_buffer_s {
 	size_t window_size;
 } window_buffer;
 
+typedef struct canyon_s { 
+	int			zone_count;
+	canyonZone	zones[kNumZones];
+	int			current_zone;
+
+	texture*	canyonZone_lookup_texture;
+	texture*	canyonZone_lookup_pending;
+
+	vector		zone_sample_point;
+	scene*		scene;
+} canyon;
 
 // Canyon functions
 void terrain_debugDraw( window* w );
@@ -35,3 +48,5 @@ void terrain_canyonSpaceFromWorld( float x, float z, float* u, float* v );
 
 // Convert canyon-space U and V coords into world space X and Z
 void terrain_worldSpaceFromCanyon( float u, float v, float* x, float* z );
+void canyon_tick( void* canyon_data, float dt, engine* eng );
+canyon* canyon_create();

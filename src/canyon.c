@@ -414,3 +414,29 @@ void terrain_debugDraw( window* w ) {
 			   	canyon_point( &canyon_streaming_buffer, canyon_streaming_buffer.head + i + 1 ));
 	}
 }
+
+void canyon_tick( void* canyon_data, float dt, engine* eng ) {
+	(void)eng;
+	canyon* c = canyon_data;
+	float u, v;
+	terrain_canyonSpaceFromWorld( zone_sample_point.coord.x, zone_sample_point.coord.z, &u, &v );
+	int zone = canyon_zone( v );
+
+	int current = zone % canyon_zone_count;
+	int next = ( zone + 1 ) % canyon_zone_count;
+	canyonZone* a = &zones[current];
+	canyonZone* b = &zones[next];
+	vector sky_color;
+	vector fog_color;
+	canyonZone_skyFogBlend( a, b, canyonZone_blend( v ), &sky_color, &fog_color );
+	scene_setFogColor( c->scene, &fog_color );
+	scene_setSkyColor( c->scene, &sky_color );
+
+	canyonZone_tick( c, dt );
+}
+
+canyon* canyon_create() {
+	canyon* c = mem_alloc( sizeof( canyon ));
+	memset( c, 0, sizeof( canyon ));
+	return c;
+}

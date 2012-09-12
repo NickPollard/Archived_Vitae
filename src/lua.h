@@ -6,6 +6,12 @@
 
 #define LUA_DEBUG false
 
+#if LUA_DEBUG
+#define LUA_DEBUG_PRINT(...) printf(__VA_ARGS__)
+#else
+#define LUA_DEBUG_PRINT(...)
+#endif
+
 #define LUA_CALL(lua, func)					\
 	lua_getglobal(lua, func);				\
 	lua_pcall(lua,	/* args */			0,	\
@@ -38,7 +44,7 @@ typedef struct luaInterface_s luaInterface;
 void lua_preTick( lua_State* l, float dt );
 
 // Is the luaCallback currently enabled?
-int luaCallback_enabled(luaCallback* l);
+bool luaCallback_enabled(luaCallback* l);
 
 // Add a callback to the interface
 luaCallback* luaInterface_addCallback(luaInterface* i, const char* name);
@@ -59,4 +65,21 @@ void lua_registerFunction(lua_State* l, lua_CFunction func, const char* name);
 // Create a Lua State and load it's initial contents from <filename>
 lua_State* vlua_create( engine* e, const char* filename );
 
+// Sets the engine scene used by this lua_state
 void lua_setScene( lua_State* l, scene* s );
+
+// Sets a field for the table that is assumed to be on the top of the Lua stack
+void lua_setfieldi( lua_State* l, const char* key, int value );
+
+// Sets a field for the table that is assumed to be on the top of the Lua stack
+void lua_setfieldf( lua_State* l, const char* key, float value );
+
+// Create a vector from 3 consecutive number lua arguments
+vector lua_tovector3( lua_State* l, int i );
+
+void lua_pushptr( lua_State* l, void* ptr );
+void lua_retrieve( lua_State* l, int ref );
+int lua_store( lua_State* l );
+void* lua_toptr( lua_State* l, int index );
+void lua_assertnumber( lua_State* l, int index );
+vector* lua_createVector( );

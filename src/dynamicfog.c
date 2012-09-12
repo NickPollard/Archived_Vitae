@@ -28,22 +28,6 @@ void dynamicFog_tick( void* v, float dt, engine* eng ) {
 	(void)eng;
 	(void)dt;
 	(void)v;
-	/*
-	dynamicFog* fog = v;
-	fog->time += dt;
-	const float timeCycle = 120.f;
-	while ( fog->time > timeCycle )
-		fog->time -= timeCycle;
-
-	// Get a value between 0 and 1;
-	float f = fog->time / timeCycle;
-	f = f * (float)fog->fog_count; // mul up per number of fogs;
-	int old = (int)floorf( f ) % fog->fog_count;
-	int new = (old + 1) % fog->fog_count;
-
-	float blend = f - floorf( f );
-	dynamicFog_blend( fog, old, new, blend );
-	*/
 }
 
 // blend the sky and fog to the correct interpolated value

@@ -76,7 +76,12 @@ void test_engine_init( engine* e ) {
 	lua_setScene( e->lua, theScene );
 
 	{
-		canyonTerrain* t = canyonTerrain_create( 7, 9, 40, 40, 360.f, 960.f );
+		canyon* c = canyon_create();
+		c->scene = theScene;
+		canyonZone_load( c, "dat/script/lisp/canyon_zones.s" );
+		startTick( e, c, canyon_tick );
+		
+		canyonTerrain* t = canyonTerrain_create( c, 7, 9, 40, 40, 360.f, 960.f );
 		canyonTerrain_setLodIntervals( t, 1, 3 );
 		startTick( e, (void*)t, canyonTerrain_tick );
 		engine_addRender( e, (void*)t, canyonTerrain_render );
@@ -260,8 +265,6 @@ void engine_init(engine* e, int argc, char** argv) {
 	// *** Canyon
 	canyon_staticInit();
 	canyon_generateInitialPoints();
-	canyonZone_staticInit();
-	canyonZone_load( "dat/script/lisp/canyon_zones.s" );
 
 	vthread worker_thread = vthread_create( worker_threadFunc, NULL );
 	(void)worker_thread;

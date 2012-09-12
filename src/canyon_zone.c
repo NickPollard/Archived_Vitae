@@ -3,12 +3,11 @@
 #include "canyon_zone.h"
 //-------------------------
 #include "canyon.h"
+#include "scene.h"
 #include "maths/maths.h"
 #include "mem/allocator.h"
 #include "render/texture.h"
 #include "script/lisp.h"
-
-bool canyon_zone_init = false;
 
 texture* canyonZone_lookup_texture = NULL;
 texture* canyonZone_lookup_pending = NULL;
@@ -18,7 +17,6 @@ vector zone_sample_point;
 
 // What Zone are we in at a given distance V down the canyon? This forever increases
 int canyon_zone( float v ) {
-	vAssert( canyon_zone_init );
 	return (int)floorf( v / kZoneLength );
 }
 
@@ -59,39 +57,31 @@ float canyonZone_blend( float v ) {
 }
 
 float canyonZone_progress( float v ) {
-	//int zone = canyon_zone( v );
-	//float distance = canyonZone_distance( v );
 	return v / kZoneLength;
 }
 
 // What color is the standard terrain for ZONE?
 vector canyonZone_terrainColor( int zone ) {
-	vAssert( canyon_zone_init );
 	return zones[zone % canyon_zone_count].terrain_color;
 }
 
 vector canyonZone_cliffColor( int zone ) {
-	vAssert( canyon_zone_init );
 	return zones[zone % canyon_zone_count].cliff_color;
 }
 
 vector canyonZone_edgeColor( int zone ) {
-	vAssert( canyon_zone_init );
 	return zones[zone % canyon_zone_count].edge_color;
 }
 
 vector canyonZone_terrainColorAtV( float v ) {
-	vAssert( canyon_zone_init );
 	return canyonZone_terrainColor( canyon_zone( v ));
 }
 
 vector canyonZone_cliffColorAtV( float v ) {
-	vAssert( canyon_zone_init );
 	return canyonZone_cliffColor( canyon_zone( v ));
 }
 
 vector canyonZone_edgeColorAtV( float v ) {
-	vAssert( canyon_zone_init );
 	return canyonZone_edgeColor( canyon_zone( v ));
 }
 
@@ -128,43 +118,31 @@ void canyonZone_loadTextureForZone( int zone_index ) {
 	}
 }
 
-void canyonZone_tick( float dt ) {
+void canyonZone_skyFogBlend( canyonZone* a, canyonZone* b, float blend, vector* sky_color, vector* fog_color ) {
+	*sky_color = vector_lerp( &a->sky_color, &b->sky_color, blend );
+	*fog_color = vector_lerp( &a->fog_color, &b->fog_color, blend );
+}
+
+void canyonZone_tick( canyon* c, float dt ) {
+	(void)dt;
 	float u, v;
 	terrain_canyonSpaceFromWorld( zone_sample_point.coord.x, zone_sample_point.coord.z, &u, &v );
 	int zone = canyon_zone( v );
-	if ( zone != canyon_current_zone ) {
+	if ( zone != c->current_zone ) {
 		canyonZone_loadTextureForZone( zone );
-		canyon_current_zone = zone;
+		c->current_zone = zone;
 	}
-	(void)dt;
-	if ( canyonZone_lookup_pending && 
-			canyonZone_lookup_pending->gl_tex ) {
-		texture_delete( canyonZone_lookup_texture );
-		canyonZone_lookup_texture = canyonZone_lookup_pending;
-		canyonZone_lookup_pending = NULL;	
+	if ( c->canyonZone_lookup_pending && 
+			c->canyonZone_lookup_pending->gl_tex ) {
+		texture_delete( c->canyonZone_lookup_texture );
+		c->canyonZone_lookup_texture = canyonZone_lookup_pending;
+		c->canyonZone_lookup_pending = NULL;	
 	}
 }
 
-void canyonZone_staticInit() {
-	/*
-	// Ice
-	zones[0].terrain_color = Vector( 0.8f, 0.9f, 1.0f, 1.f );
-	zones[0].cliff_color = Vector( 0.2f, 0.3f, 0.6f, 1.f );
-	zones[0].edge_color = Vector( 0.4f, 0.55f, 0.8f, 1.f );
-
-	// Wasteland	
-	zones[1].terrain_color = Vector( 0.7f, 0.3f, 0.2f, 1.f );
-	zones[1].cliff_color = Vector( 0.3f, 0.2f, 0.2f, 1.f );
-	zones[1].edge_color = Vector( 0.6f, 0.2f, 0.2f, 1.f );
-	*/
-
-	canyon_zone_init = true;
-}
-
-
-void canyonZone_load( const char* filename ) {
-	context* c = lisp_newContext();
-	term* t = lisp_eval_file( c, filename );
+void canyonZone_load( canyon* c, const char* filename ) {
+	context* lisp_context = lisp_newContext();
+	term* t = lisp_eval_file( lisp_context, filename );
 	// We should now have a list of zones
 	term_takeRef( t );
 	term* zone = t;
@@ -172,16 +150,16 @@ void canyonZone_load( const char* filename ) {
 	vAssert( zone_count < kNumZones );
 	int i = 0;
 	while ( zone ) { 
-		zones[i] = *(canyonZone*)( head( zone )->data );
+		c->zones[i] = *(canyonZone*)( head( zone )->data );
 		zone = zone->tail;
 		++i;
 	}
 	// TODO - add this back and get it working
 	//term_deref( t );
-	canyon_zone_count = zone_count;
+	c->zone_count = zone_count;
 	
-	vAssert( !canyonZone_lookup_texture );
-	canyonZone_lookup_texture = canyonZone_buildTexture( zones[0], zones[1] );
+	vAssert( !c->canyonZone_lookup_texture );
+	c->canyonZone_lookup_texture = canyonZone_buildTexture( c->zones[0], c->zones[1] );
 }
 
 canyonZone* canyonZone_create() {

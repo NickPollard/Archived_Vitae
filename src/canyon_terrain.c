@@ -98,7 +98,7 @@ void canyonTerrainBlock_render( canyonTerrainBlock* b ) {
 	if ( b->vertex_VBO && *b->vertex_VBO ) {
 		drawCall* draw = drawCall_create( &renderPass_main, resources.shader_terrain, b->element_count_render, b->element_buffer, b->vertex_buffer, terrain_texture, modelview );
 		draw->texture_b = terrain_texture_cliff;
-		draw->texture_lookup = canyonZone_lookup_texture->gl_tex;
+		draw->texture_lookup = b->canyon->canyonZone_lookup_texture->gl_tex;
 		draw->vertex_VBO = *b->vertex_VBO;
 		draw->element_VBO = *b->element_VBO;
 	}
@@ -247,13 +247,15 @@ void canyonTerrain_createBlocks( canyonTerrain* t ) {
 			canyonTerrainBlock_calculateExtents( t->blocks[i], t, coord );
 			canyonTerrainBlock_createBuffers( t->blocks[i] );
 			canyonTerrainBlock_calculateBuffers( t->blocks[i] );
+			t->blocks[i]->canyon = t->canyon;
 		}
 	}
 }
 
-canyonTerrain* canyonTerrain_create( int u_blocks, int v_blocks, int u_samples, int v_samples, float u_radius, float v_radius ) {
+canyonTerrain* canyonTerrain_create( canyon* c, int u_blocks, int v_blocks, int u_samples, int v_samples, float u_radius, float v_radius ) {
 	canyonTerrain* t = mem_alloc( sizeof( canyonTerrain ));
 	memset( t, 0, sizeof( canyonTerrain ));
+	t->canyon = c;
 	t->u_block_count = u_blocks;
 	t->v_block_count = v_blocks;
 	t->u_samples_per_block = u_samples;
@@ -643,7 +645,6 @@ void canyonTerrain_tick( void* data, float dt, engine* eng ) {
 	(void)dt;
 	(void)eng;
 	canyonTerrain* t = data;
-	canyonZone_tick( dt );
 	canyonTerrain_updateBlocks( t );
 }
 
