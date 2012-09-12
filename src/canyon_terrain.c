@@ -4,7 +4,6 @@
 //-----------------------
 #include "canyon.h"
 #include "canyon_zone.h"
-#include "terrain.h"
 #include "worker.h"
 #include "maths/geometry.h"
 #include "maths/vector.h"
@@ -16,6 +15,10 @@
 #define TERRAIN_USE_WORKER_THREAD 1
 	
 const float texture_scale = 0.0325f;
+
+GLuint terrain_texture = 0;
+GLuint terrain_texture_cliff = 0;
+
 
 // *** Forward declarations
 void canyonTerrainBlock_initVBO( canyonTerrainBlock* b );
@@ -55,6 +58,22 @@ void canyonTerrainBlock_positionsFromUV( canyonTerrainBlock* b, int u_index, int
 int canyonTerrainBlock_triangleCount( canyonTerrainBlock* b ) {
 	return ( b->u_samples - 1 ) * ( b->v_samples - 1 ) * 2;
 }
+
+bool boundsContains( int bounds[2][2], int coord[2] ) {
+	return ( coord[0] >= bounds[0][0] &&
+			coord[1] >= bounds[0][1] &&
+			coord[0] <= bounds[1][0] &&
+			coord[1] <= bounds[1][1] );
+}
+
+// Calculate the intersection of the two block bounds specified
+void boundsIntersection( int intersection[2][2], int a[2][2], int b[2][2] ) {
+	intersection[0][0] = max( a[0][0], b[0][0] );
+	intersection[0][1] = max( a[0][1], b[0][1] );
+	intersection[1][0] = min( a[1][0], b[1][0] );
+	intersection[1][1] = min( a[1][1], b[1][1] );
+}
+
 
 // ***
 
@@ -444,7 +463,7 @@ void canyonTerrainBlock_calculateBuffers( canyonTerrainBlock* b ) {
 			canyonTerrainBlock_positionsFromUV( b, u_index, v_index, &u, &v );
 			float vert_x, vert_z;
 			terrain_worldSpaceFromCanyon( u, v, &vert_x, &vert_z );
-			float vert_y = terrain_sample( vert_x, vert_z  );
+			float vert_y = canyonTerrain_sample( vert_x, vert_z  );
 
 			verts[i] = Vector( vert_x, vert_y, vert_z, 1.f );
 			normals[i] = y_axis;
@@ -547,10 +566,10 @@ void canyonTerrain_updateBlocks( canyonTerrain* t ) {
 	int bounds[2][2];
 	int intersection[2][2];
 	canyonTerrain_calculateBounds( bounds, t, &t->sample_point );
-	terrain_boundsIntersection( intersection, bounds, t->bounds );
+	boundsIntersection( intersection, bounds, t->bounds );
 
 	// Using alloca for dynamic stack allocation (just moves the stack pointer up)
-	canyonTerrainBlock** new_blocks = alloca( sizeof( terrainBlock* ) * t->total_block_count );
+	canyonTerrainBlock** new_blocks = alloca( sizeof( canyonTerrainBlock* ) * t->total_block_count );
 
 	int empty_index = 0;
 	// For Each old block
@@ -624,7 +643,28 @@ void canyonTerrain_tick( void* data, float dt, engine* eng ) {
 	(void)dt;
 	(void)eng;
 	canyonTerrain* t = data;
+	canyonZone_tick( dt );
 	canyonTerrain_updateBlocks( t );
 }
 
+// Returns a value between 0.f and height_m
+float terrain_mountainHeight( float u, float v ) {
+	float scale_m_u = 40.f;
+	float scale_m_v = 40.f;
+	float height_m = 40.f;
+	return (1.0f + sinf( u / scale_m_u ) * sinf( v / scale_m_v )) * 0.5f * height_m;
+}
 
+float terrain_detailHeight( float u, float v ) {
+	return	0.5 * sinf( u ) * sinf( v ) +
+			sinf( u / 3.f ) * sinf( v / 3.f ) +
+			5 * sinf( u / 10.f ) * sinf( v / 10.f ) * sinf( u / 10.f ) * sinf( v / 10.f );
+}
+
+// The procedural function
+float canyonTerrain_sample( float u, float v ) {
+	float mountains = terrain_mountainHeight( u, v );
+	float detail = terrain_detailHeight( u, v );
+	float canyon = terrain_newCanyonHeight( u, v );
+	return mountains + detail - canyon;
+}

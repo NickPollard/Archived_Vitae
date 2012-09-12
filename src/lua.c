@@ -6,6 +6,7 @@
 
 // temp
 #include "canyon.h"
+#include "canyon_terrain.h"
 #include "canyon_zone.h"
 #include "collision.h"
 #include "dynamicfog.h"
@@ -15,7 +16,6 @@
 #include "input.h"
 #include "particle.h"
 #include "physic.h"
-#include "terrain.h"
 #include "transform.h"
 #include "camera/chasecam.h"
 #include "camera/flycam.h"
@@ -667,7 +667,7 @@ int LUA_canyonPosition( lua_State* l ) {
 	float v = lua_tonumber( l, 2 );
 	float x, y, z;
 	terrain_worldSpaceFromCanyon( u, v, &x, &z );
-	y = terrain_sample( x, z );
+	y = canyonTerrain_sample( x, z );
 	lua_pushnumber( l, x );
 	lua_pushnumber( l, y );
 	lua_pushnumber( l, z );

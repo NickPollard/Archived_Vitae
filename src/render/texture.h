@@ -64,5 +64,6 @@ void texture_requestFile( GLuint* tex, const char* filename );
 
 texture* texture_load( const char* filename );
 texture* texture_loadFromMem( int w, int h, int stride, uint8_t* bitmap );
+void texture_delete( texture* t );
 
 #endif // __TEXTURE_H__

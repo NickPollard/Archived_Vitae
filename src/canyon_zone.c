@@ -2,6 +2,7 @@
 #include "common.h"
 #include "canyon_zone.h"
 //-------------------------
+#include "canyon.h"
 #include "maths/maths.h"
 #include "mem/allocator.h"
 #include "render/texture.h"
@@ -10,7 +11,10 @@
 bool canyon_zone_init = false;
 
 texture* canyonZone_lookup_texture = NULL;
+texture* canyonZone_lookup_pending = NULL;
 int canyon_zone_count = 1;
+int canyon_current_zone = 0;
+vector zone_sample_point;
 
 // What Zone are we in at a given distance V down the canyon? This forever increases
 int canyon_zone( float v ) {
@@ -32,8 +36,8 @@ float canyonZone_distance( float v ) {
 // A float ratio for how strongly in the zone we are, use for zone terrain colouring
 // See-saws back and forth between 1.f and 0.f to deal with our texture building
 float canyonZone_terrainBlend( float v ) {
-	int zone_type = canyon_zoneType( v );
-	float this = (float)(zone_type % 2);
+	int zone = canyon_zone( v );
+	float this = (float)(zone % 2);
 	float next = 1.f - this;
 	return lerp( this, next, canyonZone_blend( v ));
 }
@@ -110,6 +114,35 @@ texture* canyonZone_buildTexture( canyonZone a, canyonZone b ) {
 	}
 	texture* t = texture_loadFromMem( kZoneTextureWidth, kZoneTextureHeight, kZoneTextureStride, bitmap );
 	return t;
+}
+
+
+void canyonZone_loadTextureForZone( int zone_index ) {
+	int zone_type_index = zone_index % canyon_zone_count;
+	int other_index = ( zone_index + 1 ) % canyon_zone_count;
+	// We flip around alternate zones to deal with the blending
+	if ( zone_index % 2 == 0 ) {
+		canyonZone_lookup_pending = canyonZone_buildTexture( zones[zone_type_index], zones[other_index] );
+	} else {
+		canyonZone_lookup_pending = canyonZone_buildTexture( zones[other_index], zones[zone_type_index] );
+	}
+}
+
+void canyonZone_tick( float dt ) {
+	float u, v;
+	terrain_canyonSpaceFromWorld( zone_sample_point.coord.x, zone_sample_point.coord.z, &u, &v );
+	int zone = canyon_zone( v );
+	if ( zone != canyon_current_zone ) {
+		canyonZone_loadTextureForZone( zone );
+		canyon_current_zone = zone;
+	}
+	(void)dt;
+	if ( canyonZone_lookup_pending && 
+			canyonZone_lookup_pending->gl_tex ) {
+		texture_delete( canyonZone_lookup_texture );
+		canyonZone_lookup_texture = canyonZone_lookup_pending;
+		canyonZone_lookup_pending = NULL;	
+	}
 }
 
 void canyonZone_staticInit() {

@@ -72,9 +72,6 @@ void term_deref( term* t ) {
 	--(t->refcount);
 	vAssert( t->refcount >= 0 );
 	if ( t->refcount == 0 ) {
-		printf( "Deleting term: " xPTRf " : ", (uintptr_t)t );
-		term_debugPrint( t );
-		printf( "\n" );
 		term_delete( t );
 	}
 }

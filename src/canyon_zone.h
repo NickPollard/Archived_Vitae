@@ -20,6 +20,7 @@ typedef struct canyonZone_s {
 canyonZone zones[kNumZones];
 extern texture* canyonZone_lookup_texture;
 extern int canyon_zone_count;
+extern vector zone_sample_point;
 
 // Static Init
 void canyonZone_staticInit();
@@ -43,3 +44,4 @@ vector canyonZone_edgeColorAtV( float v );
 
 canyonZone* canyonZone_create();
 void canyonZone_load( const char* filename );
+void canyonZone_tick( float dt );

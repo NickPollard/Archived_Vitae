@@ -145,6 +145,13 @@ texture* texture_loadFromMem( int w, int h, int stride, uint8_t* bitmap ) {
 	return t;
 }
 
+void texture_delete( texture* t ) {
+	(void)t;
+	// Do nothing right now?
+	// TODO - this should potentially free the GL_TEX if no longer referenced
+	// Also update which is the next_free texture	
+}
+
 uint8_t* read_tga( const char* file, int* w, int* h ) {
 	size_t length = 0;
 	u8* image_data = vfile_contents( file, &length );

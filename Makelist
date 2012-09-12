@@ -16,7 +16,6 @@ SRCS =	src/camera.c \
 		src/profile.c \
 		src/scene.c \
 		src/skybox.c \
-		src/terrain.c \
 		src/test.c \
 		src/ticker.c \
 		src/vtime.c \

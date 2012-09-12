@@ -15,7 +15,6 @@
 #include "particle.h"
 #include "scene.h"
 #include "skybox.h"
-#include "terrain.h"
 #include "transform.h"
 #include "worker.h"
 #include "camera/flycam.h"
@@ -45,7 +44,6 @@ IMPLEMENT_LIST(delegate)
 
 // *** Static Hacks
 scene* theScene = NULL;
-terrain* theTerrain = NULL;
 canyonTerrain* theCanyonTerrain = NULL;
 
 #ifdef LINUX_X
@@ -178,6 +176,7 @@ void engine_tick( engine* e ) {
 	//const vector* camera_position = matrix_getTranslation( theScene->cam->trans->world );
 	//canyon_seekForWorldPosition( *camera_position );
 	canyon_seekForWorldPosition( theCanyonTerrain->sample_point );
+	zone_sample_point = theCanyonTerrain->sample_point;
 	PROFILE_END( PROFILE_ENGINE_TICK );
 
 }

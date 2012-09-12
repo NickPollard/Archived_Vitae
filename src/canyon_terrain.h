@@ -50,9 +50,14 @@ typedef struct canyonTerrain_s {
 	vector			sample_point;
 } canyonTerrain;
 
+extern GLuint terrain_texture;
+extern GLuint terrain_texture_cliff;
+
 // *** Functions 
 
 canyonTerrain* canyonTerrain_create( int u_blocks, int v_blocks, int u_samples, int v_samples, float u_radius, float v_radius );
 void canyonTerrain_setLodIntervals( canyonTerrain* t, int u, int v );
 void canyonTerrain_render( void* data );
 void canyonTerrain_tick( void* data, float dt, engine* eng );
+
+float canyonTerrain_sample( float u, float v );

@@ -13,7 +13,6 @@
 #include "input.h"
 #include "maths/maths.h"
 #include "particle.h"
-#include "terrain.h"
 #include "mem/allocator.h"
 #include "render/modelinstance.h"
 #include "system/file.h"
@@ -45,8 +44,6 @@ void runTests() {
 	test_aabb_calculate();
 
 	//test_collision();
-	
-	//test_terrain();
 }
 #endif // UNIT_TEST
 
