@@ -86,6 +86,11 @@ void term_takeRef( term* t );
 // Release a held reference to term [t]
 void term_deref( term* t );
 
+term* head( term* list );
+term* tail( term* list );
+
+// Return the length of the given list T
+int list_length( term* t );
 #ifdef UNIT_TEST
 void test_lisp();
 #endif

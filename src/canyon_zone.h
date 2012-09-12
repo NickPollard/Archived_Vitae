@@ -3,7 +3,7 @@
 #include "maths/vector.h"
 
 #define kZoneLength 2000.f
-#define kNumZones	2
+#define kNumZones	4
 #define kZoneBlendDistance 400.f
 
 // Texture
@@ -19,6 +19,7 @@ typedef struct canyonZone_s {
 
 canyonZone zones[kNumZones];
 extern texture* canyonZone_lookup_texture;
+extern int canyon_zone_count;
 
 // Static Init
 void canyonZone_staticInit();
@@ -39,3 +40,6 @@ vector canyonZone_edgeColor( int zone );
 vector canyonZone_terrainColorAtV( float v );
 vector canyonZone_cliffColorAtV( float v );
 vector canyonZone_edgeColorAtV( float v );
+
+canyonZone* canyonZone_create();
+void canyonZone_load( const char* filename );

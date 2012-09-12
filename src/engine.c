@@ -262,6 +262,7 @@ void engine_init(engine* e, int argc, char** argv) {
 	canyon_staticInit();
 	canyon_generateInitialPoints();
 	canyonZone_staticInit();
+	canyonZone_load( "dat/script/lisp/canyon_zones.s" );
 
 	vthread worker_thread = vthread_create( worker_threadFunc, NULL );
 	(void)worker_thread;

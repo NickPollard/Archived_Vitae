@@ -5,10 +5,12 @@
 #include "maths/maths.h"
 #include "mem/allocator.h"
 #include "render/texture.h"
+#include "script/lisp.h"
 
 bool canyon_zone_init = false;
 
 texture* canyonZone_lookup_texture = NULL;
+int canyon_zone_count = 1;
 
 // What Zone are we in at a given distance V down the canyon? This forever increases
 int canyon_zone( float v ) {
@@ -19,7 +21,7 @@ int canyon_zone( float v ) {
 // What ZoneType are we in at a given distance V down the canyon? This is canyon_zone modulo zone count
 // (so repeating zones of the same type have the same index)
 int canyon_zoneType( float v ) {
-	return canyon_zone( v ) % kNumZones;
+	return canyon_zone( v ) % canyon_zone_count;
 }
 
 // How far through the current zone are we?
@@ -61,17 +63,17 @@ float canyonZone_progress( float v ) {
 // What color is the standard terrain for ZONE?
 vector canyonZone_terrainColor( int zone ) {
 	vAssert( canyon_zone_init );
-	return zones[zone % kNumZones].terrain_color;
+	return zones[zone % canyon_zone_count].terrain_color;
 }
 
 vector canyonZone_cliffColor( int zone ) {
 	vAssert( canyon_zone_init );
-	return zones[zone % kNumZones].cliff_color;
+	return zones[zone % canyon_zone_count].cliff_color;
 }
 
 vector canyonZone_edgeColor( int zone ) {
 	vAssert( canyon_zone_init );
-	return zones[zone % kNumZones].edge_color;
+	return zones[zone % canyon_zone_count].edge_color;
 }
 
 vector canyonZone_terrainColorAtV( float v ) {
@@ -111,6 +113,7 @@ texture* canyonZone_buildTexture( canyonZone a, canyonZone b ) {
 }
 
 void canyonZone_staticInit() {
+	/*
 	// Ice
 	zones[0].terrain_color = Vector( 0.8f, 0.9f, 1.0f, 1.f );
 	zones[0].cliff_color = Vector( 0.2f, 0.3f, 0.6f, 1.f );
@@ -120,8 +123,36 @@ void canyonZone_staticInit() {
 	zones[1].terrain_color = Vector( 0.7f, 0.3f, 0.2f, 1.f );
 	zones[1].cliff_color = Vector( 0.3f, 0.2f, 0.2f, 1.f );
 	zones[1].edge_color = Vector( 0.6f, 0.2f, 0.2f, 1.f );
-
-	canyonZone_lookup_texture = canyonZone_buildTexture( zones[0], zones[1] );
+	*/
 
 	canyon_zone_init = true;
+}
+
+
+void canyonZone_load( const char* filename ) {
+	context* c = lisp_newContext();
+	term* t = lisp_eval_file( c, filename );
+	// We should now have a list of zones
+	term_takeRef( t );
+	term* zone = t;
+	int zone_count = list_length( t );
+	vAssert( zone_count < kNumZones );
+	int i = 0;
+	while ( zone ) { 
+		zones[i] = *(canyonZone*)( head( zone )->data );
+		zone = zone->tail;
+		++i;
+	}
+	// TODO - add this back and get it working
+	//term_deref( t );
+	canyon_zone_count = zone_count;
+	
+	vAssert( !canyonZone_lookup_texture );
+	canyonZone_lookup_texture = canyonZone_buildTexture( zones[0], zones[1] );
+}
+
+canyonZone* canyonZone_create() {
+	canyonZone* z = mem_alloc( sizeof( canyonZone ));
+	memset( z, 0, sizeof( canyonZone ));
+	return z;
 }

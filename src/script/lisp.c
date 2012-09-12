@@ -1,6 +1,7 @@
 #include "common.h"
 #include "lisp.h"
 //--------------------------------------------------------
+#include "canyon_zone.h"
 #include "model.h"
 #include "model_loader.h"
 #include "particle.h"
@@ -46,7 +47,12 @@ void attr_particle_flags( term* definition_term, term* flags );
 void attr_particle_texture( term* definition_term, term* texture_attr );
 
 void attr_mesh_diffuseTexture( term* mesh_term, term* texture_attr );
+
+void attr_zone_cliffColor( term* zone_term, term* cliff_color_attr );
+void attr_zone_terrainColor( term* zone_term, term* terrain_color_attr );
 //// Attribute functions /////////////////////////////////////////
+
+void term_debugPrint( term* t );
 
 bool isType( term* t, enum termType type ) {
 	return t->type == type;
@@ -65,9 +71,13 @@ void term_takeRef( term* t ) {
 void term_deref( term* t ) {
 	--(t->refcount);
 	vAssert( t->refcount >= 0 );
-	if ( t->refcount == 0 )
+	if ( t->refcount == 0 ) {
+		printf( "Deleting term: " xPTRf " : ", (uintptr_t)t );
+		term_debugPrint( t );
+		printf( "\n" );
 		term_delete( t );
 	}
+}
 
 #ifdef MEM_STACK_TRACE
 static const char* kLispTermAllocString = "lisp.c:term_create()";
@@ -329,6 +339,7 @@ void list_deref( term* t ) {
 	term_deref( t );
 	}
 
+// Return the length of the given list T
 int list_length( term* t ) {
 	if ( t ) {
 		assert( isType( t, typeList ));
@@ -491,7 +502,8 @@ term* _eval( term* expr, void* _context ) {
 		}
 	if ( isValue( expr )) {
 		// Do we return as a term of typeValue, or just return the value itself? Probably the first, for macros and hijinks
-		result = term_copy( expr );
+		//result = term_copy( expr );
+		result = expr;
 		}
 	if ( isType( expr, typeList )) {
 		// TODO - need to check for intrinsic here
@@ -742,6 +754,12 @@ term* lisp_func_length( context* c, term* raw_args ) {
 	return tf;
 	}
 
+term* lisp_func_list( context* c, term* raw_args ) {
+	term* args = fmap_1( _eval, c, raw_args );
+	return args;
+	}
+
+
 term* lisp_func_vector( context* c, term* raw_args ) {
 	term* args = fmap_1( _eval, c, raw_args );
 	term_takeRef( args );
@@ -753,8 +771,9 @@ term* lisp_func_vector( context* c, term* raw_args ) {
 	term* t = args;
 	while ( i < 4 && t ) {
 		assert( isType( head( t ), typeFloat ));
-		floats[i] = *(float*)head( t )->head;
+		floats[i] = *head( t )->number;
 		t = t->tail;
+		++i;
 	}
 	
 	term* vec = term_create( typeVector, v );;
@@ -962,6 +981,8 @@ void lisp_init() {
 	attributeFunction_set( "texture", attr_particle_texture );
 
 	attributeFunction_set( "diffuse_texture", attr_mesh_diffuseTexture );
+	attributeFunction_set( "cliff_color", attr_zone_cliffColor );
+	attributeFunction_set( "terrain_color", attr_zone_terrainColor );
 
 	lisp_global_context = lisp_newContext();
 }
@@ -1054,6 +1075,14 @@ term* lisp_func_filename( context* c, term* raw_args ) {
 	mesh* msh = mesh_loadObj( "dat/model/sphere.obj" );
 	term* ret = term_create( typeObject, msh );
 	term_deref( args );	
+	return ret;
+}
+
+term* lisp_func_canyonZone_create( context* c, term* raw_args ) {
+	(void)c;
+	(void)raw_args;
+	canyonZone* zone = canyonZone_create();
+	term* ret = term_create( typeObject, zone );
 	return ret;
 }
 
@@ -1204,6 +1233,22 @@ void attr_mesh_diffuseTexture( term* mesh_term, term* texture_attr ) {
 	m->texture_diffuse = texture_load( texture_attr->string );
 }
 
+void attr_zone_cliffColor( term* zone_term, term* cliff_color_attr ) {
+	lisp_assert( isType( cliff_color_attr, typeVector ));
+	canyonZone* zone = zone_term->data;
+	lisp_assert( zone );
+	zone->cliff_color = *(vector*)( cliff_color_attr->data );
+}
+
+
+void attr_zone_terrainColor( term* zone_term, term* terrain_color_attr ) {
+	lisp_assert( isType( terrain_color_attr, typeVector ));
+	canyonZone* zone = zone_term->data;
+	lisp_assert( zone );
+	zone->terrain_color = *(vector*)( terrain_color_attr->data );
+}
+
+
 // (particle_create)
 term* lisp_func_particle_emitter_definition_create( context* c, term* raw_args ) {
 	(void)c;
@@ -1298,6 +1343,7 @@ void lisp_initContext( context* c ) {
 	define_function( c, "filter",	"(( func list ) (if (func (head list)) (cons (head list) (filter func (tail list))) (filter func (tail list))))" );
 	define_function( c, "foldl",	"(( func item list ) (if (tail list) (foldl func (func item (head list)) (tail list)) (func item (head list))))" );
 	
+	define_cfunction( c, "list", lisp_func_list );
 	define_cfunction( c, "vector", lisp_func_vector );
 	define_cfunction( c, "color", lisp_func_color );
 	define_cfunction( c, "quote", lisp_func_quote );
@@ -1315,6 +1361,8 @@ void lisp_initContext( context* c ) {
 	define_cfunction( c, "model", lisp_func_model );
 	//define_cfunction( c, "mesh", lisp_func_mesh );
 	define_cfunction( c, "meshLoadFile", lisp_func_mesh_loadFile );
+	define_cfunction( c, "canyon_zone_create", lisp_func_canyonZone_create );
+
 	define_cfunction( c, "transform", lisp_func_transform );
 	define_cfunction( c, "mesh_create", lisp_func_mesh_create );
 	define_cfunction( c, "filename", lisp_func_filename );
@@ -1327,6 +1375,7 @@ void lisp_initContext( context* c ) {
 	// load the default vlisp library
 	lisp_eval_file( c, "dat/script/lisp/vliblisp.s" );
 	lisp_eval_file( c, "dat/script/lisp/particle.s" );
+	lisp_eval_file( c, "dat/script/lisp/canyon.s" );
 	// just load the definitions in the file
 }
 
