@@ -76,15 +76,17 @@ function player_fire( ship )
 	end
 end
 
-function missile_collisionHandler( missile, other )
-	spawn_missile_explosion( missile.transform )
-	local no_velocity = Vector( 0.0, 0.0, 0.0, 0.0 )
-	vphysic_setVelocity( missile.physic, no_velocity )
+function missile_destroy( missile )
 	vdeleteModelInstance( missile.model ) 
 	vdestroyTransform( missile.transform )
 	vdestroyBody( missile.body )
 	vparticle_destroy( missile.glow )
-	--vparticle_destroy( missile.trail )
+end
+
+function missile_collisionHandler( missile, other )
+	spawn_missile_explosion( missile.transform )
+	vphysic_setVelocity( missile.physic, Vector( 0.0, 0.0, 0.0, 0.0 ))
+	missile_destroy( missile )
 end
 
 missiles  = { count = 0 }

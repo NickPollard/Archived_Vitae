@@ -35,6 +35,7 @@ void collision_event( body* a, body* b ) {
 }
 
 void collision_addBody( body* b ) {
+	vAssert( body_count < kMaxCollidingBodies );
 	bodies[body_count++] = b;
 }
 

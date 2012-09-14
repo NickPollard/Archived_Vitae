@@ -2,7 +2,7 @@
 
 #define kMaxCollisionEvents 256
 #define kMaxShapeTypes 4
-#define kMaxCollidingBodies 256
+#define kMaxCollidingBodies 1024
 
 #include "maths/maths.h"
 #include "maths/matrix.h"
