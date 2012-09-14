@@ -311,9 +311,10 @@ function restart()
 	vtransform_setWorldPosition( player_ship.transform, start_position )
 
 	-- Init velocity
-	player_ship.speed = 30.0
+	player_ship.speed = 0.0
 	local no_velocity = Vector( 0.0, 0.0, player_ship.speed, 0.0 )
 	vphysic_setVelocity( player_ship.physic, no_velocity )
+	inTime( 3.0, function () player_ship.speed = 30.0 end )
 
 	-- Init Collision
 	vbody_registerCollisionCallback( player_ship.body, player_ship_collisionHandler )
@@ -519,7 +520,7 @@ end
 function sky_tick( camera, dt )
 	camera_position = vcamera_position( camera )
 	u,v = vworldPositionFromCanyon( camera_position )
-	vdynamicSky_blend( v )
+	--vdynamicSky_blend( v )
 end
 
 -- Called once per frame to update the current Lua State
@@ -561,6 +562,27 @@ end
 
 function spawn_pos( i )
 	return i * spawn_interval + spawn_offset;
+end
+
+function spawn_turret( u, v )
+	local spawn_height = 0.0
+	vprint( "Spawn_turret, v = " .. v )
+
+	-- position
+	local x, y, z = vcanyon_position( u, v )
+	local position = Vector( x, y + spawn_height, z, 1.0 )
+	local target = gameobject_create( "dat/model/gun_turret.s" )
+	vtransform_setWorldPosition( target.transform, position )
+
+	-- Orientation
+	local facing_x, facing_y, facing_z = vcanyon_position( u, v - ( 1.0 / canyon_v_scale ))
+	local facing_position = Vector( facing_x, y + spawn_height, facing_z, 1.0 )
+	vtransform_facingWorld( target.transform, facing_position )
+
+	-- Physics
+	vbody_registerCollisionCallback( target.body, target_collisionHandler )
+	vbody_setLayers( target.body, collision_layer_enemy )
+	vbody_setCollidableLayers( target.body, collision_layer_player )
 end
 
 function spawn_target( v )
@@ -623,7 +645,10 @@ function entities_spawnAll( near, far )
 	--vprint( "spawn_v " .. spawn_v .. ", near " .. near .. ", far " .. far )
 	while contains( spawn_v, near, far ) do
 		vprint( "Spawning at " .. spawn_v .. "!" )
-		spawn_target( spawn_v )
+		--spawn_target( spawn_v )
+		local turret_offset_u = 20.0
+		spawn_turret( turret_offset_u, spawn_v )
+		spawn_turret( -turret_offset_u, spawn_v )
 		i = i + 1
 		spawn_v = i * spawn_interval
 		--vprint( "Evaluating spawn index: " .. i )

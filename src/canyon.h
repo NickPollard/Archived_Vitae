@@ -25,7 +25,7 @@ typedef struct window_buffer_s {
 	size_t window_size;
 } window_buffer;
 
-typedef struct canyon_s { 
+struct canyon_s { 
 	int			zone_count;
 	canyonZone	zones[kNumZones];
 	int			current_zone;
@@ -35,7 +35,7 @@ typedef struct canyon_s {
 
 	vector		zone_sample_point;
 	scene*		scene;
-} canyon;
+};
 
 // Canyon functions
 void terrain_debugDraw( window* w );

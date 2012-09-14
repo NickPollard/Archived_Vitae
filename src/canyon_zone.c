@@ -9,9 +9,6 @@
 #include "render/texture.h"
 #include "script/lisp.h"
 
-texture* canyonZone_lookup_texture = NULL;
-texture* canyonZone_lookup_pending = NULL;
-int canyon_zone_count = 1;
 int canyon_current_zone = 0;
 vector zone_sample_point;
 
@@ -22,8 +19,8 @@ int canyon_zone( float v ) {
 
 // What ZoneType are we in at a given distance V down the canyon? This is canyon_zone modulo zone count
 // (so repeating zones of the same type have the same index)
-int canyon_zoneType( float v ) {
-	return canyon_zone( v ) % canyon_zone_count;
+int canyon_zoneType( canyon* c, float v ) {
+	return canyon_zone( v ) % c->zone_count;
 }
 
 // How far through the current zone are we?
@@ -61,28 +58,28 @@ float canyonZone_progress( float v ) {
 }
 
 // What color is the standard terrain for ZONE?
-vector canyonZone_terrainColor( int zone ) {
-	return zones[zone % canyon_zone_count].terrain_color;
+vector canyonZone_terrainColor( canyon* c, int zone ) {
+	return c->zones[zone % c->zone_count].terrain_color;
 }
 
-vector canyonZone_cliffColor( int zone ) {
-	return zones[zone % canyon_zone_count].cliff_color;
+vector canyonZone_cliffColor( canyon* c, int zone ) {
+	return c->zones[zone % c->zone_count].cliff_color;
 }
 
-vector canyonZone_edgeColor( int zone ) {
-	return zones[zone % canyon_zone_count].edge_color;
+vector canyonZone_edgeColor( canyon* c, int zone ) {
+	return c->zones[zone % c->zone_count].edge_color;
 }
 
-vector canyonZone_terrainColorAtV( float v ) {
-	return canyonZone_terrainColor( canyon_zone( v ));
+vector canyonZone_terrainColorAtV( canyon* c, float v ) {
+	return canyonZone_terrainColor( c, canyon_zone( v ));
 }
 
-vector canyonZone_cliffColorAtV( float v ) {
-	return canyonZone_cliffColor( canyon_zone( v ));
+vector canyonZone_cliffColorAtV( canyon* c, float v ) {
+	return canyonZone_cliffColor( c, canyon_zone( v ));
 }
 
-vector canyonZone_edgeColorAtV( float v ) {
-	return canyonZone_edgeColor( canyon_zone( v ));
+vector canyonZone_edgeColorAtV( canyon* c, float v ) {
+	return canyonZone_edgeColor( c, canyon_zone( v ));
 }
 
 texture* canyonZone_buildTexture( canyonZone a, canyonZone b ) {
@@ -107,15 +104,16 @@ texture* canyonZone_buildTexture( canyonZone a, canyonZone b ) {
 }
 
 
-void canyonZone_loadTextureForZone( int zone_index ) {
-	int zone_type_index = zone_index % canyon_zone_count;
-	int other_index = ( zone_index + 1 ) % canyon_zone_count;
+void canyonZone_loadTextureForZone( canyon* c, int zone_index ) {
+	int zone_type_index = zone_index % c->zone_count;
+	int other_index = ( zone_index + 1 ) % c->zone_count;
 	// We flip around alternate zones to deal with the blending
 	if ( zone_index % 2 == 0 ) {
-		canyonZone_lookup_pending = canyonZone_buildTexture( zones[zone_type_index], zones[other_index] );
+		c->canyonZone_lookup_pending = canyonZone_buildTexture( c->zones[zone_type_index], c->zones[other_index] );
 	} else {
-		canyonZone_lookup_pending = canyonZone_buildTexture( zones[other_index], zones[zone_type_index] );
+		c->canyonZone_lookup_pending = canyonZone_buildTexture( c->zones[other_index], c->zones[zone_type_index] );
 	}
+	printf( "##### loading lookup texture: Zones %d and %d.\n", zone_type_index, other_index );
 }
 
 void canyonZone_skyFogBlend( canyonZone* a, canyonZone* b, float blend, vector* sky_color, vector* fog_color ) {
@@ -129,13 +127,14 @@ void canyonZone_tick( canyon* c, float dt ) {
 	terrain_canyonSpaceFromWorld( zone_sample_point.coord.x, zone_sample_point.coord.z, &u, &v );
 	int zone = canyon_zone( v );
 	if ( zone != c->current_zone ) {
-		canyonZone_loadTextureForZone( zone );
+		canyonZone_loadTextureForZone( c, zone );
 		c->current_zone = zone;
 	}
 	if ( c->canyonZone_lookup_pending && 
 			c->canyonZone_lookup_pending->gl_tex ) {
 		texture_delete( c->canyonZone_lookup_texture );
-		c->canyonZone_lookup_texture = canyonZone_lookup_pending;
+		printf( "##### Switching terrain texture.\n" );
+		c->canyonZone_lookup_texture = c->canyonZone_lookup_pending;
 		c->canyonZone_lookup_pending = NULL;	
 	}
 }

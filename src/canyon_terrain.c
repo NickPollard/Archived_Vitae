@@ -248,6 +248,7 @@ void canyonTerrain_createBlocks( canyonTerrain* t ) {
 			canyonTerrainBlock_createBuffers( t->blocks[i] );
 			canyonTerrainBlock_calculateBuffers( t->blocks[i] );
 			t->blocks[i]->canyon = t->canyon;
+			t->blocks[i]->terrain = t;
 		}
 	}
 }
@@ -536,6 +537,7 @@ void canyonTerrainBlock_initVBO( canyonTerrainBlock* b ) {
 void* canyonTerrain_workerGenerateBlock( void* args ) {
 	canyonTerrainBlock* b = args;
 	if ( b->pending ) {
+		canyonTerrainBlock_calculateExtents( b, b->terrain, b->coord );
 		canyonTerrainBlock_createBuffers( b );
 		canyonTerrainBlock_calculateBuffers( b );
 		//canyonTerrainBlock_calculateCollision( t, b );
@@ -614,7 +616,8 @@ void canyonTerrain_updateBlocks( canyonTerrain* t ) {
 		// Or if we need to change lod level
 		if (( !boundsContains( intersection, coord )) ||
 			( new_blocks[i]->lod_level != canyonTerrain_lodLevelForBlock( t, coord ))) {
-			canyonTerrainBlock_calculateExtents( new_blocks[i], t, coord );
+			memcpy( new_blocks[i]->coord, coord, sizeof( int ) * 2 );
+			//canyonTerrainBlock_calculateExtents( new_blocks[i], t, coord );
 			// mark it as new, buffers will be filled in later
 			new_blocks[i]->pending = true;
 #if TERRAIN_USE_WORKER_THREAD

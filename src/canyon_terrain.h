@@ -29,10 +29,12 @@ typedef struct canyonTerrainBlock_s {
 	int	lod_level;	// Current lod-level
 
 	canyon* canyon;
+	int	coord[2];
+	canyonTerrain* terrain;
 
 } canyonTerrainBlock;
 
-typedef struct canyonTerrain_s {
+struct canyonTerrain_s {
 	transform* trans;
 
 	float	u_radius;
@@ -52,7 +54,7 @@ typedef struct canyonTerrain_s {
 	vector			sample_point;
 
 	canyon*			canyon;
-} canyonTerrain;
+};
 
 extern GLuint terrain_texture;
 extern GLuint terrain_texture_cliff;

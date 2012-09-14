@@ -719,4 +719,10 @@ void luaLibrary_import( lua_State* l ) {
 	/////////////// Constants /////////////////
 
 	lua_keycodes( l );
+
+#ifdef TOUCH
+	lua_setConstant_bool( l, "touch_enabled", true );
+#else
+	lua_setConstant_bool( l, "touch_enabled", false );
+#endif
 }

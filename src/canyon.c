@@ -422,10 +422,10 @@ void canyon_tick( void* canyon_data, float dt, engine* eng ) {
 	terrain_canyonSpaceFromWorld( zone_sample_point.coord.x, zone_sample_point.coord.z, &u, &v );
 	int zone = canyon_zone( v );
 
-	int current = zone % canyon_zone_count;
-	int next = ( zone + 1 ) % canyon_zone_count;
-	canyonZone* a = &zones[current];
-	canyonZone* b = &zones[next];
+	int current = zone % c->zone_count;
+	int next = ( zone + 1 ) % c->zone_count;
+	canyonZone* a = &c->zones[current];
+	canyonZone* b = &c->zones[next];
 	vector sky_color;
 	vector fog_color;
 	canyonZone_skyFogBlend( a, b, canyonZone_blend( v ), &sky_color, &fog_color );

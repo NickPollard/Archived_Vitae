@@ -38,20 +38,6 @@ static passthroughAllocator* context_heap = NULL;
 typedef void (*attributeSetter)( term* ob, term* value );
 map* attrFuncMap = NULL;
 
-//// Attribute functions /////////////////////////////////////////
-void attr_particle_setSize( term* definition_term, term* size_attr );
-void attr_particle_setColor( term* definition_term, term* color_attr );
-void attr_particle_setLifetime( term* definition_term, term* lifetime );
-void attr_particle_setSpawnRate( term* definition_term, term* spawn_rate );
-void attr_particle_flags( term* definition_term, term* flags );
-void attr_particle_texture( term* definition_term, term* texture_attr );
-
-void attr_mesh_diffuseTexture( term* mesh_term, term* texture_attr );
-
-void attr_zone_cliffColor( term* zone_term, term* cliff_color_attr );
-void attr_zone_terrainColor( term* zone_term, term* terrain_color_attr );
-//// Attribute functions /////////////////////////////////////////
-
 void term_debugPrint( term* t );
 
 bool isType( term* t, enum termType type ) {
@@ -642,6 +628,31 @@ void define_cfunction( context* c, const char* name, lisp_func implementation ) 
 	context_add( c, name, func );
 	}
 
+//// Attribute functions /////////////////////////////////////////
+#define ATTR_FUNCTION_VECTOR( OBJECT, PARAM ) \
+void attr_##OBJECT##_##PARAM ( term* object_term, term* attr ) { \
+	lisp_assert( isType( attr, typeVector )); \
+	OBJECT* o = object_term->data; \
+	lisp_assert( o ); \
+	o->PARAM = *(vector*)( attr->data ); \
+}
+
+void attr_particle_setSize( term* definition_term, term* size_attr );
+void attr_particle_setColor( term* definition_term, term* color_attr );
+void attr_particle_setLifetime( term* definition_term, term* lifetime );
+void attr_particle_setSpawnRate( term* definition_term, term* spawn_rate );
+void attr_particle_flags( term* definition_term, term* flags );
+void attr_particle_texture( term* definition_term, term* texture_attr );
+
+void attr_mesh_diffuseTexture( term* mesh_term, term* texture_attr );
+
+void attr_zone_cliffColor( term* zone_term, term* cliff_color_attr );
+void attr_zone_terrainColor( term* zone_term, term* terrain_color_attr );
+
+ATTR_FUNCTION_VECTOR( canyonZone, sky_color )
+ATTR_FUNCTION_VECTOR( canyonZone, fog_color )
+//// Attribute functions /////////////////////////////////////////
+
 // Intrinsic Maths functions
 term* lisp_func_add( context* c, term* raw_args ) {
 	assert( isType( raw_args, typeList ));
@@ -980,6 +991,8 @@ void lisp_init() {
 	attributeFunction_set( "diffuse_texture", attr_mesh_diffuseTexture );
 	attributeFunction_set( "cliff_color", attr_zone_cliffColor );
 	attributeFunction_set( "terrain_color", attr_zone_terrainColor );
+	attributeFunction_set( "sky_color", attr_canyonZone_sky_color );
+	attributeFunction_set( "fog_color", attr_canyonZone_fog_color );
 
 	lisp_global_context = lisp_newContext();
 }
@@ -1244,7 +1257,6 @@ void attr_zone_terrainColor( term* zone_term, term* terrain_color_attr ) {
 	lisp_assert( zone );
 	zone->terrain_color = *(vector*)( terrain_color_attr->data );
 }
-
 
 // (particle_create)
 term* lisp_func_particle_emitter_definition_create( context* c, term* raw_args ) {

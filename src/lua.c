@@ -154,12 +154,6 @@ lua_State* vlua_create( engine* e, const char* filename ) {
 	lua_setConstant_ptr( l, "engine", e );
 	lua_setConstant_ptr( l, "input", e->input );
 
-#ifdef TOUCH
-	lua_setConstant_bool( l, "touch_enabled", true );
-#else
-	lua_setConstant_bool( l, "touch_enabled", false );
-#endif
-
 	// *** Always call init
 	LUA_CALL( l, "init" );
 

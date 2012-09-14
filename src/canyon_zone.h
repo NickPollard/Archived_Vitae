@@ -19,13 +19,11 @@ struct canyonZone_s {
 	vector fog_color;
 };
 
-canyonZone zones[kNumZones];
 extern texture* canyonZone_lookup_texture;
-extern int canyon_zone_count;
 extern vector zone_sample_point;
 
 int canyon_zone( float v );
-int canyon_zoneType( float v );
+int canyon_zoneType( canyon* c, float v );
 
 float canyonZone_progress( float v );
 float canyonZone_totalBlend( float v );
@@ -35,12 +33,12 @@ float canyonZone_blend( float v );
 float canyonZone_terrainBlend( float v );
 
 // *** Colors
-vector canyonZone_cliffColor( int zone );
-vector canyonZone_terrainColor( int zone );
-vector canyonZone_edgeColor( int zone );
-vector canyonZone_terrainColorAtV( float v );
-vector canyonZone_cliffColorAtV( float v );
-vector canyonZone_edgeColorAtV( float v );
+vector canyonZone_cliffColor( canyon* c, int zone );
+vector canyonZone_terrainColor( canyon* c, int zone );
+vector canyonZone_edgeColor( canyon* c, int zone );
+vector canyonZone_terrainColorAtV( canyon* c, float v );
+vector canyonZone_cliffColorAtV( canyon* c, float v );
+vector canyonZone_edgeColorAtV( canyon* c, float v );
 
 canyonZone* canyonZone_create();
 void canyonZone_load( canyon* c, const char* filename );

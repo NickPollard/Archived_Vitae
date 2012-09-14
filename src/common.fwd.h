@@ -4,6 +4,7 @@
 struct body_s;
 struct camera_s;
 struct canyon_s;
+struct canyonTerrain_s;
 struct canyonZone_s;
 struct debugtextframe_s;
 struct dynamicFog_s;
@@ -28,6 +29,7 @@ union vector_u;
 typedef struct body_s body;
 typedef struct camera_s camera;
 typedef struct canyon_s canyon;
+typedef struct canyonTerrain_s canyonTerrain;
 typedef struct canyonZone_s canyonZone;
 typedef struct debugtextframe_s debugtextframe;
 typedef struct dynamicFog_s dynamicFog;

@@ -70,7 +70,6 @@ void test_engine_init( engine* e ) {
 	e->debugtext = f;
 #endif
 	
-
 	theScene = test_scene_init( e );
 //	theScene->debugtext = e->debugtext;
 	lua_setScene( e->lua, theScene );
@@ -89,12 +88,14 @@ void test_engine_init( engine* e ) {
 	}
 
 	// Dynamic fog
+	/*
 	{
 		dynamicFog* f = dynamicFog_create();
 		f->scene = theScene;
 		theScene->fog = f;
 		startTick( e, (void*)f, dynamicFog_tick );
 	}
+	*/
 }
 
 /*
