@@ -68,10 +68,10 @@ weapons_cooldown = 0.15
 
 function player_fire( ship )
 	if ship.cooldown <= 0.0 then
-		muzzle_pos = Vector( 1.2, 0.0, 0.0, 1.0 );
-		fire_missile( ship, muzzle_pos );
-		muzzle_pos = Vector( -1.2, 0.0, 0.0, 1.0 );
-		fire_missile( ship, muzzle_pos );
+		muzzle_position = Vector( 1.2, 0.0, 0.0, 1.0 );
+		fire_missile( ship, muzzle_position );
+		muzzle_position = Vector( -1.2, 0.0, 0.0, 1.0 );
+		fire_missile( ship, muzzle_position );
 		ship.cooldown = weapons_cooldown
 	end
 end
@@ -87,9 +87,11 @@ function missile_collisionHandler( missile, other )
 	--vparticle_destroy( missile.trail )
 end
 
-missiles  = {}
-missile_count = 0
-function fire_missile( ship, offset )
+missiles  = { count = 0 }
+bullet_speed = 250.0;
+enemy_bullet_speed = 150.0;
+
+function fire_missile( source, offset )
 	-- Create a new Projectile
 	local projectile = {}
 	projectile = gameobject_create( projectile_model );
@@ -98,8 +100,8 @@ function fire_missile( ship, offset )
 	vbody_registerCollisionCallback( projectile.body, missile_collisionHandler )
 
 	-- Position it at the correct muzzle position and rotation
-	muzzle_world_pos = vtransformVector( ship.transform, muzzle_pos )
-	vtransform_setWorldSpaceByTransform( projectile.transform, ship.transform )
+	muzzle_world_pos = vtransformVector( source.transform, offset )
+	vtransform_setWorldSpaceByTransform( projectile.transform, source.transform )
 	vtransform_setWorldPosition( projectile.transform, muzzle_world_pos )
 
 	-- Attach a particle effect to the object
@@ -107,14 +109,40 @@ function fire_missile( ship, offset )
 	--inTime( 0.2, function () projectile.trail = vparticle_create( engine, projectile.transform, "dat/script/lisp/missile_particle.s" ) end )
 
 	-- Apply initial velocity
-	bullet_speed = 250.0;
-	ship_v = Vector( 0.0, 0.0, bullet_speed, 0.0 )
-	world_v = vtransformVector( ship.transform, ship_v )
+	source_velocity = Vector( 0.0, 0.0, bullet_speed, 0.0 )
+	world_v = vtransformVector( source.transform, source_velocity )
 	vphysic_setVelocity( projectile.physic, world_v );
 
 	-- Store the projectile so it doesn't get garbage collected
-	missiles[missile_count] = projectile
-	missile_count = missile_count + 1
+	missiles[missiles.count] = projectile
+	missiles.count = missiles.count + 1
+end
+
+function fire_enemy_missile( source, offset )
+	-- Create a new Projectile
+	local projectile = {}
+	projectile = gameobject_create( projectile_model );
+	vbody_setLayers( projectile.body, collision_layer_enemy )
+	vbody_setCollidableLayers( projectile.body, collision_layer_player )
+	vbody_registerCollisionCallback( projectile.body, missile_collisionHandler )
+
+	-- Position it at the correct muzzle position and rotation
+	muzzle_world_pos = vtransformVector( source.transform, offset )
+	vtransform_setWorldSpaceByTransform( projectile.transform, source.transform )
+	vtransform_setWorldPosition( projectile.transform, muzzle_world_pos )
+
+	-- Attach a particle effect to the object
+	projectile.glow = vparticle_create( engine, projectile.transform, "dat/script/lisp/bullet.s" )
+	--inTime( 0.2, function () projectile.trail = vparticle_create( engine, projectile.transform, "dat/script/lisp/missile_particle.s" ) end )
+
+	-- Apply initial velocity
+	source_velocity = Vector( 0.0, 0.0, enemy_bullet_speed, 0.0 )
+	world_v = vtransformVector( source.transform, source_velocity )
+	vphysic_setVelocity( projectile.physic, world_v );
+
+	-- Store the projectile so it doesn't get garbage collected
+	missiles[missiles.count] = projectile
+	missiles.count = missiles.count + 1
 end
 
 timers = {}
@@ -540,6 +568,7 @@ function tick( dt )
 
 	update_spawns( player_ship )
 
+	tick_array( turrets, dt )
 end
 
 -- Called on termination to clean up after itself
@@ -564,25 +593,58 @@ function spawn_pos( i )
 	return i * spawn_interval + spawn_offset;
 end
 
+turrets = { count = 0 }
+
+
+turret_cooldown = 0.4
+
+function turret_fire( turret )
+	vprint( "### Turret fire!" )
+	muzzle_position = Vector( 4.0, 6.0, 0.0, 1.0 )
+	fire_enemy_missile( turret, muzzle_position )
+	muzzle_position = Vector( -4.0, 6.0, 0.0, 1.0 )
+	fire_enemy_missile( turret, muzzle_position )
+end
+
+function turret_tick( turret, dt )
+	if turret.cooldown < 0.0 then
+		turret_fire( turret )
+		turret.cooldown = turret_cooldown
+	end
+	turret.cooldown = turret.cooldown - dt
+end
+
+function tick_array( array, dt )
+	for element in iterator( array ) do
+		element.tick( element, dt )
+	end
+end
+
 function spawn_turret( u, v )
-	local spawn_height = 0.0
+	local spawn_height = 20.0
 	vprint( "Spawn_turret, v = " .. v )
 
 	-- position
 	local x, y, z = vcanyon_position( u, v )
 	local position = Vector( x, y + spawn_height, z, 1.0 )
-	local target = gameobject_create( "dat/model/gun_turret.s" )
-	vtransform_setWorldPosition( target.transform, position )
+	local turret = gameobject_create( "dat/model/gun_turret.s" )
+	vtransform_setWorldPosition( turret.transform, position )
 
 	-- Orientation
 	local facing_x, facing_y, facing_z = vcanyon_position( u, v - ( 1.0 / canyon_v_scale ))
 	local facing_position = Vector( facing_x, y + spawn_height, facing_z, 1.0 )
-	vtransform_facingWorld( target.transform, facing_position )
+	vtransform_facingWorld( turret.transform, facing_position )
 
 	-- Physics
-	vbody_registerCollisionCallback( target.body, target_collisionHandler )
-	vbody_setLayers( target.body, collision_layer_enemy )
-	vbody_setCollidableLayers( target.body, collision_layer_player )
+	vbody_registerCollisionCallback( turret.body, target_collisionHandler )
+	vbody_setLayers( turret.body, collision_layer_enemy )
+	vbody_setCollidableLayers( turret.body, collision_layer_player )
+
+	turret.tick = turret_tick
+	turret.cooldown = turret_cooldown
+
+	turrets[turrets.count] = turret
+	turrets.count = turrets.count + 1
 end
 
 function spawn_target( v )
@@ -621,10 +683,11 @@ end
 
 -- spawn properties
 spawn_offset = 0.0
-spawn_interval = 100.0
-spawn_distance = 1000.0
+spawn_interval = 200.0
+spawn_distance = 300.0
 -- spawn tracking
 last_spawn = 0.0
+last_spawn_index = 0
 
 
 function contains( value, range_a, range_b )
@@ -644,14 +707,16 @@ function entities_spawnAll( near, far )
 	spawn_v = i * spawn_interval
 	--vprint( "spawn_v " .. spawn_v .. ", near " .. near .. ", far " .. far )
 	while contains( spawn_v, near, far ) do
-		vprint( "Spawning at " .. spawn_v .. "!" )
-		--spawn_target( spawn_v )
-		local turret_offset_u = 20.0
-		spawn_turret( turret_offset_u, spawn_v )
-		spawn_turret( -turret_offset_u, spawn_v )
-		i = i + 1
-		spawn_v = i * spawn_interval
-		--vprint( "Evaluating spawn index: " .. i )
+		if ( i > last_spawn_index ) then
+			vprint( "Spawning at " .. spawn_v .. "!" )
+			--spawn_target( spawn_v )
+			local turret_offset_u = 20.0
+			spawn_turret( turret_offset_u, spawn_v )
+			spawn_turret( -turret_offset_u, spawn_v )
+			last_spawn_index = i
+			i = i + 1
+			spawn_v = i * spawn_interval
+		end
 	end
 end
 
