@@ -97,6 +97,7 @@ void		scene_setFogColor( scene* s, const vector* color );
 // Transform Access
 transform*	scene_transform( scene* s, int i );
 void		scene_addTransform( scene* s, transform* t );
+void		scene_removeTransform( scene* s, transform* e );
 int			scene_transformIndex( scene* s, transform* t );
 
 // ModelInstance Access

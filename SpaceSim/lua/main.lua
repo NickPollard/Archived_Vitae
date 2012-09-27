@@ -11,6 +11,11 @@ C and only controlled remotely by Lua
 
 ]]--
 
+-- Load Modules
+	package.path = "./SpaceSim/lua/?.lua"
+	tm = require "testmodule"
+	ai = require "ai"
+
 -- player - this object contains general data about the player
 player = nil
 -- player_ship - the actual ship entity flying around
@@ -21,7 +26,6 @@ player_ship = nil
 -- and a transform for locating it in space (transform)
 function gameobject_create( model_file )
 	g = {}
-	g.test = 256
 	g.model = vcreateModelInstance( model_file )
 	g.physic = vcreatePhysic()
 	g.transform = vcreateTransform()
@@ -40,7 +44,7 @@ end
 
 function gameobject_destroy( g )
 	inTime( 0.2, function () vdeleteModelInstance( g.model ) 
-							vdestroyTransform( g.transform )
+							vdestroyTransform( scene, g.transform )
 							vphysic_destroy( g.physic )
 				end )
 	vdestroyBody( g.body )
@@ -77,10 +81,14 @@ function player_fire( ship )
 end
 
 function missile_destroy( missile )
-	vdeleteModelInstance( missile.model ) 
-	vdestroyTransform( missile.transform )
-	vdestroyBody( missile.body )
-	vparticle_destroy( missile.glow )
+	if not missile.destroyed then
+		vdeleteModelInstance( missile.model ) 
+		vphysic_destroy( missile.physic )
+		vdestroyTransform( scene, missile.transform )
+		vdestroyBody( missile.body )
+		vparticle_destroy( missile.glow )
+		missile.destroyed = true
+	end
 end
 
 function missile_collisionHandler( missile, other )
@@ -89,7 +97,7 @@ function missile_collisionHandler( missile, other )
 	missile_destroy( missile )
 end
 
-missiles  = { count = 0 }
+missiles = { count = 0 }
 bullet_speed = 250.0;
 enemy_bullet_speed = 150.0;
 
@@ -114,6 +122,8 @@ function fire_missile( source, offset )
 	source_velocity = Vector( 0.0, 0.0, bullet_speed, 0.0 )
 	world_v = vtransformVector( source.transform, source_velocity )
 	vphysic_setVelocity( projectile.physic, world_v );
+
+	projectile.destroyed = false
 
 	-- Store the projectile so it doesn't get garbage collected
 	missiles[missiles.count] = projectile
@@ -141,6 +151,10 @@ function fire_enemy_missile( source, offset )
 	source_velocity = Vector( 0.0, 0.0, enemy_bullet_speed, 0.0 )
 	world_v = vtransformVector( source.transform, source_velocity )
 	vphysic_setVelocity( projectile.physic, world_v );
+
+	-- Queue up delete
+	projectile.destroyed = false
+	inTime( 2.0, function () missile_destroy( projectile ) end )
 
 	-- Store the projectile so it doesn't get garbage collected
 	missiles[missiles.count] = projectile
@@ -212,6 +226,12 @@ function playership_create()
 	p.pitch = 0
 	p.roll = 0
 	p.camera_transform = vcreateTransform()
+	
+	-- Init Collision
+	vbody_registerCollisionCallback( p.body, player_ship_collisionHandler )
+	vbody_setLayers( p.body, collision_layer_player )
+	vbody_setCollidableLayers( p.body, collision_layer_enemy )
+
 	return p
 end
 
@@ -322,10 +342,19 @@ function player_ship_collisionHandler( ship, collider )
 
 	-- destroy it
 	spawn_explosion( ship.transform )
-	gameobject_destroy( ship )
+
+	-- not using gameobject_destroy as we need to sync transform dying with camera rejig
+	inTime( 0.2, function () vdeleteModelInstance( ship.model ) 
+							vphysic_destroy( ship.physic )
+				end )
+	vdestroyBody( ship.body )
 
 	-- queue a restart
-	inTime( 2.0, restart )
+	inTime( 2.0, function ()
+		vdestroyTransform( scene, ship.transform )
+		restart() 
+	end )
+	vprint( "### 3" )
 end
 
 collision_layer_player = 1
@@ -345,11 +374,6 @@ function restart()
 	local no_velocity = Vector( 0.0, 0.0, player_ship.speed, 0.0 )
 	vphysic_setVelocity( player_ship.physic, no_velocity )
 	inTime( 3.0, function () player_ship.speed = 30.0 end )
-
-	-- Init Collision
-	vbody_registerCollisionCallback( player_ship.body, player_ship_collisionHandler )
-	vbody_setLayers( player_ship.body, collision_layer_player )
-	vbody_setCollidableLayers( player_ship.body, collision_layer_enemy )
 
 	setup_controls()
 	--vtransform_yaw( player_ship.transform, math.pi * 2 * 1.32 );
@@ -388,6 +412,10 @@ function start()
 	loadParticles()
 
 	restart()
+
+	--tm.test()
+	--ai.test_combinator()
+	ai.test_states()
 
 	-- testSpawns()
 	--ship_spawner()
@@ -571,6 +599,7 @@ function tick( dt )
 	update_spawns( player_ship )
 
 	tick_array( turrets, dt )
+	tick_array( interceptors, dt )
 end
 
 -- Called on termination to clean up after itself
@@ -596,12 +625,12 @@ function spawn_pos( i )
 end
 
 turrets = { count = 0 }
+interceptors = { count = 0 }
 
 
 turret_cooldown = 0.4
 
 function turret_fire( turret )
-	vprint( "### Turret fire!" )
 	muzzle_position = Vector( 4.0, 6.0, 0.0, 1.0 )
 	fire_enemy_missile( turret, muzzle_position )
 	muzzle_position = Vector( -4.0, 6.0, 0.0, 1.0 )
@@ -609,11 +638,7 @@ function turret_fire( turret )
 end
 
 function turret_tick( turret, dt )
-	if turret.cooldown < 0.0 then
-		turret_fire( turret )
-		turret.cooldown = turret_cooldown
-	end
-	turret.cooldown = turret.cooldown - dt
+	turret.state = turret.state( turret, dt )
 end
 
 function tick_array( array, dt )
@@ -644,6 +669,9 @@ function spawn_turret( u, v )
 
 	turret.tick = turret_tick
 	turret.cooldown = turret_cooldown
+
+	-- ai
+	turret.state = turret_state_inactive
 
 	turrets[turrets.count] = turret
 	turrets.count = turrets.count + 1
@@ -713,8 +741,9 @@ function entities_spawnAll( near, far )
 			vprint( "Spawning at " .. spawn_v .. "!" )
 			--spawn_target( spawn_v )
 			local turret_offset_u = 20.0
-			spawn_turret( turret_offset_u, spawn_v )
-			spawn_turret( -turret_offset_u, spawn_v )
+			--spawn_turret( turret_offset_u, spawn_v )
+			--spawn_turret( -turret_offset_u, spawn_v )
+			spawn_interceptor( 0, spawn_v )
 			last_spawn_index = i
 			i = i + 1
 			spawn_v = i * spawn_interval
@@ -730,4 +759,111 @@ function update_spawns( ship )
 	far = v + spawn_distance
 	entities_spawnAll( last_spawn, far )
 	last_spawn = far;
+end
+
+function turret_state_inactive( turret, dt )
+	--vprint( "inactive" )
+	player_close = ( vtransform_distance( player_ship.transform, turret.transform ) < 200.0 )
+	--[[
+	if player_close then
+		vprint( "player close true" )
+	else
+		vprint( "player close false" )
+	end
+	--]]
+
+	if player_close then
+		return turret_state_active
+	else
+		return turret_state_inactive
+	end
+end
+
+function turret_state_active( turret, dt )
+	--vprint( "active" )
+	player_close = ( vtransform_distance( player_ship.transform, turret.transform ) < 200.0 )
+	--[[
+	if player_close then
+		vprint( "player close true" )
+	else
+		vprint( "player close false" )
+	end
+	--]]
+
+	if turret.cooldown < 0.0 then
+		turret_fire( turret )
+		turret.cooldown = turret_cooldown
+	end
+	turret.cooldown = turret.cooldown - dt
+
+	if player_close then
+		return turret_state_active
+	else
+		return turret_state_inactive
+	end
+end
+
+function entity_setSpeed( entity, speed )
+	entity.speed = speed
+	entity_velocity = Vector( 0.0, 0.0, entity.speed, 0.0 )
+	world_velocity = vtransformVector( entity.transform, entity_velocity )
+	vphysic_setVelocity( entity.physic, world_velocity )
+end
+
+function entity_moveTo( position )
+	return function ( entity )
+		--entity.transform = direction_to_position
+		entity_setSpeed( entity, 10.0 )
+	end
+end
+
+function entity_attack()
+	return function ( entity )
+		entity_setSpeed( entity, 0.0 )
+	end
+end
+
+function entity_atPosition( entity, position, max_distance )
+	distance = vtransform_distance( entity.transform, position )
+	return distance < max_distance
+end
+
+function spawn_interceptor( u, v )
+	local y_height = 20
+	local u_offset = -40
+	local y_offset = 40
+	local x, y, z = vcanyon_position( u + u_offset, v )
+	spawn_position = Vector( x, y + y_height + y_offset, z, 1.0 )
+	local x, y, z = vcanyon_position( u, v )
+	attack_position = Vector( x, y + y_height, z, 1.0 )
+	retreat_position = spawn_position
+	
+	local interceptor = gameobject_create( "dat/model/ship_hd.s" )
+	vtransform_setWorldPosition( interceptor.transform, spawn_position )
+
+	--[[
+	enter = nil
+	attack = nil
+	exit = nil
+	enter =		ai.state( entity_moveTo( attack_position ),		function () if entity_atPosition( entity, attack_position, 10.0 ) then return attack else return enter end end )
+	attack =	ai.state( entity_attack,						function () if time_in_state > 5 then return exit else return attack end end )
+	exit = 		ai.state( entity_moveTo( retreat_position ),	function () return exit )
+	--]]
+	enter =		ai.state( entity_moveTo( attack_position ),		
+							function () if entity_atPosition( entity, attack_position, 10.0 ) then 
+									return nil 
+								else 
+									return enter 
+								end 
+							end )
+	interceptor.behaviour = enter
+	interceptor.tick = interceptor_tick
+
+	interceptors[interceptors.count] = interceptor
+	interceptors.count = interceptors.count + 1
+end
+
+function interceptor_tick( interceptor, dt )
+	--vprint( "Interceptor tick." )
+	interceptor.behaviour = interceptor.behaviour( interceptor, dt )
 end

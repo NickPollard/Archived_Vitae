@@ -36,6 +36,7 @@ void modelInstance_initPool();
 
 modelInstance* modelInstance_createEmpty( );
 modelInstance* modelInstance_create( modelHandle m );
+void modelInstance_delete( modelInstance* t );
 
 void modelInstance_draw( modelInstance* instance, camera* cam );
 

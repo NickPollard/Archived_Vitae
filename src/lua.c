@@ -127,6 +127,11 @@ void lua_setConstant_ptr( lua_State* l, const char* name, void* ptr ) {
 	lua_pushptr( l, ptr );
 	lua_setglobal( l, name ); // Store in the global variable named <name>
 }
+
+void lua_setConstant_string( lua_State* l, const char* name, const char* string ) {
+	lua_pushstring( l, string );
+	lua_setglobal( l, name );
+}
 // ***
 
 
@@ -153,6 +158,8 @@ lua_State* vlua_create( engine* e, const char* filename ) {
 
 	lua_setConstant_ptr( l, "engine", e );
 	lua_setConstant_ptr( l, "input", e->input );
+
+	//lua_setConstant_string( l, "package.path", "SpaceSim/lua/?.lua" );
 
 	// *** Always call init
 	LUA_CALL( l, "init" );

@@ -107,7 +107,6 @@ void scene_addLight( scene* s, light* l ) {
 // Add an existing transform to the scene
 void scene_addTransform( scene* s, transform* t ) {
 	assert( s->transform_count < MAX_TRANSFORMS );
-//	memcpy(	&s->transforms[s->transform_count++], t, sizeof( transform ));
 	s->transforms[s->transform_count++] = t;
 }
 

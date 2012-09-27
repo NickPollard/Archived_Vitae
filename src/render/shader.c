@@ -9,6 +9,13 @@
 #include "system/string.h"
 #include "system/hash.h"
 
+#define SHADER_DEBUG 0
+#if SHADER_DEBUG
+#define SHADER_DEBUGPRINT( ... ) printf( __VA_ARGS__ )
+#else
+#define SHADER_DEBUGPRINT( ... ) 
+#endif // SHADER_DEBUG
+
 #define kMaxShaderConstants 128
 map* shader_constants = NULL;
 #define kShaderMaxLogLength (16 << 10)
@@ -51,7 +58,7 @@ shaderConstantBinding shader_createBinding( GLuint shader_program, const char* v
 	if ( string_equal( "sampler2D", variable_type ))
 		binding.type = uniform_tex2D;
 
-	printf( "SHADER: Created Shader binding 0x" xPTRf " for \"%s\" at location 0x%x, type: %s\n", (uintptr_t)binding.value, variable_name, binding.program_location, variable_type );
+	SHADER_DEBUGPRINT( "SHADER: Created Shader binding 0x" xPTRf " for \"%s\" at location 0x%x, type: %s\n", (uintptr_t)binding.value, variable_name, binding.program_location, variable_type );
 	return binding;
 }
 
@@ -206,7 +213,7 @@ void shader_activate( shader* s ) {
 
 // Load a shader from GLSL files
 shader* shader_load( const char* vertex_name, const char* fragment_name ) {
-	printf( "SHADER: Loading Shader (Vertex: \"%s\", Fragment: \"%s\")\n", vertex_name, fragment_name );
+	SHADER_DEBUGPRINT( "SHADER: Loading Shader (Vertex: \"%s\", Fragment: \"%s\")\n", vertex_name, fragment_name );
 	shader* s = mem_alloc( sizeof( shader ));
 	memset( s, 0, sizeof( shader ));
 	s->dict.count = 0;

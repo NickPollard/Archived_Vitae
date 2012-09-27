@@ -24,6 +24,11 @@ modelInstance* modelInstance_createEmpty( ) {
 	return i;
 }
 
+void modelInstance_delete( modelInstance* t ) {
+	pool_modelInstance_free( static_modelInstance_pool, t );
+}
+
+
 void modelInstance_createSubTransforms( modelInstance* instance ) {
 	model* m = model_fromInstance( instance );
 	for ( int i = 0; i < m->transform_count; i++ ) {

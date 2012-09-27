@@ -124,10 +124,9 @@ int LUA_createbodyMesh( lua_State* l ) {
 }
 
 int LUA_deleteModelInstance( lua_State* l ) {
-	//printf( "Delete Model Instance.\n" );
 	modelInstance* m = lua_toptr( l, 1 );
 	scene_removeModel( theScene, m );
-	// TODO: remove from pool (not mem-free)
+	modelInstance_delete( m );
 	return 0;
 }
 
@@ -203,8 +202,10 @@ int LUA_physic_destroy( lua_State* l ) {
 }
 
 int LUA_transform_destroy( lua_State* l ) {
-	transform* t = lua_toptr( l, 1 );
+	scene* s = lua_toptr( l, 1 );
+	transform* t = lua_toptr( l, 2 );
 	vAssert( t );
+	scene_removeTransform( s, t );
 	transform_delete( t );
 	return 0;
 }
@@ -487,6 +488,14 @@ int LUA_transform_eulerAngles( lua_State* l ) {
 	return 0;
 }
 
+int LUA_transform_distance( lua_State* l ) {
+	transform* a = lua_toptr( l, 1 );
+	transform* b = lua_toptr( l, 2 );
+	float distance = vector_distance( transform_getWorldPosition( a ), transform_getWorldPosition( b ));
+	lua_pushnumber( l, (double)distance );
+	return 1;
+}
+
 int LUA_transform_facingWorld( lua_State* l ) {
 	transform* t = lua_toptr( l, 1 );
 	const vector* look_at = lua_toptr( l, 2 );
@@ -687,6 +696,7 @@ void luaLibrary_import( lua_State* l ) {
 	lua_registerFunction( l, LUA_transform_destroy, "vdestroyTransform" );
 	lua_registerFunction( l, LUA_transform_facingWorld, "vtransform_facingWorld" );
 	lua_registerFunction( l, LUA_transform_eulerAngles, "vtransform_eulerAngles" );
+	lua_registerFunction( l, LUA_transform_distance, "vtransform_distance" );
 
 	// *** Particles
 	lua_registerFunction( l, LUA_particle_create, "vparticle_create" );
