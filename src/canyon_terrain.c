@@ -608,23 +608,25 @@ void canyonTerrain_updateBlocks( canyonTerrain* t ) {
 	}
 
 	// For each new block
+	int new_block_count = 0;
 	for ( int i = 0; i < t->total_block_count; i++ ) {
 		int coord[2];
 		coord[0] = bounds[0][0] + ( i % t->u_block_count );
 		coord[1] = bounds[0][1] + ( i / t->u_block_count );
+		canyonTerrainBlock* b = new_blocks[i];
 		// if not in old bounds
 		// Or if we need to change lod level
-		if (( !boundsContains( intersection, coord )) ||
-			( new_blocks[i]->lod_level != canyonTerrain_lodLevelForBlock( t, coord ))) {
-			memcpy( new_blocks[i]->coord, coord, sizeof( int ) * 2 );
-			//canyonTerrainBlock_calculateExtents( new_blocks[i], t, coord );
+		if ( !boundsContains( intersection, coord ) || ( !b->pending && ( b->lod_level != canyonTerrain_lodLevelForBlock( t, coord )))) {
+			memcpy( b->coord, coord, sizeof( int ) * 2 );
 			// mark it as new, buffers will be filled in later
-			new_blocks[i]->pending = true;
+			b->pending = true;
 #if TERRAIN_USE_WORKER_THREAD
-			canyonTerrain_queueWorkerTaskGenerateBlock( new_blocks[i] );
+			++new_block_count;
+			canyonTerrain_queueWorkerTaskGenerateBlock( b );
 #endif // TERRAIN_USE_WORKER_THREAD
 		}
 	}
+	printf( "Adding %d new blocks. Bounds: %d,%d\n", new_block_count, bounds[0][0], bounds[0][1] );
 
 	memcpy( t->bounds, bounds, sizeof( int ) * 2 * 2 );
 	memcpy( t->blocks, new_blocks, sizeof( canyonTerrainBlock* ) * t->total_block_count );
