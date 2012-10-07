@@ -103,7 +103,11 @@ int lua_store( lua_State* l ) {
 
 void lua_runFunc( lua_State* l, int ref, int args ) {
 	lua_retrieve( l, ref );
-	lua_pcall( l, args, 0, 0 );
+	int err = lua_pcall( l, args, 0, 0 );
+	if ( err != 0 ) {
+		printf( "LUA ERROR: ErrorNum: %d.\n", err );
+		vAssert( 0 );
+	}
 }
 
 vector lua_tovector3( lua_State* l, int i ) {

@@ -64,6 +64,19 @@ void debugdraw_line3d( vector from, vector to, vector color ) {
 	draw->elements_mode = GL_LINES;
 }
 
+// Draw a debug cross at the point *center*
+void debugdraw_cross( vector center, float radius, vector color ) {
+	vector from = vector_add( center, Vector( radius, 0.f, 0.f, 0.f ));
+	vector to = vector_add( center, Vector( -radius, 0.f, 0.f, 0.f ));
+	debugdraw_line3d( from, to, color );
+	from = vector_add( center, Vector( 0.f, radius, 0.f, 0.f ));
+	to = vector_add( center, Vector( 0.f, -radius, 0.f, 0.f ));
+	debugdraw_line3d( from, to, color );
+	from = vector_add( center, Vector( 0.f, 0.f, radius, 0.f ));
+	to = vector_add( center, Vector( 0.f, 0.f, -radius, 0.f ));
+	debugdraw_line3d( from, to, color );
+}
+
 void debugdraw_sphere( vector origin, float radius, vector color ) {
 	// Grab a vertex and element buffer from our static ones
 	int vert_count = 24;
@@ -168,21 +181,6 @@ void debugdraw_preTick( float dt ) {
 }
 
 	/*
-// Draw a debug cross at the point *center*
-void debugdraw_cross( const vector* center, float radius ) {
-	glBegin(GL_LINES);
-	// horizonal
-	glVertex3f(center->coord.x - radius, center->coord.y, center->coord.z);
-	glVertex3f(center->coord.x + radius, center->coord.y, center->coord.z);
-	// vertical
-	glVertex3f(center->coord.x, center->coord.y - radius, center->coord.z);
-	glVertex3f(center->coord.x, center->coord.y + radius, center->coord.z);
-	// directional
-	glVertex3f(center->coord.x, center->coord.y, center->coord.z - radius);
-	glVertex3f(center->coord.x, center->coord.y, center->coord.z + radius);
-	glEnd();
-}
-
 void debugdraw_drawRect2D( vector* tl, vector* br ) {
 	render_set2D();
 	glMatrixMode( GL_MODELVIEW );

@@ -19,6 +19,7 @@
 #include "input/keyboard.h"
 #include "maths/geometry.h"
 #include "mem/allocator.h"
+#include "render/debugdraw.h"
 #include "render/modelinstance.h"
 #include "render/texture.h"
 #include "script/lisp.h"
@@ -418,6 +419,7 @@ int LUA_transform_setWorldPosition( lua_State* l ) {
 
 int LUA_transform_getWorldPosition( lua_State* l ) {
 	transform* t = lua_toptr( l, 1 );
+	//printf( "lua_transform_getWorldPosition - transform = " xPTRf "\n", (uintptr_t)t );
 	const vector* v = transform_getWorldPosition( t );
 	lua_pushptr( l, (void*)v );
 	return 1;
@@ -500,6 +502,7 @@ int LUA_transform_facingWorld( lua_State* l ) {
 	transform* t = lua_toptr( l, 1 );
 	const vector* look_at = lua_toptr( l, 2 );
 	const vector* position = transform_getWorldPosition( t );
+	//vector_printf( "Facing position ", look_at );
 	vector displacement;
 	Sub( &displacement, look_at, position );
 	Normalize( &displacement, &displacement );
@@ -619,6 +622,20 @@ int LUA_body_setCollidableLayers( lua_State* l ) {
 	return 0;
 }
 
+int LUA_debugdraw_cross( lua_State* l ) {
+	vector* center = lua_toptr( l, 1 );
+	float radius = lua_tonumber( l, 2 );
+	debugdraw_cross( *center, radius, color_green );
+	return 0;
+}
+
+int LUA_vector_distance( lua_State* l ) {
+	const vector* a = lua_toptr( l, 1 );
+	const vector* b = lua_toptr( l, 2 );
+	float distance = vector_distance( a, b );
+	lua_pushnumber( l, (double)distance );
+	return 1;
+}
 
 
 
@@ -654,10 +671,12 @@ void luaLibrary_import( lua_State* l ) {
 	// *** General
 	lua_registerFunction( l, LUA_registerCallback, "registerEventHandler" );
 	lua_registerFunction( l, LUA_print, "vprint" );
+	lua_registerFunction( l, LUA_debugdraw_cross, "vdebugdraw_cross" );
 
 	// *** Vector
 	lua_registerFunction( l, LUA_vector, "Vector" );
 	lua_registerFunction( l, LUA_vector_values, "vvector_values" );
+	lua_registerFunction( l, LUA_vector_distance, "vvector_distance" );
 
 	// *** Input
 	lua_registerFunction( l, LUA_keyPressed, "vkeyPressed" );

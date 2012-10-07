@@ -4,14 +4,12 @@
 
 #include "src/maths/maths.h"
 
-// Draw a debug cross at the point *center*
-void debugdraw_cross( const vector* center, float radius );
-
 void debugdraw_drawRect2D( vector* from, vector* to );
 
 // *** Debug draw primitives
 void debugdraw_line2d( vector from, vector to, vector color );
 void debugdraw_line3d( vector from, vector to, vector color );
+void debugdraw_cross( vector center, float radius, vector color );
 void debugdraw_sphere( vector origin, float radius, vector color );
 void debugdraw_wireframeMesh( int vert_count, vector* verts, int index_count, uint16_t* indices, matrix trans, vector color );
 

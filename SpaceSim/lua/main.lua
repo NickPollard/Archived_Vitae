@@ -25,7 +25,7 @@ player_ship = nil
 -- A gameobject has a visual representation (model), a physical entity for velocity and momentum (physic)
 -- and a transform for locating it in space (transform)
 function gameobject_create( model_file )
-	g = {}
+	local g = {}
 	g.model = vcreateModelInstance( model_file )
 	g.physic = vcreatePhysic()
 	g.transform = vcreateTransform()
@@ -408,11 +408,30 @@ function testSpawns()
 	end
 end
 
+function makefunction( text )
+	local a = nil
+	a = function() vprint( text ) return a end
+	return a
+end
+
 function start()
 	loadParticles()
 
 	restart()
 
+	vprint( "begin test." )
+	local test_table = {}
+	test_table.text = "hello world"
+	test = function ( ) 
+		a = function ( t ) 
+			vprint( t.text ) 
+		end
+		a( test_table )
+	end
+	test()
+
+
+	
 	--tm.test()
 	--ai.test_combinator()
 	ai.test_states()
@@ -673,8 +692,8 @@ function spawn_turret( u, v )
 	-- ai
 	turret.state = turret_state_inactive
 
-	turrets[turrets.count] = turret
 	turrets.count = turrets.count + 1
+	turrets[turrets.count] = turret
 end
 
 function spawn_target( v )
@@ -738,12 +757,12 @@ function entities_spawnAll( near, far )
 	--vprint( "spawn_v " .. spawn_v .. ", near " .. near .. ", far " .. far )
 	while contains( spawn_v, near, far ) do
 		if ( i > last_spawn_index ) then
-			vprint( "Spawning at " .. spawn_v .. "!" )
+			--vprint( "Spawning at " .. spawn_v .. "!" )
 			--spawn_target( spawn_v )
 			local turret_offset_u = 20.0
 			--spawn_turret( turret_offset_u, spawn_v )
 			--spawn_turret( -turret_offset_u, spawn_v )
-			spawn_interceptor( 0, spawn_v )
+				spawn_interceptor( 0, spawn_v )
 			last_spawn_index = i
 			i = i + 1
 			spawn_v = i * spawn_interval
@@ -753,6 +772,7 @@ end
 
 -- Spawn all entities that need to be spawned this frame
 function update_spawns( ship )
+	--vprint( "update spawns." )
 	ship_pos = vtransform_getWorldPosition( ship.transform )
 	u,v = vworldPositionFromCanyon( ship_pos )
 	--x,y,z,w = vvector_values( ship_pos )
@@ -805,15 +825,17 @@ end
 
 function entity_setSpeed( entity, speed )
 	entity.speed = speed
-	entity_velocity = Vector( 0.0, 0.0, entity.speed, 0.0 )
-	world_velocity = vtransformVector( entity.transform, entity_velocity )
+	local entity_velocity = Vector( 0.0, 0.0, entity.speed, 0.0 )
+	local world_velocity = vtransformVector( entity.transform, entity_velocity )
 	vphysic_setVelocity( entity.physic, world_velocity )
 end
 
-function entity_moveTo( position )
+function entity_moveTo( x, y, z )
 	return function ( entity )
-		--entity.transform = direction_to_position
-		entity_setSpeed( entity, 10.0 )
+		entity_setSpeed( entity, 20.0 )
+		local facing_position = Vector( x, y, z, 1.0 )
+		vdebugdraw_cross( facing_position, 10.0 )
+		vtransform_facingWorld( entity.transform, facing_position )
 	end
 end
 
@@ -823,8 +845,10 @@ function entity_attack()
 	end
 end
 
-function entity_atPosition( entity, position, max_distance )
-	distance = vtransform_distance( entity.transform, position )
+function entity_atPosition( entity, x, y, z, max_distance )
+	local position = Vector( x, y, z, 1.0 )
+	local entity_position = vtransform_getWorldPosition( entity.transform )
+	local distance = vvector_distance( entity_position, position )
 	return distance < max_distance
 end
 
@@ -833,10 +857,10 @@ function spawn_interceptor( u, v )
 	local u_offset = -40
 	local y_offset = 40
 	local x, y, z = vcanyon_position( u + u_offset, v )
-	spawn_position = Vector( x, y + y_height + y_offset, z, 1.0 )
+	local spawn_position = Vector( x, y + y_height + y_offset, z, 1.0 )
 	local x, y, z = vcanyon_position( u, v )
-	attack_position = Vector( x, y + y_height, z, 1.0 )
-	retreat_position = spawn_position
+	local attack_position = Vector( x, y + y_height, z, 1.0 )
+	--retreat_position = spawn_position
 	
 	local interceptor = gameobject_create( "dat/model/ship_hd.s" )
 	vtransform_setWorldPosition( interceptor.transform, spawn_position )
@@ -849,9 +873,12 @@ function spawn_interceptor( u, v )
 	attack =	ai.state( entity_attack,						function () if time_in_state > 5 then return exit else return attack end end )
 	exit = 		ai.state( entity_moveTo( retreat_position ),	function () return exit )
 	--]]
-	enter =		ai.state( entity_moveTo( attack_position ),		
-							function () if entity_atPosition( entity, attack_position, 10.0 ) then 
-									return nil 
+	local enter = nil
+	local exit = nil
+	enter =		ai.state( entity_moveTo( x, y + y_height, z ),		
+							function () if entity_atPosition( interceptor, x, y + y_height, z, 10.0 ) then 
+									vprint( "reached!" )
+									return exit 
 								else 
 									return enter 
 								end 
@@ -859,11 +886,12 @@ function spawn_interceptor( u, v )
 	interceptor.behaviour = enter
 	interceptor.tick = interceptor_tick
 
-	interceptors[interceptors.count] = interceptor
 	interceptors.count = interceptors.count + 1
+	interceptors[interceptors.count] = interceptor
 end
 
 function interceptor_tick( interceptor, dt )
-	--vprint( "Interceptor tick." )
-	interceptor.behaviour = interceptor.behaviour( interceptor, dt )
+	if interceptor.behaviour then
+		interceptor.behaviour = interceptor.behaviour( interceptor, dt )
+	end
 end
