@@ -626,8 +626,6 @@ void canyonTerrain_updateBlocks( canyonTerrain* t ) {
 #endif // TERRAIN_USE_WORKER_THREAD
 		}
 	}
-	printf( "Adding %d new blocks. Bounds: %d,%d\n", new_block_count, bounds[0][0], bounds[0][1] );
-
 	memcpy( t->bounds, bounds, sizeof( int ) * 2 * 2 );
 	memcpy( t->blocks, new_blocks, sizeof( canyonTerrainBlock* ) * t->total_block_count );
 
