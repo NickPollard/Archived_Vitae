@@ -830,19 +830,38 @@ function entity_setSpeed( entity, speed )
 	vphysic_setVelocity( entity.physic, world_velocity )
 end
 
+-- Interceptor Stats
+interceptor_speed = 30.0
+interceptor_weapon_cooldown = 0.4
+
 function entity_moveTo( x, y, z )
-	return function ( entity )
-		entity_setSpeed( entity, 20.0 )
+	return function ( entity, dt )
+		entity_setSpeed( entity, interceptor_speed )
 		local facing_position = Vector( x, y, z, 1.0 )
 		vdebugdraw_cross( facing_position, 10.0 )
 		vtransform_facingWorld( entity.transform, facing_position )
 	end
 end
 
-function entity_attack()
-	return function ( entity )
-		entity_setSpeed( entity, 0.0 )
+function interceptor_attack( x, y, z )
+	return function ( interceptor, dt )
+		local facing_position = Vector( x, y, z, 1.0 )
+		vtransform_facingWorld( interceptor.transform, facing_position )
+		entity_setSpeed( interceptor, 0.0 )
+
+		if interceptor.cooldown < 0.0 then
+			interceptor_fire( interceptor )
+			interceptor.cooldown = interceptor_weapon_cooldown
+		end
+		interceptor.cooldown = interceptor.cooldown - dt
 	end
+end
+
+function interceptor_fire( interceptor )
+	muzzle_position = Vector( 4.0, 0.0, 0.0, 1.0 )
+	fire_enemy_missile( interceptor, muzzle_position )
+	muzzle_position = Vector( -4.0, 0.0, 0.0, 1.0 )
+	fire_enemy_missile( interceptor, muzzle_position )
 end
 
 function entity_atPosition( entity, x, y, z, max_distance )
@@ -853,36 +872,41 @@ function entity_atPosition( entity, x, y, z, max_distance )
 end
 
 function spawn_interceptor( u, v )
-	local y_height = 20
-	local u_offset = -40
+	local y_height = 40
+	local u_offset = -100
 	local y_offset = 40
 	local x, y, z = vcanyon_position( u + u_offset, v )
-	local spawn_position = Vector( x, y + y_height + y_offset, z, 1.0 )
+	y = y + y_height
+	local spawn_position = Vector( x, y + y_offset, z, 1.0 )
 	local x, y, z = vcanyon_position( u, v )
-	local attack_position = Vector( x, y + y_height, z, 1.0 )
+	y = y + y_height
 	--retreat_position = spawn_position
 	
 	local interceptor = gameobject_create( "dat/model/ship_hd.s" )
+	interceptor.cooldown = 0.0
 	vtransform_setWorldPosition( interceptor.transform, spawn_position )
 
-	--[[
-	enter = nil
-	attack = nil
-	exit = nil
-	enter =		ai.state( entity_moveTo( attack_position ),		function () if entity_atPosition( entity, attack_position, 10.0 ) then return attack else return enter end end )
-	attack =	ai.state( entity_attack,						function () if time_in_state > 5 then return exit else return attack end end )
-	exit = 		ai.state( entity_moveTo( retreat_position ),	function () return exit )
-	--]]
 	local enter = nil
+	local attack = nil
 	local exit = nil
-	enter =		ai.state( entity_moveTo( x, y + y_height, z ),		
-							function () if entity_atPosition( interceptor, x, y + y_height, z, 10.0 ) then 
+	enter =		ai.state( entity_moveTo( x, y, z ),		
+							function () if entity_atPosition( interceptor, x, y, z, 1.0 ) then 
 									vprint( "reached!" )
-									return exit 
+									return attack 
 								else 
 									return enter 
 								end 
 							end )
+
+	local attack_target = Vector( x, y, z, 1.0 )
+	local x, unused, z = vcanyon_position( u, v - 10.0 )
+	--attack =	ai.state( interceptor_attack,						function () if time_in_state > 5 then return exit else return attack end end )
+	attack =	ai.state( interceptor_attack( x, y, z ),						function () return attack end )
+	--[[
+	exit = 		ai.state( entity_moveTo( retreat_position ),	function () return exit )
+	--]]
+
+
 	interceptor.behaviour = enter
 	interceptor.tick = interceptor_tick
 
