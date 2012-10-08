@@ -84,3 +84,6 @@ void* lua_toptr( lua_State* l, int index );
 void lua_assertnumber( lua_State* l, int index );
 vector* lua_createVector( );
 void lua_setConstant_bool( lua_State* l, const char* name, bool b );
+
+// Set the lua path to look for required modules
+void lua_setGameLuaPath( const char* path );

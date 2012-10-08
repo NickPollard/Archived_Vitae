@@ -96,3 +96,6 @@ typedef const char* String;
 											printf( format, args ); \
 											printf( " [File: %s, Line: %d]\n", __FILE__, __LINE__ ); \
 										}
+
+// Maximum path length in characters
+#define kMaxPath 256

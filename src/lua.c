@@ -11,6 +11,7 @@
 #define MAX_LUA_VECTORS 64
 vector lua_vectors[MAX_LUA_VECTORS];
 int lua_vector_count = 0;
+const char* game_lua_path = NULL;
 
 void lua_keycodes( lua_State* l );
 
@@ -144,26 +145,73 @@ void lua_registerFunction( lua_State* l, lua_CFunction func, const char* name ) 
     lua_setglobal( l, name );
 }
 
+#ifdef ANDROID
+int LUA_androidOpen( lua_State* l ) {
+	char filename[kMaxPath];
+	const char* modulename = lua_tostring( l, 1 );
+	sprintf( filename, "%s%s.lua", game_lua_path, modulename );
+	printf( "Android loading Lua file \"%s\"\n", filename );
+	int length = -1;
+	const char* buffer = vfile_contents( filename, &length );
+	if ( luaL_loadbuffer( l, buffer, length, filename )) {
+		printf("Error: Failed loading lua from file %s!\n", filename );
+		vAssert( 0 );
+	}
+
+	/*
+	int err = lua_pcall( l, 0, 0, 0 );
+	if ( err != 0 ) {
+		printf( "LUA ERROR: ErrorNum: %d.\n", err );
+		vAssert( 0 );
+	}
+	*/
+	return 1; // The module
+}
+
+// Set up lua loader for android
+// package.loaders[5] = android_loader
+void lua_setupAndroidLoader( lua_State* l ) {
+	// Get the package.loaders table
+	lua_getglobal( l, "package" );
+	lua_getfield( l, -1, "loaders" );
+
+	// Set the [5] value
+	int key = 5;
+	lua_pushinteger( l, key );
+	lua_pushcfunction( l, LUA_androidOpen );
+	lua_settable( l, -3 ); // The table is at -3, as we have the key and the value on top
+}
+#endif // ANDROID
+
 // Create a Lua l and load it's initial contents from <filename>
 lua_State* vlua_create( engine* e, const char* filename ) {
 	lua_State* l = lua_open();
+
 	luaL_openlibs( l );	// Load the Lua libs into our lua l
+
+#ifdef ANDROID
+	lua_setupAndroidLoader( l );
+#endif // ANDROID
 
 	// We now use luaL_loadbuffer rather than luaL_loadfile as on Android we need
 	// to go through Libzip to get the data
 	size_t length;
 	const char* buffer = vfile_contents( filename, &length );
-	if ( luaL_loadbuffer( l, buffer, length, filename ) || lua_pcall( l, 0, 0, 0)) {
+	if ( luaL_loadbuffer( l, buffer, length, filename )) {
 		printf("Error: Failed loading lua from file %s!\n", filename );
-		assert( 0 );
+		vAssert( 0 );
+	}
+
+	int err = lua_pcall( l, 0, 0, 0 );
+	if ( err != 0 ) {
+		printf( "LUA ERROR: ErrorNum: %d.\n", err );
+		vAssert( 0 );
 	}
 
 	luaLibrary_import( l );
 
 	lua_setConstant_ptr( l, "engine", e );
 	lua_setConstant_ptr( l, "input", e->input );
-
-	//lua_setConstant_string( l, "package.path", "SpaceSim/lua/?.lua" );
 
 	// *** Always call init
 	LUA_CALL( l, "init" );
@@ -188,3 +236,6 @@ void lua_setfieldf( lua_State* l, const char* key, float value ) {
 	lua_settable( l, -3 ); // The table is at -3, as we have the key and the value on top
 }
 
+void lua_setGameLuaPath( const char* path ) {
+	game_lua_path = string_createCopy( path );
+}

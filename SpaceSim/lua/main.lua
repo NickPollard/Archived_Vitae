@@ -262,40 +262,9 @@ function vrand( lower, upper )
 	return math.random() * ( upper - lower ) + lower
 end
 
-ships = {}
-ship_count = 0
---[[
-function ship_spawner()
-	local ship = gameobject_create( "dat/model/ship_hd.s" )
-	vbody_registerCollisionCallback( ship.body, ship_collisionHandler )
-	ship.speed = 30.0
-	vtransform_yaw( ship.transform, 3.14 )
-	x = vrand( -50.0, 50.0 )
-	y = vrand( 0.0, 100.0 )
-	position = Vector( x, y, 100.0, 1.0 )
-	vtransform_setWorldPosition( ship.transform, position )
-
-	ships[ ship_count ] = ship
-	ship_count = ship_count + 1
-
-	inTime( 0.1, function () ship_tick( ship ) end )
-	inTime( 3, ship_spawner )
-end
---]]
-
-function collision( this, other )
-		
-end
-
 function ship_collisionHandler( ship, collider )
 	spawn_explosion( ship.transform );
 	ship_destroy( ship )
-
-	--[[
-	if collider == bullet then
-		ship_destroy( ship )
-	end
-	--]]
 end
 
 function ship_destroy( ship )
@@ -418,26 +387,9 @@ function start()
 	loadParticles()
 
 	restart()
-
-	vprint( "begin test." )
-	local test_table = {}
-	test_table.text = "hello world"
-	test = function ( ) 
-		a = function ( t ) 
-			vprint( t.text ) 
-		end
-		a( test_table )
-	end
-	test()
-
-
 	
-	--tm.test()
 	--ai.test_combinator()
 	ai.test_states()
-
-	-- testSpawns()
-	--ship_spawner()
 end
 
 wave_interval_time = 10.0
@@ -513,6 +465,7 @@ function steering_input_keyboard()
 	end
 	return yaw, pitch
 end
+
 function playership_weaponsTick( ship, dt )
 	-- Gunfire
 	local fired = false

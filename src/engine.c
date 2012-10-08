@@ -210,6 +210,7 @@ void engine_handleKeyPress(engine* e, uchar key, int x, int y) {
 void engine_initLua(engine* e, int argc, char** argv) {
 	(void)argc;
 	(void)argv;
+	lua_setGameLuaPath( "SpaceSim/lua/" );
 	e->lua = vlua_create( e, "SpaceSim/lua/main.lua" );
 }
 
