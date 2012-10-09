@@ -258,6 +258,7 @@ end
 function ship_collisionHandler( ship, collider )
 	spawn_explosion( ship.transform );
 	ship_destroy( ship )
+	ship.behaviour = ai.dead
 end
 
 function ship_destroy( ship )
@@ -316,7 +317,6 @@ function player_ship_collisionHandler( ship, collider )
 		vdestroyTransform( scene, ship.transform )
 		restart() 
 	end )
-	vprint( "### 3" )
 end
 
 collision_layer_player = 1
@@ -844,29 +844,20 @@ function spawn_interceptor( u, v )
 	local spawn_position = Vector( x, y + y_offset, z, 1.0 )
 	local x, y, z = vcanyon_position( u, v )
 	y = y + y_height
-	--retreat_position = spawn_position
 	
 	local interceptor = gameobject_create( "dat/model/ship_hd.s" )
 	interceptor.cooldown = 0.0
 	vtransform_setWorldPosition( interceptor.transform, spawn_position )
 
+	-- Init Collision
+	vbody_registerCollisionCallback( interceptor.body, ship_collisionHandler )
+	vbody_setLayers( interceptor.body, collision_layer_enemy )
+	vbody_setCollidableLayers( interceptor.body, collision_layer_player )
+
 	local attack_x, unused, attack_z = vcanyon_position( u, v - 100.0 )
 
 	local enter = nil
 	local attack = nil
-	local exit = nil
-	--[[
-	enter =		ai.state( entity_moveTo( x, y, z ),		
-							function () if entity_atPosition( interceptor, x, y, z, 1.0 ) then 
-									vprint( "reached!" )
-									return attack 
-								else 
-									return enter 
-								end 
-							end )
-							--]]
-
-
 	enter =		ai.state( entity_strafeTo( x, y, z, attack_x, y, attack_z ),		
 							function () if entity_atPosition( interceptor, x, y, z, 1.0 ) then 
 									vprint( "reached!" )
@@ -876,18 +867,22 @@ function spawn_interceptor( u, v )
 								end 
 							end )
 
-	--attack =	ai.state( interceptor_attack,						function () if time_in_state > 5 then return exit else return attack end end )
 	attack =	ai.state( interceptor_attack( attack_x, y, attack_z ),						function () return attack end )
+
 	--[[
+	local exit = nil
+	attack =	ai.state( interceptor_attack,						function () if time_in_state > 5 then return exit else return attack end end )
 	exit = 		ai.state( entity_moveTo( retreat_position ),	function () return exit )
 	--]]
 
-
 	interceptor.behaviour = enter
 	interceptor.tick = interceptor_tick
+	array_add( interceptors, interceptor )
+end
 
-	interceptors.count = interceptors.count + 1
-	interceptors[interceptors.count] = interceptor
+function array_add( array, object )
+	array.count = array.count + 1
+	array[array.count] = object
 end
 
 function interceptor_tick( interceptor, dt )

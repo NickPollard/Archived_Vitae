@@ -131,4 +131,7 @@ function ai.test_states()
 	end
 end
 
+ai.dead = nil
+ai.dead = ai.state( function () end, function () return ai.dead end )
+
 return ai
