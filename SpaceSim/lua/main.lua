@@ -778,7 +778,8 @@ function entity_setSpeed( entity, speed )
 end
 
 -- Interceptor Stats
-interceptor_speed = 30.0
+min_speed = 3.0
+interceptor_speed = 50.0
 interceptor_weapon_cooldown = 0.4
 
 function entity_moveTo( x, y, z )
@@ -794,16 +795,20 @@ function entity_strafeTo( target_x, target_y, target_z, facing_x, facing_y, faci
 	return function ( entity, dt )
 		-- Move to correct position
 		local target_position = Vector( target_x, target_y, target_z, 1.0 )
-		vdebugdraw_cross( target_position, 10.0 )
-		local entity_velocity = Vector( 0.0, 0.0, interceptor_speed, 0.0 )
+		local current_position = vtransform_getWorldPosition( entity.transform )
+		local distance_remaining = vvector_distance( target_position, current_position )
+		local speed = clamp( min_speed, interceptor_speed, distance_remaining)
+		vprint( "Speed " .. speed )
 
-		local world_direction = vvector_normalize( vvector_subtract( target_position, vtransform_getWorldPosition( entity.transform )))
-		local world_velocity = vvector_scale( world_direction, interceptor_speed )
+		local world_direction = vvector_normalize( vvector_subtract( target_position, current_position))
+		local world_velocity = vvector_scale( world_direction, speed )
 		vphysic_setVelocity( entity.physic, world_velocity )
 
 		-- Face correct direction
 		local facing_position = Vector( facing_x, facing_y, facing_z, 1.0 )
 		vtransform_facingWorld( entity.transform, facing_position )
+		
+		--vdebugdraw_cross( target_position, 10.0 )
 	end
 end
 
@@ -859,7 +864,7 @@ function spawn_interceptor( u, v )
 	local enter = nil
 	local attack = nil
 	enter =		ai.state( entity_strafeTo( x, y, z, attack_x, y, attack_z ),		
-							function () if entity_atPosition( interceptor, x, y, z, 1.0 ) then 
+							function () if entity_atPosition( interceptor, x, y, z, 5.0 ) then 
 									vprint( "reached!" )
 									return attack 
 								else 
