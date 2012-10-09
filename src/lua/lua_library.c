@@ -395,7 +395,7 @@ int LUA_vector( lua_State* l ) {
 	float y = lua_tonumber( l, 2 );
 	float z = lua_tonumber( l, 3 );
 	float w = lua_tonumber( l, 4 );
-	vector* v = lua_createVector( x, y, z, w );
+	vector* v = lua_createVector( );
 	*v = Vector( x, y, z, w );
 	lua_pushptr( l, v );
 	return 1;
@@ -637,6 +637,32 @@ int LUA_vector_distance( lua_State* l ) {
 	return 1;
 }
 
+int LUA_vector_subtract( lua_State* l ) {
+	const vector* a = lua_toptr( l, 1 );
+	const vector* b = lua_toptr( l, 2 );
+	vector* v = lua_createVector();
+	*v = vector_sub( *a, *b );
+	lua_pushptr( l, v );
+	return 1;
+}
+
+int LUA_vector_normalize( lua_State* l ) {
+	const vector* v = lua_toptr( l, 1 );
+	vector* v_normalized = lua_createVector();
+	*v_normalized = normalized( *v );
+	lua_pushptr( l, v_normalized );
+	return 1;
+}
+
+int LUA_vector_scale( lua_State* l ) {
+	const vector* v = lua_toptr( l, 1 );
+	float scale = lua_tonumber( l, 2 );
+	vector* v_scaled = lua_createVector();
+	*v_scaled = vector_scaled( *v, scale );
+	lua_pushptr( l, v_scaled );
+	return 1;
+}
+
 
 
 // ***
@@ -677,6 +703,9 @@ void luaLibrary_import( lua_State* l ) {
 	lua_registerFunction( l, LUA_vector, "Vector" );
 	lua_registerFunction( l, LUA_vector_values, "vvector_values" );
 	lua_registerFunction( l, LUA_vector_distance, "vvector_distance" );
+	lua_registerFunction( l, LUA_vector_subtract, "vvector_subtract" );
+	lua_registerFunction( l, LUA_vector_normalize, "vvector_normalize" );
+	lua_registerFunction( l, LUA_vector_scale, "vvector_scale" );
 
 	// *** Input
 	lua_registerFunction( l, LUA_keyPressed, "vkeyPressed" );

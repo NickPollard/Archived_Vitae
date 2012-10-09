@@ -7,6 +7,7 @@
 #include "maths/vector.h"
 #include "mem/allocator.h"
 #include "system/file.h"
+#include "system/string.h"
 
 #define MAX_LUA_VECTORS 64
 vector lua_vectors[MAX_LUA_VECTORS];

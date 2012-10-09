@@ -251,13 +251,6 @@ camera = "chase"
 flycam = nil
 chasecam = nil
 
-function ship_tick( ship )
-	vprint( "ship_tick" )
-	ship_v = Vector( 0.0, 0.0, ship.speed, 0.0 )
-	world_v = vtransformVector( ship.transform, ship_v )
-	vphysic_setVelocity( ship.physic, world_v )
-end
-
 function vrand( lower, upper )
 	return math.random() * ( upper - lower ) + lower
 end
@@ -796,6 +789,24 @@ function entity_moveTo( x, y, z )
 	end
 end
 
+function entity_strafeTo( target_x, target_y, target_z, facing_x, facing_y, facing_z )
+	return function ( entity, dt )
+		-- Move to correct position
+		local target_position = Vector( target_x, target_y, target_z, 1.0 )
+		vdebugdraw_cross( target_position, 10.0 )
+		local entity_velocity = Vector( 0.0, 0.0, interceptor_speed, 0.0 )
+
+		local world_direction = vvector_normalize( vvector_subtract( target_position, vtransform_getWorldPosition( entity.transform )))
+		local world_velocity = vvector_scale( world_direction, interceptor_speed )
+		vphysic_setVelocity( entity.physic, world_velocity )
+
+		-- Face correct direction
+		local facing_position = Vector( facing_x, facing_y, facing_z, 1.0 )
+		vtransform_facingWorld( entity.transform, facing_position )
+		vprint( "Strafing!" )
+	end
+end
+
 function interceptor_attack( x, y, z )
 	return function ( interceptor, dt )
 		local facing_position = Vector( x, y, z, 1.0 )
@@ -839,9 +850,12 @@ function spawn_interceptor( u, v )
 	interceptor.cooldown = 0.0
 	vtransform_setWorldPosition( interceptor.transform, spawn_position )
 
+	local attack_x, unused, attack_z = vcanyon_position( u, v - 100.0 )
+
 	local enter = nil
 	local attack = nil
 	local exit = nil
+	--[[
 	enter =		ai.state( entity_moveTo( x, y, z ),		
 							function () if entity_atPosition( interceptor, x, y, z, 1.0 ) then 
 									vprint( "reached!" )
@@ -850,11 +864,20 @@ function spawn_interceptor( u, v )
 									return enter 
 								end 
 							end )
+							--]]
 
-	local attack_target = Vector( x, y, z, 1.0 )
-	local x, unused, z = vcanyon_position( u, v - 10.0 )
+
+	enter =		ai.state( entity_strafeTo( x, y, z, attack_x, y, attack_z ),		
+							function () if entity_atPosition( interceptor, x, y, z, 1.0 ) then 
+									vprint( "reached!" )
+									return attack 
+								else 
+									return enter 
+								end 
+							end )
+
 	--attack =	ai.state( interceptor_attack,						function () if time_in_state > 5 then return exit else return attack end end )
-	attack =	ai.state( interceptor_attack( x, y, z ),						function () return attack end )
+	attack =	ai.state( interceptor_attack( attack_x, y, attack_z ),						function () return attack end )
 	--[[
 	exit = 		ai.state( entity_moveTo( retreat_position ),	function () return exit )
 	--]]
