@@ -570,6 +570,14 @@ void canyonTerrain_updateBlocks( canyonTerrain* t ) {
 	int bounds[2][2];
 	int intersection[2][2];
 	canyonTerrain_calculateBounds( bounds, t, &t->sample_point );
+
+	// If the bounds are the exact same as before, we don't need to do *any* updating
+	if ( bounds[0][0] == t->bounds[0][0] &&
+			bounds[0][1] == t->bounds[0][1] &&
+			bounds[1][0] == t->bounds[1][0] &&
+			bounds[1][1] == t->bounds[1][1] )
+		return;
+
 	boundsIntersection( intersection, bounds, t->bounds );
 
 	// Using alloca for dynamic stack allocation (just moves the stack pointer up)

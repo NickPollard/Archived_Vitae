@@ -105,7 +105,7 @@ function fire_missile( source, offset )
 	-- Create a new Projectile
 	local projectile = {}
 	projectile = gameobject_create( projectile_model );
-	vbody_setLayers( projectile.body, collision_layer_player )
+	vbody_setLayers( projectile.body, collision_layer_bullet )
 	vbody_setCollidableLayers( projectile.body, collision_layer_enemy )
 	vbody_registerCollisionCallback( projectile.body, missile_collisionHandler )
 
@@ -134,7 +134,7 @@ function fire_enemy_missile( source, offset )
 	-- Create a new Projectile
 	local projectile = {}
 	projectile = gameobject_create( projectile_model );
-	vbody_setLayers( projectile.body, collision_layer_enemy )
+	vbody_setLayers( projectile.body, collision_layer_bullet )
 	vbody_setCollidableLayers( projectile.body, collision_layer_player )
 	vbody_registerCollisionCallback( projectile.body, missile_collisionHandler )
 
@@ -321,6 +321,7 @@ end
 
 collision_layer_player = 1
 collision_layer_enemy = 2
+collision_layer_bullet = 3
 
 function restart()
 	-- We create a player object which is a game-specific Lua class
@@ -803,7 +804,6 @@ function entity_strafeTo( target_x, target_y, target_z, facing_x, facing_y, faci
 		-- Face correct direction
 		local facing_position = Vector( facing_x, facing_y, facing_z, 1.0 )
 		vtransform_facingWorld( entity.transform, facing_position )
-		vprint( "Strafing!" )
 	end
 end
 
