@@ -746,13 +746,9 @@ function entities_spawnAll( near, far )
 	near = near / canyon_v_scale
 	far = far / canyon_v_scale
 	i = spawn_index( near ) + 1
-	--vprint( "Evaluating spawn index: " .. i )
 	spawn_v = i * spawn_interval
-	--vprint( "spawn_v " .. spawn_v .. ", near " .. near .. ", far " .. far )
 	while contains( spawn_v, near, far ) do
 		if ( i > last_spawn_index ) then
-			--vprint( "Spawning at " .. spawn_v .. "!" )
-			--spawn_target( spawn_v )
 			local turret_offset_u = 20.0
 			--spawn_turret( turret_offset_u, spawn_v )
 			--spawn_turret( -turret_offset_u, spawn_v )
@@ -863,7 +859,6 @@ end
 
 function interceptor_attack( x, y, z )
 	return function ( interceptor, dt )
-		vprint( "Interceptor attack!" )
 		local facing_position = Vector( x, y, z, 1.0 )
 		vtransform_facingWorld( interceptor.transform, facing_position )
 		entity_setSpeed( interceptor, 0.0 )
@@ -924,11 +919,11 @@ function create_interceptor()
 	return interceptor
 end
 
-function interceptor_behaviour( move_to, attack_target )
+function interceptor_behaviour( interceptor, move_to, attack_target )
 	local enter = nil
 	local attack = nil
 	enter =		ai.state( entity_strafeTo( move_to.x, move_to.y, move_to.z, attack_target.x, move_to.y, attack_target.z ),		
-							function () if entity_atPosition( interceptor, x, y, z, 5.0 ) then 
+							function () if entity_atPosition( interceptor, move_to.x, move_to.y, move_to.z, 5.0 ) then 
 									vprint( "reached!" )
 									return attack 
 								else 
@@ -937,12 +932,6 @@ function interceptor_behaviour( move_to, attack_target )
 							end )
 
 	attack =	ai.state( interceptor_attack( attack_target.x, attack_target.y, attack_target.z ),						function () return attack end )
-
-	--[[
-	local exit = nil
-	attack =	ai.state( interceptor_attack,						function () if time_in_state > 5 then return exit else return attack end end )
-	exit = 		ai.state( entity_moveTo( retreat_position ),	function () return exit )
-	--]]
 	return enter
 end
 
@@ -958,31 +947,12 @@ function spawn_interceptor( u, v )
 	local x, y, z = vcanyon_position( u, v + interceptor_target_v_offset )
 	move_to = { x = x, y = y + y_height, z = z }
 
-	interceptor = create_interceptor()
+	local interceptor = create_interceptor()
 	
 	vtransform_setWorldPosition( interceptor.transform, spawn_position )
 	local x, y, z = vcanyon_position( u, v + interceptor_target_v_offset - 100.0 )
 	local attack_target = { x = x, y = move_to.y, z = z }
-	--interceptor.behaviour = interceptor_behaviour( move_to, attack_target )
-	local enter = nil
-	local attack = nil
-	enter =		ai.state( entity_strafeTo( move_to.x, move_to.y, move_to.z, attack_target.x, move_to.y, attack_target.z ),		
-							function () if entity_atPosition( interceptor, x, y, z, 5.0 ) then 
-									vprint( "reached!" )
-									return attack 
-								else 
-									return enter 
-								end 
-							end )
-
-	attack =	ai.state( interceptor_attack( attack_target.x, attack_target.y, attack_target.z ),						function () return attack end )
-
-	--[[
-	local exit = nil
-	attack =	ai.state( interceptor_attack,						function () if time_in_state > 5 then return exit else return attack end end )
-	exit = 		ai.state( entity_moveTo( retreat_position ),	function () return exit )
-	--]]
-	interceptor.behaviour = enter
+	interceptor.behaviour = interceptor_behaviour( interceptor, move_to, attack_target )
 end
 
 function array_add( array, object )
