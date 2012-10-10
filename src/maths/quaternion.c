@@ -141,6 +141,21 @@ quaternion quaternion_slerp( quaternion p0, quaternion p1, float t ) {
 	return r;
 }
 
+float quaternion_angleBetween( quaternion p0, quaternion p1 ) {
+	vector v0 = quaternion_rotation( p0, z_axis );
+	vector v1 = quaternion_rotation( p1, z_axis );
+	float d = Dot( &v0, &v1 );
+	return acosf( d );
+}
+
+// Slerp by a given angle
+quaternion quaternion_slerpAngle( quaternion p0, quaternion p1, float angle ) {
+	float total_angle = quaternion_angleBetween( p0, p1 );
+	float t = fclamp( angle / total_angle, 0.f, 1.f );
+	return quaternion_slerp( p0, p1, t );
+}
+
+
 /*
 quaternion quat_fromMatrix( matrix m ) {
 	quaternion q;

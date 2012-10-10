@@ -87,6 +87,9 @@ function missile_destroy( missile )
 		vdestroyTransform( scene, missile.transform )
 		vdestroyBody( missile.body )
 		vparticle_destroy( missile.glow )
+		if missile.trail then
+			vparticle_destroy( missile.trail )
+		end
 		missile.physic = nil
 		missile.transform = nil
 		missile.destroyed = true
@@ -165,7 +168,9 @@ function homing_missile_tick( target_transform )
 		local target_direction = vvector_normalize( vvector_subtract( target_position, current_position ))
 		local current_dir = vquaternion_fromTransform( missile.transform )
 		local target_dir = vquaternion_look( target_direction )
-		local new_dir = vquaternion_slerp( current_dir, target_dir, 1.0 * dt )
+		--local new_dir = vquaternion_slerp( current_dir, target_dir, 1.0 * dt )
+		local turn_angle = 1.0
+		local new_dir = vquaternion_slerpAngle( current_dir, target_dir, turn_angle * dt )
 		local world_velocity = vquaternion_rotation( new_dir, Vector( 0.0, 0.0, homing_missile_speed, 0.0 ))
 			vphysic_setVelocity( missile.physic, world_velocity )
 			vtransform_setRotation( missile.transform, new_dir )
@@ -188,6 +193,7 @@ function fire_enemy_homing_missile( source, offset )
 
 	-- Attach a particle effect to the object
 	projectile.glow = vparticle_create( engine, projectile.transform, "dat/script/lisp/red_bullet.s" )
+	projectile.trail = vparticle_create( engine, projectile.transform, "dat/script/lisp/red_trail.s" )
 
 	-- Apply initial velocity
 	source_velocity = Vector( 0.0, 0.0, homing_missile_speed, 0.0 )
@@ -869,7 +875,7 @@ function interceptor_attack( x, y, z )
 	end
 end
 
-function interceptor_attack( x, y, z )
+function interceptor_attack_homing( x, y, z )
 	return function ( interceptor, dt )
 		local facing_position = Vector( x, y, z, 1.0 )
 		vtransform_facingWorld( interceptor.transform, facing_position )
@@ -900,6 +906,10 @@ function entity_atPosition( entity, x, y, z, max_distance )
 	local entity_position = vtransform_getWorldPosition( entity.transform )
 	local distance = vvector_distance( entity_position, position )
 	return distance < max_distance
+end
+
+function create_interceptor()
+
 end
 
 function spawn_interceptor( u, v )

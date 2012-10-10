@@ -711,6 +711,16 @@ int LUA_quaternion_slerp( lua_State* l ) {
 	return 1;
 }
 
+int LUA_quaternion_slerpAngle( lua_State* l ) {
+	const quaternion* from = lua_toptr( l, 1 );
+	const quaternion* to = lua_toptr( l, 2 );
+	float angle = lua_tonumber( l, 3 );
+	quaternion* result = lua_createQuaternion();
+	*result = quaternion_slerpAngle( *from, *to, angle );
+	lua_pushptr( l, result );
+	return 1;
+}
+
 
 // ***
 
@@ -759,6 +769,7 @@ void luaLibrary_import( lua_State* l ) {
 	lua_registerFunction( l, LUA_quaternion_look, "vquaternion_look" );
 	lua_registerFunction( l, LUA_quaternion_rotation, "vquaternion_rotation" );
 	lua_registerFunction( l, LUA_quaternion_slerp, "vquaternion_slerp" );
+	lua_registerFunction( l, LUA_quaternion_slerpAngle, "vquaternion_slerpAngle" );
 
 	// *** Input
 	lua_registerFunction( l, LUA_keyPressed, "vkeyPressed" );

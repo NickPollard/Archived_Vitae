@@ -28,6 +28,8 @@ quaternion quaternion_fromEuler( vector* euler_angles );
 
 // Spherical linear interpolation of quaternions
 quaternion quaternion_slerp( quaternion p0, quaternion p1, float t );
+// Slerp by angle
+quaternion quaternion_slerpAngle( quaternion p0, quaternion p1, float angle );
 
 // Do a straight quaternion rotation on vector v
 vector	quaternion_rotation( quaternion rotation, vector v );
