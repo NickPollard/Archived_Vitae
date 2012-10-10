@@ -863,6 +863,7 @@ end
 
 function interceptor_attack( x, y, z )
 	return function ( interceptor, dt )
+		vprint( "Interceptor attack!" )
 		local facing_position = Vector( x, y, z, 1.0 )
 		vtransform_facingWorld( interceptor.transform, facing_position )
 		entity_setSpeed( interceptor, 0.0 )
@@ -909,34 +910,24 @@ function entity_atPosition( entity, x, y, z, max_distance )
 end
 
 function create_interceptor()
-
-end
-
-function spawn_interceptor( u, v )
-	local y_height = 40
-	local spawn_u_offset = -200
-	local spawn_v_offset = -200
-	local spawn_y_offset = 100
-	local target_v_offset = 100
-	local spawn_x, spawn_y, spawn_z = vcanyon_position( u + spawn_u_offset, v + spawn_v_offset )
-	local spawn_position = Vector( spawn_x, spawn_y + spawn_y_offset, spawn_z, 1.0 )
-	local x, y, z = vcanyon_position( u, v + target_v_offset )
-	y = y + y_height
-	
 	local interceptor = gameobject_create( "dat/model/ship_hd.s" )
 	interceptor.cooldown = 0.0
-	vtransform_setWorldPosition( interceptor.transform, spawn_position )
-
+	
 	-- Init Collision
 	vbody_registerCollisionCallback( interceptor.body, ship_collisionHandler )
 	vbody_setLayers( interceptor.body, collision_layer_enemy )
 	vbody_setCollidableLayers( interceptor.body, collision_layer_player )
 
-	local attack_x, unused, attack_z = vcanyon_position( u, v + target_v_offset - 100.0 )
+	-- Activate
+	interceptor.tick = interceptor_tick
+	array_add( interceptors, interceptor )
+	return interceptor
+end
 
+function interceptor_behaviour( move_to, attack_target )
 	local enter = nil
 	local attack = nil
-	enter =		ai.state( entity_strafeTo( x, y, z, attack_x, y, attack_z ),		
+	enter =		ai.state( entity_strafeTo( move_to.x, move_to.y, move_to.z, attack_target.x, move_to.y, attack_target.z ),		
 							function () if entity_atPosition( interceptor, x, y, z, 5.0 ) then 
 									vprint( "reached!" )
 									return attack 
@@ -945,17 +936,53 @@ function spawn_interceptor( u, v )
 								end 
 							end )
 
-	attack =	ai.state( interceptor_attack( attack_x, y, attack_z ),						function () return attack end )
+	attack =	ai.state( interceptor_attack( attack_target.x, attack_target.y, attack_target.z ),						function () return attack end )
 
 	--[[
 	local exit = nil
 	attack =	ai.state( interceptor_attack,						function () if time_in_state > 5 then return exit else return attack end end )
 	exit = 		ai.state( entity_moveTo( retreat_position ),	function () return exit )
 	--]]
+	return enter
+end
 
+interceptor_spawn_u_offset = -200
+interceptor_spawn_v_offset = -200
+interceptor_spawn_y_offset = 100
+interceptor_target_v_offset = 100
+
+function spawn_interceptor( u, v )
+	local y_height = 40
+	local spawn_x, spawn_y, spawn_z = vcanyon_position( u + interceptor_spawn_u_offset, v + interceptor_spawn_v_offset )
+	local spawn_position = Vector( spawn_x, spawn_y + interceptor_spawn_y_offset, spawn_z, 1.0 )
+	local x, y, z = vcanyon_position( u, v + interceptor_target_v_offset )
+	move_to = { x = x, y = y + y_height, z = z }
+
+	interceptor = create_interceptor()
+	
+	vtransform_setWorldPosition( interceptor.transform, spawn_position )
+	local x, y, z = vcanyon_position( u, v + interceptor_target_v_offset - 100.0 )
+	local attack_target = { x = x, y = move_to.y, z = z }
+	--interceptor.behaviour = interceptor_behaviour( move_to, attack_target )
+	local enter = nil
+	local attack = nil
+	enter =		ai.state( entity_strafeTo( move_to.x, move_to.y, move_to.z, attack_target.x, move_to.y, attack_target.z ),		
+							function () if entity_atPosition( interceptor, x, y, z, 5.0 ) then 
+									vprint( "reached!" )
+									return attack 
+								else 
+									return enter 
+								end 
+							end )
+
+	attack =	ai.state( interceptor_attack( attack_target.x, attack_target.y, attack_target.z ),						function () return attack end )
+
+	--[[
+	local exit = nil
+	attack =	ai.state( interceptor_attack,						function () if time_in_state > 5 then return exit else return attack end end )
+	exit = 		ai.state( entity_moveTo( retreat_position ),	function () return exit )
+	--]]
 	interceptor.behaviour = enter
-	interceptor.tick = interceptor_tick
-	array_add( interceptors, interceptor )
 end
 
 function array_add( array, object )
