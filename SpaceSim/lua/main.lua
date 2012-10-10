@@ -109,8 +109,9 @@ homing_missile_speed = 50.0;
 
 function fire_missile( source, offset )
 	-- Create a new Projectile
-	local projectile = { destroyed = false, tick = nil }
-	projectile = gameobject_create( projectile_model );
+	local projectile = gameobject_create( projectile_model );
+	projectile.destroyed = false
+	projectile.tick = nil
 	vbody_setLayers( projectile.body, collision_layer_bullet )
 	vbody_setCollidableLayers( projectile.body, collision_layer_enemy )
 	vbody_registerCollisionCallback( projectile.body, missile_collisionHandler )
@@ -134,8 +135,9 @@ end
 
 function fire_enemy_missile( source, offset )
 	-- Create a new Projectile
-	local projectile = { destroyed = false, tick = nil }
-	projectile = gameobject_create( projectile_model );
+	local projectile = gameobject_create( projectile_model );
+	projectile.destroyed = false
+	projectile.tick = nil
 	vbody_setLayers( projectile.body, collision_layer_bullet )
 	vbody_setCollidableLayers( projectile.body, collision_layer_player )
 	vbody_registerCollisionCallback( projectile.body, missile_collisionHandler )
@@ -159,19 +161,18 @@ function fire_enemy_missile( source, offset )
 	array_add( missiles, projectile )
 end
 
-homing_missile_turn_angle_per_second = math.pi
+homing_missile_turn_angle_per_second = math.pi / 2
 function homing_missile_tick( target_transform )
 	return function ( missile, dt )
 		if missile.physic and missile.transform then
-		local current_position = vtransform_getWorldPosition( missile.transform )
-		local target_position = vtransform_getWorldPosition( target_transform )
-		local target_direction = vvector_normalize( vvector_subtract( target_position, current_position ))
-		local current_dir = vquaternion_fromTransform( missile.transform )
-		local target_dir = vquaternion_look( target_direction )
-		--local new_dir = vquaternion_slerp( current_dir, target_dir, 1.0 * dt )
-		local turn_angle = 1.0
-		local new_dir = vquaternion_slerpAngle( current_dir, target_dir, turn_angle * dt )
-		local world_velocity = vquaternion_rotation( new_dir, Vector( 0.0, 0.0, homing_missile_speed, 0.0 ))
+			local current_position = vtransform_getWorldPosition( missile.transform )
+			local target_position = vtransform_getWorldPosition( target_transform )
+			local target_direction = vvector_normalize( vvector_subtract( target_position, current_position ))
+			local current_dir = vquaternion_fromTransform( missile.transform )
+			local target_dir = vquaternion_look( target_direction )
+			--local new_dir = vquaternion_slerp( current_dir, target_dir, 1.0 * dt )
+			local new_dir = vquaternion_slerpAngle( current_dir, target_dir, homing_missile_turn_angle_per_second * dt )
+			local world_velocity = vquaternion_rotation( new_dir, Vector( 0.0, 0.0, homing_missile_speed, 0.0 ))
 			vphysic_setVelocity( missile.physic, world_velocity )
 			vtransform_setRotation( missile.transform, new_dir )
 		end
@@ -180,8 +181,8 @@ end
 
 function fire_enemy_homing_missile( source, offset )
 	-- Create a new Projectile
-	local projectile = { destroyed = false }
-	projectile = gameobject_create( projectile_model );
+	local projectile = gameobject_create( projectile_model );
+	projectile.destroyed = false
 	vbody_setLayers( projectile.body, collision_layer_bullet )
 	vbody_setCollidableLayers( projectile.body, collision_layer_player )
 	vbody_registerCollisionCallback( projectile.body, missile_collisionHandler )
@@ -657,7 +658,9 @@ end
 
 function tick_array( array, dt )
 	for element in iterator( array ) do
-		element.tick( element, dt )
+		if element.tick then
+			element.tick( element, dt )
+		end
 	end
 end
 
@@ -753,8 +756,13 @@ function entities_spawnAll( near, far )
 			--spawn_turret( turret_offset_u, spawn_v )
 			--spawn_turret( -turret_offset_u, spawn_v )
 			local interceptor_offset_u = 20.0
-			spawn_interceptor( interceptor_offset_u, spawn_v )
-			spawn_interceptor( -interceptor_offset_u, spawn_v )
+			if ( i + 1 ) % 3.0 == 0 then
+				spawn_interceptor( interceptor_offset_u, spawn_v, interceptor_attack_homing )
+				spawn_interceptor( -interceptor_offset_u, spawn_v, interceptor_attack_homing )
+			else
+				spawn_interceptor( interceptor_offset_u, spawn_v, interceptor_attack_gun )
+				spawn_interceptor( -interceptor_offset_u, spawn_v, interceptor_attack_gun )
+			end
 			last_spawn_index = i
 			i = i + 1
 			spawn_v = i * spawn_interval
@@ -857,7 +865,7 @@ function entity_strafeTo( target_x, target_y, target_z, facing_x, facing_y, faci
 	end
 end
 
-function interceptor_attack( x, y, z )
+function interceptor_attack_gun( x, y, z )
 	return function ( interceptor, dt )
 		local facing_position = Vector( x, y, z, 1.0 )
 		vtransform_facingWorld( interceptor.transform, facing_position )
@@ -919,7 +927,7 @@ function create_interceptor()
 	return interceptor
 end
 
-function interceptor_behaviour( interceptor, move_to, attack_target )
+function interceptor_behaviour( interceptor, move_to, attack_target, attack_type )
 	local enter = nil
 	local attack = nil
 	enter =		ai.state( entity_strafeTo( move_to.x, move_to.y, move_to.z, attack_target.x, move_to.y, attack_target.z ),		
@@ -931,7 +939,7 @@ function interceptor_behaviour( interceptor, move_to, attack_target )
 								end 
 							end )
 
-	attack =	ai.state( interceptor_attack( attack_target.x, attack_target.y, attack_target.z ),						function () return attack end )
+	attack =	ai.state( attack_type( attack_target.x, attack_target.y, attack_target.z ),						function () return attack end )
 	return enter
 end
 
@@ -940,7 +948,7 @@ interceptor_spawn_v_offset = -200
 interceptor_spawn_y_offset = 100
 interceptor_target_v_offset = 100
 
-function spawn_interceptor( u, v )
+function spawn_interceptor( u, v, attack_type )
 	local y_height = 40
 	local spawn_x, spawn_y, spawn_z = vcanyon_position( u + interceptor_spawn_u_offset, v + interceptor_spawn_v_offset )
 	local spawn_position = Vector( spawn_x, spawn_y + interceptor_spawn_y_offset, spawn_z, 1.0 )
@@ -952,7 +960,7 @@ function spawn_interceptor( u, v )
 	vtransform_setWorldPosition( interceptor.transform, spawn_position )
 	local x, y, z = vcanyon_position( u, v + interceptor_target_v_offset - 100.0 )
 	local attack_target = { x = x, y = move_to.y, z = z }
-	interceptor.behaviour = interceptor_behaviour( interceptor, move_to, attack_target )
+	interceptor.behaviour = interceptor_behaviour( interceptor, move_to, attack_target, attack_type )
 end
 
 function array_add( array, object )
