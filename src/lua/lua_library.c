@@ -18,6 +18,7 @@
 #include "camera/flycam.h"
 #include "input/keyboard.h"
 #include "maths/geometry.h"
+#include "maths/quaternion.h"
 #include "mem/allocator.h"
 #include "render/debugdraw.h"
 #include "render/modelinstance.h"
@@ -498,11 +499,19 @@ int LUA_transform_distance( lua_State* l ) {
 	return 1;
 }
 
+int LUA_transform_setRotation( lua_State* l ) {
+	transform* t = lua_toptr( l, 1 );
+	quaternion* q = lua_toptr( l, 2 );
+	matrix m;
+	matrix_fromRotationTranslation( m, *q, Vector( 0.f, 0.f, 0.f, 1.f ));
+	transform_setWorldRotationMatrix( t, m );
+	return 0;
+}
+
 int LUA_transform_facingWorld( lua_State* l ) {
 	transform* t = lua_toptr( l, 1 );
 	const vector* look_at = lua_toptr( l, 2 );
 	const vector* position = transform_getWorldPosition( t );
-	//vector_printf( "Facing position ", look_at );
 	vector displacement;
 	Sub( &displacement, look_at, position );
 	Normalize( &displacement, &displacement );
@@ -663,6 +672,44 @@ int LUA_vector_scale( lua_State* l ) {
 	return 1;
 }
 
+// *** Quaternions
+
+int LUA_quaternion_fromTransform( lua_State* l ) {
+	transform* t = lua_toptr( l, 1 );
+	quaternion* q = lua_createQuaternion();
+	*q = matrix_getRotation( t->world );
+	lua_pushptr( l, q );
+	return 1;
+}
+
+int LUA_quaternion_look( lua_State* l ) {
+	const vector* v = lua_toptr( l, 1 );
+	matrix m;
+	matrix_look( m, *v );
+	quaternion* q = lua_createQuaternion();
+	*q = matrix_getRotation( m );
+	lua_pushptr( l, q );
+	return 1;
+}
+
+int LUA_quaternion_rotation( lua_State* l ) {
+	const quaternion* q = lua_toptr( l, 1 );
+	const vector* v = lua_toptr( l, 2 );
+	vector* result = lua_createVector();
+	*result = quaternion_rotation( *q, *v );
+	lua_pushptr( l, result );
+	return 1;
+}
+
+int LUA_quaternion_slerp( lua_State* l ) {
+	const quaternion* from = lua_toptr( l, 1 );
+	const quaternion* to = lua_toptr( l, 2 );
+	float f = lua_tonumber( l, 3 );
+	quaternion* result = lua_createQuaternion();
+	*result = quaternion_slerp( *from, *to, f );
+	lua_pushptr( l, result );
+	return 1;
+}
 
 
 // ***
@@ -707,6 +754,12 @@ void luaLibrary_import( lua_State* l ) {
 	lua_registerFunction( l, LUA_vector_normalize, "vvector_normalize" );
 	lua_registerFunction( l, LUA_vector_scale, "vvector_scale" );
 
+	// *** Quaternion
+	lua_registerFunction( l, LUA_quaternion_fromTransform, "vquaternion_fromTransform" );
+	lua_registerFunction( l, LUA_quaternion_look, "vquaternion_look" );
+	lua_registerFunction( l, LUA_quaternion_rotation, "vquaternion_rotation" );
+	lua_registerFunction( l, LUA_quaternion_slerp, "vquaternion_slerp" );
+
 	// *** Input
 	lua_registerFunction( l, LUA_keyPressed, "vkeyPressed" );
 	lua_registerFunction( l, LUA_keyHeld, "vkeyHeld" );
@@ -745,6 +798,7 @@ void luaLibrary_import( lua_State* l ) {
 	lua_registerFunction( l, LUA_transform_facingWorld, "vtransform_facingWorld" );
 	lua_registerFunction( l, LUA_transform_eulerAngles, "vtransform_eulerAngles" );
 	lua_registerFunction( l, LUA_transform_distance, "vtransform_distance" );
+	lua_registerFunction( l, LUA_transform_setRotation, "vtransform_setRotation" );
 
 	// *** Particles
 	lua_registerFunction( l, LUA_particle_create, "vparticle_create" );

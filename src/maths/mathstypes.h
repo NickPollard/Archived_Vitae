@@ -67,10 +67,10 @@ extern matrix matrix_identity;
    The x,y,z elements are equivalent to the i,j,k elements in complex notation. The s element is the real part.
    */
 
-typedef struct quat_s {
+struct quaternion_s {
 	float s;
 	float x;
 	float y;
 	float z;
-} quaternion;
+};
 

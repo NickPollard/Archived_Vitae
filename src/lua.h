@@ -83,6 +83,7 @@ int lua_store( lua_State* l );
 void* lua_toptr( lua_State* l, int index );
 void lua_assertnumber( lua_State* l, int index );
 vector* lua_createVector( );
+quaternion* lua_createQuaternion( );
 void lua_setConstant_bool( lua_State* l, const char* name, bool b );
 
 // Set the lua path to look for required modules

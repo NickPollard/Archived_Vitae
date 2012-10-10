@@ -4,6 +4,7 @@
 //---------------------
 #include "engine.h"
 #include "lua/lua_library.h"
+#include "maths/quaternion.h"
 #include "maths/vector.h"
 #include "mem/allocator.h"
 #include "system/file.h"
@@ -12,6 +13,10 @@
 #define MAX_LUA_VECTORS 64
 vector lua_vectors[MAX_LUA_VECTORS];
 int lua_vector_count = 0;
+#define MAX_LUA_QUATERNIONS 64
+quaternion lua_quaternions[MAX_LUA_QUATERNIONS];
+int lua_quaternion_count = 0;
+
 const char* game_lua_path = NULL;
 
 void lua_keycodes( lua_State* l );
@@ -122,6 +127,14 @@ vector* lua_createVector( ) {
 	assert( lua_vector_count < 64 );
 	vector* v = &lua_vectors[lua_vector_count++];
 	return v;
+}
+
+quaternion* lua_createQuaternion( ) {
+	if ( !(lua_quaternion_count < 64) )
+		lua_quaternion_count = 0;
+	assert( lua_quaternion_count < 64 );
+	quaternion* q = &lua_quaternions[lua_quaternion_count++];
+	return q;
 }
 
 void lua_setConstant_bool( lua_State* l, const char* name, bool b ) {
