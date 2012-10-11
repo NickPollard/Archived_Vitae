@@ -77,7 +77,13 @@ char* inputStream_nextToken( inputStream* stream ) {
 	}
 	// make a copy of it
 	int length = ptr - stream->stream;
-	char* token = mem_alloc( sizeof( char ) * (length + 1) );
+	char* token;
+	if ( length < kStreamTokenBufferLength ) {
+		token = &stream->token_buffer[0];
+	}
+	else {
+		token = mem_alloc( sizeof( char ) * (length + 1) );
+	}
 	strncpy( token, stream->stream, length );
 	token[length] = '\0';
 	stream->stream = ptr; // Advance past the end of the token
@@ -85,8 +91,8 @@ char* inputStream_nextToken( inputStream* stream ) {
 }
 
 void inputStream_freeToken( inputStream* stream, const char* token ) {
-	(void)stream;
-	mem_free( (char*)token );
+	if ( token != &stream->token_buffer[0] )
+		mem_free( (char*)token );
 }
 
 // Advance the stream forward just passed the first instance of [string]
@@ -95,7 +101,7 @@ void inputStream_skipPast( inputStream* stream, const char* string ) {
 	while ( !inputStream_endOfFile( stream ) && 
 			(!token || !string_equal( token, string ))) {
 		if ( token )
-			mem_free( token );
+			inputStream_freeToken( stream, token );
 		token = inputStream_nextToken( stream );
 		}
 	if ( token )

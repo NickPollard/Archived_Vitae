@@ -5,12 +5,6 @@ extern heapAllocator* global_string_heap;
 
 // *** Stream Reading
 
-typedef struct inputStream_s {
-	const char* source; // Never changes once initialised
-	const char* stream; // Read head
-	const char* end;	// One-past-the-end
-} inputStream;
-
 bool token_isFloat( const char* token );
 bool token_isString( const char* token );
 const char* sstring_create( const char* token );

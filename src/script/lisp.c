@@ -287,7 +287,7 @@ term* lisp_parse( inputStream* stream ) {
 		return term_create( typeFloat, f );
 		}
 	// When it's an atom, we keep the token, don't free it
-	return term_create( typeAtom, (void*)token );
+	return term_create( typeAtom, (void*)string_createCopy( token ));
 }
 
 term* lisp_parse_string( const char* string ) {
@@ -300,10 +300,10 @@ term* lisp_parse_string( const char* string ) {
 term* lisp_parse_exprList( inputStream* stream ) {
 	PARSE_PRINT( "lisp_parse_exprList: \"%s\"\n", stream->stream );
 	inputStream* peeker = inputStream_create( stream->stream );
-	lisp_nextToken( peeker );
+	const char* token = lisp_nextToken( peeker );
+	inputStream_freeToken( peeker, token );
 	//printf( "Next lisp token: \"%s\"\n", token );
 	bool eof = inputStream_endOfFile( peeker );
-	mem_free( peeker );
 	if ( eof )
 		return NULL;
 
