@@ -252,11 +252,11 @@ term* lisp_parse( inputStream* stream ) {
 	//printf( "lisp token \"%s\"\n", token );
 
 	if ( _isListEnd( *token ) ) {
-		mem_free( token ); // It's a bracket, discard it
+		inputStream_freeToken( stream, token ); // It's a bracket, discard it
 		return NULL;
 		}
 	if ( _isListStart( *token ) ) {
-		mem_free( token ); // It's a bracket, discard it
+		inputStream_freeToken( stream, token ); // It's a bracket, discard it
 		term* list = term_create( typeList, lisp_parse( stream ));
 		term* s = list;
 
@@ -277,11 +277,13 @@ term* lisp_parse( inputStream* stream ) {
 		}
 	if ( token_isString( token )) {
 		const char* string = sstring_create( token );
+		inputStream_freeToken( stream, token );
 		return term_create( typeString, (char*)string );
 		}
 	if ( token_isFloat( token )) {
 		float* f = value_create( sizeof( float ));
 		*f = strtof( token, NULL );
+		inputStream_freeToken( stream, token );
 		return term_create( typeFloat, f );
 		}
 	// When it's an atom, we keep the token, don't free it
