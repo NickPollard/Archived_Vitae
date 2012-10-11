@@ -99,19 +99,48 @@ void lisp_assert( bool b ) {
 	vAssert( b );
 }
 
+#define kMaxLispTerms 4096
+term lisp_terms[kMaxLispTerms];
+term* first_free_term = NULL;
+
+void term_storage_init() {
+	first_free_term = &lisp_terms[0];
+	for ( int i = 0; i < kMaxLispTerms; ++i ) {
+		*((term**)&lisp_terms[i]) = &lisp_terms[i+1];
+	}
+	*((term**)&lisp_terms[kMaxLispTerms - 1]) = NULL;
+}
+
+term* next_free_term( term* t ) {
+	return *(term**)t;
+}
+
+term* term_new() {
+	vAssert( first_free_term );
+	term* t = first_free_term;
+	first_free_term = next_free_term( first_free_term ); 
+	return t;
+}
+
+void term_free( term* t ) {
+	*(term**)t = first_free_term;
+	first_free_term = t;
+}
+
 term* term_create( enum termType type, void* value ) {
 	mem_pushStack( kLispTermAllocString );
-	term* t = heap_allocate( lisp_heap, sizeof( term ));
+	//term* t = heap_allocate( lisp_heap, sizeof( term ));
+	term* t = term_new();
 	mem_popStack();
 	t->type = type;
 	t->head = value;
 	if (( type == typeList ) && value ) {
 		term_takeRef( (term*)value );
-		}
+	}
 	t->tail = NULL;
 	t->refcount = 0;
 	return t;
-	}
+}
 
 term* term_copy( term* t ) {
 	return term_create( t->type, t->head );
@@ -124,9 +153,10 @@ void term_delete( term* t ) {
 			term_deref( t->head );
 		if ( t->tail )
 			term_deref( t->tail );
-		}
-	heap_deallocate( lisp_heap, t );
 	}
+	//heap_deallocate( lisp_heap, t );
+	term_free( t );
+}
 
 int _isListStart( char c ) {
 	return c == '(';
@@ -975,6 +1005,8 @@ void attributeFunction_set( const char* name, attributeSetter f ) {
 void lisp_init() {
 	lisp_heap = heap_create( kLispHeapSize );
 	assert( lisp_heap->total_allocated == 0 );
+	
+	term_storage_init();
 
 	context_heap = passthrough_create( lisp_heap );
 	lisp_debug_stack_init();
