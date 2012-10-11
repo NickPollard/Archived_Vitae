@@ -584,35 +584,19 @@ int LUA_dynamicSky_blend( lua_State* l ) {
 	return 0;
 }
 
-// TODO: TEMP
-int LUA_createCrosshair( lua_State* l ) {
-	engine* e = lua_toptr( l, 1 );
-	float x = lua_tonumber( l, 2 );
-	float y = lua_tonumber( l, 3 );
-	float w = lua_tonumber( l, 4 );
-	float h = lua_tonumber( l, 5 );
-	panel* p = panel_create();
-	p->x = x;
-	p->y = y;
-	p->width = w;
-	p->height = h;
-	texture_requestFile( &p->texture, "dat/img/crosshair_rgba128.tga" );
-	engine_addRender( e, p, panel_render );
-	return 0;
-}
-
 int LUA_createUIPanel( lua_State* l ) {
 	engine* e = lua_toptr( l, 1 );
-	float x = lua_tonumber( l, 2 );
-	float y = lua_tonumber( l, 3 );
-	float w = lua_tonumber( l, 4 );
-	float h = lua_tonumber( l, 5 );
+	const char* texture_path = lua_tostring( l, 2 );
+	float x = lua_tonumber( l, 3 );
+	float y = lua_tonumber( l, 4 );
+	float w = lua_tonumber( l, 5 );
+	float h = lua_tonumber( l, 6 );
 	panel* p = panel_create();
 	p->x = x;
 	p->y = y;
 	p->width = w;
 	p->height = h;
-	texture_requestFile( &p->texture, "dat/img/circle.tga" );
+	texture_requestFile( &p->texture, texture_path );
 	engine_addRender( e, p, panel_render );
 	return 0;
 }
@@ -832,7 +816,6 @@ void luaLibrary_import( lua_State* l ) {
 
 	// *** UI
 	lua_registerFunction( l, LUA_createUIPanel, "vcreateUIPanel" );
-	lua_registerFunction( l, LUA_createCrosshair, "vcreateCrosshair" );
 
 	// *** Game
 	lua_registerFunction( l, LUA_canyonPosition, "vcanyon_position" );

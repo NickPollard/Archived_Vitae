@@ -13,8 +13,8 @@ C and only controlled remotely by Lua
 
 -- Load Modules
 	package.path = "./SpaceSim/lua/?.lua"
-	tm = require "testmodule"
 	ai = require "ai"
+	ui = require "ui"
 
 -- player - this object contains general data about the player
 player = nil
@@ -342,7 +342,7 @@ function setup_controls()
 	local h = 128
 	local x = 640 - ( w / 2 )
 	local y = 360 - ( h / 2 ) - 40
-	vcreateCrosshair( engine, x, y, w, h )
+	vcreateUIPanel( engine, "dat/img/crosshair_rgba128.tga", x, y, w, h )
 end
 
 function player_ship_collisionHandler( ship, collider )
@@ -426,6 +426,8 @@ function makefunction( text )
 end
 
 function start()
+	ui.show_splash()
+
 	loadParticles()
 
 	restart()
