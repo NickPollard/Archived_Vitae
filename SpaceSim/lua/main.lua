@@ -333,16 +333,9 @@ function setup_controls()
 		local w = 1280 - 720
 		local h = 720
 		player_ship.fire_trigger = vcreateTouchPad( input, x, y, w, h )
-		--vcreateUIPanel( engine, x, 720-y-h, w, h )
 	else
 		player_ship.steering_input = steering_input_keyboard
 	end
-	-- Crosshair
-	local w = 128
-	local h = 128
-	local x = 640 - ( w / 2 )
-	local y = 360 - ( h / 2 ) - 40
-	vcreateUIPanel( engine, "dat/img/crosshair_rgba128.tga", x, y, w, h )
 end
 
 function player_ship_collisionHandler( ship, collider )
@@ -425,8 +418,17 @@ function makefunction( text )
 	return a
 end
 
+function splash()
+	local splash = ui.show_splash()
+	inTime( 2.0, function () 
+		ui.hide_splash( splash ) 
+		ui.show_crosshair()
+	end )
+end
+
 function start()
-	ui.show_splash()
+	splash()
+
 
 	loadParticles()
 

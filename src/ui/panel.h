@@ -26,6 +26,8 @@ struct panel_s {
 	float height;
 	unsigned int local_anchor;
 	unsigned int remote_anchor;
+	vector color;
+	bool visible;
 
 	// Temp
 	GLuint	texture;
@@ -34,6 +36,10 @@ struct panel_s {
 
 // Create a Panel
 panel* panel_create();
+
+// Show/Hide the panel
+void panel_hide( engine* e, panel* p );
+void panel_show( engine* e, panel* p );
 
 // The draw function gets passed the current 'cursor' x and y
 void panel_draw( panel* p, float x, float y );

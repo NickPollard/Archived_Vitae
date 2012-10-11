@@ -642,12 +642,6 @@ void render( scene* s ) {
 }
 
 void render_sceneParams( sceneParams* params ) {
-	/*
-	vector sky_color_top;
-	vector v = Vector( 1.f, 1.f, 1.f, 2.f );
-	Sub( &sky_color_top, &v, &params->fog_color );
-*/
-
 	render_setUniform_vector( *resources.uniforms.fog_color, &params->fog_color );
 	render_setUniform_vector( *resources.uniforms.sky_color_bottom, &params->fog_color );
 	render_setUniform_vector( *resources.uniforms.sky_color_top, &params->sky_color );
@@ -688,7 +682,6 @@ drawCall* drawCall_create( renderPass* pass, shader* vshader, int count, GLushor
 	draw->vertex_buffer = verts;
 	draw->element_count = count;
 	draw->texture = tex;
-	//draw->fog_color = *fog_color;
 	draw->element_buffer_offset = 0;
 	draw->vertex_VBO	= resources.vertex_buffer[0];
 	draw->element_VBO	= resources.element_buffer[0];

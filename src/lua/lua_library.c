@@ -587,17 +587,27 @@ int LUA_dynamicSky_blend( lua_State* l ) {
 int LUA_createUIPanel( lua_State* l ) {
 	engine* e = lua_toptr( l, 1 );
 	const char* texture_path = lua_tostring( l, 2 );
-	float x = lua_tonumber( l, 3 );
-	float y = lua_tonumber( l, 4 );
-	float w = lua_tonumber( l, 5 );
-	float h = lua_tonumber( l, 6 );
+	vector* ui_color = lua_toptr( l, 3 );
+	float x = lua_tonumber( l, 4 );
+	float y = lua_tonumber( l, 5 );
+	float w = lua_tonumber( l, 6 );
+	float h = lua_tonumber( l, 7 );
 	panel* p = panel_create();
 	p->x = x;
 	p->y = y;
 	p->width = w;
 	p->height = h;
+	p->color = *ui_color;
 	texture_requestFile( &p->texture, texture_path );
 	engine_addRender( e, p, panel_render );
+	lua_pushptr( l, p );
+	return 1;
+}
+
+int LUA_hideUIPanel( lua_State* l ) {
+	engine* e = lua_toptr( l, 1 );
+	panel* p = lua_toptr( l, 2 );
+	panel_hide( e, p );
 	return 0;
 }
 
@@ -815,7 +825,8 @@ void luaLibrary_import( lua_State* l ) {
 	lua_registerFunction( l, LUA_cameraPosition, "vcamera_position" );
 
 	// *** UI
-	lua_registerFunction( l, LUA_createUIPanel, "vcreateUIPanel" );
+	lua_registerFunction( l, LUA_createUIPanel, "vuiPanel_create" );
+	lua_registerFunction( l, LUA_hideUIPanel, "vuiPanel_hide" );
 
 	// *** Game
 	lua_registerFunction( l, LUA_canyonPosition, "vcanyon_position" );
