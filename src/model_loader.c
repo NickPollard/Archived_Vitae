@@ -5,6 +5,7 @@
 #include "model.h"
 #include "script/lisp.h"
 #include "system/file.h"
+#include "system/inputstream.h"
 #include "system/string.h"
 
 mesh* mesh_loadObj( const char* filename ) {
@@ -40,7 +41,7 @@ mesh* mesh_loadObj( const char* filename ) {
 			assert( vert_count < kObjMaxVertices );
 			// Vertex
 			for ( int i = 0; i < 3; i++ ) {
-				mem_free( token );
+				inputStream_freeToken( stream, token );
 				token = inputStream_nextToken( stream );
 				vertices[vert_count].val[i] = strtof( token, NULL );
 			}
@@ -51,7 +52,7 @@ mesh* mesh_loadObj( const char* filename ) {
 			assert( normal_count < kObjMaxVertices );
 			// Vertex Normal
 			for ( int i = 0; i < 3; i++ ) {
-				mem_free( token );
+				inputStream_freeToken( stream, token );
 				token = inputStream_nextToken( stream );
 				normals[normal_count].val[i] = strtof( token, NULL );
 			}
@@ -62,7 +63,7 @@ mesh* mesh_loadObj( const char* filename ) {
 			assert( uv_count < kObjMaxVertices );
 			// Vertex Texture Coord (UV)
 			for ( int i = 0; i < 2; i++ ) {
-				mem_free( token );
+				inputStream_freeToken( stream, token );
 				token = inputStream_nextToken( stream );
 				uvs[uv_count].val[i] = strtof( token, NULL );
 			}
@@ -73,7 +74,7 @@ mesh* mesh_loadObj( const char* filename ) {
 			for ( int i = 0; i < 3; i++ ) {
 				assert( index_count < kObjMaxIndices );
 
-				mem_free( token );
+				inputStream_freeToken( stream, token );
 				token = inputStream_nextToken( stream );
 				// Need to split into 3 parts (vert/tex/normal) by /
 				int len = strlen( token );
@@ -116,7 +117,7 @@ mesh* mesh_loadObj( const char* filename ) {
 				index_count++;
 			}
 		}
-		mem_free( token );
+		inputStream_freeToken( stream, token );
 		inputStream_nextLine( stream );
 	}
 	mem_free( file_buffer );

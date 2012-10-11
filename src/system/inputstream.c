@@ -84,6 +84,11 @@ char* inputStream_nextToken( inputStream* stream ) {
 	return token;
 }
 
+void inputStream_freeToken( inputStream* stream, const char* token ) {
+	(void)stream;
+	mem_free( (char*)token );
+}
+
 // Advance the stream forward just passed the first instance of [string]
 void inputStream_skipPast( inputStream* stream, const char* string ) {
 	char* token = NULL;
@@ -94,7 +99,7 @@ void inputStream_skipPast( inputStream* stream, const char* string ) {
 		token = inputStream_nextToken( stream );
 		}
 	if ( token )
-		mem_free( token );
+		inputStream_freeToken( stream, token );
 }
 
 // Returns the next token as a c string, advances the inputstream to the token's end

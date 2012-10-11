@@ -6,6 +6,7 @@
 #include "mem/allocator.h"
 #include "render/render.h"
 #include "system/file.h"
+#include "system/inputstream.h"
 #include "system/string.h"
 #include "system/hash.h"
 
@@ -76,10 +77,10 @@ void shader_buildDictionary( shaderDictionary* dict, GLuint shader_program, cons
 		token = inputStream_nextToken( stream );
 		if (( string_equal( token, "uniform" ) || string_equal( token, "attribute" )) && !inputStream_endOfFile( stream )) {
 			// Advance two tokens (the next is the type declaration, the second is the variable name)
-			mem_free( token );
+			inputStream_freeToken( stream, token );
 			token = inputStream_nextToken( stream );
 			const char* type = string_trim( token );
-			mem_free( token );
+			inputStream_freeToken( stream, token );
 			token = inputStream_nextToken( stream );
 			const char* name = string_trim( token );
 			// If it's an array remove the array specification
@@ -96,7 +97,7 @@ void shader_buildDictionary( shaderDictionary* dict, GLuint shader_program, cons
 			mem_free( (void*)name );
 			mem_free( (void*)type );
 		}
-		mem_free( token );
+		inputStream_freeToken( stream, token );
 	}
 }
 

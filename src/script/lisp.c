@@ -11,6 +11,7 @@
 #include "render/texture.h"
 #include "system/hash.h"
 #include "system/file.h"
+#include "system/inputstream.h"
 #include "system/string.h"
 #include <assert.h>
 
@@ -232,7 +233,7 @@ char* lisp_nextToken( inputStream* stream ) {
 		}
 		else
 			//printf( " newline\n" );
-		mem_free( token );
+		inputStream_freeToken( stream, token );
 		token = inputStream_nextToken( stream );
 		}
 	return token;
