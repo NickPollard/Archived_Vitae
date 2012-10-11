@@ -3,6 +3,7 @@
 #include "common.h"
 #include "render/texture.h"
 //---------------------
+#include "worker.h"
 #include "maths/maths.h"
 #include "mem/allocator.h"
 #include "render/render.h"
@@ -10,6 +11,10 @@
 #include "system/hash.h"
 #include "system/string.h"
 #include "system/thread.h"
+
+// *** Forward Declarations
+uint8_t* read_tga( const char* file, int* w, int* h );
+void texture_requestMem( GLuint* tex, int w, int h, int stride, uint8_t* bitmap );
 
 // Globals
 GLuint g_texture_default = 0;
@@ -42,8 +47,10 @@ void texture_tick() {
 					mem_free( (void*)r.filename );
 					break;
 				case kTextureMemRequest:
+					vAssert( r.bitmap );
 					*(r.tex) = texture_loadBitmap( r.width, r.height, r.stride, r.bitmap );
-					mem_free( r.bitmap );
+					// Need to clear up where we free this - we won't always want to do it but we might
+					//mem_free( r.bitmap );
 					break;
 			}
 		}
@@ -52,18 +59,17 @@ void texture_tick() {
 	vmutex_unlock( &texture_mutex );
 }
 
-void texture_requestFile( GLuint* tex, const char* filename ) {
-	// TODO - check if we've already loaded it
-	vmutex_lock( &texture_mutex );
-	{
-		vAssert( texture_request_count < kMaxTextureRequests );
-		textureRequest* request = &requests[texture_request_count++];
-		request->tex = tex;
-		*request->tex = kInvalidGLTexture;
-		request->type = kTextureFileRequest;
-		request->filename = string_createCopy( filename );
-	}
-	vmutex_unlock( &texture_mutex );
+void* texture_workerLoadFile( void* args ) {
+	GLuint* tex = ((void**)args)[0];
+	const char* filename = ((void**)args)[1];
+	//printf( "Run worker task: Tex: " xPTRf ", filename: %s\n", (uintptr_t)tex, filename );
+	int w, h;
+	void* bitmap = read_tga( filename, &w, &h );
+	int stride = 4; // Currently we only support RGBA8
+	texture_requestMem( tex, w, h, stride, bitmap );
+	// Args were allocated when task was created, so we can safely free them here
+	mem_free( args );
+	return NULL;
 }
 
 // Load a texture from an internal block of memory as a bitmap
@@ -83,6 +89,42 @@ void texture_requestMem( GLuint* tex, int w, int h, int stride, uint8_t* bitmap 
 		request->stride = stride;
 	}
 	vmutex_unlock( &texture_mutex );
+}
+
+void texture_queueWorkerTextureLoad( GLuint* tex, const char* filename ) {
+
+	const void** args = mem_alloc( sizeof( void* ) * 2 );
+	args[0] = tex;
+	args[1] = filename;
+	//printf( "Queue worker task: Tex: " xPTRf ", filename: %s\n", (uintptr_t)tex, filename );
+	worker_task texture_load_task;
+	texture_load_task.func = texture_workerLoadFile;
+	texture_load_task.args = args;
+	worker_addTask( texture_load_task );
+}
+
+void texture_requestFile( GLuint* tex, const char* filename ) {
+	/*
+	vmutex_lock( &texture_mutex );
+	{
+		vAssert( texture_request_count < kMaxTextureRequests );
+		textureRequest* request = &requests[texture_request_count++];
+		request->tex = tex;
+		*request->tex = kInvalidGLTexture;
+		request->type = kTextureFileRequest;
+		request->filename = string_createCopy( filename );
+	}
+	vmutex_unlock( &texture_mutex );
+	*/
+
+	texture_queueWorkerTextureLoad( tex, filename );
+
+	/*
+	int w, h;
+	void* bitmap = read_tga( filename, &w, &h );
+	int stride = 4; // Currently we only support RGBA8
+	texture_requestMem( tex, w, h, stride, bitmap );
+	*/
 }
 
 void texture_init( texture* t, const char* filename ) {
@@ -125,7 +167,6 @@ texture* texture_load( const char* filename ) {
 	texture* t;
 	t = textureCache_find( filename );
 	if ( t ) {
-		//printf( "Texture \"%s\" already loaded.\n", filename );
 		return t;
 	}
 	else {

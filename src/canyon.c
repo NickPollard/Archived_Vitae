@@ -261,7 +261,7 @@ vector segment_normal( window_buffer* b, int i ) {
 	vector previous = canyon_point( b, i );
 	vector segment = normalized( vector_sub( next, previous ));
 	vector normal = Vector( -segment.coord.z, 0.f, segment.coord.x, 0.f );
-	vAssert( isNormalized( &normal ));
+	//vAssert( isNormalized( &normal ));
 	return normal;
 }
 

@@ -30,7 +30,7 @@ struct panel_s {
 	bool visible;
 
 	// Temp
-	GLuint	texture;
+	texture*	texture;
 	vertex vertex_buffer[4];
 };
 

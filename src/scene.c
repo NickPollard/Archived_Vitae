@@ -150,23 +150,6 @@ void scene_free( scene* s ) {
 
 // Initialise a scene with some test data
 scene* test_scene_init( engine* e ) { 
-
-	/*
-	sterm* stree = parse_file( "dat/scene/testscene.s" );
-	scene* s = eval( stree );
-	sterm_free( stree );
-	s->eng = e;
-	*/
-
-	/*
-	context* c = lisp_newContext();
-	term* t = lisp_parse_file( filename );
-	term* m = _eval( t, c );
-	term_takeRef( m );
-	model* mdl = m->data;
-	term_deref( m );
-	*/
-
 	// Test Misc scene setup
 	(void)e;
 	scene* s = scene_create();

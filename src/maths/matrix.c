@@ -551,7 +551,7 @@ void matrix_copyRotation( matrix dst, matrix src ) {
 	matrix_setColumn( dst, 2, matrix_getCol( src, 2 ));
 }
 
-#ifdef UNIT_TEST
+#if UNIT_TEST
 void test_matrix() {
 	matrix a, b, c;
 	matrix_setIdentity( a );

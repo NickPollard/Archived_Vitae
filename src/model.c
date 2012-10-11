@@ -139,8 +139,8 @@ void mesh_buildBuffers( mesh* m ) {
 	// Now also build the OpenGL VBOs for the static data
 	m->vertex_VBO = render_requestBuffer( GL_ARRAY_BUFFER, m->vertex_buffer, size_vertex );
 	m->element_VBO = render_requestBuffer( GL_ELEMENT_ARRAY_BUFFER, m->element_buffer, size_element );
-	printf( "build buffers - Vertex vbo: %u\n", *m->vertex_VBO );
-	printf( "build buffers - Element vbo: %u\n", *m->element_VBO );
+	//printf( "build buffers - Vertex vbo: %u\n", *m->vertex_VBO );
+	//printf( "build buffers - Element vbo: %u\n", *m->element_VBO );
 }
 
 // Draw the verts of a mesh to the openGL buffer
@@ -243,7 +243,7 @@ int model_transformIndex( model* m, transform* ptr ) {
 }
 
 obb obb_calculate( int vert_count, vector* verts ) {
-	printf( "obb calculate!\n" );
+	//printf( "obb calculate!\n" );
 	vAssert( vert_count > 1 );
 	obb bb;
 	vector vert = verts[0];

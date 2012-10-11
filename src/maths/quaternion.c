@@ -188,7 +188,7 @@ void quaternion_printf( const char* label, const quaternion* q ) {
 	printf( "\n" );
 }
 
-#ifdef UNIT_TEST
+#if UNIT_TEST
 void test_quaternion() {
 	quaternion i = Quaternion( 0.f, 1.f, 0.f, 0.f );
 	quaternion j = Quaternion( 0.f, 0.f, 1.f, 0.f );

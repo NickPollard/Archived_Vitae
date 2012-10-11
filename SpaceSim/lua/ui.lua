@@ -1,13 +1,12 @@
 local ui = {}
 
-function ui.show_splash()
+function ui.show_splash( splash_image )
 	local color = Vector( 1.0, 1.0, 1.0, 1.0 )
-	local splash = vuiPanel_create( engine, "dat/img/splash_vitruvian.tga", color, 0, 0, 1280, 720 )
+	local splash = vuiPanel_create( engine, splash_image, color, 0, 0, 1280, 720 )
 	return splash
 end
 
 function ui.hide_splash( splash )
-	vprint( "hide splash" )
 	vuiPanel_hide( engine, splash )
 end
 

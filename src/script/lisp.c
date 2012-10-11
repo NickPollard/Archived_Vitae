@@ -1193,7 +1193,6 @@ void attr_particle_flags( term* definition_term, term* flags_attr ) {
 	term* flags_term = foldl( lisp_bitwiseOr, lisp_zero, fmap_1( parseFlag, NULL, flags_attr ));
 	particle_flags_t flags = (particle_flags_t)(*flags_term->integer);
 
-	printf( "Setting particle flags: %x\n", flags );
 	def->flags = def->flags | flags;
 }
 

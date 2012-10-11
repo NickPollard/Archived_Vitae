@@ -598,7 +598,7 @@ int LUA_createUIPanel( lua_State* l ) {
 	p->width = w;
 	p->height = h;
 	p->color = *ui_color;
-	texture_requestFile( &p->texture, texture_path );
+	p->texture = texture_load( texture_path );
 	engine_addRender( e, p, panel_render );
 	lua_pushptr( l, p );
 	return 1;

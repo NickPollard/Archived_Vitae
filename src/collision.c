@@ -541,6 +541,8 @@ void shape_delete( shape* s ) {
 	mem_free( s );
 }
 
+
+#if UNIT_TEST
 void test_heightField() {
 	heightField* h = heightField_create( 10.f, 8.f, 2, 2 );
 	(void)h;
@@ -573,6 +575,7 @@ void test_heightField() {
 
 	heightField_delete( h );
 }
+#endif // UNIT_TEST
 
 //
 //
@@ -597,6 +600,7 @@ void collision_init() {
 	collision_initCollisionFuncs();
 }
 
+#if UNIT_TEST
 void test_collision() {
 	printf( "--- Beginning Unit Test: Collision ---\n" );
 	shape sphere_a;
@@ -662,3 +666,4 @@ void test_collision() {
 
 	test_heightField();
 }
+#endif // UNIT_TEST

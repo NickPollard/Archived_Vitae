@@ -86,16 +86,6 @@ void test_engine_init( engine* e ) {
 		engine_addRender( e, (void*)t, canyonTerrain_render );
 		theCanyonTerrain = t;
 	}
-
-	// Dynamic fog
-	/*
-	{
-		dynamicFog* f = dynamicFog_create();
-		f->scene = theScene;
-		theScene->fog = f;
-		startTick( e, (void*)f, dynamicFog_tick );
-	}
-	*/
 }
 
 /*

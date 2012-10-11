@@ -59,7 +59,7 @@ bool isPowerOf2( unsigned int n ) {
 	return (n & (n - 1)) == 0;
 }
 
-#ifdef UNIT_TEST
+#if UNIT_TEST
 void test_maths() {
 	printf( "--- Beginning Unit Test: Maths ---\n" );
 

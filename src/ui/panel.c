@@ -24,6 +24,7 @@ panel* panel_create() {
 	// default UI color
 	p->color = ui_color_default;
 	p->visible = true;
+	p->texture = NULL;
 
 	return p;
 }
@@ -39,29 +40,28 @@ static const int vert_count = 4;
 void panel_draw( panel* p, float x, float y ) {
 	(void)x;
 	(void)y;
+	vAssert( p->texture );
 
-	if ( true ) {
-		// We draw a quad as two triangles
-		p->vertex_buffer[0].position = Vector( p->x,				p->y,				0.1f, 1.f );
-		p->vertex_buffer[1].position = Vector( p->x + p->width,	p->y,				0.1f, 1.f );
-		p->vertex_buffer[2].position = Vector( p->x,				p->y + p->height,	0.1f, 1.f );
-		p->vertex_buffer[3].position = Vector( p->x + p->width,	p->y + p->height,	0.1f, 1.f );
+	// We draw a quad as two triangles
+	p->vertex_buffer[0].position = Vector( p->x,				p->y,				0.1f, 1.f );
+	p->vertex_buffer[1].position = Vector( p->x + p->width,	p->y,				0.1f, 1.f );
+	p->vertex_buffer[2].position = Vector( p->x,				p->y + p->height,	0.1f, 1.f );
+	p->vertex_buffer[3].position = Vector( p->x + p->width,	p->y + p->height,	0.1f, 1.f );
 
-		p->vertex_buffer[0].uv = Vector( 0.f, 0.f, 0.f, 0.f );
-		p->vertex_buffer[1].uv = Vector( 1.f, 0.f, 0.f, 0.f );
-		p->vertex_buffer[2].uv = Vector( 0.f, 1.f, 0.f, 0.f );
-		p->vertex_buffer[3].uv = Vector( 1.f, 1.f, 0.f, 0.f );
+	p->vertex_buffer[0].uv = Vector( 0.f, 0.f, 0.f, 0.f );
+	p->vertex_buffer[1].uv = Vector( 1.f, 0.f, 0.f, 0.f );
+	p->vertex_buffer[2].uv = Vector( 0.f, 1.f, 0.f, 0.f );
+	p->vertex_buffer[3].uv = Vector( 1.f, 1.f, 0.f, 0.f );
 
-		p->vertex_buffer[0].color = p->color;
-		p->vertex_buffer[1].color = p->color;
-		p->vertex_buffer[2].color = p->color;
-		p->vertex_buffer[3].color = p->color;
+	p->vertex_buffer[0].color = p->color;
+	p->vertex_buffer[1].color = p->color;
+	p->vertex_buffer[2].color = p->color;
+	p->vertex_buffer[3].color = p->color;
 
-		// Copy our data to the GPU
-		// There are now <index_count> vertices, as we have unrolled them
-		drawCall* draw = drawCall_create( &renderPass_alpha, resources.shader_ui, element_count, element_buffer, p->vertex_buffer, p->texture, modelview );
-		draw->depth_mask = GL_FALSE;
-	}
+	// Copy our data to the GPU
+	// There are now <index_count> vertices, as we have unrolled them
+	drawCall* draw = drawCall_create( &renderPass_alpha, resources.shader_ui, element_count, element_buffer, p->vertex_buffer, p->texture->gl_tex, modelview );
+	draw->depth_mask = GL_FALSE;
 }
 
 void panel_render( void* panel_ ) {

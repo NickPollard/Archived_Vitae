@@ -289,10 +289,11 @@ starting = true
 function init()
 	vprint( "init" )
 	starting = true
+	
+	splash_intro()
+
 	library, msg = loadfile( "SpaceSim/lua/library.lua" )
 	library()
-
---	vprint( tostring( msg ))
 end
 
 camera = "chase"
@@ -357,6 +358,7 @@ function player_ship_collisionHandler( ship, collider )
 	inTime( 2.0, function ()
 		vdestroyTransform( scene, ship.transform )
 		restart() 
+		gameplay_start()
 	end )
 end
 
@@ -364,7 +366,16 @@ collision_layer_player = 1
 collision_layer_enemy = 2
 collision_layer_bullet = 3
 
+function gameplay_start()
+	spawning_active = true
+	player_active = true
+	inTime( 3.0, function () player_ship.speed = 30.0 end )
+end
+
+
 function restart()
+	spawning_active = false
+	player_active = false
 	-- We create a player object which is a game-specific Lua class
 	-- The player class itself creates several native C classes in the engine
 	player_ship = playership_create()
@@ -377,13 +388,11 @@ function restart()
 	player_ship.speed = 0.0
 	local no_velocity = Vector( 0.0, 0.0, player_ship.speed, 0.0 )
 	vphysic_setVelocity( player_ship.physic, no_velocity )
-	inTime( 3.0, function () player_ship.speed = 30.0 end )
 
-	setup_controls()
-	--vtransform_yaw( player_ship.transform, math.pi * 2 * 1.32 );
 	chasecam = vchasecam_follow( engine, player_ship.camera_transform )
 	flycam = vflycam( engine )
 	vscene_setCamera( chasecam )
+	setup_controls()
 end
 
 function loadParticles( )
@@ -418,24 +427,23 @@ function makefunction( text )
 	return a
 end
 
-function splash()
-	local splash = ui.show_splash()
-	inTime( 2.0, function () 
-		ui.hide_splash( splash ) 
-		ui.show_crosshair()
+function splash_intro()
+	local studio_splash = ui.show_splash( "dat/img/splash_vitruvian.tga" )
+	inTime( 3.0, function () 
+		ui.hide_splash( studio_splash ) 
+		local author_splash = ui.show_splash( "dat/img/splash_author.tga" )
+		inTime( 3.0, function ()
+			ui.hide_splash( author_splash ) 
+			ui.show_crosshair()
+			gameplay_start()
+		end )
 	end )
 end
 
 function start()
-	splash()
-
-
 	loadParticles()
 
 	restart()
-	
-	--ai.test_combinator()
-	ai.test_states()
 end
 
 wave_interval_time = 10.0
@@ -593,11 +601,15 @@ function debug_tick()
 	end
 end
 
+--[[
 function sky_tick( camera, dt )
 	camera_position = vcamera_position( camera )
 	u,v = vworldPositionFromCanyon( camera_position )
 	--vdynamicSky_blend( v )
 end
+--]]
+
+spawning_active = false
 
 -- Called once per frame to update the current Lua State
 function tick( dt )
@@ -606,15 +618,19 @@ function tick( dt )
 		start()
 	end
 
-	sky_tick( chasecam, dt )
+	--sky_tick( chasecam, dt )
 
-	playership_tick( player_ship, dt )
+	if player_active then
+		playership_tick( player_ship, dt )
+	end
 
 	debug_tick()
 
 	timers_tick( dt )
 
-	update_spawns( player_ship )
+	if spawning_active then
+		update_spawns( player_ship )
+	end
 
 	tick_array( turrets, dt )
 	tick_array( interceptors, dt )
@@ -936,7 +952,6 @@ function interceptor_behaviour( interceptor, move_to, attack_target, attack_type
 	local attack = nil
 	enter =		ai.state( entity_strafeTo( move_to.x, move_to.y, move_to.z, attack_target.x, move_to.y, attack_target.z ),		
 							function () if entity_atPosition( interceptor, move_to.x, move_to.y, move_to.z, 5.0 ) then 
-									vprint( "reached!" )
 									return attack 
 								else 
 									return enter 
@@ -977,3 +992,4 @@ function interceptor_tick( interceptor, dt )
 		interceptor.behaviour = interceptor.behaviour( interceptor, dt )
 	end
 end
+
