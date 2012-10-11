@@ -376,6 +376,7 @@ end
 function restart()
 	spawning_active = false
 	player_active = false
+	entities_despawnAll()
 	-- We create a player object which is a game-specific Lua class
 	-- The player class itself creates several native C classes in the engine
 	player_ship = playership_create()
@@ -765,7 +766,7 @@ end
 canyon_v_scale = 1.0
 
 -- Spawn all entities in the given range
-function entities_spawnAll( near, far )
+function entities_spawnRange( near, far )
 	near = near / canyon_v_scale
 	far = far / canyon_v_scale
 	i = spawn_index( near ) + 1
@@ -784,9 +785,17 @@ function entities_spawnAll( near, far )
 				spawn_interceptor( -interceptor_offset_u, spawn_v, interceptor_attack_gun )
 			end
 			last_spawn_index = i
-			i = i + 1
-			spawn_v = i * spawn_interval
 		end
+		i = i + 1
+		spawn_v = i * spawn_interval
+	end
+end
+
+function entities_despawnAll()
+	for ship in iterator( interceptors ) do
+		vprint( "Despawning interceptor" )
+		ship_destroy( ship )
+		ship.behaviour = ai.dead
 	end
 end
 
@@ -797,7 +806,7 @@ function update_spawns( ship )
 	u,v = vworldPositionFromCanyon( ship_pos )
 	--x,y,z,w = vvector_values( ship_pos )
 	far = v + spawn_distance
-	entities_spawnAll( last_spawn, far )
+	entities_spawnRange( last_spawn, far )
 	last_spawn = far;
 end
 
