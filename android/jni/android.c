@@ -58,7 +58,7 @@ static void draw_frame( window* w ) {
 
 void android_exit() {
 	// Cleanup the profiling library
-	//moncleanup();
+	moncleanup();
 
 	exit( EXIT_SUCCESS );
 }
@@ -222,7 +222,7 @@ void android_init( struct android_app* app ) {
 	printf("Loading Vitae.\n");
 
 	// Initialise the profiling library
-	//monstartup("libvitae.so");
+	monstartup("libvitae.so");
 
 	// *** Initialise Engine
 	// already created
