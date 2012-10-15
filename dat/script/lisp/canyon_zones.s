@@ -1,8 +1,8 @@
 # Canyon Zones.s
 (list 
-		(canyon_zone (quote ((attribute "terrain_color" (vector 0.3 0.6 0.1 1.0))
-					  	 	 (attribute "cliff_color"	(vector 0.3 0.2 0.1 1.0))
-					  	 	 (attribute "sky_color"		(vector 0.40 0.45 0.7 1.0))
+		(canyon_zone (quote ((attribute "terrain_color" (vector 0.4 0.5 0.1 1.0))
+					  	 	 (attribute "cliff_color"	(vector 0.3 0.15 0.05 1.0))
+					  	 	 (attribute "sky_color"		(vector 0.40 0.55 0.7 1.0))
 					  	 	 (attribute "fog_color"		(vector 0.0 0.4 0.3 1.0))
 )))
  		(canyon_zone (quote ((attribute "terrain_color"	(vector 0.2 0.1 0.1 1.0))
