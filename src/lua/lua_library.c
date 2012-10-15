@@ -578,7 +578,7 @@ int LUA_canyonPosition( lua_State* l ) {
 }
 
 // Get the Canyon U,V position of a point from a given world position
-int LUA_worldPositionFromCanyon( lua_State* l ) {
+int LUA_canyon_fromWorld( lua_State* l ) {
 	vector* world_position = lua_toptr( l, 1 );
 	float u, v;
 	terrain_canyonSpaceFromWorld( world_position->coord.x, world_position->coord.z, &u, &v );
@@ -847,7 +847,7 @@ void luaLibrary_import( lua_State* l ) {
 
 	// *** Game
 	lua_registerFunction( l, LUA_canyonPosition, "vcanyon_position" );
-	lua_registerFunction( l, LUA_worldPositionFromCanyon, "vworldPositionFromCanyon" );
+	lua_registerFunction( l, LUA_canyon_fromWorld, "vcanyon_fromWorld" );
 	lua_registerFunction( l, LUA_dynamicSky_blend, "vdynamicSky_blend" );
 
 	/////////////// Constants /////////////////

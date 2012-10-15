@@ -369,9 +369,12 @@ collision_layer_enemy = 2
 collision_layer_bullet = 3
 
 function gameplay_start()
-	spawning_active = true
 	player_active = true
-	inTime( 3.0, function () player_ship.speed = 30.0 end )
+	inTime( 3.0, function () 
+		player_ship.speed = 30.0 
+		spawning_active = true
+		already_spawned = 0.0
+	end )
 end
 
 
@@ -605,14 +608,6 @@ function debug_tick()
 	end
 end
 
---[[
-function sky_tick( camera, dt )
-	camera_position = vcamera_position( camera )
-	u,v = vworldPositionFromCanyon( camera_position )
-	--vdynamicSky_blend( v )
-end
---]]
-
 spawning_active = false
 
 -- Called once per frame to update the current Lua State
@@ -757,8 +752,7 @@ spawn_offset = 0.0
 spawn_interval = 300.0
 spawn_distance = 300.0
 -- spawn tracking
-last_spawn = 0.0
-last_spawn_index = 0
+already_spawned = 0.0
 
 function contains( value, range_a, range_b )
 	range_max = math.max( range_a, range_b )
@@ -775,7 +769,6 @@ function entities_spawnRange( near, far )
 	i = spawn_index( near ) + 1
 	spawn_v = i * spawn_interval
 	while contains( spawn_v, near, far ) do
-		if ( i > last_spawn_index ) then
 			local turret_offset_u = 20.0
 			--spawn_turret( turret_offset_u, spawn_v )
 			--spawn_turret( -turret_offset_u, spawn_v )
@@ -787,8 +780,6 @@ function entities_spawnRange( near, far )
 				spawn_interceptor( interceptor_offset_u, spawn_v, interceptor_attack_gun )
 				spawn_interceptor( -interceptor_offset_u, spawn_v, interceptor_attack_gun )
 			end
-			last_spawn_index = i
-		end
 		i = i + 1
 		spawn_v = i * spawn_interval
 	end
@@ -804,13 +795,11 @@ end
 
 -- Spawn all entities that need to be spawned this frame
 function update_spawns( ship )
-	--vprint( "update spawns." )
 	ship_pos = vtransform_getWorldPosition( ship.transform )
-	u,v = vworldPositionFromCanyon( ship_pos )
-	--x,y,z,w = vvector_values( ship_pos )
-	far = v + spawn_distance
-	entities_spawnRange( last_spawn, far )
-	last_spawn = far;
+	u,v = vcanyon_fromWorld( ship_pos )
+	spawn_up_to = v + spawn_distance
+	entities_spawnRange( already_spawned, spawn_up_to )
+	already_spawned = spawn_up_to;
 end
 
 function turret_state_inactive( turret, dt )
