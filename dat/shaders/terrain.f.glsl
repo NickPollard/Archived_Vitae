@@ -28,7 +28,8 @@ vec4 directional_light_specular = vec4( 0.5, 0.5, 0.5, 1.0 );
 vec4 sun_color = vec4( 1.0, 0.5, 0.0, 0.0 );
 
 float diffuse_warp( float diffuse ) {
-	return diffuse * 0.5 + 0.5;
+	//return diffuse * 0.5 + 0.5;
+	return diffuse;
 }
 
 float sun_fog( vec4 local_sun_dir, vec4 fragment_position ) {
