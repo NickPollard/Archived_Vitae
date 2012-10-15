@@ -16,8 +16,8 @@
 	
 const float texture_scale = 0.0325f;
 
-GLuint terrain_texture = 0;
-GLuint terrain_texture_cliff = 0;
+texture* terrain_texture = 0;
+texture* terrain_texture_cliff = 0;
 
 
 // *** Forward declarations
@@ -95,9 +95,9 @@ void canyonTerrainBlock_render( canyonTerrainBlock* b ) {
 		b->element_VBO_alt = NULL;
 	}
 
-	if ( b->vertex_VBO && *b->vertex_VBO ) {
-		drawCall* draw = drawCall_create( &renderPass_main, resources.shader_terrain, b->element_count_render, b->element_buffer, b->vertex_buffer, terrain_texture, modelview );
-		draw->texture_b = terrain_texture_cliff;
+	if ( b->vertex_VBO && *b->vertex_VBO && terrain_texture && terrain_texture_cliff ) {
+		drawCall* draw = drawCall_create( &renderPass_main, resources.shader_terrain, b->element_count_render, b->element_buffer, b->vertex_buffer, terrain_texture->gl_tex, modelview );
+		draw->texture_b = terrain_texture_cliff->gl_tex;
 		draw->texture_lookup = b->canyon->canyonZone_lookup_texture->gl_tex;
 		draw->vertex_VBO = *b->vertex_VBO;
 		draw->element_VBO = *b->element_VBO;
@@ -270,11 +270,11 @@ canyonTerrain* canyonTerrain_create( canyon* c, int u_blocks, int v_blocks, int 
 
 	t->trans = transform_create();
 
-	if ( terrain_texture == 0 ) {
-		texture_requestFile( &terrain_texture, "dat/img/terrain/snow_2_rgba.tga" );
+	if ( !terrain_texture ) {
+		terrain_texture = texture_load( "dat/img/terrain/snow_2_rgba.tga" );
 	}
-	if ( terrain_texture_cliff == 0 ) {
-		texture_requestFile( &terrain_texture_cliff, "dat/img/terrain/cliffs_2_rgba.tga" );
+	if ( !terrain_texture_cliff ) {
+		terrain_texture_cliff = texture_load( "dat/img/terrain/cliffs_2_rgba.tga" );
 	}
 
 	return t;

@@ -11,7 +11,7 @@ extern GLuint g_texture_default;
 
 void texture_staticInit();
 
-GLuint texture_loadBitmap( int w, int h, int stride, uint8_t* bitmap );
+GLuint texture_loadBitmap( int w, int h, int stride, uint8_t* bitmap, GLuint wrap_s, GLuint wrap_t );
 GLuint texture_loadTGA(const char* filename);
 
 	// TGA format
@@ -59,8 +59,13 @@ struct texture_s {
 	const char* filename;
 };
 
+typedef struct textureProperties_s {
+	GLuint wrap_s;
+	GLuint wrap_t;
+} textureProperties;
+
 void texture_tick();
-void texture_requestFile( GLuint* tex, const char* filename );
+void texture_requestFile( GLuint* tex, const char* filename, textureProperties* properties );
 
 texture* texture_load( const char* filename );
 texture* texture_loadFromMem( int w, int h, int stride, uint8_t* bitmap );

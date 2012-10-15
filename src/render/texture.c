@@ -14,7 +14,7 @@
 
 // *** Forward Declarations
 uint8_t* read_tga( const char* file, int* w, int* h );
-void texture_requestMem( GLuint* tex, int w, int h, int stride, uint8_t* bitmap );
+void texture_requestMem( GLuint* tex, int w, int h, int stride, uint8_t* bitmap, GLuint wrap_s, GLuint wrap_t );
 
 // Globals
 GLuint g_texture_default = 0;
@@ -28,6 +28,7 @@ typedef struct textureRequest_s {
 	int			width;
 	int			height;
 	int			stride;
+	textureProperties properties;
 } textureRequest;
 
 #define kMaxTextureRequests 32
@@ -48,7 +49,7 @@ void texture_tick() {
 					break;
 				case kTextureMemRequest:
 					vAssert( r.bitmap );
-					*(r.tex) = texture_loadBitmap( r.width, r.height, r.stride, r.bitmap );
+					*(r.tex) = texture_loadBitmap( r.width, r.height, r.stride, r.bitmap, r.properties.wrap_s, r.properties.wrap_t );
 					// Need to clear up where we free this - we won't always want to do it but we might
 					//mem_free( r.bitmap );
 					break;
@@ -62,18 +63,19 @@ void texture_tick() {
 void* texture_workerLoadFile( void* args ) {
 	GLuint* tex = ((void**)args)[0];
 	const char* filename = ((void**)args)[1];
+	textureProperties* properties = ((void**)args)[2];
 	//printf( "Run worker task: Tex: " xPTRf ", filename: %s\n", (uintptr_t)tex, filename );
 	int w, h;
 	void* bitmap = read_tga( filename, &w, &h );
 	int stride = 4; // Currently we only support RGBA8
-	texture_requestMem( tex, w, h, stride, bitmap );
+	texture_requestMem( tex, w, h, stride, bitmap, properties->wrap_s, properties->wrap_t );
 	// Args were allocated when task was created, so we can safely free them here
 	mem_free( args );
 	return NULL;
 }
 
 // Load a texture from an internal block of memory as a bitmap
-void texture_requestMem( GLuint* tex, int w, int h, int stride, uint8_t* bitmap ) {
+void texture_requestMem( GLuint* tex, int w, int h, int stride, uint8_t* bitmap, GLuint wrap_s, GLuint wrap_t ) {
 	vmutex_lock( &texture_mutex );
 	{
 		vAssert( texture_request_count < kMaxTextureRequests );
@@ -87,15 +89,17 @@ void texture_requestMem( GLuint* tex, int w, int h, int stride, uint8_t* bitmap 
 		request->width = w;
 		request->height = h;
 		request->stride = stride;
+		request->properties.wrap_s = wrap_s;
+		request->properties.wrap_t = wrap_t;
 	}
 	vmutex_unlock( &texture_mutex );
 }
 
-void texture_queueWorkerTextureLoad( GLuint* tex, const char* filename ) {
-
-	const void** args = mem_alloc( sizeof( void* ) * 2 );
+void texture_queueWorkerTextureLoad( GLuint* tex, const char* filename, textureProperties* properties ) {
+	const void** args = mem_alloc( sizeof( void* ) * 3 );
 	args[0] = tex;
 	args[1] = filename;
+	args[2] = properties;
 	//printf( "Queue worker task: Tex: " xPTRf ", filename: %s\n", (uintptr_t)tex, filename );
 	worker_task texture_load_task;
 	texture_load_task.func = texture_workerLoadFile;
@@ -103,28 +107,8 @@ void texture_queueWorkerTextureLoad( GLuint* tex, const char* filename ) {
 	worker_addTask( texture_load_task );
 }
 
-void texture_requestFile( GLuint* tex, const char* filename ) {
-	/*
-	vmutex_lock( &texture_mutex );
-	{
-		vAssert( texture_request_count < kMaxTextureRequests );
-		textureRequest* request = &requests[texture_request_count++];
-		request->tex = tex;
-		*request->tex = kInvalidGLTexture;
-		request->type = kTextureFileRequest;
-		request->filename = string_createCopy( filename );
-	}
-	vmutex_unlock( &texture_mutex );
-	*/
-
-	texture_queueWorkerTextureLoad( tex, filename );
-
-	/*
-	int w, h;
-	void* bitmap = read_tga( filename, &w, &h );
-	int stride = 4; // Currently we only support RGBA8
-	texture_requestMem( tex, w, h, stride, bitmap );
-	*/
+void texture_requestFile( GLuint* tex, const char* filename, textureProperties* properties ) {
+	texture_queueWorkerTextureLoad( tex, filename, properties );
 }
 
 void texture_init( texture* t, const char* filename ) {
@@ -174,15 +158,18 @@ texture* texture_load( const char* filename ) {
 		t = texture_nextEmpty();
 		texture_init( t, filename );
 		textureCache_add( t, filename );
-		// temp
-		texture_requestFile( &t->gl_tex, filename );
+		
+		textureProperties* properties = mem_alloc( sizeof( textureProperties ));
+		properties->wrap_s = GL_REPEAT;
+		properties->wrap_t = GL_REPEAT;
+		texture_requestFile( &t->gl_tex, filename, properties );
 	}
 	return t;
 }
 
 texture* texture_loadFromMem( int w, int h, int stride, uint8_t* bitmap ) {
 	texture* t = texture_nextEmpty();
-	texture_requestMem( &t->gl_tex, w, h, stride, bitmap );
+	texture_requestMem( &t->gl_tex, w, h, stride, bitmap, GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE );
 	return t;
 }
 
@@ -278,7 +265,7 @@ GLuint texture_loadTGA( const char* filename ) {
 	return tex;
 }
 
-GLuint texture_loadBitmap( int w, int h, int stride, uint8_t* bitmap ) {
+GLuint texture_loadBitmap( int w, int h, int stride, uint8_t* bitmap, GLuint wrap_s, GLuint wrap_t ) {
 	GLuint tex;
 
 	vAssert( isPowerOf2( w ) );
@@ -296,8 +283,8 @@ GLuint texture_loadBitmap( int w, int h, int stride, uint8_t* bitmap ) {
 	glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR );
     glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR );
 	// TODO - set this properly. For now force to clamp for loadBitmap, for the terrain lookup texture
-    glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_WRAP_S,     GL_CLAMP_TO_EDGE );
-    glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_WRAP_T,     GL_CLAMP_TO_EDGE );
+    glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_WRAP_S,     wrap_s );
+    glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_WRAP_T,     wrap_t );
 
 	glTexImage2D( GL_TEXTURE_2D,
 		   			0,			// No Mipmaps for now

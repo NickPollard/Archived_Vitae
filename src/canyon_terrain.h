@@ -56,8 +56,8 @@ struct canyonTerrain_s {
 	canyon*			canyon;
 };
 
-extern GLuint terrain_texture;
-extern GLuint terrain_texture_cliff;
+extern texture* terrain_texture;
+extern texture* terrain_texture_cliff;
 
 // *** Functions 
 

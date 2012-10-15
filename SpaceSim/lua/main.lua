@@ -289,6 +289,8 @@ starting = true
 function init()
 	vprint( "init" )
 	starting = true
+	color = Vector( 1.0, 1.0, 1.0, 1.0 )
+	local vignette = vuiPanel_create( engine, "dat/img/vignette.tga", color, 0, 360, 1280, 360 )
 	
 	splash_intro()
 
