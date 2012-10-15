@@ -6,7 +6,7 @@
 #define kMaxParticles 128
 #define kMaxParticleVerts (kMaxParticles * 6)
 
-#define kmax_property_values 16
+#define kMaxPropertyValues 16
 
 enum particleEmitter_flags {
 	kParticleWorldSpace = 0x1,

@@ -16,7 +16,7 @@
 float property_samplef( property* p, float time );
 vector property_samplev( property* p, float time );
 float property_valuef( property* p, int key );
-property* property_range( property* p, float from, float to );
+property* property_range( property* p, float from, float to, property* buffer );
 
 particleEmitterDef* particleEmitterDef_create() {
 	particleEmitterDef* def = mem_alloc( sizeof( particleEmitterDef ));
@@ -107,15 +107,18 @@ void particleEmitter_tick( void* data, float dt, engine* eng ) {
 	if ( !e->destroyed ) {
 		// Burst mode means we batch-spawn particles on keys, otherwise spawn nothing
 		if ( e->definition->flags & kParticleBurst ) {
-			// TODO - don't allocate here
-			property* keys = property_range( e->definition->spawn_rate, e->emitter_age, e->emitter_age + dt );
+			// Use some stack space to save on a mem_alloc
+			// We just create a buffer and pass that to property_range()
+			size_t alloc_size = sizeof( property ) + sizeof( float ) * e->definition->spawn_rate->stride * kMaxPropertyValues;
+			property* buffer = alloca( alloc_size );
+
+			property* keys = property_range( e->definition->spawn_rate, e->emitter_age, e->emitter_age + dt, buffer );
 			for ( int key = 0; key < keys->count; ++key ) {
 				int count = (int)property_valuef( e->definition->spawn_rate, key );
 				for ( int i = 0; i < count; ++i ) {
 					particleEmitter_spawnParticle( e );
 				}
 			}
-			mem_free( keys );
 		}
 		// Default is normal interpolated spawning
 		else {
@@ -225,11 +228,18 @@ void particleEmitter_render( void* data ) {
 	}
 }
 
-property* property_create( int stride ) {
-	property* p = mem_alloc( sizeof( property ));
-	memset( p, 0, sizeof( property ));
+property* property_init( property* p, int stride ) {
+	size_t alloc_size = sizeof( property ) + sizeof( float ) * stride * kMaxPropertyValues;
+	memset( p, 0, alloc_size );
 	p->stride = stride;
-	p->data = mem_alloc( sizeof( float ) * p->stride * kmax_property_values );
+	p->data = (float*)((uint8_t*)p + sizeof( property ));
+	return p;
+}
+
+property* property_create( int stride ) {
+	size_t alloc_size = sizeof( property ) + sizeof( float ) * stride * kMaxPropertyValues;
+	property* p = mem_alloc( alloc_size );
+	property_init( p, stride );
 	return p;
 }
 
@@ -237,13 +247,13 @@ property* property_copy( property* p ) {
 	//printf( "Copying property with stride %d\n", p->stride );
 	property* p_copy = property_create( p->stride );
 	p_copy->count = p->count;
-	memcpy( p_copy->data, p->data, sizeof( float ) * p->stride * kmax_property_values );
+	memcpy( p_copy->data, p->data, sizeof( float ) * p->stride * kMaxPropertyValues );
 	return p_copy;
 }
 
 // add [p->stride] number of float [values], at [time]
 void property_addf( property* p, float time, float value ) {
-	assert( p->count < kmax_property_values );
+	assert( p->count < kMaxPropertyValues );
 	assert( p->stride == 2 );
 	int frame = p->count * p->stride;
 	p->data[frame] = time;
@@ -253,7 +263,7 @@ void property_addf( property* p, float time, float value ) {
 
 // add [p->stride] number of float [values], at [time]
 void property_addfv( property* p, float time, float* values ) {
-	assert( p->count < kmax_property_values );
+	assert( p->count < kMaxPropertyValues );
 	int frame = p->count * p->stride;
 	p->data[frame] = time;
 	for ( int i = 0; i < p->stride - 1; ++i )
@@ -262,7 +272,7 @@ void property_addfv( property* p, float time, float* values ) {
 }
 
 void property_addv( property* p, float time, vector value ) {
-	assert( p->count < kmax_property_values );
+	assert( p->count < kMaxPropertyValues );
 	p->data[p->count * p->stride] = time;
 	p->data[p->count * p->stride + 1] = value.coord.x;
 	p->data[p->count * p->stride + 2] = value.coord.y;
@@ -313,8 +323,11 @@ float property_keyDomain( float* key ) {
 }
 
 // Return a new property that contains only the keys in the given domain range
-property* property_range( property* p, float from, float to ) {
-	property* p_filtered = property_create( p->stride );
+// BUFFER is a pointer to space big enough to use for the range
+// this is passed in so we can use stack allocation ot save a mem_alloc traversal
+property* property_range( property* p, float from, float to, property* buffer ) {
+	property* range = property_init( buffer, p->stride );
+	//property* range = property_create( p->stride );
 	float* key = p->data;
 	float* max = key + p->stride * p->count;
 	while ( key < max && property_keyDomain( key ) < from ) {
@@ -322,14 +335,14 @@ property* property_range( property* p, float from, float to ) {
 	}
 	while ( key < max && property_keyDomain( key ) < to ) {
 		if ( p->stride == 2 ) {
-			property_addf( p_filtered, key[0], key[1] );
+			property_addf( range, key[0], key[1] );
 		} else if ( p->stride == 5 ) {
 			vector v = Vector( key[1], key[2], key[3], key[4] );
-			property_addv( p_filtered, key[0], v );
+			property_addv( range, key[0], v );
 		}
 		key += p->stride;
 	}
-	return p_filtered;
+	return range;
 }
 
 void test_property() {
