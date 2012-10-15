@@ -89,7 +89,9 @@ void* heap_allocate_aligned( heapAllocator* heap, size_t size, size_t alignment 
 	b->size -= offset;
 	// Now move the block on and copy the header, so that it's contiguous with the block
 	block* new_block = (block*)(((uint8_t*)b) + offset);
-	block temp = *b;
+	block temp;
+	//block temp = *b; // This doesn't work on android, alignment issues again?
+	memcpy( &temp, b, sizeof( block ));
 	b = new_block;
 	*b = temp;
 	// Fix up pointers to this block, for the new location
