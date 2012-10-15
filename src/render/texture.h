@@ -68,6 +68,7 @@ void texture_tick();
 void texture_requestFile( GLuint* tex, const char* filename, textureProperties* properties );
 
 texture* texture_load( const char* filename );
+texture* texture_loadWithProperties( const char* filename, textureProperties* properties );
 texture* texture_loadFromMem( int w, int h, int stride, uint8_t* bitmap );
 void texture_delete( texture* t );
 

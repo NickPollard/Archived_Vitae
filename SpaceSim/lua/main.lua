@@ -431,6 +431,7 @@ function makefunction( text )
 end
 
 function splash_intro()
+	vtexture_preload( "dat/img/splash_author.tga" )
 	local studio_splash = ui.show_splash( "dat/img/splash_vitruvian.tga" )
 	inTime( 3.0, function () 
 		ui.hide_splash( studio_splash ) 

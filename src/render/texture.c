@@ -148,6 +148,7 @@ texture* texture_nextEmpty() {
 // Get a texture matching a given filename
 // Pulls it from cache if existing, otherwise loads it asynchronously
 texture* texture_load( const char* filename ) {
+	/*
 	texture* t;
 	t = textureCache_find( filename );
 	if ( t ) {
@@ -165,7 +166,33 @@ texture* texture_load( const char* filename ) {
 		texture_requestFile( &t->gl_tex, filename, properties );
 	}
 	return t;
+	*/
+	textureProperties* properties = mem_alloc( sizeof( textureProperties ));
+	properties->wrap_s = GL_REPEAT;
+	properties->wrap_t = GL_REPEAT;
+	return texture_loadWithProperties( filename, properties );
 }
+
+
+// Get a texture matching a given filename
+// Pulls it from cache if existing, otherwise loads it asynchronously
+texture* texture_loadWithProperties( const char* filename, textureProperties* properties ) {
+	texture* t;
+	t = textureCache_find( filename );
+	if ( t ) {
+		return t;
+	}
+	else {
+		printf( "Loading Texture \"%s\".\n", filename );
+		t = texture_nextEmpty();
+		texture_init( t, filename );
+		textureCache_add( t, filename );
+		texture_requestFile( &t->gl_tex, filename, properties );
+	}
+	return t;
+}
+
+
 
 texture* texture_loadFromMem( int w, int h, int stride, uint8_t* bitmap ) {
 	texture* t = texture_nextEmpty();

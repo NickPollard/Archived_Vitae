@@ -78,6 +78,19 @@ int LUA_modelPreload( lua_State* l ) {
 	}
 }
 
+int LUA_texturePreload( lua_State* l ) {
+	if ( lua_isstring( l, 1 ) ) {
+		const char* filename = lua_tostring( l, 1 );
+		texture_load( filename );
+		return 0;
+	} else {
+		printf( "Error: LUA: No filename specified for vtexture_preload().\n" );
+		return 0;
+	}
+}
+
+
+
 typedef struct luaCollisionCallbackData_s {
 	lua_State* lua_state;
 	int callback_ref;
@@ -598,7 +611,10 @@ int LUA_createUIPanel( lua_State* l ) {
 	p->width = w;
 	p->height = h;
 	p->color = *ui_color;
-	p->texture = texture_load( texture_path );
+	textureProperties* properties = mem_alloc( sizeof( textureProperties ));
+	properties->wrap_s = GL_CLAMP_TO_EDGE;
+	properties->wrap_t = GL_CLAMP_TO_EDGE;
+	p->texture = texture_loadWithProperties( texture_path, properties );
 	engine_addRender( e, p, panel_render );
 	lua_pushptr( l, p );
 	return 1;
@@ -782,6 +798,7 @@ void luaLibrary_import( lua_State* l ) {
 	lua_registerFunction( l, LUA_setWorldSpacePosition, "vsetWorldSpacePosition" );
 	lua_registerFunction( l, LUA_scene_addModel, "vscene_addModel" );
 	lua_registerFunction( l, LUA_scene_removeModel, "vscene_removeModel" );
+	lua_registerFunction( l, LUA_texturePreload, "vtexture_preload" );
 
 	// *** Physic
 	lua_registerFunction( l, LUA_createphysic, "vcreatePhysic" );
