@@ -87,6 +87,24 @@ void* heap_allocate_aligned( heapAllocator* heap, size_t size, size_t alignment 
 	uintptr_t offset = alignment - ((uintptr_t)b->data % alignment);
 	b->data = ((uint8_t*)b->data) + offset;
 	b->size -= offset;
+	// Now move the block on and copy the header, so that it's contiguous with the block
+	block* new_block = (block*)(((uint8_t*)b) + offset);
+	block temp = *b;
+	b = new_block;
+	*b = temp;
+	// Fix up pointers to this block, for the new location
+	if ( b->prev ) {
+		b->prev->next = b;
+		// Increment previous block size by what we've moved the block
+		b->prev->size += offset;
+	}
+	else {
+		heap->first = b;
+	}
+	if ( b->next ) {
+		b->next->prev = b;
+	}
+
 
 	vAssert( b->next == b->data + b->size );
 
@@ -182,7 +200,11 @@ block* heap_findBlock( heapAllocator* heap, void* mem_addr ) {
 // Release a block from the heapAllocator
 void heap_deallocate( heapAllocator* heap, void* data ) {
 	vmutex_lock( &allocator_mutex );
-	block* b = heap_findBlock( heap, data );
+	//block* b = heap_findBlock( heap, data );
+	block* b = (block*)((uint8_t*)data - sizeof( block ));
+#ifdef MEM_GUARD_BLOCK
+	vAssert( b->guard = kGuardValue );
+#endif // MEM_GUARD_BLOCK
 	vAssert( b );
 #ifdef MEM_DEBUG_VERBOSE
 	printf("Allocator freed address: " xPTRf ".\n", (uintptr_t)b->data );
