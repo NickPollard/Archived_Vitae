@@ -668,6 +668,7 @@ void attr_##OBJECT##_##PARAM ( term* object_term, term* attr ) { \
 	OBJECT* o = object_term->data; \
 	lisp_assert( o ); \
 	o->PARAM = *(vector*)( attr->data ); \
+	vector_printf( "Loaded vector param " #PARAM "\n", (vector*)( attr->data ) ); \
 }
 
 void attr_particle_setSize( term* definition_term, term* size_attr );
@@ -676,6 +677,7 @@ void attr_particle_setLifetime( term* definition_term, term* lifetime );
 void attr_particle_setSpawnRate( term* definition_term, term* spawn_rate );
 void attr_particle_flags( term* definition_term, term* flags );
 void attr_particle_texture( term* definition_term, term* texture_attr );
+ATTR_FUNCTION_VECTOR( particleEmitterDef, velocity )
 
 void attr_mesh_diffuseTexture( term* mesh_term, term* texture_attr );
 
@@ -684,6 +686,7 @@ void attr_zone_terrainColor( term* zone_term, term* terrain_color_attr );
 
 ATTR_FUNCTION_VECTOR( canyonZone, sky_color )
 ATTR_FUNCTION_VECTOR( canyonZone, fog_color )
+
 //// Attribute functions /////////////////////////////////////////
 
 // Intrinsic Maths functions
@@ -1022,6 +1025,8 @@ void lisp_init() {
 	attributeFunction_set( "spawn_rate", attr_particle_setSpawnRate );
 	attributeFunction_set( "flags", attr_particle_flags );
 	attributeFunction_set( "texture", attr_particle_texture );
+	
+	attributeFunction_set( "velocity", attr_particleEmitterDef_velocity );
 
 	attributeFunction_set( "diffuse_texture", attr_mesh_diffuseTexture );
 	attributeFunction_set( "cliff_color", attr_zone_cliffColor );

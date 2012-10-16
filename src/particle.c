@@ -22,6 +22,7 @@ particleEmitterDef* particleEmitterDef_create() {
 	particleEmitterDef* def = mem_alloc( sizeof( particleEmitterDef ));
 	memset( def, 0, sizeof( particleEmitterDef ));
 	def->spawn_box = Vector( 0.f, 0.f, 0.f, 0.f );
+	def->velocity = Vector( 0.f, 0.f, 0.f, 0.f );
 	return def;
 }
 
@@ -141,10 +142,12 @@ void particleEmitter_tick( void* data, float dt, engine* eng ) {
 	}
 
 	// TEST
+	/*
 	if ( e->emitter_age > 5.f ) {
 		engine_removeRender( eng, e, particleEmitter_render );
 		stopTick( eng, e, particleEmitter_tick );
 	}
+	*/
 }
 
 // Output the 4 verts of the quad to the target vertex array

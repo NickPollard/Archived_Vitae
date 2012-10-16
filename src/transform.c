@@ -31,15 +31,9 @@ void transform_setWorldSpace( transform* t, matrix world ) {
 }
 
 void transform_setWorldSpacePosition( transform* t, vector* position ) {
+	// TODO - test this - Does this actually work in all situations?
 	// Concat in case world space rotation is not up to date
-	// Could we just set localspace position actually?
-	/*
 	transform_concatenate( t );
-	matrix m;
-	matrix_cpy( m, t->world );
-	matrix_setTranslation( m, position );
-	transform_setWorldSpace( t, m );
-	*/
 	if ( !t->parent ) {
 		matrix_setTranslation( t->local, position );
 	} else {
@@ -49,8 +43,6 @@ void transform_setWorldSpacePosition( transform* t, vector* position ) {
 	}
 	transform_concatenate( t );
 }
-
-void transform_setLocalSpace();
 
 // Create a new default transform
 transform* transform_create() {

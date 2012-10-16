@@ -48,6 +48,11 @@ int LUA_create##type( lua_State* l ) { \
 
 int LUA_createTransform( lua_State* l ) {
 	transform* t = transform_createAndAdd( theScene );
+	int arg_count = lua_gettop( l );;
+	if ( arg_count == 1 ) {
+		transform* parent = lua_toptr( l, 1 );
+		t->parent = parent;
+	}
 	lua_pushptr( l, t );
 	return 1;
 }
@@ -424,6 +429,13 @@ int LUA_transformVector( lua_State* l ) {
 	return 1;
 }
 
+int LUA_transform_setLocalPosition( lua_State* l ) {
+	transform* t = lua_toptr( l, 1 );
+	vector* v = lua_toptr( l, 2 );
+	transform_setLocalTranslation( t, v );
+	return 0;
+}
+
 int LUA_transform_setWorldPosition( lua_State* l ) {
 	transform* t = lua_toptr( l, 1 );
 	vector* v = lua_toptr( l, 2 );
@@ -541,7 +553,6 @@ int LUA_particle_create( lua_State* l ) {
 	const char* particle_file = lua_tostring( l, 3 );
 
 	particleEmitterDef* def = particle_loadAsset( particle_file );
-	def->velocity = Vector( 0.f, 0.f, 0.f, 0.f );
 	def->flags = def->flags /*| kParticleWorldSpace */
 							| kParticleRandomRotation;
 
@@ -813,6 +824,7 @@ void luaLibrary_import( lua_State* l ) {
 	lua_registerFunction( l, LUA_transform_pitch, "vtransform_pitch" );
 	lua_registerFunction( l, LUA_transform_roll, "vtransform_roll" );
 	lua_registerFunction( l, LUA_transformVector, "vtransformVector" );
+	lua_registerFunction( l, LUA_transform_setLocalPosition, "vtransform_setLocalPosition" );
 	lua_registerFunction( l, LUA_transform_setWorldPosition, "vtransform_setWorldPosition" );
 	lua_registerFunction( l, LUA_transform_getWorldPosition, "vtransform_getWorldPosition" );
 	lua_registerFunction( l, LUA_transform_setWorldSpaceByTransform, "vtransform_setWorldSpaceByTransform" );
