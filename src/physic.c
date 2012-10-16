@@ -20,19 +20,17 @@ void physic_delete( physic* p ) {
 }
 
 void physic_tick( void* data, float dt, engine* eng ) {
-	(void)eng;
 	physic* p = data;
 	assert( p->trans );
-
-	vector delta;
-	vector_scale( &delta, &p->velocity, dt );
-	vector position;
-	Add( &position, &delta, matrix_getTranslation( p->trans->world ));
-	transform_setWorldSpacePosition( p->trans, &position );
 
 	// If requested to delete
 	if ( p->to_delete ) {
 		mem_free( p );
 		stopTick( eng, p, physic_tick );
+		return;
 	}
+
+	vector delta = vector_scaled( p->velocity, dt );
+	vector position = vector_add( delta, *matrix_getTranslation( p->trans->world ));
+	transform_setWorldSpacePosition( p->trans, &position );
 }

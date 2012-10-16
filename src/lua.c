@@ -23,8 +23,15 @@ void lua_keycodes( lua_State* l );
 
 // *** Helpers ***
 
+void luaAssert( lua_State* l, bool condition ) {
+	if ( !condition ) {
+		lua_stacktrace( l );
+		vAssert( condition );
+	}
+}
+
 void lua_assertnumber( lua_State* l, int index ) {
-	vAssert( lua_isnumber( l, index ));
+	luaAssert( l, lua_isnumber( l, index ));
 }
 void* lua_toptr( lua_State* l, int index ) {
 	lua_assertnumber( l, index );
@@ -252,4 +259,15 @@ void lua_setfieldf( lua_State* l, const char* key, float value ) {
 
 void lua_setGameLuaPath( const char* path ) {
 	game_lua_path = string_createCopy( path );
+}
+
+void lua_stacktrace( lua_State* l ) {
+    lua_Debug debug_entry;
+    int depth = 0;
+    while (lua_getstack( l, depth, &debug_entry )) {
+        int status = lua_getinfo( l, "Sln", &debug_entry );
+        vAssert(status);
+        printf( "%s(%d): %s\n", debug_entry.short_src, debug_entry.currentline, debug_entry.name ? debug_entry.name : "?" );
+        depth++;
+    }
 }

@@ -46,6 +46,7 @@ body* dead_bodies[kMaxDeadBodies];
 void collision_removeBody( body* b ) {
 	vAssert( dead_body_count < kMaxDeadBodies );
 	dead_bodies[dead_body_count++] = b;
+	b->disabled = true;
 }
 
 void collision_removeDeadBody( body*  b ) {
@@ -76,7 +77,7 @@ void collision_generateEvents() {
 	// for every body, check every other body
 	for ( int i = 0; i < body_count; ++i )
 		for ( int j = i + 1; j < body_count; j++ )
-			if ( body_colliding( bodies[i], bodies[j] ))
+			if ( !bodies[i]->disabled && ! bodies[j]->disabled && body_colliding( bodies[i], bodies[j] ))
 				collision_event( bodies[i], bodies[j] );
 }
 
@@ -591,6 +592,7 @@ body* body_create( shape* s, transform* t ) {
 	memset( b, 0, sizeof( body ));
 	b->shape = s;
 	b->trans = t;
+	b->disabled = false;
 	return b;
 }
 

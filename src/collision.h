@@ -57,6 +57,7 @@ struct body_s {
 	collision_layers_t collide_with;
 	collisionCallback callback;
 	void* callback_data;
+	bool disabled;
 };
 
 typedef struct collisionEvent_s {

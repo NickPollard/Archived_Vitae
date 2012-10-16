@@ -43,11 +43,43 @@ function gameobject_create( model_file )
 end
 
 function gameobject_destroy( g )
-	inTime( 0.2, function () vdeleteModelInstance( g.model ) 
-							vdestroyTransform( scene, g.transform )
-							vphysic_destroy( g.physic )
-				end )
+	inTime( 0.2, 
+	function () if g.model then
+		vdeleteModelInstance( g.model )
+		g.model = nil
+	end
+	if g.transform then
+		vdestroyTransform( scene, g.transform )
+		g.transform = nil
+	end
+	if g.physic then
+		vphysic_destroy( g.physic )
+		g.physic = nil
+	end
+	end )
+	if g.body then
 	vdestroyBody( g.body )
+	g.body = nil
+end
+end
+
+function gameobject_delete( g )
+	if g.model then
+		vdeleteModelInstance( g.model )
+		g.model = nil
+	end
+	if g.transform then
+		vdestroyTransform( scene, g.transform )
+		g.transform = nil
+	end
+	if g.physic then
+		vphysic_destroy( g.physic )
+		g.physic = nil
+	end
+	if g.body then
+		vdestroyBody( g.body )
+		g.body = nil
+	end
 end
 
 function spawn_missile_explosion( position )
@@ -128,6 +160,9 @@ function fire_missile( source, offset )
 	source_velocity = Vector( 0.0, 0.0, bullet_speed, 0.0 )
 	world_v = vtransformVector( source.transform, source_velocity )
 	vphysic_setVelocity( projectile.physic, world_v );
+
+	-- Queue up delete
+	inTime( 2.0, function () missile_destroy( projectile ) end )
 
 	-- Store the projectile so it doesn't get garbage collected
 	array_add( missiles, projectile )
@@ -317,6 +352,11 @@ function ship_destroy( ship )
 	-- spawn explosion
 end
 
+function ship_delete( ship )
+	gameobject_delete( ship )
+	ship.behaviour = ai.dead
+end
+
 function setup_controls()
 	-- Set up steering input for the player ship
 	if touch_enabled then
@@ -436,10 +476,10 @@ end
 function splash_intro()
 	vtexture_preload( "dat/img/splash_author.tga" )
 	local studio_splash = ui.show_splash( "dat/img/splash_vitruvian.tga" )
-	inTime( 3.0, function () 
+	inTime( 2.0, function () 
 		ui.hide_splash( studio_splash ) 
 		local author_splash = ui.show_splash( "dat/img/splash_author.tga" )
-		inTime( 3.0, function ()
+		inTime( 2.0, function ()
 			ui.hide_splash( author_splash ) 
 			ui.show_crosshair()
 			gameplay_start()
@@ -629,6 +669,7 @@ function tick( dt )
 
 	if spawning_active then
 		update_spawns( player_ship )
+		update_despawns( player_ship )
 	end
 
 	tick_array( turrets, dt )
@@ -751,6 +792,7 @@ end
 spawn_offset = 0.0
 spawn_interval = 300.0
 spawn_distance = 300.0
+despawn_distance = 100.0 -- how far behind to despawn units
 -- spawn tracking
 already_spawned = 0.0
 
@@ -786,10 +828,10 @@ function entities_spawnRange( near, far )
 end
 
 function entities_despawnAll()
-	for ship in iterator( interceptors ) do
+	for unit in iterator( interceptors ) do
 		vprint( "Despawning interceptor" )
-		ship_destroy( ship )
-		ship.behaviour = ai.dead
+		ship_delete( unit )
+		unit.behaviour = ai.dead
 	end
 end
 
@@ -800,6 +842,25 @@ function update_spawns( ship )
 	spawn_up_to = v + spawn_distance
 	entities_spawnRange( already_spawned, spawn_up_to )
 	already_spawned = spawn_up_to;
+end
+
+function update_despawns( ship ) 
+	ship_pos = vtransform_getWorldPosition( ship.transform )
+	u,v = vcanyon_fromWorld( ship_pos )
+	despawn_up_to = v - despawn_distance
+
+	for unit in iterator( interceptors ) do
+		-- TODO remove them properly
+		if unit.transform then
+			unit_pos = vtransform_getWorldPosition( unit.transform )
+			u,v = vcanyon_fromWorld( unit_pos )
+			if v < despawn_up_to then
+				vprint( "despawn" )
+				ship_delete( unit )
+				unit = nil
+			end
+		end
+	end
 end
 
 function turret_state_inactive( turret, dt )
