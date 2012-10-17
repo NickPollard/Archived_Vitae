@@ -38,14 +38,9 @@ void main() {
 	float fog = clamp( 100.0 / ( max( 1.0, height + 120.0 )), 0.0, 1.0 );
 
 	// sunlight on fog
-#if 1
-	// sunlight on fog
-	float fog_sun_factor = sun_fog( camera_space_sun_direction, frag_position );
+	//float fog_sun_factor = sun_fog( camera_space_sun_direction, frag_position );
+	float fog_sun_factor = 1.0;
 	vec4 local_fog_color = fog_color + (sun_color * fog_sun_factor);
-	//vec4 local_fog_color = mix( fog_color, sun_color, sun_fog( camera_space_sun_direction, frag_position ));
-#else
-	vec4 local_fog_color = fog_color;
-#endif
 	
 	gl_FragColor = mix( fragColor, local_fog_color, fog );
 }
