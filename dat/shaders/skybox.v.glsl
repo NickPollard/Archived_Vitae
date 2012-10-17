@@ -22,9 +22,6 @@ void main() {
 	gl_Position = projection * modelview * position;
 	frag_position = modelview * position;
 	texcoord = uv.xy;
-
 	// height is relative to the world, not to the camera
 	height = position.y;
-	// distance is camera relative
-	vec4 frag_position = modelview * position;
 }
