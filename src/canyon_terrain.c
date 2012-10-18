@@ -149,6 +149,7 @@ canyonTerrainBlock* canyonTerrainBlock_create( canyonTerrain* t ) {
 	b->element_VBO_alt = NULL;
 	b->u_samples = t->u_samples_per_block;
 	b->v_samples = t->v_samples_per_block;
+	b->terrain = t;
 	return b;
 }
 
@@ -176,18 +177,19 @@ int canyonTerrain_lodLevelForBlock( canyonTerrain* t, int coord[2] ) {
 void canyonTerrainBlock_calculateSamplesForLoD( canyonTerrainBlock* b, canyonTerrain* t, int coord[2] ) {
 	int lod_level = canyonTerrain_lodLevelForBlock( t, coord );
 	// Set samples based on U offset
+	// We add one so that we always get a centre point
 	switch( lod_level ) {
 		case 0:
-			b->u_samples = t->u_samples_per_block;
-			b->v_samples = t->v_samples_per_block;
+			b->u_samples = t->u_samples_per_block + 1;
+			b->v_samples = t->v_samples_per_block + 1;
 			break;
 		case 1:
-			b->u_samples = t->u_samples_per_block / 2;
-			b->v_samples = t->v_samples_per_block / 2;
+			b->u_samples = t->u_samples_per_block / 2 + 1;
+			b->v_samples = t->v_samples_per_block / 2 + 1;
 			break;
 		case 2:
-			b->u_samples = t->u_samples_per_block / 4;
-			b->v_samples = t->v_samples_per_block / 4;
+			b->u_samples = t->u_samples_per_block / 4 + 1;
+			b->v_samples = t->v_samples_per_block / 4 + 1;
 			break;
 		default:
 			vAssert( 0 );
@@ -248,7 +250,6 @@ void canyonTerrain_createBlocks( canyonTerrain* t ) {
 			canyonTerrainBlock_createBuffers( t->blocks[i] );
 			canyonTerrainBlock_calculateBuffers( t->blocks[i] );
 			t->blocks[i]->canyon = t->canyon;
-			t->blocks[i]->terrain = t;
 		}
 	}
 }
@@ -457,6 +458,10 @@ void canyonTerrainBlock_calculateBuffers( canyonTerrainBlock* b ) {
 	memset( verts, 0, sizeof( vector ) * vert_count );
 	vector* normals = mem_alloc( sizeof( vector ) * vert_count );
 
+	int lod_ratio = b->u_samples / ( b->terrain->u_samples_per_block / 4 );
+	printf( "Lod ratio: %d (samples %d, min_samples %d)\n", lod_ratio, b->u_samples, b->terrain->u_samples_per_block / 4 );
+
+	// Generate initial mesh
 	for ( int v_index = -1; v_index < b->v_samples + 1; ++v_index ) {
 		for ( int u_index = -1; u_index < b->u_samples + 1; ++u_index ) {
 			// Generate a vertex
@@ -470,6 +475,57 @@ void canyonTerrainBlock_calculateBuffers( canyonTerrainBlock* b ) {
 
 			verts[i] = Vector( vert_x, vert_y, vert_z, 1.f );
 			normals[i] = y_axis;
+		}
+	}
+
+	// Force low-LOD edges
+	for ( int v_index = -1; v_index < b->v_samples + 1; ++v_index ) {
+		for ( int u_index = -1; u_index < b->u_samples + 1; ++u_index ) {
+			// Generate a vertex
+			int i = canyonTerrainBlock_indexFromUV( b, u_index, v_index );
+			vAssert( i < vert_count );
+			float u, v;
+			canyonTerrainBlock_positionsFromUV( b, u_index, v_index, &u, &v );
+			/*
+			float vert_x, vert_z;
+			terrain_worldSpaceFromCanyon( u, v, &vert_x, &vert_z );
+			float vert_y = canyonTerrain_sample( vert_x, vert_z  );
+			*/
+			// If it's an intermediary value
+			/*
+			if ( ( v_index <= 0 || v_index >= b->v_samples - 1 ) && 
+					( u_index % lod_ratio != 0 )) {
+				printf( "Low lod vertex: i: %d, u: %d, v: %d.\n", i, u_index, v_index );
+				int prev_index = i - u_index % lod_ratio;
+				int next_index = i - u_index % lod_ratio + lod_ratio;
+				printf( "    Averaging between verts %d and %d.\n", prev_index, next_index );
+				float factor = (float)( u_index % lod_ratio ) / (float)lod_ratio;
+				vector previous = verts[prev_index];
+				vector next = verts[next_index];
+				verts[i] = vector_lerp( &previous, &next, factor );
+			}
+			*/
+
+			if ( ( u_index == 0 || u_index == b->u_samples - 1 ) && 
+					( v_index % lod_ratio != 0 )) {
+				printf( "Low lod vertex: i: %d, u: %d, v: %d.\n", i, u_index, v_index );
+				int prev_index = i - ( u_index % lod_ratio ) * ( b->u_samples + 2 );
+				int next_index = i + ( -u_index % lod_ratio + lod_ratio ) * ( b->u_samples + 2 );
+				printf( "    Averaging between verts %d and %d.\n", prev_index, next_index );
+
+				if ( prev_index >= 0 && prev_index < vert_count &&
+						next_index >= 0 && next_index < vert_count ) {
+					/*
+					float factor = (float)( v_index % lod_ratio ) / (float)lod_ratio;
+					vector previous = verts[prev_index];
+					vector next = verts[next_index];
+					*/
+					vector_printf( "    Old: ", &verts[i] );
+					//verts[i] = vector_lerp( &previous, &next, factor );
+					verts[i].coord.y = 40.f;
+					vector_printf( "    New: ", &verts[i] );
+				}
+			}
 
 #if CANYON_TERRAIN_INDEXED
 			if ( v_index >= 0 && v_index < b->v_samples &&
@@ -616,7 +672,6 @@ void canyonTerrain_updateBlocks( canyonTerrain* t ) {
 	}
 
 	// For each new block
-	int new_block_count = 0;
 	for ( int i = 0; i < t->total_block_count; i++ ) {
 		int coord[2];
 		coord[0] = bounds[0][0] + ( i % t->u_block_count );
@@ -624,12 +679,14 @@ void canyonTerrain_updateBlocks( canyonTerrain* t ) {
 		canyonTerrainBlock* b = new_blocks[i];
 		// if not in old bounds
 		// Or if we need to change lod level
-		if ( !boundsContains( intersection, coord ) || ( !b->pending && ( b->lod_level != canyonTerrain_lodLevelForBlock( t, coord )))) {
+		if ( !boundsContains( intersection, coord ) || 
+				( !b->pending && ( b->lod_level != canyonTerrain_lodLevelForBlock( t, coord ))) ||
+				// Force regeneration on all blocks to fix LODing
+				true ) {
 			memcpy( b->coord, coord, sizeof( int ) * 2 );
 			// mark it as new, buffers will be filled in later
 			b->pending = true;
 #if TERRAIN_USE_WORKER_THREAD
-			++new_block_count;
 			canyonTerrain_queueWorkerTaskGenerateBlock( b );
 #endif // TERRAIN_USE_WORKER_THREAD
 		}
