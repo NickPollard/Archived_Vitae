@@ -314,7 +314,10 @@ function playership_create()
 	vbody_setLayers( p.body, collision_layer_player )
 	vbody_setCollidableLayers( p.body, collision_layer_enemy )
 
-	-- Add temp particles
+	return p
+end
+
+function playership_addEngineGlows( p )
 	local engine_trail = "dat/script/lisp/engine_trail.s"
 	local engine_glow = "dat/script/lisp/engine_glow.s"
 
@@ -342,8 +345,6 @@ function playership_create()
 	p.engine_glow_b = vparticle_create( engine, t_b, engine_glow )
 	p.engine_glow_c = vparticle_create( engine, t_c, engine_glow )
 	p.engine_glow_d = vparticle_create( engine, t_d, engine_glow )
-
-	return p
 end
 
 starting = true
@@ -420,12 +421,25 @@ function player_ship_collisionHandler( ship, collider )
 
 	-- not using gameobject_destroy as we need to sync transform dying with camera rejig
 	inTime( 0.2, function () vdeleteModelInstance( ship.model ) 
+							vprint( "Destroying ship physic" )
 							vphysic_destroy( ship.physic )
+							ship.physic = nil
 				end )
 	vdestroyBody( ship.body )
 
+	-- destroy engine glows
+	vparticle_destroy( ship.engine_glow_a )
+	vparticle_destroy( ship.engine_glow_b )
+	vparticle_destroy( ship.engine_glow_c )
+	vparticle_destroy( ship.engine_glow_d )
+	vparticle_destroy( ship.engine_trail_a )
+	vparticle_destroy( ship.engine_trail_b )
+	vparticle_destroy( ship.engine_trail_c )
+	vparticle_destroy( ship.engine_trail_d )
+
 	-- queue a restart
 	inTime( 2.0, function ()
+		vprint( "Restarting" )
 		vdestroyTransform( scene, ship.transform )
 		restart() 
 		gameplay_start()
@@ -438,8 +452,9 @@ collision_layer_bullet = 3
 
 function gameplay_start()
 	player_active = true
-	inTime( 3.0, function () 
+	inTime( 2.0, function () 
 		player_ship.speed = 30.0 
+		playership_addEngineGlows( player_ship )
 		spawning_active = true
 		already_spawned = 0.0
 	end )
@@ -655,7 +670,9 @@ function playership_tick( ship, dt )
 
 	-- Physics
 	world_v = vtransformVector( ship.transform, Vector( 0.0, 0.0, ship.speed, 0.0 ))
-	vphysic_setVelocity( ship.physic, world_v )
+	if ship.physic then
+		vphysic_setVelocity( ship.physic, world_v )
+	end
 end
 
 function toggle_camera()
@@ -1004,6 +1021,7 @@ function interceptor_attack_homing( x, y, z )
 end
 
 function interceptor_fire( interceptor )
+	vprint( "Enemy fire." )
 	muzzle_position = Vector( 4.0, 0.0, 0.0, 1.0 )
 	fire_enemy_missile( interceptor, muzzle_position )
 	muzzle_position = Vector( -4.0, 0.0, 0.0, 1.0 )

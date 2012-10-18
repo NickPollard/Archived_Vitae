@@ -146,14 +146,6 @@ void engine_tick( engine* e ) {
 	lua_preTick( e->lua, dt );
 
 	input_tick( e->input, dt );
-	scene_tick( theScene, dt );
-	collision_tick( dt );
-
-	engine_tickTickers( e, dt );
-
-	//countVisibleParticleEmitters( e );
-	//countActiveParticleEmitters( e );
-
 	if ( e->onTick && luaCallback_enabled( e->onTick ) ) {
 #if DEBUG_LUA
 		printf("Calling engine::onTick handler: %s\n", e->onTick->func);
@@ -166,6 +158,18 @@ void engine_tick( engine* e ) {
 				/* returns */		0,
 				/* error handler */ 0);
 	}
+
+	collision_tick( dt );
+
+	engine_tickTickers( e, dt );
+	
+	// This happens last, as transform concatenation needs to take into account every other input
+	scene_tick( theScene, dt );
+
+	//countVisibleParticleEmitters( e );
+	//countActiveParticleEmitters( e );
+
+
 
 	vector v = Vector( 0.0, 0.0, 30.0, 1.0 );
 	theCanyonTerrain->sample_point = matrix_vecMul( theScene->cam->trans->world, &v );

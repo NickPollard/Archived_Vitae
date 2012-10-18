@@ -553,8 +553,8 @@ int LUA_particle_create( lua_State* l ) {
 	const char* particle_file = lua_tostring( l, 3 );
 
 	particleEmitterDef* def = particle_loadAsset( particle_file );
-	def->flags = def->flags /*| kParticleWorldSpace */
-							| kParticleRandomRotation;
+	// TODO: Remove
+	def->flags = def->flags | kParticleRandomRotation;
 
 	particleEmitter* emitter = particle_newEmitter( def );
 

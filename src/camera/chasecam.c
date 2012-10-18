@@ -36,6 +36,9 @@ void chasecam_tick( void* data, float dt, engine* eng ) {
 	(void)eng;
 	chasecam* c = (chasecam*) data;
 
+	vAssert( c->target );
+	transform_concatenate( c->target );
+
 	vector position = chasecam_targetPosition( c );
 	float lerp = fclamp( c->lerp_speed * dt, 0.f, 1.f );
 	c->position = vector_lerp( &c->position, &position, lerp );
