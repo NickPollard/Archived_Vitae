@@ -458,9 +458,6 @@ void canyonTerrainBlock_calculateBuffers( canyonTerrainBlock* b ) {
 	memset( verts, 0, sizeof( vector ) * vert_count );
 	vector* normals = mem_alloc( sizeof( vector ) * vert_count );
 
-	int lod_ratio = b->u_samples / ( b->terrain->u_samples_per_block / 4 );
-	printf( "Lod ratio: %d (samples %d, min_samples %d)\n", lod_ratio, b->u_samples, b->terrain->u_samples_per_block / 4 );
-
 	// Generate initial mesh
 	for ( int v_index = -1; v_index < b->v_samples + 1; ++v_index ) {
 		for ( int u_index = -1; u_index < b->u_samples + 1; ++u_index ) {
@@ -479,6 +476,8 @@ void canyonTerrainBlock_calculateBuffers( canyonTerrainBlock* b ) {
 	}
 
 	// Force low-LOD edges
+	int lod_ratio = b->u_samples / ( b->terrain->u_samples_per_block / 4 );
+
 	for ( int v_index = -1; v_index < b->v_samples + 1; ++v_index ) {
 		for ( int u_index = -1; u_index < b->u_samples + 1; ++u_index ) {
 			// Generate a vertex
@@ -492,37 +491,30 @@ void canyonTerrainBlock_calculateBuffers( canyonTerrainBlock* b ) {
 			float vert_y = canyonTerrain_sample( vert_x, vert_z  );
 			*/
 			// If it's an intermediary value
-			/*
 			if ( ( v_index <= 0 || v_index >= b->v_samples - 1 ) && 
 					( u_index % lod_ratio != 0 )) {
-				printf( "Low lod vertex: i: %d, u: %d, v: %d.\n", i, u_index, v_index );
 				int prev_index = i - u_index % lod_ratio;
 				int next_index = i - u_index % lod_ratio + lod_ratio;
-				printf( "    Averaging between verts %d and %d.\n", prev_index, next_index );
-				float factor = (float)( u_index % lod_ratio ) / (float)lod_ratio;
-				vector previous = verts[prev_index];
-				vector next = verts[next_index];
-				verts[i] = vector_lerp( &previous, &next, factor );
+				if ( prev_index >= 0 && prev_index < vert_count &&
+						next_index >= 0 && next_index < vert_count ) {
+					float factor = (float)( u_index % lod_ratio ) / (float)lod_ratio;
+					vector previous = verts[prev_index];
+					vector next = verts[next_index];
+					verts[i] = vector_lerp( &previous, &next, factor );
+				}
 			}
-			*/
 
 			if ( ( u_index == 0 || u_index == b->u_samples - 1 ) && 
 					( v_index % lod_ratio != 0 )) {
-				printf( "Low lod vertex: i: %d, u: %d, v: %d.\n", i, u_index, v_index );
 				int prev_index = i - ( v_index % lod_ratio ) * ( b->u_samples + 2 );
 				int next_index = i + ( lod_ratio - ( v_index % lod_ratio )) * ( b->u_samples + 2 );
-				printf( "    Averaging between verts %d and %d.\n", prev_index, next_index );
 
 				if ( prev_index >= 0 && prev_index < vert_count &&
 						next_index >= 0 && next_index < vert_count ) {
-					
 					float factor = (float)( v_index % lod_ratio ) / (float)lod_ratio;
 					vector previous = verts[prev_index];
 					vector next = verts[next_index];
-					
-					vector_printf( "    Old: ", &verts[i] );
 					verts[i] = vector_lerp( &previous, &next, factor );
-					vector_printf( "    New: ", &verts[i] );
 				}
 			}
 
