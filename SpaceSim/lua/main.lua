@@ -11,6 +11,8 @@ C and only controlled remotely by Lua
 
 ]]--
 
+debug_spawning_enabled = false
+
 -- Load Modules
 	package.path = "./SpaceSim/lua/?.lua"
 	ai = require "ai"
@@ -455,7 +457,9 @@ function gameplay_start()
 	inTime( 2.0, function () 
 		player_ship.speed = 30.0 
 		playership_addEngineGlows( player_ship )
-		spawning_active = true
+		if debug_spawning_enabled then
+			spawning_active = true
+		end
 		already_spawned = 0.0
 	end )
 end

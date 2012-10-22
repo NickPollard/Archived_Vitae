@@ -509,20 +509,19 @@ void canyonTerrainBlock_calculateBuffers( canyonTerrainBlock* b ) {
 			if ( ( u_index == 0 || u_index == b->u_samples - 1 ) && 
 					( v_index % lod_ratio != 0 )) {
 				printf( "Low lod vertex: i: %d, u: %d, v: %d.\n", i, u_index, v_index );
-				int prev_index = i - ( u_index % lod_ratio ) * ( b->u_samples + 2 );
-				int next_index = i + ( -u_index % lod_ratio + lod_ratio ) * ( b->u_samples + 2 );
+				int prev_index = i - ( v_index % lod_ratio ) * ( b->u_samples + 2 );
+				int next_index = i + ( lod_ratio - ( v_index % lod_ratio )) * ( b->u_samples + 2 );
 				printf( "    Averaging between verts %d and %d.\n", prev_index, next_index );
 
 				if ( prev_index >= 0 && prev_index < vert_count &&
 						next_index >= 0 && next_index < vert_count ) {
-					/*
+					
 					float factor = (float)( v_index % lod_ratio ) / (float)lod_ratio;
 					vector previous = verts[prev_index];
 					vector next = verts[next_index];
-					*/
+					
 					vector_printf( "    Old: ", &verts[i] );
-					//verts[i] = vector_lerp( &previous, &next, factor );
-					verts[i].coord.y = 40.f;
+					verts[i] = vector_lerp( &previous, &next, factor );
 					vector_printf( "    New: ", &verts[i] );
 				}
 			}
