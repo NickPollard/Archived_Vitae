@@ -666,6 +666,14 @@ int LUA_vector_distance( lua_State* l ) {
 	lua_pushnumber( l, (double)distance );
 	return 1;
 }
+int LUA_vector_add( lua_State* l ) {
+	const vector* a = lua_toptr( l, 1 );
+	const vector* b = lua_toptr( l, 2 );
+	vector* v = lua_createVector();
+	*v = vector_add( *a, *b );
+	lua_pushptr( l, v );
+	return 1;
+}
 
 int LUA_vector_subtract( lua_State* l ) {
 	const vector* a = lua_toptr( l, 1 );
@@ -782,6 +790,7 @@ void luaLibrary_import( lua_State* l ) {
 	lua_registerFunction( l, LUA_vector_values, "vvector_values" );
 	lua_registerFunction( l, LUA_vector_distance, "vvector_distance" );
 	lua_registerFunction( l, LUA_vector_subtract, "vvector_subtract" );
+	lua_registerFunction( l, LUA_vector_add, "vvector_add" );
 	lua_registerFunction( l, LUA_vector_normalize, "vvector_normalize" );
 	lua_registerFunction( l, LUA_vector_scale, "vvector_scale" );
 
