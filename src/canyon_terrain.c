@@ -123,7 +123,6 @@ void canyonTerrainBlock_render( canyonTerrainBlock* b ) {
 	}
 	*/
 
-	/*
 	int lod_ratio = b->u_samples / ( b->terrain->u_samples_per_block / 4 );
 	for ( int u = 0; u < b->u_samples; u+= lod_ratio ) {
 		int i = canyonTerrainBlock_indexFromUV( b, u, 0 );
@@ -131,12 +130,23 @@ void canyonTerrainBlock_render( canyonTerrainBlock* b ) {
 		debugdraw_line3d( b->verts[i], b->verts[i_], color_red );
 
 		for ( int j = 0; j < lod_ratio; j++ ) {
+			/*
 			i = canyonTerrainBlock_indexFromUV( b, u, b->v_samples - j - 1 );
 			i_ = canyonTerrainBlock_indexFromUV( b, u, b->v_samples - j - 2 );
 			debugdraw_line3d( b->verts[i], b->verts[i_], color_green );
+			*/
+
+			/*
+			i = canyonTerrainBlock_indexFromUV( b, u + j, b->v_samples - lod_ratio - 1 );
+			i_ = canyonTerrainBlock_indexFromUV( b, u + j + 1, b->v_samples - lod_ratio - 1 );
+			debugdraw_line3d( b->verts[i], b->verts[i_], color_blue );
+			*/
+			
+			i = canyonTerrainBlock_indexFromUV( b, u + j, -1 );
+			i_ = canyonTerrainBlock_indexFromUV( b, u + j + 1, -1 );
+			debugdraw_line3d( b->verts[i], b->verts[i_], color_blue );
 		}
 	}
-	*/
 }
 
 int canyonTerrain_blockIndexFromUV( canyonTerrain* t, int u, int v ) {
@@ -412,15 +422,38 @@ void canyonTerrainBlock_generateVertices( canyonTerrainBlock* b, vector* verts, 
 void canyonTerrainBlock_calculateNormals( canyonTerrainBlock* block, int vert_count, vector* verts, vector* normals ) {
 	(void)vert_count;
 
+	int lod_ratio = block->u_samples / ( block->terrain->u_samples_per_block / 4 );
+
 	for ( int v = 0; v < block->v_samples; ++v ) {
 		for ( int u = 0; u < block->u_samples; ++u ) {
-			int index = canyonTerrainBlock_indexFromUV( block, u, v - 1 );
+			int index;
+			if ( v == block->v_samples ) {
+				index = canyonTerrainBlock_indexFromUV( block, u, v - lod_ratio );
+			}
+			else {
+				index = canyonTerrainBlock_indexFromUV( block, u, v - 1 );
+			}
 			vector left		= verts[index];
-			index = canyonTerrainBlock_indexFromUV( block, u, v + 1 );
+			if ( v == 0 ) {
+				index = canyonTerrainBlock_indexFromUV( block, u, v + lod_ratio );
+			}
+			else {
+				index = canyonTerrainBlock_indexFromUV( block, u, v + 1 );
+			}
 			vector right	= verts[index];
-			index = canyonTerrainBlock_indexFromUV( block, u - 1, v );
+			if ( u == block->u_samples ) {
+				index = canyonTerrainBlock_indexFromUV( block, u - lod_ratio, v );
+			}
+			else {
+				index = canyonTerrainBlock_indexFromUV( block, u - 1, v );
+			}
 			vector top		= verts[index];
-			index = canyonTerrainBlock_indexFromUV( block, u + 1, v );
+			if ( u == block->u_samples ) {
+				index = canyonTerrainBlock_indexFromUV( block, u + lod_ratio, v );
+			}
+			else {
+				index = canyonTerrainBlock_indexFromUV( block, u + 1, v );
+			}
 			vector bottom	= verts[index];
 			int i = canyonTerrainBlock_indexFromUV( block, u, v );
 
