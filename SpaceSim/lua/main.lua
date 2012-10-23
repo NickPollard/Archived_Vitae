@@ -455,7 +455,7 @@ collision_layer_bullet = 3
 function gameplay_start()
 	player_active = true
 	inTime( 2.0, function () 
-		player_ship.speed = 30.0 
+		player_ship.speed = 10.0 
 		playership_addEngineGlows( player_ship )
 		if debug_spawning_enabled then
 			spawning_active = true
@@ -666,7 +666,7 @@ function playership_tick( ship, dt )
 
 	-- throttle
 	width = 100
-	acceleration = 1.0
+	acceleration = 0.0
 	delta_speed = acceleration * dt;
 	ship.speed = ship.speed + delta_speed
 
