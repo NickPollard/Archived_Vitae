@@ -63,8 +63,8 @@ void canyonTerrainBlock_positionsFromUV( canyonTerrainBlock* b, int u_index, int
 	float v_interval = ( b->v_max - b->v_min ) / (float)( b->v_samples - 1 );
 	*u = (float)u_index * u_interval + b->u_min;
 	*v = (float)v_index * v_interval + b->v_min;
-	if ( u_index == 1 )
-		printf( "index %d, %d, position %.2f, %.2f, v_interval %.2f\n", u_index, v_index, *u, *v, v_interval );
+	//if ( u_index == 1 )
+		//printf( "index %d, %d, position %.2f, %.2f, v_interval %.2f\n", u_index, v_index, *u, *v, v_interval );
 }
 
 int canyonTerrainBlock_triangleCount( canyonTerrainBlock* b ) {
@@ -115,11 +115,28 @@ void canyonTerrainBlock_render( canyonTerrainBlock* b ) {
 		draw->element_VBO = *b->element_VBO;
 	}
 
-	for ( int u = 0; u < b->u_samples; u++ ) {
-		int i = canyonTerrainBlock_indexFromUV( b, u, 1 );
-		int i_ = canyonTerrainBlock_indexFromUV( b, u + 1, 1 );
+	/*
+	for ( int v = -1; v < b->v_samples; v++ ) {
+		int i = canyonTerrainBlock_indexFromUV( b, -1, v );
+		int i_ = canyonTerrainBlock_indexFromUV( b, -1, v + 1 );
 		debugdraw_line3d( b->verts[i], b->verts[i_], color_red );
 	}
+	*/
+
+	/*
+	int lod_ratio = b->u_samples / ( b->terrain->u_samples_per_block / 4 );
+	for ( int u = 0; u < b->u_samples; u+= lod_ratio ) {
+		int i = canyonTerrainBlock_indexFromUV( b, u, 0 );
+		int i_ = canyonTerrainBlock_indexFromUV( b, u, -1 );
+		debugdraw_line3d( b->verts[i], b->verts[i_], color_red );
+
+		for ( int j = 0; j < lod_ratio; j++ ) {
+			i = canyonTerrainBlock_indexFromUV( b, u, b->v_samples - j - 1 );
+			i_ = canyonTerrainBlock_indexFromUV( b, u, b->v_samples - j - 2 );
+			debugdraw_line3d( b->verts[i], b->verts[i_], color_green );
+		}
+	}
+	*/
 }
 
 int canyonTerrain_blockIndexFromUV( canyonTerrain* t, int u, int v ) {
@@ -194,7 +211,7 @@ int canyonTerrain_lodLevelForBlock( canyonTerrain* t, int coord[2] ) {
 
 void canyonTerrainBlock_calculateSamplesForLoD( canyonTerrainBlock* b, canyonTerrain* t, int coord[2] ) {
 	int lod_level = canyonTerrain_lodLevelForBlock( t, coord );
-	lod_level = 1;
+	//lod_level = 0;
 	// Set samples based on U offset
 	// We add one so that we always get a centre point
 	switch( lod_level ) {
@@ -494,6 +511,7 @@ void canyonTerrainBlock_calculateBuffers( canyonTerrainBlock* b ) {
 		}
 	}
 
+#if 1
 	// Force low-LOD edges
 	int lod_ratio = b->u_samples / ( b->terrain->u_samples_per_block / 4 );
 
@@ -506,19 +524,19 @@ void canyonTerrainBlock_calculateBuffers( canyonTerrainBlock* b ) {
 			canyonTerrainBlock_positionsFromUV( b, u_index, v_index, &u, &v );
 
 			// If it's an intermediary value
+
 			if ( ( v_index <= 0 || v_index >= b->v_samples - 1 ) && 
 					( u_index % lod_ratio != 0 ) &&
 					( u_index >= 0 && u_index < b->u_samples )) {
 				if ( v_index == 1 ) {
-					printf( "averaging uv %d %d\n", u_index, v_index );
+					//printf( "averaging uv %d %d\n", u_index, v_index );
 				}
-				//int prev_index = i - u_index % lod_ratio;
-				//int next_index = i - u_index % lod_ratio + lod_ratio;
 				int prev_index = canyonTerrainBlock_indexFromUV( b, u_index - ( u_index % lod_ratio ), v_index );
 				int next_index = canyonTerrainBlock_indexFromUV( b, u_index - ( u_index % lod_ratio ) + lod_ratio, v_index );
 
 				if ( prev_index >= 0 && prev_index < vert_count &&
 						next_index >= 0 && next_index < vert_count ) {
+					//printf( "Tweaking vert index %d( uv: %d %d, samples %d)\n", i, u_index, v_index, b->u_samples );
 					float factor = (float)( u_index % lod_ratio ) / (float)lod_ratio;
 					vector previous = verts[prev_index];
 					vector next = verts[next_index];
@@ -530,15 +548,14 @@ void canyonTerrainBlock_calculateBuffers( canyonTerrainBlock* b ) {
 					( v_index % lod_ratio != 0 ) &&
 					( v_index >= 0 && v_index < b->v_samples )) {
 				if ( v_index == 1 ) {
-					printf( "averaging uv %d %d\n", u_index, v_index );
+					//printf( "averaging uv %d %d\n", u_index, v_index );
 				}
-				//int prev_index = i - ( v_index % lod_ratio ) * ( b->u_samples + 2 );
-				//int next_index = i + ( lod_ratio - ( v_index % lod_ratio )) * ( b->u_samples + 2 );
 				int prev_index = canyonTerrainBlock_indexFromUV( b, u_index, v_index - ( v_index % lod_ratio ));
 				int next_index = canyonTerrainBlock_indexFromUV( b, u_index, v_index - ( v_index % lod_ratio ) + lod_ratio );
 
 				if ( prev_index >= 0 && prev_index < vert_count &&
 						next_index >= 0 && next_index < vert_count ) {
+					//printf( "Tweaking vert index %d( uv: %d %d, samples %d)\n", i, u_index, v_index, b->u_samples );
 					float factor = (float)( v_index % lod_ratio ) / (float)lod_ratio;
 					vector previous = verts[prev_index];
 					vector next = verts[next_index];
@@ -559,6 +576,7 @@ void canyonTerrainBlock_calculateBuffers( canyonTerrainBlock* b ) {
 #endif // CANYON_TERRAIN_INDEXED
 		}
 	}
+#endif
 
 	canyonTerrainBlock_calculateNormals( b, vert_count, verts, normals );
 
