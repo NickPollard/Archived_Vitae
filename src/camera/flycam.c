@@ -31,10 +31,10 @@ void flycam_input( void* data, input* in  ) {
 	flycamInput fly_in;
 	fly_in.pan = Vector( 0.f, 0.f, 0.f, 0.f );
 	fly_in.track = Vector( 0.f, 0.f, 0.f, 0.f );
-	float delta = 0.01f;
+	float delta = 0.1f;
 
 	if ( input_keyHeld( in, KEY_SHIFT ) )
-		delta = 0.1f;
+		delta = 10.f;
 
 	// Cam now looks down the positive Z axis
 	if ( input_keyHeld( in, KEY_W ))

@@ -24,6 +24,9 @@ typedef struct canyonTerrainBlock_s {
 
 	//temp
 	vector* verts;
+	vector* normals;
+	vector	temp_a[4];
+	vector	temp_b[4];
 
 	bool pending;	// Whether we need to recalculate the block
 	int	lod_level;	// Current lod-level

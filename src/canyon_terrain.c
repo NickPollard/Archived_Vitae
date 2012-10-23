@@ -123,12 +123,22 @@ void canyonTerrainBlock_render( canyonTerrainBlock* b ) {
 	}
 	*/
 
+	debugdraw_line3d( b->temp_a[0], b->temp_a[1], color_red );
+	debugdraw_line3d( b->temp_a[2], b->temp_a[3], color_red );
+
+	debugdraw_line3d( b->temp_b[0], b->temp_b[1], color_blue );
+	debugdraw_line3d( b->temp_b[2], b->temp_b[3], color_blue );
+
+#if 0
 	int lod_ratio = b->u_samples / ( b->terrain->u_samples_per_block / 4 );
 	for ( int u = 0; u < b->u_samples; u+= lod_ratio ) {
 		int i = canyonTerrainBlock_indexFromUV( b, u, 0 );
-		int i_ = canyonTerrainBlock_indexFromUV( b, u, -1 );
-		debugdraw_line3d( b->verts[i], b->verts[i_], color_red );
+		debugdraw_line3d( b->verts[i], vector_add( b->verts[i], vector_scaled( b->normals[i], 10.f )), color_red );
+		
+		i = canyonTerrainBlock_indexFromUV( b, u, b->v_samples - 1 );
+		debugdraw_line3d( b->verts[i], vector_add( b->verts[i], vector_scaled( b->normals[i], 10.f )), color_green );
 
+#if 0
 		for ( int j = 0; j < lod_ratio; j++ ) {
 			/*
 			i = canyonTerrainBlock_indexFromUV( b, u, b->v_samples - j - 1 );
@@ -146,7 +156,9 @@ void canyonTerrainBlock_render( canyonTerrainBlock* b ) {
 			i_ = canyonTerrainBlock_indexFromUV( b, u + j + 1, -1 );
 			debugdraw_line3d( b->verts[i], b->verts[i_], color_blue );
 		}
+#endif
 	}
+#endif
 }
 
 int canyonTerrain_blockIndexFromUV( canyonTerrain* t, int u, int v ) {
@@ -427,7 +439,7 @@ void canyonTerrainBlock_calculateNormals( canyonTerrainBlock* block, int vert_co
 	for ( int v = 0; v < block->v_samples; ++v ) {
 		for ( int u = 0; u < block->u_samples; ++u ) {
 			int index;
-			if ( v == block->v_samples ) {
+			if ( v == block->v_samples - 1 ) {
 				index = canyonTerrainBlock_indexFromUV( block, u, v - lod_ratio );
 			}
 			else {
@@ -441,20 +453,40 @@ void canyonTerrainBlock_calculateNormals( canyonTerrainBlock* block, int vert_co
 				index = canyonTerrainBlock_indexFromUV( block, u, v + 1 );
 			}
 			vector right	= verts[index];
-			if ( u == block->u_samples ) {
+			if ( u == block->u_samples - 1 ) {
 				index = canyonTerrainBlock_indexFromUV( block, u - lod_ratio, v );
 			}
 			else {
 				index = canyonTerrainBlock_indexFromUV( block, u - 1, v );
 			}
 			vector top		= verts[index];
-			if ( u == block->u_samples ) {
+			if ( u == 0 ) {
 				index = canyonTerrainBlock_indexFromUV( block, u + lod_ratio, v );
 			}
 			else {
 				index = canyonTerrainBlock_indexFromUV( block, u + 1, v );
 			}
 			vector bottom	= verts[index];
+			
+			// Temp
+			if ( u == 0 && v == 0 ) {
+				block->temp_a[0] = left;
+				block->temp_a[1] = right;
+				block->temp_a[2] = top;
+				block->temp_a[3] = bottom;
+			}
+			// Temp
+			if ( ( u == block->u_samples - 1 ) && v == 0 ) {
+				block->temp_b[0] = left;
+				block->temp_b[1] = right;
+				block->temp_b[2] = top;
+				block->temp_b[3] = bottom;
+			}
+
+
+
+
+
 			int i = canyonTerrainBlock_indexFromUV( block, u, v );
 
 			vector a, b, c, x, y;
@@ -613,6 +645,56 @@ void canyonTerrainBlock_calculateBuffers( canyonTerrainBlock* b ) {
 
 	canyonTerrainBlock_calculateNormals( b, vert_count, verts, normals );
 
+#if 0
+	// Force low-LOD edges
+	for ( int v_index = 0; v_index < b->v_samples; ++v_index ) {
+		for ( int u_index = 0; u_index < b->u_samples; ++u_index ) {
+			int i = canyonTerrainBlock_indexFromUV( b, u_index, v_index );
+			// If it's an intermediary value
+			if ( ( v_index == 0 || v_index == b->v_samples - 1 ) && 
+					( u_index % lod_ratio != 0 ) &&
+					( u_index >= 0 && u_index < b->u_samples )) {
+				int prev_index = canyonTerrainBlock_indexFromUV( b, u_index - ( u_index % lod_ratio ), v_index );
+				int next_index = canyonTerrainBlock_indexFromUV( b, u_index - ( u_index % lod_ratio ) + lod_ratio, v_index );
+
+				if ( prev_index >= 0 && prev_index < vert_count &&
+						next_index >= 0 && next_index < vert_count ) {
+					printf( "Tweaking normal index %d( uv: %d %d, samples %d)\n", i, u_index, v_index, b->u_samples );
+					float factor = (float)( u_index % lod_ratio ) / (float)lod_ratio;
+					vector previous = normals[prev_index];
+					vector next = normals[next_index];
+					normals[i] = vector_lerp( &previous, &next, factor );
+				}
+			}
+
+			if ( ( u_index == 0 || u_index == b->u_samples - 1 ) && 
+					( v_index % lod_ratio != 0 ) &&
+					( v_index >= 0 && v_index < b->v_samples )) {
+				int prev_index = canyonTerrainBlock_indexFromUV( b, u_index, v_index - ( v_index % lod_ratio ));
+				int next_index = canyonTerrainBlock_indexFromUV( b, u_index, v_index - ( v_index % lod_ratio ) + lod_ratio );
+
+				if ( prev_index >= 0 && prev_index < vert_count &&
+						next_index >= 0 && next_index < vert_count ) {
+					printf( "Tweaking normal index %d( uv: %d %d, samples %d)\n", i, u_index, v_index, b->u_samples );
+					float factor = (float)( v_index % lod_ratio ) / (float)lod_ratio;
+					vector previous = normals[prev_index];
+					vector next = normals[next_index];
+					normals[i] = vector_lerp( &previous, &next, factor );
+				}
+			}
+
+#if CANYON_TERRAIN_INDEXED
+			if ( v_index >= 0 && v_index < b->v_samples &&
+					u_index >= 0 && u_index < b->u_samples ) {
+				int buffer_index = canyonTerrainBlock_renderIndexFromUV( b, u_index, v_index );
+				b->vertex_buffer[buffer_index].normal = normals[i];
+			}
+#endif // CANYON_TERRAIN_INDEXED
+		}
+	}
+#endif
+
+
 #if CANYON_TERRAIN_INDEXED
 	int triangle_count = canyonTerrainBlock_triangleCount( b );
 	int i = 0;
@@ -639,9 +721,13 @@ void canyonTerrainBlock_calculateBuffers( canyonTerrainBlock* b ) {
 	if ( b->verts )
 		mem_free( verts );
 	b->verts = verts;
+	
+	if ( b->normals )
+		mem_free( normals );
+	b->normals = normals;
 
 	//mem_free( verts );
-	mem_free( normals );
+	//mem_free( normals );
 
 	canyonTerrainBlock_initVBO( b );
 }
