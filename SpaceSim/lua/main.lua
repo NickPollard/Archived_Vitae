@@ -11,6 +11,7 @@ C and only controlled remotely by Lua
 
 ]]--
 
+-- Debug settings
 debug_spawning_enabled = true
 
 -- Load Modules
@@ -45,24 +46,12 @@ function gameobject_create( model_file )
 end
 
 function gameobject_destroy( g )
-	inTime( 0.2, 
-	function () if g.model then
-		vdeleteModelInstance( g.model )
-		g.model = nil
-	end
-	if g.transform then
-		vdestroyTransform( scene, g.transform )
-		g.transform = nil
-	end
-	if g.physic then
-		vphysic_destroy( g.physic )
-		g.physic = nil
-	end
-	end )
+	inTime( 0.2, function() gameobject_delete( g ) end )
+
 	if g.body then
-	vdestroyBody( g.body )
-	g.body = nil
-end
+		vdestroyBody( g.body )
+		g.body = nil
+	end
 end
 
 function gameobject_delete( g )
@@ -85,14 +74,12 @@ function gameobject_delete( g )
 end
 
 function spawn_missile_explosion( position )
-	-- Attach a particle effect to the object
 	local t = vcreateTransform()
 	vparticle_create( engine, t, "dat/script/lisp/missile_explosion.s" )
 	vtransform_setWorldSpaceByTransform( t, position )
 end
 
 function spawn_explosion( position )
-	-- Attach a particle effect to the object
 	local t = vcreateTransform()
 	vparticle_create( engine, t, "dat/script/lisp/explosion.s" )
 	vparticle_create( engine, t, "dat/script/lisp/explosion_b.s" )
@@ -115,16 +102,11 @@ end
 
 function missile_destroy( missile )
 	if not missile.destroyed then
-		vdeleteModelInstance( missile.model ) 
-		vphysic_destroy( missile.physic )
-		vdestroyTransform( scene, missile.transform )
-		vdestroyBody( missile.body )
+		gameobject_destroy( missile )
 		vparticle_destroy( missile.glow )
 		if missile.trail then
 			vparticle_destroy( missile.trail )
 		end
-		missile.physic = nil
-		missile.transform = nil
 		missile.destroyed = true
 	end
 end
@@ -380,7 +362,6 @@ end
 
 function ship_destroy( ship )
 	gameobject_destroy( ship )
-	-- spawn explosion
 end
 
 function ship_delete( ship )
