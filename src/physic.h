@@ -13,3 +13,4 @@ physic* physic_create();
 void physic_delete( physic* p );
 
 void physic_tick( void* data, float dt, engine* eng );
+void physic_assertActive( physic* p );

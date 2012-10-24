@@ -18,6 +18,10 @@ vector property_samplev( property* p, float time );
 float property_valuef( property* p, int key );
 property* property_range( property* p, float from, float to, property* buffer );
 
+// Debug
+particleEmitter* active_particles[1024];
+int active_particle_count = 0;
+
 particleEmitterDef* particleEmitterDef_create() {
 	particleEmitterDef* def = mem_alloc( sizeof( particleEmitterDef ));
 	memset( def, 0, sizeof( particleEmitterDef ));
@@ -49,6 +53,9 @@ particleEmitter* particleEmitter_create() {
 	p->vertex_buffer = mem_alloc( sizeof( vertex ) * kMaxParticleVerts );
 	p->element_buffer = mem_alloc( sizeof( GLushort ) * kMaxParticleVerts );
 	p->destroyed = false;
+	
+	//printf( "Adding particle 0x" xPTRf ".\n", (uintptr_t)p );
+	array_add( (void**)active_particles, &active_particle_count, (void*)p );
 
 	return p;
 }
@@ -85,6 +92,16 @@ void particleEmitter_spawnParticle( particleEmitter* e ) {
 
 void particleEmitter_tick( void* data, float dt, engine* eng ) {
 	particleEmitter* e = data;
+
+	if ( e->destroyed && e->count <= 0 ) {
+		engine_removeRender( eng, e, particleEmitter_render );
+		stopTick( eng, e, particleEmitter_tick );
+		particleEmitter_delete( e );
+		return;
+	}
+
+	particleEmitter_assertActive( e );
+
 	// Update existing particles
 	vector delta;
 	vector_scale ( &delta, &e->definition->velocity, dt );
@@ -134,12 +151,6 @@ void particleEmitter_tick( void* data, float dt, engine* eng ) {
 		}
 	}
 	e->emitter_age += dt;
-
-	if ( e->destroyed && e->count <= 0 ) {
-		engine_removeRender( eng, e, particleEmitter_render );
-		stopTick( eng, e, particleEmitter_tick );
-		particleEmitter_delete( e );
-	}
 
 	// TEST
 	/*
@@ -193,6 +204,11 @@ void particle_quad( particleEmitter* e, vertex* dst, vector* point, float rotati
 // Render a particleEmitter system
 void particleEmitter_render( void* data ) {
 	particleEmitter* p = data;
+
+	if ( p->destroyed )
+		return;
+
+	particleEmitter_assertActive( p );
 		
 	// reset modelview matrix so we can billboard
 	// particle_quad() will manually apply the modelview
@@ -405,6 +421,9 @@ void particleEmitter_destroy( particleEmitter* e ) {
 }
 
 void particleEmitter_delete( particleEmitter* e ) {
+	//printf( "Removing particle 0x" xPTRf ".\n", (uintptr_t)e );
+	array_remove( (void**)active_particles, &active_particle_count, (void*)e );
+
 	// Does not explicitly remove the definition
 	vAssert( e );
 	vAssert( e->vertex_buffer );
@@ -412,4 +431,9 @@ void particleEmitter_delete( particleEmitter* e ) {
 	mem_free( e->vertex_buffer );
 	mem_free( e->element_buffer );
 	mem_free( e );
+}
+
+void particleEmitter_assertActive( particleEmitter* e ) {
+	int found = array_find( (void**)active_particles, active_particle_count, (void*)e );
+	vAssert( found != -1 )
 }

@@ -78,6 +78,8 @@ void property_addf( property* p, float time, float value );
 void property_addfv( property* p, float time, float* values );
 void property_addv( property* p, float time, vector value );
 
+void particleEmitter_assertActive( particleEmitter* e );
+
 // *** Test
 
 void test_property();

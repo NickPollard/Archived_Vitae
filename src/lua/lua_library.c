@@ -178,6 +178,7 @@ int LUA_model_setTransform( lua_State* l ) {
 int LUA_physic_setTransform( lua_State* l ) {
 	LUA_DEBUG_PRINT( "lua physic set transform\n" );
 	physic* p = lua_toptr( l, 1 );
+	physic_assertActive( p );
 	transform* t = lua_toptr( l, 2 );
 	p->trans = t;
 	return 0;
@@ -217,6 +218,7 @@ int LUA_body_destroy( lua_State* l ) {
 int LUA_physic_destroy( lua_State* l ) {
 	physic* p = lua_toptr( l, 1 );
 	vAssert( p );
+	physic_assertActive( p );
 	physic_delete( p );
 	return 0;
 }
@@ -234,12 +236,14 @@ int LUA_physic_activate( lua_State* l ) {
 	LUA_DEBUG_PRINT( "lua physic activate.\n" );
 	engine* e = lua_toptr( l, 1 );
 	physic* p = lua_toptr( l, 2 );
+	physic_assertActive( p );
 	startTick( e, p, physic_tick );
 	return 0;
 }
 
 int LUA_physic_setVelocity( lua_State* l ) {
 	physic* p = lua_toptr( l, 1 );
+	physic_assertActive( p );
 	vector* v = lua_toptr( l, 2 );
 	p->velocity = *v;
 	return 0;

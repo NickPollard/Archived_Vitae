@@ -12,19 +12,42 @@ C and only controlled remotely by Lua
 ]]--
 
 -- Debug settings
-debug_spawning_enabled = true
+	debug_spawning_enabled = true
 
 -- Load Modules
 	package.path = "./SpaceSim/lua/?.lua"
 	ai = require "ai"
+	entities = require "entities"
 	fx = require "fx"
+	library = require "library"
 	timers = require "timers"
 	ui = require "ui"
 
 -- player - this object contains general data about the player
-player = nil
+	player = nil
+
 -- player_ship - the actual ship entity flying around
-player_ship = nil
+	player_ship = nil
+
+-- Collision
+	collision_layer_player	= 1
+	collision_layer_enemy	= 2
+	collision_layer_bullet	= 3
+
+-- Camera
+	camera		= "chase"
+	flycam		= nil
+	chasecam 	= nil
+
+-- Entities
+	missiles		= { count = 0 }
+	turrets			= { count = 0 }
+	interceptors	= { count = 0 }
+
+-- Settings
+	player_bullet_speed		= 250.0;
+	enemy_bullet_speed		= 150.0;
+	homing_missile_speed	= 50.0;
 
 -- Create a spacesim Game object
 -- A gameobject has a visual representation (model), a physical entity for velocity and momentum (physic)
@@ -104,13 +127,6 @@ function missile_collisionHandler( missile, other )
 	missile_destroy( missile )
 end
 
-missiles		= { count = 0 }
-turrets			= { count = 0 }
-interceptors	= { count = 0 }
-player_bullet_speed		= 250.0;
-enemy_bullet_speed		= 150.0;
-homing_missile_speed	= 50.0;
-
 function setCollision_playerBullet( object )
 	vbody_setLayers( object.body, collision_layer_bullet )
 	vbody_setCollidableLayers( object.body, collision_layer_enemy )
@@ -121,59 +137,51 @@ function setCollision_enemyBullet( object )
 	vbody_setCollidableLayers( object.body, collision_layer_player )
 end
 
-function fire_missile( source, offset, model, speed )
+function create_projectile( source, offset, model, speed ) 
 	-- Create a new Projectile
 	local projectile = gameobject_create( model )
 	projectile.tick = nil
+
+	-- Position it at the correct muzzle position and rotation
+	muzzle_world_pos = vtransformVector( source.transform, offset )
+	vtransform_setWorldSpaceByTransform( projectile.transform, source.transform )
+	vtransform_setWorldPosition( projectile.transform, muzzle_world_pos )
+
+	-- Apply initial velocity
+	source_velocity = Vector( 0.0, 0.0, speed, 0.0 )
+	world_v = vtransformVector( source.transform, source_velocity )
+	vphysic_setVelocity( projectile.physic, world_v );
+
+	-- Store the projectile so it doesn't get garbage collected
+	array_add( missiles, projectile )
+
+	return projectile
+end
+
+function fire_missile( source, offset, model, speed )
+	local projectile = create_projectile( source, offset, model, speed )
 
 	setCollision_playerBullet( projectile )
 	vbody_registerCollisionCallback( projectile.body, missile_collisionHandler )
 
-	-- Position it at the correct muzzle position and rotation
-	muzzle_world_pos = vtransformVector( source.transform, offset )
-	vtransform_setWorldSpaceByTransform( projectile.transform, source.transform )
-	vtransform_setWorldPosition( projectile.transform, muzzle_world_pos )
-
-	-- Attach a particle effect to the object
-	projectile.glow = vparticle_create( engine, projectile.transform, "dat/script/lisp/bullet.s" )
-
-	-- Apply initial velocity
-	source_velocity = Vector( 0.0, 0.0, speed, 0.0 )
-	world_v = vtransformVector( source.transform, source_velocity )
-	vphysic_setVelocity( projectile.physic, world_v );
-
 	-- Queue up delete
 	inTime( 2.0, function () missile_destroy( projectile ) end )
 
-	-- Store the projectile so it doesn't get garbage collected
-	array_add( missiles, projectile )
+	-- Attach a particle effect to the object
+	projectile.glow = vparticle_create( engine, projectile.transform, "dat/script/lisp/bullet.s" )
 end
 
 function fire_enemy_missile( source, offset, model, speed )
-	-- Create a new Projectile
-	local projectile = gameobject_create( model )
-	projectile.tick = nil
+	local projectile = create_projectile( source, offset, model, speed )
 
 	setCollision_enemyBullet( projectile )
 	vbody_registerCollisionCallback( projectile.body, missile_collisionHandler )
 
-	-- Position it at the correct muzzle position and rotation
-	muzzle_world_pos = vtransformVector( source.transform, offset )
-	vtransform_setWorldSpaceByTransform( projectile.transform, source.transform )
-	vtransform_setWorldPosition( projectile.transform, muzzle_world_pos )
-
-	-- Attach a particle effect to the object
-	projectile.glow = vparticle_create( engine, projectile.transform, "dat/script/lisp/bullet.s" )
-
-	-- Apply initial velocity
-	source_velocity = Vector( 0.0, 0.0, speed, 0.0 )
-	world_v = vtransformVector( source.transform, source_velocity )
-	vphysic_setVelocity( projectile.physic, world_v );
-
 	-- Queue up delete
 	inTime( 2.0, function () missile_destroy( projectile ) end )
 
-	array_add( missiles, projectile )
+	-- Attach a particle effect to the object
+	projectile.glow = vparticle_create( engine, projectile.transform, "dat/script/lisp/bullet.s" )
 end
 
 homing_missile_turn_angle_per_second = math.pi / 2
@@ -307,17 +315,6 @@ function init()
 	local vignette = vuiPanel_create( engine, "dat/img/vignette.tga", color, 0, 360, 1280, 360 )
 	
 	splash_intro()
-
-	library, msg = loadfile( "SpaceSim/lua/library.lua" )
-	library()
-end
-
-camera = "chase"
-flycam = nil
-chasecam = nil
-
-function vrand( lower, upper )
-	return math.random() * ( upper - lower ) + lower
 end
 
 function ship_collisionHandler( ship, collider )
@@ -395,10 +392,6 @@ function player_ship_collisionHandler( ship, collider )
 	end )
 end
 
-collision_layer_player = 1
-collision_layer_enemy = 2
-collision_layer_bullet = 3
-
 function gameplay_start()
 	player_active = true
 	inTime( 2.0, function () 
@@ -410,7 +403,6 @@ function gameplay_start()
 		already_spawned = 0.0
 	end )
 end
-
 
 function restart()
 	spawning_active = false
@@ -856,53 +848,17 @@ function turret_state_active( turret, dt )
 	end
 end
 
-function entity_setSpeed( entity, speed )
-	entity.speed = speed
-	local entity_velocity = Vector( 0.0, 0.0, entity.speed, 0.0 )
-	local world_velocity = vtransformVector( entity.transform, entity_velocity )
-	vphysic_setVelocity( entity.physic, world_velocity )
-end
-
 -- Interceptor Stats
 interceptor_min_speed = 3.0
 interceptor_speed = 160.0
 interceptor_weapon_cooldown = 0.4
 homing_missile_cooldown = 1.2
 
-function entity_moveTo( x, y, z )
-	return function ( entity, dt )
-		entity_setSpeed( entity, interceptor_speed )
-		local facing_position = Vector( x, y, z, 1.0 )
-		vdebugdraw_cross( facing_position, 10.0 )
-		vtransform_facingWorld( entity.transform, facing_position )
-	end
-end
-
-function entity_strafeTo( target_x, target_y, target_z, facing_x, facing_y, facing_z )
-	return function ( entity, dt )
-		-- Move to correct position
-		local target_position = Vector( target_x, target_y, target_z, 1.0 )
-		local current_position = vtransform_getWorldPosition( entity.transform )
-		local distance_remaining = vvector_distance( target_position, current_position )
-		local speed = clamp( interceptor_min_speed, interceptor_speed, distance_remaining)
-
-		local world_direction = vvector_normalize( vvector_subtract( target_position, current_position ))
-		local world_velocity = vvector_scale( world_direction, speed )
-		vphysic_setVelocity( entity.physic, world_velocity )
-
-		-- Face correct direction
-		local facing_position = Vector( facing_x, facing_y, facing_z, 1.0 )
-		vtransform_facingWorld( entity.transform, facing_position )
-		
-		--vdebugdraw_cross( target_position, 10.0 )
-	end
-end
-
 function interceptor_attack_gun( x, y, z )
 	return function ( interceptor, dt )
 		local facing_position = Vector( x, y, z, 1.0 )
 		vtransform_facingWorld( interceptor.transform, facing_position )
-		entity_setSpeed( interceptor, 0.0 )
+		entities.setSpeed( interceptor, 0.0 )
 
 		if interceptor.cooldown < 0.0 then
 			interceptor_fire( interceptor )
@@ -916,7 +872,7 @@ function interceptor_attack_homing( x, y, z )
 	return function ( interceptor, dt )
 		local facing_position = Vector( x, y, z, 1.0 )
 		vtransform_facingWorld( interceptor.transform, facing_position )
-		entity_setSpeed( interceptor, 0.0 )
+		entities.setSpeed( interceptor, 0.0 )
 
 		if interceptor.cooldown < 0.0 then
 			interceptor_fire_homing( interceptor )
@@ -933,13 +889,6 @@ end
 
 function interceptor_fire_homing( interceptor )
 	fire_enemy_homing_missile( interceptor, Vector( 0.0, 0.0, 0.0, 1.0 ), projectile_model, homing_missile_speed )
-end
-
-function entity_atPosition( entity, x, y, z, max_distance )
-	local position = Vector( x, y, z, 1.0 )
-	local entity_position = vtransform_getWorldPosition( entity.transform )
-	local distance = vvector_distance( entity_position, position )
-	return distance < max_distance
 end
 
 function create_interceptor()
@@ -960,8 +909,8 @@ end
 function interceptor_behaviour( interceptor, move_to, attack_target, attack_type )
 	local enter = nil
 	local attack = nil
-	enter =		ai.state( entity_strafeTo( move_to.x, move_to.y, move_to.z, attack_target.x, move_to.y, attack_target.z ),		
-							function () if entity_atPosition( interceptor, move_to.x, move_to.y, move_to.z, 5.0 ) then 
+	enter =		ai.state( entities.strafeTo( move_to.x, move_to.y, move_to.z, attack_target.x, move_to.y, attack_target.z ),		
+							function () if entities.atPosition( interceptor, move_to.x, move_to.y, move_to.z, 5.0 ) then 
 									return attack 
 								else 
 									return enter 
