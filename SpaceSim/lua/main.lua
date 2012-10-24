@@ -18,6 +18,7 @@ debug_spawning_enabled = true
 	package.path = "./SpaceSim/lua/?.lua"
 	ai = require "ai"
 	fx = require "fx"
+	timers = require "timers"
 	ui = require "ui"
 
 -- player - this object contains general data about the player
@@ -75,7 +76,7 @@ function gameobject_delete( g )
 end
 
 projectile_model = "dat/model/missile.s"
-weapons_cooldown = 0.15
+player_gun_cooldown = 0.15
 
 function player_fire( ship )
 	if ship.cooldown <= 0.0 then
@@ -83,7 +84,7 @@ function player_fire( ship )
 		fire_missile( ship, muzzle_position, projectile_model, player_bullet_speed );
 		muzzle_position = Vector( -1.2, 0.0, 0.0, 1.0 );
 		fire_missile( ship, muzzle_position, projectile_model, player_bullet_speed );
-		ship.cooldown = weapons_cooldown
+		ship.cooldown = player_gun_cooldown
 	end
 end
 
@@ -222,26 +223,8 @@ function fire_enemy_homing_missile( source, offset, model, speed )
 	projectile.tick = homing_missile_tick( player_ship.transform )
 end
 
-timers = {}
-timers.count = 0
-
-function addTimer( timer )
-	timers.count = timers.count + 1
-	timers[timers.count] = timer
-end
-
----[[
-function timer_create( time, action )
-	timer = {
-		time = time,
-		action = action,
-	}
-	return timer
-end
---]]
-
 function inTime( time, action )
-	addTimer( timer_create( time, action ))
+	timers.add( timers.create( time, action ))
 end
 
 function iterator( t )
@@ -264,18 +247,6 @@ function filter( array, func )
 	end
 	new_array.count = count
 	return new_array
-end
-
-function timers_tick( dt )
-	for element in iterator( timers ) do
-		element.time = element.time - dt
-		if element.time < 0 then
-			element.action()
-		end
-	end
-
-	new_timers = filter( timers, function( e ) return ( e.time > 0 ) end )
-	timers = new_timers;
 end
 
 -- Create a player. The player is a specialised form of Gameobject
@@ -690,7 +661,7 @@ function tick( dt )
 
 	debug_tick()
 
-	timers_tick( dt )
+	timers.tick( dt )
 
 	if spawning_active then
 		update_spawns( player_ship )
