@@ -1,20 +1,5 @@
 local ai = {}
---[[
-function ai.flyToPoint()
 
-end
-
-function ai.tick_flyToPoint()
-	vector directionToPoint;
-	turnTowardsPoint()
-	increaseSpeed()
-end
-
-function ai.dumbFire()
-	
-end
-
---]]
 function ai.combinator( f )
 	return f( f )
 end
@@ -57,15 +42,6 @@ function ai.state( tick, transition )
 		return transition()
 	end
 end
---[[
-shoot = ai.state( ai.shoot, function() if close then return shoot else return dodge end end )
-dodge = ai.state( ai.dodge, function() if dodged then return shoot else return dodge end end )
-
-function ai.state_combinator( a, b )
-	g = function( f ) ai.state( a,  )( function() ai.state( b )( function() f( f ) end ) end ) end
-	return g
-end
---]]
 
 function ai.queue3( a, b, c )
 	state_a = ai.state( a, function() return state_b end )

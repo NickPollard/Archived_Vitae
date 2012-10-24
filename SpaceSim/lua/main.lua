@@ -17,6 +17,7 @@ debug_spawning_enabled = true
 -- Load Modules
 	package.path = "./SpaceSim/lua/?.lua"
 	ai = require "ai"
+	fx = require "fx"
 	ui = require "ui"
 
 -- player - this object contains general data about the player
@@ -73,20 +74,6 @@ function gameobject_delete( g )
 	end
 end
 
-function spawn_missile_explosion( position )
-	local t = vcreateTransform()
-	vparticle_create( engine, t, "dat/script/lisp/missile_explosion.s" )
-	vtransform_setWorldSpaceByTransform( t, position )
-end
-
-function spawn_explosion( position )
-	local t = vcreateTransform()
-	vparticle_create( engine, t, "dat/script/lisp/explosion.s" )
-	vparticle_create( engine, t, "dat/script/lisp/explosion_b.s" )
-	vparticle_create( engine, t, "dat/script/lisp/explosion_c.s" )
-	vtransform_setWorldSpaceByTransform( t, position )
-end
-
 projectile_model = "dat/model/missile.s"
 weapons_cooldown = 0.15
 
@@ -111,12 +98,14 @@ function missile_destroy( missile )
 end
 
 function missile_collisionHandler( missile, other )
-	spawn_missile_explosion( missile.transform )
+	fx.spawn_missile_explosion( missile.transform )
 	vphysic_setVelocity( missile.physic, Vector( 0.0, 0.0, 0.0, 0.0 ))
 	missile_destroy( missile )
 end
 
-missiles = { count = 0 }
+missiles		= { count = 0 }
+turrets			= { count = 0 }
+interceptors	= { count = 0 }
 player_bullet_speed		= 250.0;
 enemy_bullet_speed		= 150.0;
 homing_missile_speed	= 50.0;
@@ -361,7 +350,7 @@ function vrand( lower, upper )
 end
 
 function ship_collisionHandler( ship, collider )
-	spawn_explosion( ship.transform );
+	fx.spawn_explosion( ship.transform );
 	ship_destroy( ship )
 	ship.behaviour = ai.dead
 end
@@ -406,7 +395,7 @@ function player_ship_collisionHandler( ship, collider )
 	vphysic_setVelocity( ship.physic, no_velocity )
 
 	-- destroy it
-	spawn_explosion( ship.transform )
+	fx.spawn_explosion( ship.transform )
 
 	-- not using gameobject_destroy as we need to sync transform dying with camera rejig
 	inTime( 0.2, function () vdeleteModelInstance( ship.model ) 
@@ -735,8 +724,6 @@ function spawn_pos( i )
 	return i * spawn_interval + spawn_offset;
 end
 
-turrets = { count = 0 }
-interceptors = { count = 0 }
 
 
 turret_cooldown = 0.4
@@ -774,7 +761,7 @@ function spawn_turret( u, v )
 	vtransform_facingWorld( turret.transform, facing_position )
 
 	-- Physics
-	vbody_registerCollisionCallback( turret.body, target_collisionHandler )
+	vbody_registerCollisionCallback( turret.body, turret_collisionHandler )
 	vbody_setLayers( turret.body, collision_layer_enemy )
 	vbody_setCollidableLayers( turret.body, collision_layer_player )
 
@@ -788,30 +775,8 @@ function spawn_turret( u, v )
 	turrets[turrets.count] = turret
 end
 
-function spawn_target( v )
-	local spawn_height = 20.0
-	vprint( "Spawn_target, v = " .. v )
-
-	-- position
-	local u = 0.0
-	local x, y, z = vcanyon_position( u, v )
-	local position = Vector( x, y + spawn_height, z, 1.0 )
-	local target = gameobject_create( "dat/model/target.s" )
-	vtransform_setWorldPosition( target.transform, position )
-
-	-- Orientation
-	local facing_x, facing_y, facing_z = vcanyon_position( u, v - ( 1.0 / canyon_v_scale ))
-	local facing_position = Vector( facing_x, y + spawn_height, facing_z, 1.0 )
-	vtransform_facingWorld( target.transform, facing_position )
-
-	-- Physics
-	vbody_registerCollisionCallback( target.body, target_collisionHandler )
-	vbody_setLayers( target.body, collision_layer_enemy )
-	vbody_setCollidableLayers( target.body, collision_layer_player )
-end
-
-function target_collisionHandler( target, collider )
-	spawn_explosion( target.transform )
+function turret_collisionHandler( target, collider )
+	fx.spawn_explosion( target.transform )
 	gameobject_destroy( target )
 end
 
@@ -845,9 +810,6 @@ function entities_spawnRange( near, far )
 	i = spawn_index( near ) + 1
 	spawn_v = i * spawn_interval
 	while contains( spawn_v, near, far ) do
-			local turret_offset_u = 20.0
-			--spawn_turret( turret_offset_u, spawn_v )
-			--spawn_turret( -turret_offset_u, spawn_v )
 			local interceptor_offset_u = 20.0
 			if ( i + 1 ) % 3.0 == 0 then
 				spawn_interceptor( interceptor_offset_u, spawn_v, interceptor_attack_homing )
@@ -898,15 +860,7 @@ function update_despawns( ship )
 end
 
 function turret_state_inactive( turret, dt )
-	--vprint( "inactive" )
 	player_close = ( vtransform_distance( player_ship.transform, turret.transform ) < 200.0 )
-	--[[
-	if player_close then
-		vprint( "player close true" )
-	else
-		vprint( "player close false" )
-	end
-	--]]
 
 	if player_close then
 		return turret_state_active
@@ -916,15 +870,7 @@ function turret_state_inactive( turret, dt )
 end
 
 function turret_state_active( turret, dt )
-	--vprint( "active" )
 	player_close = ( vtransform_distance( player_ship.transform, turret.transform ) < 200.0 )
-	--[[
-	if player_close then
-		vprint( "player close true" )
-	else
-		vprint( "player close false" )
-	end
-	--]]
 
 	if turret.cooldown < 0.0 then
 		turret_fire( turret )
