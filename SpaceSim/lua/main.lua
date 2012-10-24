@@ -104,9 +104,9 @@ player_gun_cooldown = 0.15
 function player_fire( ship )
 	if ship.cooldown <= 0.0 then
 		muzzle_position = Vector( 1.2, 0.0, 0.0, 1.0 );
-		fire_missile( ship, muzzle_position, projectile_model, player_bullet_speed );
+		fire_missile( ship, muzzle_position, player_gunfire )
 		muzzle_position = Vector( -1.2, 0.0, 0.0, 1.0 );
-		fire_missile( ship, muzzle_position, projectile_model, player_bullet_speed );
+		fire_missile( ship, muzzle_position, player_gunfire )
 		ship.cooldown = player_gun_cooldown
 	end
 end
@@ -160,29 +160,27 @@ function create_projectile( source, offset, model, speed )
 	return projectile
 end
 
-function fire_missile( source, offset, model, speed )
-	local projectile = create_projectile( source, offset, model, speed )
+player_gunfire = { 
+	model = "dat/model/missile.s",
+	speed = 250.0,
+	collisionType = "player"
+}
 
-	setCollision_playerBullet( projectile )
+enemy_gunfire = { 
+	model = "dat/model/missile.s",
+	speed = 150.0,
+	collisionType = "enemy"
+}
+
+function fire_missile( source, offset, bullet_type )
+	local projectile = create_projectile( source, offset, bullet_type.model, bullet_type.speed )
+	if bullet_type.collisionType == "player" then
+		setCollision_playerBullet( projectile )
+	elseif bullet_type.collisionType == "enemy" then
+		setCollision_enemyBullet( projectile )
+	end
 	vbody_registerCollisionCallback( projectile.body, missile_collisionHandler )
-
-	-- Queue up delete
 	inTime( 2.0, function () missile_destroy( projectile ) end )
-
-	-- Attach a particle effect to the object
-	projectile.glow = vparticle_create( engine, projectile.transform, "dat/script/lisp/bullet.s" )
-end
-
-function fire_enemy_missile( source, offset, model, speed )
-	local projectile = create_projectile( source, offset, model, speed )
-
-	setCollision_enemyBullet( projectile )
-	vbody_registerCollisionCallback( projectile.body, missile_collisionHandler )
-
-	-- Queue up delete
-	inTime( 2.0, function () missile_destroy( projectile ) end )
-
-	-- Attach a particle effect to the object
 	projectile.glow = vparticle_create( engine, projectile.transform, "dat/script/lisp/bullet.s" )
 end
 
@@ -694,8 +692,8 @@ end
 turret_cooldown = 0.4
 
 function turret_fire( turret )
-	fire_enemy_missile( turret, Vector(  4.0, 6.0, 0.0, 1.0), projectile_model, enemy_bullet_speed )
-	fire_enemy_missile( turret, Vector( -4.0, 6.0, 0.0, 1.0), projectile_model, enemy_bullet_speed )
+	fire_missile( turret, Vector(  4.0, 6.0, 0.0, 1.0), enemy_gunfire )
+	fire_missile( turret, Vector( -4.0, 6.0, 0.0, 1.0), enemy_gunfire )
 end
 
 function turret_tick( turret, dt )
@@ -885,8 +883,8 @@ function interceptor_attack_homing( x, y, z )
 end
 
 function interceptor_fire( interceptor )
-	fire_enemy_missile( interceptor, Vector(  4.0, 0.0, 0.0, 1.0 ), projectile_model, enemy_bullet_speed )
-	fire_enemy_missile( interceptor, Vector( -4.0, 0.0, 0.0, 1.0 ), projectile_model, enemy_bullet_speed )
+	fire_missile( interceptor, Vector(  4.0, 0.0, 0.0, 1.0 ), enemy_gunfire )
+	fire_missile( interceptor, Vector( -4.0, 0.0, 0.0, 1.0 ), enemy_gunfire )
 end
 
 function interceptor_fire_homing( interceptor )
