@@ -93,21 +93,20 @@ weapons_cooldown = 0.15
 function player_fire( ship )
 	if ship.cooldown <= 0.0 then
 		muzzle_position = Vector( 1.2, 0.0, 0.0, 1.0 );
-		fire_missile( ship, muzzle_position );
+		fire_missile( ship, muzzle_position, projectile_model, player_bullet_speed );
 		muzzle_position = Vector( -1.2, 0.0, 0.0, 1.0 );
-		fire_missile( ship, muzzle_position );
+		fire_missile( ship, muzzle_position, projectile_model, player_bullet_speed );
 		ship.cooldown = weapons_cooldown
 	end
 end
 
 function missile_destroy( missile )
-	if not missile.destroyed then
-		gameobject_destroy( missile )
+	gameobject_destroy( missile )
+	if missile.glow then
 		vparticle_destroy( missile.glow )
-		if missile.trail then
-			vparticle_destroy( missile.trail )
-		end
-		missile.destroyed = true
+	end
+	if missile.trail then
+		vparticle_destroy( missile.trail )
 	end
 end
 
@@ -118,17 +117,26 @@ function missile_collisionHandler( missile, other )
 end
 
 missiles = { count = 0 }
-bullet_speed = 250.0;
-enemy_bullet_speed = 150.0;
-homing_missile_speed = 50.0;
+player_bullet_speed		= 250.0;
+enemy_bullet_speed		= 150.0;
+homing_missile_speed	= 50.0;
 
-function fire_missile( source, offset )
+function setCollision_playerBullet( object )
+	vbody_setLayers( object.body, collision_layer_bullet )
+	vbody_setCollidableLayers( object.body, collision_layer_enemy )
+end
+
+function setCollision_enemyBullet( object )
+	vbody_setLayers( object.body, collision_layer_bullet )
+	vbody_setCollidableLayers( object.body, collision_layer_player )
+end
+
+function fire_missile( source, offset, model, speed )
 	-- Create a new Projectile
-	local projectile = gameobject_create( projectile_model );
-	projectile.destroyed = false
+	local projectile = gameobject_create( model )
 	projectile.tick = nil
-	vbody_setLayers( projectile.body, collision_layer_bullet )
-	vbody_setCollidableLayers( projectile.body, collision_layer_enemy )
+
+	setCollision_playerBullet( projectile )
 	vbody_registerCollisionCallback( projectile.body, missile_collisionHandler )
 
 	-- Position it at the correct muzzle position and rotation
@@ -140,7 +148,7 @@ function fire_missile( source, offset )
 	projectile.glow = vparticle_create( engine, projectile.transform, "dat/script/lisp/bullet.s" )
 
 	-- Apply initial velocity
-	source_velocity = Vector( 0.0, 0.0, bullet_speed, 0.0 )
+	source_velocity = Vector( 0.0, 0.0, speed, 0.0 )
 	world_v = vtransformVector( source.transform, source_velocity )
 	vphysic_setVelocity( projectile.physic, world_v );
 
@@ -151,13 +159,12 @@ function fire_missile( source, offset )
 	array_add( missiles, projectile )
 end
 
-function fire_enemy_missile( source, offset )
+function fire_enemy_missile( source, offset, model, speed )
 	-- Create a new Projectile
-	local projectile = gameobject_create( projectile_model );
-	projectile.destroyed = false
+	local projectile = gameobject_create( model )
 	projectile.tick = nil
-	vbody_setLayers( projectile.body, collision_layer_bullet )
-	vbody_setCollidableLayers( projectile.body, collision_layer_player )
+
+	setCollision_enemyBullet( projectile )
 	vbody_registerCollisionCallback( projectile.body, missile_collisionHandler )
 
 	-- Position it at the correct muzzle position and rotation
@@ -169,7 +176,7 @@ function fire_enemy_missile( source, offset )
 	projectile.glow = vparticle_create( engine, projectile.transform, "dat/script/lisp/bullet.s" )
 
 	-- Apply initial velocity
-	source_velocity = Vector( 0.0, 0.0, enemy_bullet_speed, 0.0 )
+	source_velocity = Vector( 0.0, 0.0, speed, 0.0 )
 	world_v = vtransformVector( source.transform, source_velocity )
 	vphysic_setVelocity( projectile.physic, world_v );
 
@@ -197,12 +204,11 @@ function homing_missile_tick( target_transform )
 	end
 end
 
-function fire_enemy_homing_missile( source, offset )
+function fire_enemy_homing_missile( source, offset, model, speed )
 	-- Create a new Projectile
-	local projectile = gameobject_create( projectile_model );
-	projectile.destroyed = false
-	vbody_setLayers( projectile.body, collision_layer_bullet )
-	vbody_setCollidableLayers( projectile.body, collision_layer_player )
+	local projectile = gameobject_create( model )
+	setCollision_enemyBullet( projectile )
+
 	vbody_registerCollisionCallback( projectile.body, missile_collisionHandler )
 
 	-- Position it at the correct muzzle position and rotation
@@ -215,7 +221,7 @@ function fire_enemy_homing_missile( source, offset )
 	projectile.trail = vparticle_create( engine, projectile.transform, "dat/script/lisp/red_trail.s" )
 
 	-- Apply initial velocity
-	source_velocity = Vector( 0.0, 0.0, homing_missile_speed, 0.0 )
+	source_velocity = Vector( 0.0, 0.0, speed, 0.0 )
 	world_v = vtransformVector( source.transform, source_velocity )
 	vphysic_setVelocity( projectile.physic, world_v );
 
@@ -736,10 +742,8 @@ interceptors = { count = 0 }
 turret_cooldown = 0.4
 
 function turret_fire( turret )
-	muzzle_position = Vector( 4.0, 6.0, 0.0, 1.0 )
-	fire_enemy_missile( turret, muzzle_position )
-	muzzle_position = Vector( -4.0, 6.0, 0.0, 1.0 )
-	fire_enemy_missile( turret, muzzle_position )
+	fire_enemy_missile( turret, Vector(  4.0, 6.0, 0.0, 1.0), projectile_model, enemy_bullet_speed )
+	fire_enemy_missile( turret, Vector( -4.0, 6.0, 0.0, 1.0), projectile_model, enemy_bullet_speed )
 end
 
 function turret_tick( turret, dt )
@@ -1006,15 +1010,12 @@ function interceptor_attack_homing( x, y, z )
 end
 
 function interceptor_fire( interceptor )
-	muzzle_position = Vector( 4.0, 0.0, 0.0, 1.0 )
-	fire_enemy_missile( interceptor, muzzle_position )
-	muzzle_position = Vector( -4.0, 0.0, 0.0, 1.0 )
-	fire_enemy_missile( interceptor, muzzle_position )
+	fire_enemy_missile( interceptor, Vector(  4.0, 0.0, 0.0, 1.0 ), projectile_model, enemy_bullet_speed )
+	fire_enemy_missile( interceptor, Vector( -4.0, 0.0, 0.0, 1.0 ), projectile_model, enemy_bullet_speed )
 end
 
 function interceptor_fire_homing( interceptor )
-	muzzle_position = Vector( 0.0, 0.0, 0.0, 1.0 )
-	fire_enemy_homing_missile( interceptor, muzzle_position )
+	fire_enemy_homing_missile( interceptor, Vector( 0.0, 0.0, 0.0, 1.0 ), projectile_model, homing_missile_speed )
 end
 
 function entity_atPosition( entity, x, y, z, max_distance )
