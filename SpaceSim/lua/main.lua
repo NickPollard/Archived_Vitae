@@ -11,7 +11,7 @@ C and only controlled remotely by Lua
 
 ]]--
 
-debug_spawning_enabled = false
+debug_spawning_enabled = true
 
 -- Load Modules
 	package.path = "./SpaceSim/lua/?.lua"
@@ -1025,7 +1025,6 @@ function interceptor_attack_homing( x, y, z )
 end
 
 function interceptor_fire( interceptor )
-	vprint( "Enemy fire." )
 	muzzle_position = Vector( 4.0, 0.0, 0.0, 1.0 )
 	fire_enemy_missile( interceptor, muzzle_position )
 	muzzle_position = Vector( -4.0, 0.0, 0.0, 1.0 )
