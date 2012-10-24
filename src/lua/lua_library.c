@@ -574,6 +574,7 @@ int LUA_particle_create( lua_State* l ) {
 int LUA_particle_destroy( lua_State* l ) {
 	particleEmitter* emitter = lua_toptr( l, 1 );
 	vAssert( emitter );
+	particleEmitter_assertActive( emitter );
 	particleEmitter_destroy( emitter );
 	return 0;
 }

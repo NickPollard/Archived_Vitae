@@ -115,9 +115,11 @@ function missile_destroy( missile )
 	gameobject_destroy( missile )
 	if missile.glow then
 		vparticle_destroy( missile.glow )
+		missile.glow = nil
 	end
 	if missile.trail then
 		vparticle_destroy( missile.trail )
+		missile.trail = nil
 	end
 end
 
