@@ -401,6 +401,7 @@ function gameplay_start()
 			spawning_active = true
 		end
 		already_spawned = 0.0
+		doodads_already_spawned = 0.0
 	end )
 end
 
@@ -754,9 +755,11 @@ end
 spawn_offset = 0.0
 spawn_interval = 300.0
 spawn_distance = 300.0
+doodad_spawn_distance = 3000.0
 despawn_distance = 100.0 -- how far behind to despawn units
 -- spawn tracking
 already_spawned = 0.0
+doodads_already_spawned = 0.0
 
 function contains( value, range_a, range_b )
 	range_max = math.max( range_a, range_b )
@@ -764,23 +767,19 @@ function contains( value, range_a, range_b )
 	return ( value < range_max ) and ( value >= range_min )
 end
 
-canyon_v_scale = 1.0
-
 -- Spawn all entities in the given range
 function entities_spawnRange( near, far )
-	near = near / canyon_v_scale
-	far = far / canyon_v_scale
 	i = spawn_index( near ) + 1
 	spawn_v = i * spawn_interval
 	while contains( spawn_v, near, far ) do
-			local interceptor_offset_u = 20.0
-			if ( i + 1 ) % 3.0 == 0 then
-				spawn_interceptor( interceptor_offset_u, spawn_v, interceptor_attack_homing )
-				spawn_interceptor( -interceptor_offset_u, spawn_v, interceptor_attack_homing )
-			else
-				spawn_interceptor( interceptor_offset_u, spawn_v, interceptor_attack_gun )
-				spawn_interceptor( -interceptor_offset_u, spawn_v, interceptor_attack_gun )
-			end
+		local interceptor_offset_u = 20.0
+		if ( i + 1 ) % 3.0 == 0 then
+			spawn_interceptor( interceptor_offset_u, spawn_v, interceptor_attack_homing )
+			spawn_interceptor( -interceptor_offset_u, spawn_v, interceptor_attack_homing )
+		else
+			spawn_interceptor( interceptor_offset_u, spawn_v, interceptor_attack_gun )
+			spawn_interceptor( -interceptor_offset_u, spawn_v, interceptor_attack_gun )
+		end
 		i = i + 1
 		spawn_v = i * spawn_interval
 	end
@@ -794,13 +793,56 @@ function entities_despawnAll()
 	end
 end
 
+function spawn_doodad( u, v, model )
+	local x, y, z = vcanyon_position( u, v )
+	local position = Vector( x, y, z, 1.0 )
+	local doodad = gameobject_create( model )
+	vtransform_setWorldPosition( doodad.transform, position )
+end
+
+function spawn_bunker( u, v, model )
+	-- Try varying the v
+	vprint( "spawn bunker 1" )
+	local highest = { x = 0, y = -10000, z = 0 }
+	local radius = 100.0
+	local step = radius / 5.0
+	local i = v - radius
+	while i < v + radius do
+		local x,y,z = vcanyon_position( u , i )
+		if y > highest.y then
+			highest.x = x
+			highest.y = y
+			highest.z = z
+		end
+		i = i + step
+	end
+	local position = Vector( highest.x, highest.y, highest.z, 1.0 )
+	local doodad = gameobject_create( model )
+	vtransform_setWorldPosition( doodad.transform, position )
+end
+
+function doodads_spawnRange( near, far )
+	i = spawn_index( near ) + 1
+	spawn_v = i * spawn_interval
+	while contains( spawn_v, near, far ) do
+		local doodad_offset_u = 100.0
+		--spawn_doodad( doodad_offset_u, spawn_v, "dat/model/bunker.s" )
+		spawn_bunker( doodad_offset_u, spawn_v, "dat/model/bunker.s" )
+		i = i + 1
+		spawn_v = i * spawn_interval
+	end
+end
+
 -- Spawn all entities that need to be spawned this frame
 function update_spawns( ship )
 	ship_pos = vtransform_getWorldPosition( ship.transform )
 	u,v = vcanyon_fromWorld( ship_pos )
-	spawn_up_to = v + spawn_distance
+	local spawn_up_to = v + spawn_distance
+	local doodads_spawn_up_to = v + doodad_spawn_distance
+	--doodads_spawnRange( doodads_already_spawned, doodads_spawn_up_to )
 	entities_spawnRange( already_spawned, spawn_up_to )
 	already_spawned = spawn_up_to;
+	doodads_already_spawned = doodads_spawn_up_to
 end
 
 function update_despawns( ship ) 
