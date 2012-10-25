@@ -420,12 +420,15 @@ shape* mesh_createFromRenderMesh( mesh* render_mesh ) {
 
 
 vector heightField_vertex( heightField* h, int x, int z ) { 
+#if 0
 	float x_per_sample = h->width / ((float)h->x_samples - 1.f );
 	float x_pos = ((float)x) * x_per_sample - ( h->width * 0.5f );
 	float z_per_sample = h->length / ((float)h->z_samples - 1.f );
 	float z_pos = ((float)z) * z_per_sample - ( h->length * 0.5f );
-	vector v = Vector( x_pos, h->verts[ x * h->z_samples + z ], z_pos, 1.f );
-	return v;
+	vector v = Vector( x_pos, h->verts[ x * h->z_samples + z ].coord.y, z_pos, 1.f );
+#else
+	return h->verts[x + z * h->x_samples];
+#endif
 }
 
 int heightField_xPosition( heightField* h, float x_sample ) {
@@ -478,9 +481,53 @@ float heightField_sample( heightField* h, float x, float z ) {
 	}
 }
 
+
+bool polygon2d_contains( vector a, vector b, vector c, vector d, vector point ) {
+	vector line = normal2d( vector_sub( a, b ) );
+	bool outside = Dot( &line, &point ) > Dot( &line, &a );
+	if ( outside )
+		return false;
+	
+	line = normal2d( vector_sub( b, c ) );
+	outside = Dot( &line, &point ) > Dot( &line, &b );
+	if ( outside )
+		return false;
+
+	line = normal2d( vector_sub( c, d ) );
+	outside = Dot( &line, &point ) > Dot( &line, &c );
+	if ( outside )
+		return false;
+	
+	line = normal2d( vector_sub( d, a ) );
+	outside = Dot( &line, &point ) > Dot( &line, &d );
+	if ( outside )
+		return false;
+
+	return true;
+}
+
 bool heightField_contains( heightField* h, float x, float z ) {
+#if 0
 	return ( fabsf( x ) <= h->width * 0.5f ) &&
 			( fabsf( z ) <= h->length * 0.5f );
+#else
+	// TODO - AABB check to save time on non-rectangular heightfields
+	// Check every possible polygon?
+	for ( int i = 0; i < h->x_samples - 1; i++ ) {
+		for ( int j = 0; j < h->z_samples - 1; j++ ) {
+			// polygon = i -> i+1, j -> j+1
+			vector a = heightField_vertex( h, i, j );
+			vector b = heightField_vertex( h, i+1, j );
+			vector c = heightField_vertex( h, i+1, j+1 );
+			vector d = heightField_vertex( h, i, j+1 );
+			vector point = Vector( x, 0.f, z, 1.f );
+			if ( polygon2d_contains( a, b, c, d, point )) {
+				return true;
+			}
+		}
+	}
+	return false;
+#endif
 }
 
 // Do a collision test between a sphere and a heightfield
@@ -523,7 +570,7 @@ heightField* heightField_create( float width, float length, int x_samples, int z
 	h->x_samples = x_samples;
 	h->z_samples = z_samples;
 	int vert_count = x_samples * z_samples;
-	h->verts =  mem_alloc( sizeof( float ) * vert_count );
+	h->verts =  mem_alloc( sizeof( h->verts[0] ) * vert_count );
 	return h;
 }
 

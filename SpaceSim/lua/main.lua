@@ -12,7 +12,7 @@ C and only controlled remotely by Lua
 ]]--
 
 -- Debug settings
-	debug_spawning_enabled = true
+	debug_spawning_enabled = false
 
 -- Load Modules
 	package.path = "./SpaceSim/lua/?.lua"

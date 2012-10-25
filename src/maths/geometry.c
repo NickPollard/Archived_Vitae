@@ -39,3 +39,9 @@ float segment_closestPoint( vector a, vector b, vector point, vector* closest ) 
 vector eulerAngles( float yaw, float pitch, float roll ) {
 	return Vector( pitch, yaw, roll, 0.f );
 }
+
+// Take the normal of a line in 2d (x-z) space
+vector normal2d( vector line ) {
+	return Vector( -line.coord.z, 0.f, line.coord.x, 0.f );
+}
+

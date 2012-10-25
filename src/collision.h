@@ -30,7 +30,7 @@ typedef struct heightField_s {
 	int z_samples;		// How many verts long the field is
 	float width;		// How wide (in game units) - X - the field is
 	float length;		// How long (in game units) - Z - the field is
-	float *verts;
+	vector *verts;
 } heightField;
 
 typedef struct shape_s {

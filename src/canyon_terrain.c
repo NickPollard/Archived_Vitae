@@ -4,6 +4,7 @@
 //-----------------------
 #include "canyon.h"
 #include "canyon_zone.h"
+#include "collision.h"
 #include "worker.h"
 #include "maths/geometry.h"
 #include "maths/vector.h"
@@ -24,6 +25,7 @@ texture* terrain_texture_cliff = 0;
 void canyonTerrainBlock_initVBO( canyonTerrainBlock* b );
 void canyonTerrainBlock_calculateBuffers( canyonTerrainBlock* b );
 void canyonTerrainBlock_createBuffers( canyonTerrainBlock* b );
+void canyonTerrainBlock_calculateCollision( canyonTerrain* t, canyonTerrainBlock* b );
 
 // *** Utility functions
 
@@ -666,7 +668,7 @@ void* canyonTerrain_workerGenerateBlock( void* args ) {
 		canyonTerrainBlock_calculateExtents( b, b->terrain, b->coord );
 		canyonTerrainBlock_createBuffers( b );
 		canyonTerrainBlock_calculateBuffers( b );
-		//canyonTerrainBlock_calculateCollision( t, b );
+		canyonTerrainBlock_calculateCollision( b->terrain, b );
 		b->pending = false;
 	}
 	return NULL;
@@ -771,7 +773,7 @@ void canyonTerrain_updateBlocks( canyonTerrain* t ) {
 		if ( b->pending ) {
 			canyonTerrainBlock_createBuffers( b );
 			canyonTerrainBlock_calculateBuffers( b );
-			//canyonTerrainBlock_calculateCollision( t, b );
+			canyonTerrainBlock_calculateCollision( t, b );
 			b->pending = false;
 			break;
 		}
@@ -806,4 +808,18 @@ float canyonTerrain_sample( float u, float v ) {
 	float detail = terrain_detailHeight( u, v );
 	float canyon = terrain_newCanyonHeight( u, v );
 	return mountains + detail - canyon;
+}
+
+void canyonTerrainBlock_calculateCollision( canyonTerrain* t, canyonTerrainBlock* b ) {
+	(void)t;
+	heightField* h = heightField_create( b->u_max - b->u_min, b->v_max - b->v_min, b->u_samples, b->v_samples );
+	for ( int i = 0; i < b->u_samples; i++ ) {
+		for ( int j = 0; j < b->v_samples; j++ ) {
+			int index = canyonTerrainBlock_renderIndexFromUV( b, i, j );
+			h->verts[i + j * b->u_samples] = b->vertex_buffer[index].position;
+		}
+	}
+	shape* s = shape_heightField_create( h );
+	body* block_collision = body_create( s, transform_create());
+	(void)block_collision;
 }
