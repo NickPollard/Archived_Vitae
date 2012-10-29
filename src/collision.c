@@ -21,6 +21,7 @@ int body_count;
 bool body_colliding( body* a, body* b );
 bool collisionFunc_SphereHeightfield( shape* sphere_shape, shape* height_shape, matrix matrix_sphere, matrix matrix_heightfield );
 bool collisionFunc_HeightfieldSphere( shape* height_shape, shape* sphere_shape, matrix matrix_heightfield, matrix matrix_sphere );
+vector heightField_vertex( heightField* h, int x, int z );
 
 void collision_clearEvents() {
 	memset( collision_events, 0, sizeof( collisionEvent ) * kMaxCollisionEvents );
@@ -89,21 +90,39 @@ void collisionMesh_drawWireframe( collisionMesh* m, matrix trans, vector color )
 	debugdraw_wireframeMesh( m->vert_count, m->verts, m->index_count, m->indices, trans, color );
 }
 
+void heightfield_drawWireframe( heightField* h, matrix trans, vector color ) {
+	(void)trans;
+	//printf( "Drawing heightfield.\n" );
+	for ( int u = 0; u < h->x_samples - 1; ++u ) {
+		for ( int v = 0; v < h->z_samples - 1; ++v ) {
+			vector a = heightField_vertex( h, u, v );
+			vector b = heightField_vertex( h, u+1, v );
+			vector c = heightField_vertex( h, u, v+1 );
+			vector d = heightField_vertex( h, u+1, v+1 );
+			debugdraw_line3d( a, b, color );
+			debugdraw_line3d( b, d, color );
+			debugdraw_line3d( d, c, color );
+			debugdraw_line3d( c, a, color );
+			(void)c;
+		}
+	}
+}
+
 void body_debugdraw( body* b ) {
-	vector green = Vector( 0.f, 1.f, 0.f, 1.f );
 	switch ( b->shape->type ) {
 		case shapeInvalid:
 			break;
 		case shapeSphere:
 			{
 				const vector* position = transform_getWorldPosition( b->trans );
-				debugdraw_sphere( *position, b->shape->radius, green );
+				debugdraw_sphere( *position, b->shape->radius, color_green );
 			}
 			break;
 		case shapeMesh:
-			collisionMesh_drawWireframe( b->shape->collision_mesh, b->trans->world, green );
+			collisionMesh_drawWireframe( b->shape->collision_mesh, b->trans->world, color_green );
 			break;
 		case shapeHeightField:
+			//heightfield_drawWireframe( b->shape->height_field, b->trans->world, color_green );
 			break;
 	}
 }
@@ -128,7 +147,7 @@ void collision_tick( float dt ) {
 
 	collision_debugdraw();
 
-	printf( "Total collision bodies: %d.\n", body_count );
+	//printf( "Total collision bodies: %d.\n", body_count );
 }
 
 bool collisionFunc_SphereSphere( shape* a, shape* b, matrix matrix_a, matrix matrix_b ) {
@@ -173,6 +192,7 @@ vector line_normal( vector a, vector b ) {
 
 // Using just X and Y
 bool line_intersect2d( vector point, vector dir, vector a, vector b ) {
+	/*
 	printf( "line_intersect2d: point: (" );
 	vector_print( &point );
 	printf( " ), edge ( " );
@@ -180,6 +200,8 @@ bool line_intersect2d( vector point, vector dir, vector a, vector b ) {
 	printf( " ) --> ( " );
 	vector_print( &b );
 	printf( " )\n" );
+	*/
+
 	if ( vector_equal( &a, &b )) {
 		// Degenerate triangle, so no intersection
 		return false;
@@ -207,14 +229,16 @@ bool line_intersect2d( vector point, vector dir, vector a, vector b ) {
 	// Line must be in front of us in the DIR we are tracing
 	float point_d = Dot( &point, &dir );
 	float line_d = Dot( &intersection, &dir );
-	printf( "point_d: %.2f, line_d: %.2f\n", point_d, line_d );
+	//printf( "point_d: %.2f, line_d: %.2f\n", point_d, line_d );
 
+	/*
 	if ( d_int >= d_a && d_int <= d_b && line_d >= point_d ) {
 		printf( "Intersects.\n" );
 	}
 	else {
 		printf( "No intersect.\n" );
 	}
+	*/
 	return ( d_int >= d_a && d_int <= d_b && line_d >= point_d );
 }
 
@@ -240,7 +264,7 @@ bool point_insideTriangle( vector point, vector a, vector b, vector c ) {
 	intersections += line_intersect2d( point, z_axis, b, c ) ? 1 : 0;
 	intersections += line_intersect2d( point, z_axis, c, a ) ? 1 : 0;
 
-	printf( "Intersections: %d.\n", intersections );
+	//printf( "Intersections: %d.\n", intersections );
 	return (intersections % 2 ) == 1;
 }
 
@@ -540,8 +564,8 @@ void heightField_calculateAABB( heightField* h ) {
 	h->aabb.x_min = FLT_MAX;
 	h->aabb.z_max = -FLT_MAX;
 	h->aabb.z_min = FLT_MAX;
-	for ( int i = 0; i < h->x_samples - 1; i++ ) {
-		for ( int j = 0; j < h->z_samples - 1; j++ ) {
+	for ( int i = 0; i < h->x_samples; i++ ) {
+		for ( int j = 0; j < h->z_samples; j++ ) {
 			vector v = heightField_vertex( h, i, j );
 			h->aabb.x_max = fmaxf( h->aabb.x_max, v.coord.x );
 			h->aabb.x_min = fminf( h->aabb.x_min, v.coord.x );
@@ -569,7 +593,8 @@ bool heightField_contains( heightField* h, float x, float z ) {
 		return false;
 	}
 	vector point = Vector( x, 0.f, z, 1.f );
-	vector_printf( "Testing heightfield against point: ", &point );
+	heightfield_drawWireframe( h, NULL, color_green );
+	//vector_printf( "Testing heightfield against point: ", &point );
 	// Check every possible polygon?
 	for ( int i = 0; i < h->x_samples - 1; i++ ) {
 		for ( int j = 0; j < h->z_samples - 1; j++ ) {
@@ -589,6 +614,7 @@ bool heightField_contains( heightField* h, float x, float z ) {
 			if ( !AABBcontains( aabb, x, z ))
 				 continue;
 
+			/*
 			printf( "Testing against triangle: ( " );
 			vector_print( &a );
 			printf( " )   ( " );
@@ -603,10 +629,15 @@ bool heightField_contains( heightField* h, float x, float z ) {
 			printf( " )   ( " );
 			vector_print( &d );
 			printf( " )\n" );
-	
+*/
+
 			if ( line_intersectsTriangle( point, neg_y_axis, a, b, c ) ||
 					line_intersectsTriangle( point, neg_y_axis, d, c, b )) {
-				printf( "Heightfield contains sphere!\n" );
+				//printf( "Heightfield 0x" xPTRf " contains sphere!\n", (uintptr_t)h );
+				debugdraw_line3d( a, b, color_red );
+				debugdraw_line3d( b, d, color_red );
+				debugdraw_line3d( d, c, color_red );
+				debugdraw_line3d( c, a, color_red );
 				return true;
 			}
 		}
@@ -631,6 +662,8 @@ bool collisionFunc_SphereHeightfield( shape* sphere_shape, shape* height_shape, 
 	if ( !heightField_contains( height_shape->height_field, sphere_position.coord.x, sphere_position.coord.z )) {
 		return false;
 	}
+
+	return false;
 
 	float y = heightField_sample( height_shape->height_field, sphere_position.coord.x, sphere_position.coord.z );	
 	return ( y >= sphere_position.coord.y );

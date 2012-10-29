@@ -28,6 +28,7 @@ C and only controlled remotely by Lua
 
 -- player_ship - the actual ship entity flying around
 	player_ship = nil
+	player_ship_initial_speed = 10.0
 
 -- Collision
 	collision_layer_player	= 1
@@ -396,7 +397,7 @@ end
 function gameplay_start()
 	player_active = true
 	inTime( 2.0, function () 
-		player_ship.speed = 30.0 
+		player_ship.speed = player_ship_initial_speed
 		playership_addEngineGlows( player_ship )
 		if debug_spawning_enabled then
 			spawning_active = true
