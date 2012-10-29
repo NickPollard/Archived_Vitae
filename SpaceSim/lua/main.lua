@@ -28,7 +28,8 @@ C and only controlled remotely by Lua
 
 -- player_ship - the actual ship entity flying around
 	player_ship = nil
-	player_ship_initial_speed = 10.0
+	player_ship_initial_speed = 30.0
+	player_ship_acceleration = 1.0
 
 -- Collision
 	collision_layer_player	= 1
@@ -608,8 +609,7 @@ function playership_tick( ship, dt )
 
 	-- throttle
 	width = 100
-	acceleration = 1.0
-	delta_speed = acceleration * dt;
+	delta_speed = player_ship_acceleration * dt;
 	ship.speed = ship.speed + delta_speed
 
 	playership_weaponsTick( ship, dt )

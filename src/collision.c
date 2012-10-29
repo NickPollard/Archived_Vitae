@@ -147,7 +147,7 @@ void collision_tick( float dt ) {
 
 	collision_debugdraw();
 
-	//printf( "Total collision bodies: %d.\n", body_count );
+	printf( "Total collision bodies: %d.\n", body_count );
 }
 
 bool collisionFunc_SphereSphere( shape* a, shape* b, matrix matrix_a, matrix matrix_b ) {
@@ -264,7 +264,7 @@ bool point_insideTriangle( vector point, vector a, vector b, vector c ) {
 	intersections += line_intersect2d( point, z_axis, b, c ) ? 1 : 0;
 	intersections += line_intersect2d( point, z_axis, c, a ) ? 1 : 0;
 
-	//printf( "Intersections: %d.\n", intersections );
+	printf( "Intersections: %d.\n", intersections );
 	return (intersections % 2 ) == 1;
 }
 
@@ -280,6 +280,7 @@ int line_intersectsTriangle( vector point, vector line, vector a, vector b, vect
 	float line_dot_normal = Dot( &line, &plane_normal );
 	// If the plane is parallel to the line, then return true if the point is on the plane
 	if ( f_eq( line_dot_normal, 0.f )) {
+		printf( "parallel plane.\n" );
 		return f_eq( diff, 0.f );
 	}
 	vector intersection;
@@ -289,13 +290,21 @@ int line_intersectsTriangle( vector point, vector line, vector a, vector b, vect
 	float d = Dot( &point, &line );
 	float d_intersect = Dot( &intersection, &line );
 
-	//printf( "d: %.2f, d_intersect: %.2f\n", d, d_intersect );
+	printf( "d: %.2f, d_intersect: %.2f\n", d, d_intersect );
 
-	if ( d_intersect < d )
+	if ( d_intersect < d ) {
+		printf( "plane below.\n" );
 		return false;
+	}
 	else {
 		// Test that the intersection is inside the triangle
-		return point_insideTriangle( point, a, b, c );
+		if ( point_insideTriangle( point, a, b, c ) ) {
+			//printf( "d: %.2f, d_intersect: %.2f\n", d, d_intersect );
+			return true;
+		}
+		else {
+			return false;
+		}
 	}
 }
 
@@ -583,17 +592,12 @@ bool AABBcontains( aabb2d aabb, float x, float z ) {
 }
 
 bool heightField_contains( heightField* h, float x, float z ) {
-#if 0
-	return ( fabsf( x ) <= h->width * 0.5f ) &&
-			( fabsf( z ) <= h->length * 0.5f );
-#else
-
 	if ( !AABBcontains( h->aabb, x, z ) ) { 
 		//printf( "AABB does not contain point.\n" );
 		return false;
 	}
 	vector point = Vector( x, 0.f, z, 1.f );
-	heightfield_drawWireframe( h, NULL, color_green );
+	//heightfield_drawWireframe( h, NULL, color_green );
 	//vector_printf( "Testing heightfield against point: ", &point );
 	// Check every possible polygon?
 	for ( int i = 0; i < h->x_samples - 1; i++ ) {
@@ -614,36 +618,63 @@ bool heightField_contains( heightField* h, float x, float z ) {
 			if ( !AABBcontains( aabb, x, z ))
 				 continue;
 
-			/*
-			printf( "Testing against triangle: ( " );
-			vector_print( &a );
-			printf( " )   ( " );
-			vector_print( &b );
-			printf( " )   ( " );
-			vector_print( &c );
-			printf( " )\n" );
-			printf( "Testing against triangle: ( " );
-			vector_print( &a );
-			printf( " )   ( " );
-			vector_print( &c );
-			printf( " )   ( " );
-			vector_print( &d );
-			printf( " )\n" );
-*/
-
 			if ( line_intersectsTriangle( point, neg_y_axis, a, b, c ) ||
-					line_intersectsTriangle( point, neg_y_axis, d, c, b )) {
-				//printf( "Heightfield 0x" xPTRf " contains sphere!\n", (uintptr_t)h );
+				line_intersectsTriangle( point, y_axis, a, b, c )) {
+				/*
 				debugdraw_line3d( a, b, color_red );
-				debugdraw_line3d( b, d, color_red );
-				debugdraw_line3d( d, c, color_red );
+				debugdraw_line3d( b, c, color_red );
 				debugdraw_line3d( c, a, color_red );
+				*/
+				return true;
+			}
+			if ( line_intersectsTriangle( point, neg_y_axis, d, c, b ) ||
+				line_intersectsTriangle( point, y_axis, d, c, b )) {
+				/*
+				debugdraw_line3d( d, c, color_red );
+				debugdraw_line3d( c, b, color_red );
+				debugdraw_line3d( b, d, color_red );
+				*/
 				return true;
 			}
 		}
 	}
 	return false;
-#endif
+}
+
+bool heightField_collides( heightField* h, vector point ) {
+	//vector_printf( "Testing heightfield against point: ", &point );
+	// Check every possible polygon?
+	for ( int i = 0; i < h->x_samples - 1; i++ ) {
+		for ( int j = 0; j < h->z_samples - 1; j++ ) {
+			// polygon = i -> i+1, j -> j+1
+			vector a = heightField_vertex( h, i, j );
+			vector b = heightField_vertex( h, i+1, j );
+			vector c = heightField_vertex( h, i, j+1 );
+			vector d = heightField_vertex( h, i+1, j+1 );
+
+			// Temp AABB check to weed out triangles for debugging
+			aabb2d aabb;
+			aabb.x_max = fmaxf( a.coord.x, fmaxf( b.coord.x, fmaxf( c.coord.x, d.coord.x )));
+			aabb.x_min = fminf( a.coord.x, fminf( b.coord.x, fminf( c.coord.x, d.coord.x )));
+			aabb.z_max = fmaxf( a.coord.z, fmaxf( b.coord.z, fmaxf( c.coord.z, d.coord.z )));
+			aabb.z_min = fminf( a.coord.z, fminf( b.coord.z, fminf( c.coord.z, d.coord.z )));
+			//printf( "aabb: %.2f -> %.2f, %.2f -> %.2f\n", aabb.x_min, aabb.x_max, aabb.z_min, aabb.z_max );
+			if ( !AABBcontains( aabb, point.coord.x, point.coord.z ))
+				 continue;
+
+			if ( line_intersectsTriangle( point, y_axis, a, b, c ) ||
+					line_intersectsTriangle( point, y_axis, d, c, b )) {
+				/*
+				debugdraw_line3d( a, b, color_blue );
+				debugdraw_line3d( b, d, color_blue );
+				debugdraw_line3d( d, c, color_blue );
+				debugdraw_line3d( c, a, color_blue );
+				*/
+				return true;
+			}
+		}
+	}
+	return false;
 }
 
 // Do a collision test between a sphere and a heightfield
@@ -663,10 +694,17 @@ bool collisionFunc_SphereHeightfield( shape* sphere_shape, shape* height_shape, 
 		return false;
 	}
 
+
+	if ( heightField_collides( height_shape->height_field, sphere_position )) {
+		return true;
+	}
+
 	return false;
 
+	/*
 	float y = heightField_sample( height_shape->height_field, sphere_position.coord.x, sphere_position.coord.z );	
 	return ( y >= sphere_position.coord.y );
+	*/
 }
 
 bool collisionFunc_HeightfieldSphere( shape* height_shape, shape* sphere_shape, matrix matrix_heightfield, matrix matrix_sphere ) {
