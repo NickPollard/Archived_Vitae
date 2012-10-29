@@ -25,6 +25,8 @@ typedef struct canyonTerrainBlock_s {
 	bool pending;	// Whether we need to recalculate the block
 	int	lod_level;	// Current lod-level
 
+	body*			collision;
+
 	canyon* canyon;
 	int	coord[2];
 	canyonTerrain* terrain;

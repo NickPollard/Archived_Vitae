@@ -52,6 +52,10 @@ void collision_removeBody( body* b ) {
 void collision_removeDeadBody( body*  b ) {
 	int i = array_find( (void**)bodies, body_count, b );
 	bodies[i] = bodies[--body_count];
+	vAssert( b );
+	vAssert( b->shape );
+	shape_delete( b->shape );
+	body_delete( b );
 }
 
 void collision_removeDeadBodies( ) {
@@ -122,9 +126,9 @@ void collision_tick( float dt ) {
 
 	collision_removeDeadBodies();
 
-	//collision_debugdraw();
+	collision_debugdraw();
 
-	//printf( "Total collision bodies: %d.\n", body_count );
+	printf( "Total collision bodies: %d.\n", body_count );
 }
 
 bool collisionFunc_SphereSphere( shape* a, shape* b, matrix matrix_a, matrix matrix_b ) {
@@ -594,17 +598,17 @@ void shape_delete( shape* s ) {
 void test_heightField() {
 	heightField* h = heightField_create( 10.f, 8.f, 2, 2 );
 	(void)h;
-	h->verts[0] = 2.f; // Near corner
-	h->verts[1] = 1.f;
-	h->verts[2] = 0.f;
-	h->verts[3] = -2.f; // Far corner
+	h->verts[0].coord.y = 2.f; // Near corner
+	h->verts[1].coord.y = 1.f;
+	h->verts[2].coord.y = 0.f;
+	h->verts[3].coord.y = -2.f; // Far corner
 
 	{
 		float y;
 		y = heightField_sample( h, -5.f, -4.f );
-		test( ( y == h->verts[0] ), "heightField Sample near corner success", "heightField Sample near corner failure" );
+		test( ( y == h->verts[0].coord.y ), "heightField Sample near corner success", "heightField Sample near corner failure" );
 		y = heightField_sample( h, 4.99999f, 3.99999f );
-		test( ( f_eq( y, h->verts[3] ) ), "heightField Sample far corner success", "heightField Sample far corner failure" );
+		test( ( f_eq( y, h->verts[3].coord.y ) ), "heightField Sample far corner success", "heightField Sample far corner failure" );
 	}
 
 	{
@@ -641,6 +645,10 @@ body* body_create( shape* s, transform* t ) {
 	b->trans = t;
 	b->disabled = false;
 	return b;
+}
+
+void body_delete( body* b ) {
+	mem_free( b );
 }
 
 void collision_init() {
@@ -708,10 +716,6 @@ void test_collision() {
 	collision_removeBody( body_c );
 	// Force remove them immediately
 	collision_removeDeadBodies();
-
-	mem_free( body_a );
-	mem_free( body_b );
-	mem_free( body_c );
 
 	test_heightField();
 }

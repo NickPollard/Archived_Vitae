@@ -30,7 +30,7 @@
 #define false 0
 
 // *** Unit Testing
-#define UNIT_TEST false
+#define UNIT_TEST true
 #define TERM_RED "[1;31;40m"
 #define TERM_GREEN "[1;32;40m"
 #define TERM_WHITE "[0;37;40m"

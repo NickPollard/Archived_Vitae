@@ -25,7 +25,8 @@ texture* terrain_texture_cliff = 0;
 void canyonTerrainBlock_initVBO( canyonTerrainBlock* b );
 void canyonTerrainBlock_calculateBuffers( canyonTerrainBlock* b );
 void canyonTerrainBlock_createBuffers( canyonTerrainBlock* b );
-void canyonTerrainBlock_calculateCollision( canyonTerrain* t, canyonTerrainBlock* b );
+void canyonTerrainBlock_calculateCollision( canyonTerrainBlock* b );
+void canyonTerrainBlock_generate( canyonTerrainBlock* b );
 
 // *** Utility functions
 
@@ -255,15 +256,12 @@ void canyonTerrain_createBlocks( canyonTerrain* t ) {
 	// Calculate block extents
 	for ( int v = 0; v < t->v_block_count; v++ ) {
 		for ( int u = 0; u < t->u_block_count; u++ ) {
-			int coord[2];
-			coord[0] = t->bounds[0][0] + u;
-			coord[1] = t->bounds[0][1] + v;
 			int i = canyonTerrain_blockIndexFromUV( t, u, v );
-
 			t->blocks[i] = canyonTerrainBlock_create( t );
-			canyonTerrainBlock_calculateExtents( t->blocks[i], t, coord );
-			canyonTerrainBlock_createBuffers( t->blocks[i] );
-			canyonTerrainBlock_calculateBuffers( t->blocks[i] );
+			canyonTerrainBlock* b = t->blocks[i];
+			b->coord[0] = t->bounds[0][0] + u;
+			b->coord[1] = t->bounds[0][1] + v;
+			canyonTerrainBlock_generate( b );
 			t->blocks[i]->canyon = t->canyon;
 		}
 	}
@@ -492,18 +490,15 @@ void canyonTerrainBlock_calculateBuffers( canyonTerrainBlock* b ) {
 	memset( verts, 0, sizeof( vector ) * vert_count );
 	vector* normals = alloca( sizeof( vector ) * vert_count );
 
-	// Generate initial mesh
+	// Generate initial mesh vertices
 	for ( int v_index = -1; v_index < b->v_samples + 1; ++v_index ) {
 		for ( int u_index = -1; u_index < b->u_samples + 1; ++u_index ) {
-			// Generate a vertex
+			float u, v, vert_x, vert_y, vert_z;
 			int i = canyonTerrainBlock_indexFromUV( b, u_index, v_index );
 			vAssert( i < vert_count );
-			float u, v;
 			canyonTerrainBlock_positionsFromUV( b, u_index, v_index, &u, &v );
-			float vert_x, vert_z;
 			terrain_worldSpaceFromCanyon( u, v, &vert_x, &vert_z );
-			float vert_y = canyonTerrain_sample( vert_x, vert_z  );
-
+			vert_y = canyonTerrain_sample( vert_x, vert_z  );
 			verts[i] = Vector( vert_x, vert_y, vert_z, 1.f );
 			normals[i] = y_axis;
 		}
@@ -652,23 +647,21 @@ void canyonTerrainBlock_initVBO( canyonTerrainBlock* b ) {
 #else
 	int vert_count = b->element_count;
 #endif // CANYON_TERRAIN_INDEXED
-	//if ( !b->vertex_VBO )
-		b->vertex_VBO_alt = render_requestBuffer( GL_ARRAY_BUFFER, b->vertex_buffer, sizeof( vertex ) * vert_count );
-	//else
-		//render_bufferCopy( GL_ARRAY_BUFFER, *b->vertex_VBO, b->vertex_buffer, sizeof( vertex ) * vert_count );
-	//if ( !b->element_VBO )
-		b->element_VBO_alt = render_requestBuffer( GL_ELEMENT_ARRAY_BUFFER, b->element_buffer, sizeof( GLushort ) * b->element_count );
-	//else
-		//render_bufferCopy( GL_ELEMENT_ARRAY_BUFFER, *b->element_VBO, b->element_buffer, sizeof( GLushort ) * b->element_count );
+	b->vertex_VBO_alt	= render_requestBuffer( GL_ARRAY_BUFFER,			b->vertex_buffer,	sizeof( vertex )	* vert_count );
+	b->element_VBO_alt	= render_requestBuffer( GL_ELEMENT_ARRAY_BUFFER, 	b->element_buffer,	sizeof( GLushort ) 	* b->element_count );
+}
+
+void canyonTerrainBlock_generate( canyonTerrainBlock* b ) {
+	canyonTerrainBlock_calculateExtents( b, b->terrain, b->coord );
+	canyonTerrainBlock_createBuffers( b );
+	canyonTerrainBlock_calculateBuffers( b );
+	canyonTerrainBlock_calculateCollision( b );
 }
 
 void* canyonTerrain_workerGenerateBlock( void* args ) {
 	canyonTerrainBlock* b = args;
 	if ( b->pending ) {
-		canyonTerrainBlock_calculateExtents( b, b->terrain, b->coord );
-		canyonTerrainBlock_createBuffers( b );
-		canyonTerrainBlock_calculateBuffers( b );
-		canyonTerrainBlock_calculateCollision( b->terrain, b );
+		canyonTerrainBlock_generate( b );
 		b->pending = false;
 	}
 	return NULL;
@@ -758,27 +751,23 @@ void canyonTerrain_updateBlocks( canyonTerrain* t ) {
 			memcpy( b->coord, coord, sizeof( int ) * 2 );
 			// mark it as new, buffers will be filled in later
 			b->pending = true;
-#if TERRAIN_USE_WORKER_THREAD
-			canyonTerrain_queueWorkerTaskGenerateBlock( b );
-#endif // TERRAIN_USE_WORKER_THREAD
 		}
 	}
 	memcpy( t->bounds, bounds, sizeof( int ) * 2 * 2 );
 	memcpy( t->blocks, new_blocks, sizeof( canyonTerrainBlock* ) * t->total_block_count );
 
-#if TERRAIN_USE_WORKER_THREAD
-#else
 	for ( int i = 0; i < t->total_block_count; ++i ) {
 		canyonTerrainBlock* b = t->blocks[i];
 		if ( b->pending ) {
-			canyonTerrainBlock_createBuffers( b );
-			canyonTerrainBlock_calculateBuffers( b );
-			canyonTerrainBlock_calculateCollision( t, b );
+#if TERRAIN_USE_WORKER_THREAD
+			canyonTerrain_queueWorkerTaskGenerateBlock( b );
+#else
+			canyonTerranBlock_generate( b );
 			b->pending = false;
 			break;
+#endif // TERRAIN_USE_WORKER_THREAD
 		}
 	}
-#endif // TERRAIN_USE_WORKER_THREAD
 }
 
 void canyonTerrain_tick( void* data, float dt, engine* eng ) {
@@ -810,9 +799,22 @@ float canyonTerrain_sample( float u, float v ) {
 	return mountains + detail - canyon;
 }
 
-void canyonTerrainBlock_calculateCollision( canyonTerrain* t, canyonTerrainBlock* b ) {
-	(void)t;
-	heightField* h = heightField_create( b->u_max - b->u_min, b->v_max - b->v_min, b->u_samples, b->v_samples );
+void canyonTerrainBlock_removeCollision( canyonTerrainBlock* b ) {
+	transform_delete( b->collision->trans );
+	collision_removeBody( b->collision );
+	b->collision = NULL;
+}
+
+
+void canyonTerrainBlock_calculateCollision( canyonTerrainBlock* b ) {
+	if ( b->collision) {
+		canyonTerrainBlock_removeCollision( b );
+	}
+
+	heightField* h = heightField_create( b->u_max - b->u_min, 
+											b->v_max - b->v_min, 
+											b->u_samples, 
+											b->v_samples );
 	for ( int i = 0; i < b->u_samples; i++ ) {
 		for ( int j = 0; j < b->v_samples; j++ ) {
 			int index = canyonTerrainBlock_renderIndexFromUV( b, i, j );
@@ -820,6 +822,6 @@ void canyonTerrainBlock_calculateCollision( canyonTerrain* t, canyonTerrainBlock
 		}
 	}
 	shape* s = shape_heightField_create( h );
-	body* block_collision = body_create( s, transform_create());
-	(void)block_collision;
+	b->collision = body_create( s, transform_create());
+	collision_addBody( b->collision );
 }

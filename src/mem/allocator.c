@@ -205,7 +205,7 @@ void heap_deallocate( heapAllocator* heap, void* data ) {
 	//block* b = heap_findBlock( heap, data );
 	block* b = (block*)((uint8_t*)data - sizeof( block ));
 #ifdef MEM_GUARD_BLOCK
-	vAssert( b->guard = kGuardValue );
+	vAssert( b->guard == kGuardValue );
 #endif // MEM_GUARD_BLOCK
 	vAssert( b );
 #ifdef MEM_DEBUG_VERBOSE
