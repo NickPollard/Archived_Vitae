@@ -145,9 +145,9 @@ void collision_tick( float dt ) {
 
 	collision_removeDeadBodies();
 
-	collision_debugdraw();
+	//collision_debugdraw();
 
-	printf( "Total collision bodies: %d.\n", body_count );
+	//printf( "Total collision bodies: %d.\n", body_count );
 }
 
 bool collisionFunc_SphereSphere( shape* a, shape* b, matrix matrix_a, matrix matrix_b ) {
@@ -264,7 +264,7 @@ bool point_insideTriangle( vector point, vector a, vector b, vector c ) {
 	intersections += line_intersect2d( point, z_axis, b, c ) ? 1 : 0;
 	intersections += line_intersect2d( point, z_axis, c, a ) ? 1 : 0;
 
-	printf( "Intersections: %d.\n", intersections );
+	//printf( "Intersections: %d.\n", intersections );
 	return (intersections % 2 ) == 1;
 }
 
@@ -280,7 +280,6 @@ int line_intersectsTriangle( vector point, vector line, vector a, vector b, vect
 	float line_dot_normal = Dot( &line, &plane_normal );
 	// If the plane is parallel to the line, then return true if the point is on the plane
 	if ( f_eq( line_dot_normal, 0.f )) {
-		printf( "parallel plane.\n" );
 		return f_eq( diff, 0.f );
 	}
 	vector intersection;
@@ -290,10 +289,9 @@ int line_intersectsTriangle( vector point, vector line, vector a, vector b, vect
 	float d = Dot( &point, &line );
 	float d_intersect = Dot( &intersection, &line );
 
-	printf( "d: %.2f, d_intersect: %.2f\n", d, d_intersect );
+	//printf( "d: %.2f, d_intersect: %.2f\n", d, d_intersect );
 
 	if ( d_intersect < d ) {
-		printf( "plane below.\n" );
 		return false;
 	}
 	else {

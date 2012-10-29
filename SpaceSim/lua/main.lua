@@ -134,7 +134,7 @@ end
 
 function setCollision_playerBullet( object )
 	vbody_setLayers( object.body, collision_layer_bullet )
-	vbody_setCollidableLayers( object.body, collision_layer_enemy )
+	vbody_setCollidableLayers( object.body, bitwiseOR( collision_layer_enemy, collision_layer_terrain ))
 end
 
 function setCollision_enemyBullet( object )

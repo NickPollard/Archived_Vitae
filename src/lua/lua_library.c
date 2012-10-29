@@ -755,6 +755,23 @@ int LUA_quaternion_slerpAngle( lua_State* l ) {
 	return 1;
 }
 
+// C = A | B
+int LUA_bit_OR( lua_State* l ) {
+	int a = lua_tonumber( l, 1 );
+	int b = lua_tonumber( l, 2 );
+	int c = a | b;
+	lua_pushnumber( l, c );
+	return 1;
+}
+
+// C = A @ B
+int LUA_bit_AND( lua_State* l ) {
+	int a = lua_tonumber( l, 1 );
+	int b = lua_tonumber( l, 2 );
+	int c = a & b;
+	lua_pushnumber( l, c );
+	return 1;
+}
 
 // ***
 
@@ -784,6 +801,10 @@ void lua_keycodes( lua_State* l ) {
 void luaLibrary_import( lua_State* l ) {
 
 	/////////////// Functions /////////////////
+
+	// *** Bitwise
+	lua_registerFunction( l, LUA_bit_OR, "bitwiseOR" );
+	lua_registerFunction( l, LUA_bit_AND, "bitwiseAND" );
 
 	// *** General
 	lua_registerFunction( l, LUA_registerCallback, "registerEventHandler" );
