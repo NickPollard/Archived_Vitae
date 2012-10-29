@@ -805,7 +805,6 @@ void canyonTerrainBlock_removeCollision( canyonTerrainBlock* b ) {
 	b->collision = NULL;
 }
 
-
 void canyonTerrainBlock_calculateCollision( canyonTerrainBlock* b ) {
 	if ( b->collision) {
 		canyonTerrainBlock_removeCollision( b );
@@ -821,7 +820,10 @@ void canyonTerrainBlock_calculateCollision( canyonTerrainBlock* b ) {
 			h->verts[i + j * b->u_samples] = b->vertex_buffer[index].position;
 		}
 	}
+	heightField_calculateAABB( h );
 	shape* s = shape_heightField_create( h );
 	b->collision = body_create( s, transform_create());
+	b->collision->layers |= kCollisionLayerTerrain;
+	b->collision->collide_with |= kCollisionLayerPlayer;
 	collision_addBody( b->collision );
 }

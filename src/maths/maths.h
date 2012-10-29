@@ -2,6 +2,7 @@
 #pragma once
 
 #include "maths/mathstypes.h"
+#include <float.h>
 #include <math.h>
 
 #define PI 3.1415926535897932

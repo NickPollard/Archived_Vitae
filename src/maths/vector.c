@@ -8,6 +8,10 @@ const vector x_axis = {{ 1.f, 0.f, 0.f, 0.f }};
 const vector y_axis = {{ 0.f, 1.f, 0.f, 0.f }};
 const vector z_axis = {{ 0.f, 0.f, 1.f, 0.f }};
 
+const vector neg_x_axis = {{ -1.f, 0.f, 0.f, 0.f }};
+const vector neg_y_axis = {{ 0.f, -1.f, 0.f, 0.f }};
+const vector neg_z_axis = {{ 0.f, 0.f, -1.f, 0.f }};
+
 const vector color_red = {{ 1.f, 0.f, 0.f, 1.f }};
 const vector color_green = {{ 0.f, 1.f, 0.f, 1.f }};
 const vector color_blue = {{ 0.f, 0.f, 1.f, 1.f }};

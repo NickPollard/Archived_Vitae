@@ -4,9 +4,15 @@
 #define kMaxShapeTypes 4
 #define kMaxCollidingBodies 1024
 
+#include "maths/geometry.h"
 #include "maths/maths.h"
 #include "maths/matrix.h"
 #include "maths/vector.h"
+
+#define kCollisionLayerPlayer	1
+#define kCollisionLayerEnemy	2
+#define kCollisionLayerBullet	4
+#define kCollisionLayerTerrain	8
 
 enum shapeType {
 	shapeInvalid,
@@ -31,6 +37,7 @@ typedef struct heightField_s {
 	float width;		// How wide (in game units) - X - the field is
 	float length;		// How long (in game units) - Z - the field is
 	vector *verts;
+	aabb2d	aabb;
 } heightField;
 
 typedef struct shape_s {
@@ -91,6 +98,7 @@ void shape_delete( shape* s );
 void heightField_delete( heightField* h );
 heightField* heightField_create( float width, float length, int x_samples, int z_samples);
 shape* shape_heightField_create( heightField* h );
+void heightField_calculateAABB( heightField* h );
 
 // Unit tests
 void test_collision();

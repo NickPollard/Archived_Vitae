@@ -645,14 +645,14 @@ int LUA_hideUIPanel( lua_State* l ) {
 
 int LUA_body_setLayers( lua_State* l ) {
 	body* b = lua_toptr( l, 1 );
-	collision_layers_t layers = (collision_layers_t)(1 << (int)lua_tonumber( l, 2 ));
+	collision_layers_t layers = (collision_layers_t)lua_tonumber( l, 2 );
 	b->layers = layers;
 	return 0;
 }
 
 int LUA_body_setCollidableLayers( lua_State* l ) {
 	body* b = lua_toptr( l, 1 );
-	collision_layers_t layers = (collision_layers_t)(1 << (int)lua_tonumber( l, 2 ));
+	collision_layers_t layers = (collision_layers_t)lua_tonumber( l, 2 );
 	b->collide_with = layers;
 	return 0;
 }

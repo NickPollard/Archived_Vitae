@@ -9,8 +9,6 @@
 #include "render/debugdraw.h"
 #include "render/render.h"
 
-#include <float.h>
-
 // *** New Terrain Canyon
 
 /*

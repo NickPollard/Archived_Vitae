@@ -39,7 +39,7 @@ void collision_addBody( body* b ) {
 	bodies[body_count++] = b;
 }
 
-#define kMaxDeadBodies 32
+#define kMaxDeadBodies 128
 int dead_body_count = 0;
 body* dead_bodies[kMaxDeadBodies];
 
@@ -165,14 +165,21 @@ bool triangle_intersectingMesh( vector a, vector b, vector c, collisionMesh* m )
 vector line_normal( vector a, vector b ) {
 	// TODO
 	float x = b.coord.x - a.coord.x;
-	float y = b.coord.y - a.coord.y;
-	vector normal = Vector( y, -x, 0.f, 0.f );
+	float z = b.coord.z - a.coord.z;
+	vector normal = Vector( z, 0.f, -x, 0.f );
 	Normalize( &normal, &normal );
 	return normal;
 }
 
 // Using just X and Y
 bool line_intersect2d( vector point, vector dir, vector a, vector b ) {
+	printf( "line_intersect2d: point: (" );
+	vector_print( &point );
+	printf( " ), edge ( " );
+	vector_print( &a );
+	printf( " ) --> ( " );
+	vector_print( &b );
+	printf( " )\n" );
 	if ( vector_equal( &a, &b )) {
 		// Degenerate triangle, so no intersection
 		return false;
@@ -181,18 +188,34 @@ bool line_intersect2d( vector point, vector dir, vector a, vector b ) {
 	vector offset;
 	Sub( &offset, &a, &point );
 	float dir_dot_normal = Dot( &dir, &normal );
-	if ( f_eq (dir_dot_normal, 0.f )) {
+	if ( f_eq( dir_dot_normal, 0.f )) {
+		// If it's parellel to the edge, it will never cross
 		return false;
 	}
 	float d = Dot( &offset, &normal ) / dir_dot_normal;
 	vector intersection;
 	vector_scale( &intersection, &dir, d ); 
 	Add( &intersection, &intersection, &point );
-	//printf( "dir_dot_normal: %.2f, intersection.z %.2f\n", dir_dot_normal, intersection.coord.z );
-	vAssert( f_eq( intersection.coord.z, 0.f ));
+	//printf( "dir_dot_normal: %.2f, intersection.y %.2f\n", dir_dot_normal, intersection.coord.y );
+	vAssert( f_eq( intersection.coord.y, 0.f ));
 
+	vector line = normalized( vector_sub( b, a ));
+	float d_a = Dot( &a, &line );
+	float d_b = Dot( &b, &line );
+	float d_int = Dot( &intersection, &line );
 
-	return false;
+	// Line must be in front of us in the DIR we are tracing
+	float point_d = Dot( &point, &dir );
+	float line_d = Dot( &intersection, &dir );
+	printf( "point_d: %.2f, line_d: %.2f\n", point_d, line_d );
+
+	if ( d_int >= d_a && d_int <= d_b && line_d >= point_d ) {
+		printf( "Intersects.\n" );
+	}
+	else {
+		printf( "No intersect.\n" );
+	}
+	return ( d_int >= d_a && d_int <= d_b && line_d >= point_d );
 }
 
 // Is a point inside the triangle
@@ -203,21 +226,21 @@ bool point_insideTriangle( vector point, vector a, vector b, vector c ) {
 	int intersections = 0;
 
 	//project onto the plane
-	point.coord.z = 0.f;
-	a.coord.z = 0.f;
-	b.coord.z = 0.f;
-	c.coord.z = 0.f;
+	point.coord.y = 0.f;
+	a.coord.y = 0.f;
+	b.coord.y = 0.f;
+	c.coord.y = 0.f;
 
 	vector ab, bc, ca;
 	Sub( &ab, &b, &b );
 	Sub( &bc, &c, &a );
 	Sub( &ca, &a, &c );
 
-	vector dir = Vector( 0.f, 1.f, 0.f, 0.f );
-	intersections += line_intersect2d( point, dir, a, b ) ? 1 : 0;
-	intersections += line_intersect2d( point, dir, b, c ) ? 1 : 0;
-	intersections += line_intersect2d( point, dir, c, a ) ? 1 : 0;
+	intersections += line_intersect2d( point, z_axis, a, b ) ? 1 : 0;
+	intersections += line_intersect2d( point, z_axis, b, c ) ? 1 : 0;
+	intersections += line_intersect2d( point, z_axis, c, a ) ? 1 : 0;
 
+	printf( "Intersections: %d.\n", intersections );
 	return (intersections % 2 ) == 1;
 }
 
@@ -241,6 +264,8 @@ int line_intersectsTriangle( vector point, vector line, vector a, vector b, vect
 	
 	float d = Dot( &point, &line );
 	float d_intersect = Dot( &intersection, &line );
+
+	//printf( "d: %.2f, d_intersect: %.2f\n", d, d_intersect );
 
 	if ( d_intersect < d )
 		return false;
@@ -425,7 +450,7 @@ shape* mesh_createFromRenderMesh( mesh* render_mesh ) {
 
 vector heightField_vertex( heightField* h, int x, int z ) { 
 #if 0
-	float x_per_sample = h->width / ((float)h->x_samples - 1.f );
+	float x_per_sample = h->width / ((float)h->x_samples - 1.f )z
 	float x_pos = ((float)x) * x_per_sample - ( h->width * 0.5f );
 	float z_per_sample = h->length / ((float)h->z_samples - 1.f );
 	float z_pos = ((float)z) * z_per_sample - ( h->length * 0.5f );
@@ -510,22 +535,78 @@ bool polygon2d_contains( vector a, vector b, vector c, vector d, vector point ) 
 	return true;
 }
 
+void heightField_calculateAABB( heightField* h ) {
+	h->aabb.x_max = -FLT_MAX;
+	h->aabb.x_min = FLT_MAX;
+	h->aabb.z_max = -FLT_MAX;
+	h->aabb.z_min = FLT_MAX;
+	for ( int i = 0; i < h->x_samples - 1; i++ ) {
+		for ( int j = 0; j < h->z_samples - 1; j++ ) {
+			vector v = heightField_vertex( h, i, j );
+			h->aabb.x_max = fmaxf( h->aabb.x_max, v.coord.x );
+			h->aabb.x_min = fminf( h->aabb.x_min, v.coord.x );
+			h->aabb.z_max = fmaxf( h->aabb.z_max, v.coord.z );
+			h->aabb.z_min = fminf( h->aabb.z_min, v.coord.z );
+		}
+	}
+}
+
+bool AABBcontains( aabb2d aabb, float x, float z ) {
+	return x <= aabb.x_max &&
+			x >= aabb.x_min &&
+			z <= aabb.z_max &&
+			z >= aabb.z_min;
+}
+
 bool heightField_contains( heightField* h, float x, float z ) {
 #if 0
 	return ( fabsf( x ) <= h->width * 0.5f ) &&
 			( fabsf( z ) <= h->length * 0.5f );
 #else
-	// TODO - AABB check to save time on non-rectangular heightfields
+
+	if ( !AABBcontains( h->aabb, x, z ) ) { 
+		//printf( "AABB does not contain point.\n" );
+		return false;
+	}
+	vector point = Vector( x, 0.f, z, 1.f );
+	vector_printf( "Testing heightfield against point: ", &point );
 	// Check every possible polygon?
 	for ( int i = 0; i < h->x_samples - 1; i++ ) {
 		for ( int j = 0; j < h->z_samples - 1; j++ ) {
 			// polygon = i -> i+1, j -> j+1
 			vector a = heightField_vertex( h, i, j );
 			vector b = heightField_vertex( h, i+1, j );
-			vector c = heightField_vertex( h, i+1, j+1 );
-			vector d = heightField_vertex( h, i, j+1 );
-			vector point = Vector( x, 0.f, z, 1.f );
-			if ( polygon2d_contains( a, b, c, d, point )) {
+			vector c = heightField_vertex( h, i, j+1 );
+			vector d = heightField_vertex( h, i+1, j+1 );
+
+			// Temp AABB check to weed out triangles for debugging
+			aabb2d aabb;
+			aabb.x_max = fmaxf( a.coord.x, fmaxf( b.coord.x, fmaxf( c.coord.x, d.coord.x )));
+			aabb.x_min = fminf( a.coord.x, fminf( b.coord.x, fminf( c.coord.x, d.coord.x )));
+			aabb.z_max = fmaxf( a.coord.z, fmaxf( b.coord.z, fmaxf( c.coord.z, d.coord.z )));
+			aabb.z_min = fminf( a.coord.z, fminf( b.coord.z, fminf( c.coord.z, d.coord.z )));
+			//printf( "aabb: %.2f -> %.2f, %.2f -> %.2f\n", aabb.x_min, aabb.x_max, aabb.z_min, aabb.z_max );
+			if ( !AABBcontains( aabb, x, z ))
+				 continue;
+
+			printf( "Testing against triangle: ( " );
+			vector_print( &a );
+			printf( " )   ( " );
+			vector_print( &b );
+			printf( " )   ( " );
+			vector_print( &c );
+			printf( " )\n" );
+			printf( "Testing against triangle: ( " );
+			vector_print( &a );
+			printf( " )   ( " );
+			vector_print( &c );
+			printf( " )   ( " );
+			vector_print( &d );
+			printf( " )\n" );
+	
+			if ( line_intersectsTriangle( point, neg_y_axis, a, b, c ) ||
+					line_intersectsTriangle( point, neg_y_axis, d, c, b )) {
+				printf( "Heightfield contains sphere!\n" );
 				return true;
 			}
 		}

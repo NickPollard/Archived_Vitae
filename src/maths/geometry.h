@@ -3,6 +3,13 @@
 
 #include "maths/mathstypes.h"
 
+typedef struct aabb2d_s {
+	float x_min;
+	float x_max;
+	float z_min;
+	float z_max;
+} aabb2d;
+
 void plane( vector a, vector b, vector c, vector* normal, float* d );
 
 float segment_closestPoint( vector a, vector b, vector point, vector* closest );

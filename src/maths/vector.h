@@ -7,6 +7,10 @@ extern const vector x_axis;
 extern const vector y_axis;
 extern const vector z_axis;
 
+extern const vector neg_x_axis;
+extern const vector neg_y_axis;
+extern const vector neg_z_axis;
+
 extern const vector color_red;
 extern const vector color_green;
 extern const vector color_blue;

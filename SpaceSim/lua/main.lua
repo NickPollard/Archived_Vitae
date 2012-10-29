@@ -32,7 +32,8 @@ C and only controlled remotely by Lua
 -- Collision
 	collision_layer_player	= 1
 	collision_layer_enemy	= 2
-	collision_layer_bullet	= 3
+	collision_layer_bullet	= 4
+	collision_layer_terrain	= 8
 
 -- Camera
 	camera		= "chase"
