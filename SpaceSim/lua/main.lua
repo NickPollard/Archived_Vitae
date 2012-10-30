@@ -16,12 +16,13 @@ C and only controlled remotely by Lua
 
 -- Load Modules
 	package.path = "./SpaceSim/lua/?.lua"
-	ai = require "ai"
-	entities = require "entities"
-	fx = require "fx"
-	library = require "library"
-	timers = require "timers"
-	ui = require "ui"
+	ai			= require "ai"
+	entities	= require "entities"
+	fx			= require "fx"
+	library		= require "library"
+	spawn		= require "spawn"
+	timers		= require "timers"
+	ui			= require "ui"
 
 -- player - this object contains general data about the player
 	player = nil
@@ -713,7 +714,6 @@ end
 
 function spawn_turret( u, v )
 	local spawn_height = 20.0
-	vprint( "Spawn_turret, v = " .. v )
 
 	-- position
 	local x, y, z = vcanyon_position( u, v )
@@ -722,7 +722,7 @@ function spawn_turret( u, v )
 	vtransform_setWorldPosition( turret.transform, position )
 
 	-- Orientation
-	local facing_x, facing_y, facing_z = vcanyon_position( u, v - ( 1.0 / canyon_v_scale ))
+	local facing_x, facing_y, facing_z = vcanyon_position( u, v - 1.0 )
 	local facing_position = Vector( facing_x, y + spawn_height, facing_z, 1.0 )
 	vtransform_facingWorld( turret.transform, facing_position )
 
@@ -775,6 +775,8 @@ function entities_spawnRange( near, far )
 	spawn_v = i * spawn_interval
 	while contains( spawn_v, near, far ) do
 		local interceptor_offset_u = 20.0
+		spawn.spawnGroup( spawn.group_two_turrets, spawn_v )
+		--[[
 		if ( i + 1 ) % 3.0 == 0 then
 			spawn_interceptor( interceptor_offset_u, spawn_v, interceptor_attack_homing )
 			spawn_interceptor( -interceptor_offset_u, spawn_v, interceptor_attack_homing )
@@ -782,6 +784,7 @@ function entities_spawnRange( near, far )
 			spawn_interceptor( interceptor_offset_u, spawn_v, interceptor_attack_gun )
 			spawn_interceptor( -interceptor_offset_u, spawn_v, interceptor_attack_gun )
 		end
+		--]]
 		i = i + 1
 		spawn_v = i * spawn_interval
 	end
