@@ -701,7 +701,7 @@ function turret_fire( turret )
 end
 
 function turret_tick( turret, dt )
-	turret.state = turret.state( turret, dt )
+	turret.behaviour = turret.behaviour( turret, dt )
 end
 
 function tick_array( array, dt )
@@ -712,38 +712,11 @@ function tick_array( array, dt )
 	end
 end
 
-function spawn_turret( u, v )
-	local spawn_height = 20.0
-
-	-- position
-	local x, y, z = vcanyon_position( u, v )
-	local position = Vector( x, y + spawn_height, z, 1.0 )
-	local turret = gameobject_create( "dat/model/gun_turret.s" )
-	vtransform_setWorldPosition( turret.transform, position )
-
-	-- Orientation
-	local facing_x, facing_y, facing_z = vcanyon_position( u, v - 1.0 )
-	local facing_position = Vector( facing_x, y + spawn_height, facing_z, 1.0 )
-	vtransform_facingWorld( turret.transform, facing_position )
-
-	-- Physics
-	vbody_registerCollisionCallback( turret.body, turret_collisionHandler )
-	vbody_setLayers( turret.body, collision_layer_enemy )
-	vbody_setCollidableLayers( turret.body, collision_layer_player )
-
-	turret.tick = turret_tick
-	turret.cooldown = turret_cooldown
-
-	-- ai
-	turret.state = turret_state_inactive
-
-	turrets.count = turrets.count + 1
-	turrets[turrets.count] = turret
-end
-
 function turret_collisionHandler( target, collider )
+	vprint( "Turret collision." )
 	fx.spawn_explosion( target.transform )
 	gameobject_destroy( target )
+	target.behaviour = ai.dead
 end
 
 function spawn_atCanyon( u, v, model )
@@ -775,7 +748,7 @@ function entities_spawnRange( near, far )
 	spawn_v = i * spawn_interval
 	while contains( spawn_v, near, far ) do
 		local interceptor_offset_u = 20.0
-		spawn.spawnGroup( spawn.group_two_turrets, spawn_v )
+		spawn.spawnGroup( spawn.spawnGroupForIndex( i ), spawn_v )
 		--[[
 		if ( i + 1 ) % 3.0 == 0 then
 			spawn_interceptor( interceptor_offset_u, spawn_v, interceptor_attack_homing )
