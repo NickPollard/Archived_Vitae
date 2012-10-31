@@ -23,9 +23,12 @@ end
 function spawn.spawnGroup( spawn_group, v )
 	local u_delta = 20.0
 	local u = 0.0
+	local i = 0.5
+	local side = 1.0
 	for spawner in iterator( spawn_group ) do
-		spawner( u, v )
-		u = u + u_delta
+		spawner( u + side * math.floor( i ) * u_delta, v )
+		i = i + 0.5
+		side = side * -1.0
 	end
 end
 
@@ -60,25 +63,17 @@ end
 
 function spawn.spawnGroupForIndex( i )
 	return spawn.generateSpawnGroupForDifficulty( i )
-
-	--[[
-	if i < 3 then
-		return spawn.group_two_turrets
-	end
-	if i < 5 then
-		return spawn.group_two_interceptors
-	end
-	return spawn.group_turrets_and_interceptors
-	--]]
 end
 
 
 function spawn.randomInterceptor()
 	local r = vrand( spawn.random, 0.0, 1.0 )
-	if r < 0.7 then
+	if r > 0.75 then
+		return function( u, v ) spawn_interceptor( u, v, interceptor_attack_homing ) end
+	elseif r > 0.4 then
 		return function( u, v ) spawn_interceptor( u, v, interceptor_attack_gun ) end
 	else
-		return function( u, v ) spawn_interceptor( u, v, interceptor_attack_homing ) end
+		return function( u, v ) spawn.spawnTurret( u, v ) end
 	end
 end
 
