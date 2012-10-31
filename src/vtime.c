@@ -29,10 +29,7 @@ float deterministic_frand( randSeq* r, float floor, float ceiling ) {
 
 void deterministic_seedRandSeq( long int seed, randSeq* r ) {
 //		srand48_r( seed, &r->buffer );
-	r->buffer[0] = 0x0;
-	r->buffer[1] = 0x0;
-	r->buffer[2] = 0x0;
-	memcpy( r->buffer, &seed, sizeof( long int ));
+	memcpy( &r->buffer[0], &seed, sizeof( randSeq ));
 }
 
 void timer_init(frame_timer* timer) {

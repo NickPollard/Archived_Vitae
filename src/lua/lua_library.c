@@ -14,6 +14,7 @@
 #include "physic.h"
 #include "scene.h"
 #include "transform.h"
+#include "vtime.h"
 #include "camera/chasecam.h"
 #include "camera/flycam.h"
 #include "input/keyboard.h"
@@ -773,6 +774,25 @@ int LUA_bit_AND( lua_State* l ) {
 	return 1;
 }
 
+int LUA_rand_newSeq( lua_State* l ) {
+	randSeq* random_sequence = mem_alloc( sizeof( randSeq ));
+	random_sequence->buffer[0] = 0x1;
+	random_sequence->buffer[1] = 0x2;
+	random_sequence->buffer[2] = 0x3;
+	deterministic_seedRandSeq( 0x0, random_sequence );
+	lua_pushptr( l, random_sequence );
+	return 1;
+}
+
+int LUA_rand( lua_State* l ) {
+	randSeq* random_sequence = lua_toptr( l, 1 );
+	float floor = lua_tonumber( l, 2 );
+	float ceiling = lua_tonumber( l, 3 );
+	float rand = deterministic_frand( random_sequence, floor, ceiling );
+	lua_pushnumber( l, rand );
+	return 1;
+}
+
 // ***
 
 
@@ -810,6 +830,8 @@ void luaLibrary_import( lua_State* l ) {
 	lua_registerFunction( l, LUA_registerCallback, "registerEventHandler" );
 	lua_registerFunction( l, LUA_print, "vprint" );
 	lua_registerFunction( l, LUA_debugdraw_cross, "vdebugdraw_cross" );
+	lua_registerFunction( l, LUA_rand, "vrand" );
+	lua_registerFunction( l, LUA_rand_newSeq, "vrand_newSeq" );
 
 	// *** Vector
 	lua_registerFunction( l, LUA_vector, "Vector" );

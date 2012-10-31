@@ -14,6 +14,12 @@ spawn.group_turrets_and_interceptors[2] = function( u, v ) spawn_interceptor( u,
 spawn.group_turrets_and_interceptors[3] = function( u, v ) spawn.spawnTurret( u, v ) end
 spawn.group_turrets_and_interceptors[4] = function( u, v ) spawn_interceptor( u, v, interceptor_attack_gun ) end
 
+spawn.random = 0 
+
+function spawn.init()
+	spawn.random = vrand_newSeq()
+end
+
 function spawn.spawnGroup( spawn_group, v )
 	local u_delta = 20.0
 	local u = 0.0
@@ -53,6 +59,9 @@ function spawn.spawnTurret( u, v )
 end
 
 function spawn.spawnGroupForIndex( i )
+	return spawn.generateSpawnGroupForDifficulty( i )
+
+	--[[
 	if i < 3 then
 		return spawn.group_two_turrets
 	end
@@ -60,6 +69,31 @@ function spawn.spawnGroupForIndex( i )
 		return spawn.group_two_interceptors
 	end
 	return spawn.group_turrets_and_interceptors
+	--]]
+end
+
+
+function spawn.randomInterceptor()
+	local r = vrand( spawn.random, 0.0, 1.0 )
+	if r < 0.7 then
+		return function( u, v ) spawn_interceptor( u, v, interceptor_attack_gun ) end
+	else
+		return function( u, v ) spawn_interceptor( u, v, interceptor_attack_homing ) end
+	end
+end
+
+function spawn.generateSpawnGroupForDifficulty( difficulty )
+	vprint( "generate spawn group" )
+	-- For now, assume difficulty is number of units to spawn
+	local group = { count = difficulty }
+	local i = 1
+	vprint( "generate spawn group 2" )
+	while i <= difficulty do
+		vprint( "adding spawn" )
+		group[i] = spawn.randomInterceptor()
+		i = i + 1
+	end
+	return group
 end
 
 return spawn
