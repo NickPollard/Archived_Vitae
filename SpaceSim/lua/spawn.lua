@@ -1,18 +1,21 @@
 local spawn = {}
 
-spawn.group_two_interceptors = { count = 2 }
-spawn.group_two_interceptors[1] = function( u, v ) spawn_interceptor( u, v, interceptor_attack_gun ) end
-spawn.group_two_interceptors[2] = function( u, v ) spawn_interceptor( u, v, interceptor_attack_gun ) end
+spawn.group_two_interceptors = {}
+spawn.group_two_interceptors.spawners = { count = 2 }
+spawn.group_two_interceptors.spawners[1] = function( u, v ) spawn_interceptor( u, v, interceptor_attack_gun ) end
+spawn.group_two_interceptors.spawners[2] = function( u, v ) spawn_interceptor( u, v, interceptor_attack_gun ) end
 
-spawn.group_two_turrets = { count = 2 }
-spawn.group_two_turrets[1] = function( u, v ) spawn.spawnTurret( u, v ) end
-spawn.group_two_turrets[2] = function( u, v ) spawn.spawnTurret( u, v ) end
+spawn.group_two_turrets = {}
+spawn.group_two_turrets.spawners = { count = 2 }
+spawn.group_two_turrets.spawners[1] = function( u, v ) spawn.spawnTurret( u, v ) end
+spawn.group_two_turrets.spawners[2] = function( u, v ) spawn.spawnTurret( u, v ) end
 
-spawn.group_turrets_and_interceptors = { count = 4 }
-spawn.group_turrets_and_interceptors[1] = function( u, v ) spawn.spawnTurret( u, v ) end
-spawn.group_turrets_and_interceptors[2] = function( u, v ) spawn_interceptor( u, v, interceptor_attack_gun ) end
-spawn.group_turrets_and_interceptors[3] = function( u, v ) spawn.spawnTurret( u, v ) end
-spawn.group_turrets_and_interceptors[4] = function( u, v ) spawn_interceptor( u, v, interceptor_attack_gun ) end
+spawn.group_turrets_and_interceptors = {}
+spawn.group_turrets_and_interceptors.spawners = { count = 4 }
+spawn.group_turrets_and_interceptors.spawners[1] = function( u, v ) spawn.spawnTurret( u, v ) end
+spawn.group_turrets_and_interceptors.spawners[2] = function( u, v ) spawn_interceptor( u, v, interceptor_attack_gun ) end
+spawn.group_turrets_and_interceptors.spawners[3] = function( u, v ) spawn.spawnTurret( u, v ) end
+spawn.group_turrets_and_interceptors.spawners[4] = function( u, v ) spawn_interceptor( u, v, interceptor_attack_gun ) end
 
 spawn.random = 0 
 
@@ -20,16 +23,44 @@ function spawn.init()
 	spawn.random = vrand_newSeq()
 end
 
+function spawn.positionsForGroup( v, spawn_group_positioners )
+	--[[
+	local spawn_space = { width = 9, height = 3, u_delta = 20.0, v_delta = 20.0 }
+	local spawn_positions = fold_map( spawn_space, spawn_group_positioners )
+	--]]
+
+	local spawn_positions = { count = spawn_group_positioners.count }
+	local i = 1
+	local u = 0.0
+	local u_delta = 20.0
+	while i <= spawn_positions.count do
+		spawn_positions[i] = { u = u, v = v }
+		u = u + u_delta
+		i = i + 1
+	end
+	return spawn_positions
+end
+
 function spawn.spawnGroup( spawn_group, v )
+---[[
+	vprint( "spawning group" )
+	spawn_positions = spawn.positionsForGroup( v, spawn_group.positioners )
+	vprint( "spawning group 1" )
+	library.apply_list( spawn_group.spawners, spawn_positions )
+	vprint( "spawning group 2" )
+	--]]
+
+--[[
 	local u_delta = 20.0
 	local u = 0.0
 	local i = 0.5
 	local side = 1.0
-	for spawner in iterator( spawn_group ) do
+	for spawner in iterator( spawn_group.spawners ) do
 		spawner( u + side * math.floor( i ) * u_delta, v )
 		i = i + 0.5
 		side = side * -1.0
 	end
+	--]]
 end
 
 function spawn.spawnTurret( u, v )
@@ -66,26 +97,25 @@ function spawn.spawnGroupForIndex( i )
 end
 
 
-function spawn.randomInterceptor()
+function spawn.randomEnemy()
 	local r = vrand( spawn.random, 0.0, 1.0 )
 	if r > 0.75 then
-		return function( u, v ) spawn_interceptor( u, v, interceptor_attack_homing ) end
+		return function( coord ) spawn_interceptor( coord.u, coord.v, interceptor_attack_homing ) end
 	elseif r > 0.4 then
-		return function( u, v ) spawn_interceptor( u, v, interceptor_attack_gun ) end
+		return function( coord ) spawn_interceptor( coord.u, coord.v, interceptor_attack_gun ) end
 	else
-		return function( u, v ) spawn.spawnTurret( u, v ) end
+		return function( coord ) spawn.spawnTurret( coord.u, coord.v ) end
 	end
 end
 
 function spawn.generateSpawnGroupForDifficulty( difficulty )
-	vprint( "generate spawn group" )
 	-- For now, assume difficulty is number of units to spawn
-	local group = { count = difficulty }
+	local group = {}
+	group.spawners = { count = difficulty }
+	group.positioners = { count = difficulty }
 	local i = 1
-	vprint( "generate spawn group 2" )
 	while i <= difficulty do
-		vprint( "adding spawn" )
-		group[i] = spawn.randomInterceptor()
+		group.spawners[i] = spawn.randomEnemy()
 		i = i + 1
 	end
 	return group
