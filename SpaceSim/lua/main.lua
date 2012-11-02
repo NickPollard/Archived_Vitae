@@ -446,17 +446,6 @@ function start()
 	loadParticles()
 
 	restart()
-	
-	local test_array = { count = 3 }
-	test_array[1] = 1
-	test_array[2] = 2
-	test_array[3] = 3
-
-	vprint( "map test" )
-	local result = array.map( test_array, function( a ) vprint( "Doubling " .. a ) return a + a end )
-	vprint( "result 1 " .. result[1] )
-	vprint( "result 2 " .. result[2] )
-	vprint( "result 3 " .. result[3] )
 end
 
 wave_interval_time = 10.0
