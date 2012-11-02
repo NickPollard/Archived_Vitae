@@ -13,5 +13,4 @@ function library.apply_list( functions, arguments )
 	end
 end
 
-
 return library

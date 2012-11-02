@@ -17,6 +17,7 @@ C and only controlled remotely by Lua
 -- Load Modules
 	package.path = "./SpaceSim/lua/?.lua"
 	ai			= require "ai"
+	array		= require "array"
 	entities	= require "entities"
 	fx			= require "fx"
 	library		= require "library"
@@ -159,7 +160,7 @@ function create_projectile( source, offset, model, speed )
 	vphysic_setVelocity( projectile.physic, world_v );
 
 	-- Store the projectile so it doesn't get garbage collected
-	array_add( missiles, projectile )
+	array.add( missiles, projectile )
 
 	return projectile
 end
@@ -231,34 +232,12 @@ function fire_enemy_homing_missile( source, offset, model, speed )
 	inTime( 5.0, function () missile_destroy( projectile ) end )
 
 	-- Store the projectile so it doesn't get garbage collected
-	array_add( missiles, projectile )
+	array.add( missiles, projectile )
 	projectile.tick = homing_missile_tick( player_ship.transform )
 end
 
 function inTime( time, action )
 	timers.add( timers.create( time, action ))
-end
-
-function iterator( t )
-	local i = 0
-	local n = t.count
-	return function ()
-		i = i + 1
-		if i <= n then return t[i] end
-	end
-end
-
-function filter( array, func )
-	new_array = {}
-	local count = 0
-	for element in iterator( array ) do
-		if func( element ) then
-			count = count + 1
-			new_array[count] = element
-		end
-	end
-	new_array.count = count
-	return new_array
 end
 
 -- Create a player. The player is a specialised form of Gameobject
@@ -373,7 +352,6 @@ function player_ship_collisionHandler( ship, collider )
 
 	-- not using gameobject_destroy as we need to sync transform dying with camera rejig
 	inTime( 0.2, function () vdeleteModelInstance( ship.model ) 
-							vprint( "Destroying ship physic" )
 							vphysic_destroy( ship.physic )
 							ship.physic = nil
 				end )
@@ -706,8 +684,8 @@ function turret_tick( turret, dt )
 	turret.behaviour = turret.behaviour( turret, dt )
 end
 
-function tick_array( array, dt )
-	for element in iterator( array ) do
+function tick_array( arr, dt )
+	for element in array.iterator( arr ) do
 		if element.tick then
 			element.tick( element, dt )
 		end
@@ -715,7 +693,6 @@ function tick_array( array, dt )
 end
 
 function turret_collisionHandler( target, collider )
-	vprint( "Turret collision." )
 	fx.spawn_explosion( target.transform )
 	gameobject_destroy( target )
 	target.behaviour = ai.dead
@@ -766,7 +743,7 @@ function entities_spawnRange( near, far )
 end
 
 function entities_despawnAll()
-	for unit in iterator( interceptors ) do
+	for unit in array.iterator( interceptors ) do
 		vprint( "Despawning interceptor" )
 		ship_delete( unit )
 		unit.behaviour = ai.dead
@@ -830,7 +807,7 @@ function update_despawns( ship )
 	u,v = vcanyon_fromWorld( ship_pos )
 	despawn_up_to = v - despawn_distance
 
-	for unit in iterator( interceptors ) do
+	for unit in array.iterator( interceptors ) do
 		-- TODO remove them properly
 		if unit.transform then
 			unit_pos = vtransform_getWorldPosition( unit.transform )
@@ -924,7 +901,7 @@ function create_interceptor()
 
 	-- Activate
 	interceptor.tick = interceptor_tick
-	array_add( interceptors, interceptor )
+	array.add( interceptors, interceptor )
 	return interceptor
 end
 
@@ -961,11 +938,6 @@ function spawn_interceptor( u, v, attack_type )
 	local x, y, z = vcanyon_position( u, v + interceptor_target_v_offset - 100.0 )
 	local attack_target = { x = x, y = move_to.y, z = z }
 	interceptor.behaviour = interceptor_behaviour( interceptor, move_to, attack_target, attack_type )
-end
-
-function array_add( array, object )
-	array.count = array.count + 1
-	array[array.count] = object
 end
 
 function interceptor_tick( interceptor, dt )

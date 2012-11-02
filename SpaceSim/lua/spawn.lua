@@ -23,12 +23,15 @@ function spawn.init()
 	spawn.random = vrand_newSeq()
 end
 
-function spawn.positionsForGroup( v, spawn_group_positioners )
-	--[[
-	local spawn_space = { width = 9, height = 3, u_delta = 20.0, v_delta = 20.0 }
-	local spawn_positions = fold_map( spawn_space, spawn_group_positioners )
-	--]]
+function spawn.positionerTurret( spawn_space )
+	
+end
 
+function spawn.positionsForGroup( v, spawn_group_positioners )
+	local spawn_space = { width = 9, height = 3, u_delta = 20.0, v_delta = 20.0 }
+	local spawn_positions = array.fold_map( spawn_space, spawn_group_positioners )
+
+	--[[
 	local spawn_positions = { count = spawn_group_positioners.count }
 	local i = 1
 	local u = 0.0
@@ -38,29 +41,14 @@ function spawn.positionsForGroup( v, spawn_group_positioners )
 		u = u + u_delta
 		i = i + 1
 	end
+	--]]
+
 	return spawn_positions
 end
 
 function spawn.spawnGroup( spawn_group, v )
----[[
-	vprint( "spawning group" )
 	spawn_positions = spawn.positionsForGroup( v, spawn_group.positioners )
-	vprint( "spawning group 1" )
 	library.apply_list( spawn_group.spawners, spawn_positions )
-	vprint( "spawning group 2" )
-	--]]
-
---[[
-	local u_delta = 20.0
-	local u = 0.0
-	local i = 0.5
-	local side = 1.0
-	for spawner in iterator( spawn_group.spawners ) do
-		spawner( u + side * math.floor( i ) * u_delta, v )
-		i = i + 0.5
-		side = side * -1.0
-	end
-	--]]
 end
 
 function spawn.spawnTurret( u, v )

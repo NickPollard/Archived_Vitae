@@ -54,23 +54,12 @@ function ai.queue( ... )
 	return ai.queue_internal( arg )
 end
 
-function tail( array )
-	new_array = {}
-	for i,v in ipairs( array ) do
-		if i > 1 then
-			table.insert( new_array, v )
-		end
-	end
-	new_array.n = array.n - 1
-	return new_array
-end
-
 function ai.queue_internal( args )
 	vprint( "queue_internal" )
 	local state = nil
 	local next_state = nil
 	if args.n > 0 then
-		next_state = ai.queue_internal( tail( args )) 
+		next_state = ai.queue_internal( array.tail( args )) 
 		state = ai.state( args[1], function() return next_state end )
 	else
 		state = nil

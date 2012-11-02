@@ -14,14 +14,14 @@ function timers.create( time, action )
 end
 
 function timers.tick( dt )
-	for element in iterator( timers.timers ) do
+	for element in array.iterator( timers.timers ) do
 		element.time = element.time - dt
 		if element.time < 0 then
 			element.action()
 		end
 	end
 
-	new_timers = filter( timers.timers, function( e ) return ( e.time > 0 ) end )
+	new_timers = array.filter( timers.timers, function( e ) return ( e.time > 0 ) end )
 	timers.timers = new_timers;
 end
 
