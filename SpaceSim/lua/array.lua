@@ -48,7 +48,9 @@ function array.new()
 end
 
 function array.foldr( arr, folder, final )
-	if arr.count > 1 then
+	if arr.count == 0 then
+		return final
+	elseif arr.count > 1 then
 		return folder( array.head( arr ), array.foldr( array.tail( arr ), folder, final ))
 	else
 		return folder( array.head( arr ), final )
@@ -81,13 +83,46 @@ function array.map( arr, func )
 	return new_arr
 end
 
-function array.fold_map( folder, arr )
-	local arr_new = array.new()
-	array.foldr( function ( func, b )
-		array.add( arr_new, func( folder ))
+function array.sort( arr, sort_func )
+	local sorted_arr = {}
+	for i in array.iterator( arr ) do
+		table.insert( sorted_arr, i )
+	end
+	table.sort( sorted_arr, sort_func )
+	sorted_arr.count = arr.count
+	vprint( "array.sort" )
+	return sorted_arr
+end
+
+function array.rank( arr, rank_func )
+	vprint( "array.rank" )
+	local ranks = array.map( arr, function( item )
+			local new_item = { item = item, score = rank_func( item ) }
+			return new_item
+		end )
+	local sorted = array.sort( ranks, function ( a, b )
+			return a.score > b.score
+		end
+	)
+	return array.map( sorted, function( item )
+			return item.item
+		end )
+end
+
+function array.contains( arr, match_func )
+	vprint( "array.contains" )
+	local result = array.foldr( arr, function( item, found )
+		---[[
+		if match_func( item ) then
+				vprint( "found" )
+			else
+				vprint( "not found" )
+			end
+			--]]
+			return match_func( item ) or found
 		end,
-		arr )
-	return arr_new
+		false )
+	return result
 end
 
 return array
