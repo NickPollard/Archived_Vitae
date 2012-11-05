@@ -48,12 +48,9 @@ function array.new()
 end
 
 function array.foldr( arr, folder, final )
-	vprint( "foldr" )
 	if arr.count > 1 then
-		vprint( "foldr a" )
 		return folder( array.head( arr ), array.foldr( array.tail( arr ), folder, final ))
 	else
-		vprint( "foldr b" )
 		return folder( array.head( arr ), final )
 	end
 end
