@@ -23,25 +23,28 @@ function spawn.init()
 	spawn.random = vrand_newSeq()
 end
 
-function spawn.positionerTurret( spawn_space )
-	
+function spawn.positionerTurret( spawn_space, current_positions )
+	local u_delta = 20.0
+	local new_position = nil
+	if current_positions then
+		new_position = { u = current_positions[current_positions.count].u + u_delta, v = spawn_space.v }
+	else
+		new_position = { u = 0.0, v = spawn_space.v }
+		current_positions = array.new()
+	end
+	array.add( current_positions, new_position )
+	return current_positions
 end
 
 function spawn.positionsForGroup( v, spawn_group_positioners )
-	local spawn_space = { width = 9, height = 3, u_delta = 20.0, v_delta = 20.0 }
-	local spawn_positions = array.fold_map( spawn_space, spawn_group_positioners )
+	local spawn_space = { v = v, width = 9, height = 3, u_delta = 20.0, v_delta = 20.0 }
 
-	--[[
-	local spawn_positions = { count = spawn_group_positioners.count }
-	local i = 1
-	local u = 0.0
-	local u_delta = 20.0
-	while i <= spawn_positions.count do
-		spawn_positions[i] = { u = u, v = v }
-		u = u + u_delta
-		i = i + 1
-	end
-	--]]
+	local spawn_positions = array.foldr( spawn_group_positioners,
+					function ( positioner, positions )
+						local p = positioner( spawn_space, positions )
+						return p
+					end,
+					nil )
 
 	return spawn_positions
 end
@@ -104,6 +107,7 @@ function spawn.generateSpawnGroupForDifficulty( difficulty )
 	local i = 1
 	while i <= difficulty do
 		group.spawners[i] = spawn.randomEnemy()
+		group.positioners[i] = spawn.positionerTurret
 		i = i + 1
 	end
 	return group

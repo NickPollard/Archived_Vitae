@@ -428,22 +428,6 @@ function loadParticles( )
 	vmodel_preload( projectile_model )
 end
 
-function testSpawns()
-	spawn_v = -3.0
-	local width = 25.0
-	while spawn_v < 3.0 do
-		spawn_v = spawn_v + 0.3
-		spawn_atCanyon( -width, spawn_v, "dat/model/skyscraper.s" )
-		spawn_atCanyon( width, spawn_v, "dat/model/skyscraper.s" )
-	end
-end
-
-function makefunction( text )
-	local a = nil
-	a = function() vprint( text ) return a end
-	return a
-end
-
 function splash_intro()
 	vtexture_preload( "dat/img/splash_author.tga" )
 	local studio_splash = ui.show_splash( "dat/img/splash_vitruvian.tga" )
@@ -628,8 +612,6 @@ function tick( dt )
 		starting = false
 		start()
 	end
-
-	--sky_tick( chasecam, dt )
 
 	if player_active then
 		playership_tick( player_ship, dt )
