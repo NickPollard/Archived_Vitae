@@ -21,31 +21,39 @@ function spawn.spawnSpacePositions( spawn_space )
 	return positions
 end
 
----[[
-function spawn.positionerTurret( spawn_space, current_positions )
-	-- Pick the most central floor space
+function spawn.availablePositions( spawn_space, current_positions )
 	local positions = spawn.spawnSpacePositions( spawn_space )
-	vprint( "positioner turret" )
 	local available_positions = array.filter( positions,
 		function ( position )
 			return not array.contains( current_positions, 
 				function ( item )
-					vprint( "func!") 
-					vprint( "position " .. position.x .. ", " .. position.y )
-					vprint( "item " .. item.x .. ", " .. item.y )
 					return item.x == position.x and item.y == position.y 
 				end )
 		end )
-	vprint( "positioner turret 2" )
-	local ranked_positions = array.rank( positions, 
+	return available_positions
+end
+
+function spawn.positionerTurret( spawn_space, current_positions )
+	-- Pick the most central floor space
+	local ranked_positions = array.rank( spawn.availablePositions( spawn_space, current_positions ),
 		function( position )
 			return - math.abs( position.x ) - ( position.y ) * spawn_space.width
 		end )
-	vprint( "positioner turret using position " .. ranked_positions[1].x .. ", " .. ranked_positions[1].y )
+	vprint( "Turret! " .. ranked_positions[1].x .. ", " .. ranked_positions[1].y )
 	array.add( current_positions, ranked_positions[1] )
 	return current_positions
 end
---]]
+
+function spawn.positionerInterceptor( spawn_space, current_positions )
+	-- Pick the most tall central space
+	local ranked_positions = array.rank( spawn.availablePositions( spawn_space, current_positions ),
+		function( position )
+			return - math.abs( position.x ) + ( position.y ) * spawn_space.width
+		end )
+	vprint( "Interceptor! " .. ranked_positions[1].x .. ", " .. ranked_positions[1].y )
+	array.add( current_positions, ranked_positions[1] )
+	return current_positions
+end
 
 function spawn.positionerDefault( spawn_space, current_positions )
 	local u_delta = 20.0
@@ -56,42 +64,38 @@ end
 
 function spawn.positionsForGroup( v, spawn_space, spawn_group_positioners )
 	local current_positions = array.new()
-	local spawn_positions = array.foldr( spawn_group_positioners,
+	local spawn_positions = array.foldl( spawn_group_positioners,
 					function ( positioner, positions )
 						local p = positioner( spawn_space, positions )
 						return p
 					end,
 					current_positions )
 
-	vprint( "calculated positions." )
-
 	return spawn_positions
 end
 
 function spawn.spawnGroup( spawn_group, v )
+	vprint( "spawn groups" )
 	local spawn_space = { v = v, width = 3, height = 3, u_delta = 20.0, v_delta = 20.0 }
 	local spawn_positions = spawn.positionsForGroup( v, spawn_space, spawn_group.positioners )
-
-	for i, e in ipairs( spawn_positions ) do
-		vprint( "[" .. i .. "] ( " .. e.x .. ", " .. e.y .. " )" )
-	end
+	vprint( "spawn groups 1" )
 
 	local world_positions = array.map( spawn_positions, function( spawn_pos )
 			local position = { u = spawn_pos.x * spawn_space.u_delta, v = v, y = spawn_pos.y }
+			vprint( "Canyon position " .. position.u .. ", " .. position.v )
 			return position
 		end )
-	
-	for i, e in ipairs( world_positions ) do
-		vprint( "[" .. i .. "] ( " .. e.u .. ", " .. e.v .. " )" )
-	end
+	vprint( "spawn groups 2" )
 
-	library.apply_list( spawn_group.spawners, world_positions )
+	array.zip( spawn_group.spawners, world_positions, function ( func, arg )
+			func( arg )
+		end )
+
 	vprint( "spawned units." )
 end
 
 function spawn.spawnTurret( u, v )
-	vprint( "u " .. u )
-	vprint( "v " .. v )
+	vprint( "Spawning turret " .. u .. ", " .. v )
 	local spawn_height = 0.0
 
 	-- position
@@ -120,6 +124,27 @@ function spawn.spawnTurret( u, v )
 	turrets[turrets.count] = turret
 end
 
+local interceptor_spawn_u_offset = -200
+local interceptor_spawn_v_offset = -200
+local interceptor_spawn_y_offset = 100
+local interceptor_target_v_offset = 100
+
+function spawn.spawn_interceptor( u, v, attack_type )
+	vprint( "Spawning interceptor " .. u .. ", " .. v )
+	local y_height = 40
+	local spawn_x, spawn_y, spawn_z = vcanyon_position( u + interceptor_spawn_u_offset, v + interceptor_spawn_v_offset )
+	local spawn_position = Vector( spawn_x, spawn_y + interceptor_spawn_y_offset, spawn_z, 1.0 )
+	local x, y, z = vcanyon_position( u, v + interceptor_target_v_offset )
+	move_to = { x = x, y = y + y_height, z = z }
+
+	local interceptor = create_interceptor()
+	
+	vtransform_setWorldPosition( interceptor.transform, spawn_position )
+	local x, y, z = vcanyon_position( u, v + interceptor_target_v_offset - 100.0 )
+	local attack_target = { x = x, y = move_to.y, z = z }
+	interceptor.behaviour = interceptor_behaviour( interceptor, move_to, attack_target, attack_type )
+end
+
 function spawn.spawnGroupForIndex( i )
 	return spawn.generateSpawnGroupForDifficulty( i )
 end
@@ -127,15 +152,13 @@ end
 
 function spawn.randomEnemy()
 	local r = vrand( spawn.random, 0.0, 1.0 )
-	--[[
 	if r > 0.75 then
-		return function( coord ) spawn_interceptor( coord.u, coord.v, interceptor_attack_homing ) end
+		return function( coord ) spawn.spawn_interceptor( coord.u, coord.v, interceptor_attack_homing ) end, spawn.positionerInterceptor
 	elseif r > 0.4 then
-		return function( coord ) spawn_interceptor( coord.u, coord.v, interceptor_attack_gun ) end
+		return function( coord ) spawn.spawn_interceptor( coord.u, coord.v, interceptor_attack_gun ) end, spawn.positionerInterceptor
 	else
-	--]]
-		return function( coord ) spawn.spawnTurret( coord.u, coord.v ) end
-	--end
+		return function( coord ) spawn.spawnTurret( coord.u, coord.v ) end, spawn.positionerTurret
+	end
 end
 
 function spawn.generateSpawnGroupForDifficulty( difficulty )
@@ -145,8 +168,7 @@ function spawn.generateSpawnGroupForDifficulty( difficulty )
 	group.positioners = { count = difficulty }
 	local i = 1
 	while i <= difficulty do
-		group.spawners[i] = spawn.randomEnemy()
-		group.positioners[i] = spawn.positionerTurret
+		group.spawners[i], group.positioners[i] = spawn.randomEnemy()
 		i = i + 1
 	end
 	return group

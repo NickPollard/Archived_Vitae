@@ -445,6 +445,8 @@ end
 function start()
 	loadParticles()
 
+	array.zipTest()
+
 	restart()
 end
 
@@ -710,15 +712,6 @@ function entities_spawnRange( near, far )
 	while contains( spawn_v, near, far ) do
 		local interceptor_offset_u = 20.0
 		spawn.spawnGroup( spawn.spawnGroupForIndex( i ), spawn_v )
-		--[[
-		if ( i + 1 ) % 3.0 == 0 then
-			spawn_interceptor( interceptor_offset_u, spawn_v, interceptor_attack_homing )
-			spawn_interceptor( -interceptor_offset_u, spawn_v, interceptor_attack_homing )
-		else
-			spawn_interceptor( interceptor_offset_u, spawn_v, interceptor_attack_gun )
-			spawn_interceptor( -interceptor_offset_u, spawn_v, interceptor_attack_gun )
-		end
-		--]]
 		i = i + 1
 		spawn_v = i * spawn_interval
 	end
@@ -900,26 +893,6 @@ function interceptor_behaviour( interceptor, move_to, attack_target, attack_type
 
 	attack =	ai.state( attack_type( attack_target.x, attack_target.y, attack_target.z ),						function () return attack end )
 	return enter
-end
-
-interceptor_spawn_u_offset = -200
-interceptor_spawn_v_offset = -200
-interceptor_spawn_y_offset = 100
-interceptor_target_v_offset = 100
-
-function spawn_interceptor( u, v, attack_type )
-	local y_height = 40
-	local spawn_x, spawn_y, spawn_z = vcanyon_position( u + interceptor_spawn_u_offset, v + interceptor_spawn_v_offset )
-	local spawn_position = Vector( spawn_x, spawn_y + interceptor_spawn_y_offset, spawn_z, 1.0 )
-	local x, y, z = vcanyon_position( u, v + interceptor_target_v_offset )
-	move_to = { x = x, y = y + y_height, z = z }
-
-	local interceptor = create_interceptor()
-	
-	vtransform_setWorldPosition( interceptor.transform, spawn_position )
-	local x, y, z = vcanyon_position( u, v + interceptor_target_v_offset - 100.0 )
-	local attack_target = { x = x, y = move_to.y, z = z }
-	interceptor.behaviour = interceptor_behaviour( interceptor, move_to, attack_target, attack_type )
 end
 
 function interceptor_tick( interceptor, dt )

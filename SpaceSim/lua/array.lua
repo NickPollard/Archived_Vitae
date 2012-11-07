@@ -59,7 +59,7 @@ end
 
 function array.foldl( arr, folder, final )
 	local arr_reversed = array.reverse( arr )
-	array.foldr( arr_reversed, folder, final )
+	return array.foldr( arr_reversed, folder, final )
 end
 
 function array.reverse( arr )
@@ -90,12 +90,10 @@ function array.sort( arr, sort_func )
 	end
 	table.sort( sorted_arr, sort_func )
 	sorted_arr.count = arr.count
-	vprint( "array.sort" )
 	return sorted_arr
 end
 
 function array.rank( arr, rank_func )
-	vprint( "array.rank" )
 	local ranks = array.map( arr, function( item )
 			local new_item = { item = item, score = rank_func( item ) }
 			return new_item
@@ -110,19 +108,43 @@ function array.rank( arr, rank_func )
 end
 
 function array.contains( arr, match_func )
-	vprint( "array.contains" )
 	local result = array.foldr( arr, function( item, found )
-		---[[
-		if match_func( item ) then
-				vprint( "found" )
-			else
-				vprint( "not found" )
-			end
-			--]]
 			return match_func( item ) or found
 		end,
 		false )
 	return result
+end
+
+function array.zip( a, b, func )
+	local results = array.new()
+	array.foldl( a, function ( item, other )
+			array.add( results, func( item, array.head( other )))
+			return array.tail( other )
+		end,
+		b )
+	return results
+end
+
+function array.zipTest()
+	vprint( "Zip test" )
+	local a = array.new()
+	local b = array.new()
+	array.add( a, 1 )
+	array.add( a, 2 )
+	array.add( a, 3 )
+	array.add( b, 2 )
+	array.add( b, 4 )
+	array.add( b, 6 )
+	vprint( "Zip test 1" )
+	local results = array.zip( a, b, function ( first, second )
+			return first + second
+		end )
+	
+	vprint( "Zip test 2" )
+	for i,n in ipairs( results ) do
+		vprint( "[" .. i .. "] " .. n )
+	end
+	vprint( "Zip test 3" )
 end
 
 return array
