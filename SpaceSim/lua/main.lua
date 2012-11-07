@@ -23,6 +23,7 @@ C and only controlled remotely by Lua
 	library		= require "library"
 	spawn		= require "spawn"
 	timers		= require "timers"
+	triggers	= require "triggers"
 	ui			= require "ui"
 
 -- player - this object contains general data about the player
@@ -240,6 +241,10 @@ function inTime( time, action )
 	timers.add( timers.create( time, action ))
 end
 
+function triggerWhen( trigger, action )
+	triggers.add( triggers.create( trigger, action ))
+end
+
 -- Create a player. The player is a specialised form of Gameobject
 function playership_create()
 	local p = gameobject_create( "dat/model/ship_hd.s" )
@@ -384,8 +389,8 @@ function gameplay_start()
 		if debug_spawning_enabled then
 			spawning_active = true
 		end
-		already_spawned = 0.0
-		doodads_already_spawned = 0.0
+		entities_spawned = 0.0
+		doodads_spawned = 0.0
 	end )
 end
 
@@ -444,8 +449,6 @@ end
 
 function start()
 	loadParticles()
-
-	array.zipTest()
 
 	restart()
 end
@@ -622,11 +625,14 @@ function tick( dt )
 	debug_tick()
 
 	timers.tick( dt )
+	triggers.tick( dt )
 
 	if spawning_active then
-		update_spawns( player_ship )
-		update_despawns( player_ship )
+		update_spawns( player_ship.transform )
+		update_despawns( player_ship.transform )
 	end
+
+	update_doodads( player_ship.transform )
 
 	tick_array( turrets, dt )
 	tick_array( interceptors, dt )
@@ -692,24 +698,18 @@ end
 -- spawn properties
 spawn_offset = 0.0
 spawn_interval = 300.0
-spawn_distance = 300.0
+spawn_distance = 900.0
 doodad_spawn_distance = 3000.0
 despawn_distance = 100.0 -- how far behind to despawn units
 -- spawn tracking
-already_spawned = 0.0
-doodads_already_spawned = 0.0
-
-function contains( value, range_a, range_b )
-	range_max = math.max( range_a, range_b )
-	range_min = math.min( range_a, range_b )
-	return ( value < range_max ) and ( value >= range_min )
-end
+entities_spawned = 0.0
+doodads_spawned = 0.0
 
 -- Spawn all entities in the given range
 function entities_spawnRange( near, far )
 	i = spawn_index( near ) + 1
 	spawn_v = i * spawn_interval
-	while contains( spawn_v, near, far ) do
+	while library.contains( spawn_v, near, far ) do
 		local interceptor_offset_u = 20.0
 		spawn.spawnGroup( spawn.spawnGroupForIndex( i ), spawn_v )
 		i = i + 1
@@ -719,9 +719,7 @@ end
 
 function entities_despawnAll()
 	for unit in array.iterator( interceptors ) do
-		vprint( "Despawning interceptor" )
 		ship_delete( unit )
-		unit.behaviour = ai.dead
 	end
 end
 
@@ -756,7 +754,7 @@ end
 function doodads_spawnRange( near, far )
 	i = spawn_index( near ) + 1
 	spawn_v = i * spawn_interval
-	while contains( spawn_v, near, far ) do
+	while library.contains( spawn_v, near, far ) do
 		local doodad_offset_u = 100.0
 		--spawn_doodad( doodad_offset_u, spawn_v, "dat/model/bunker.s" )
 		spawn_bunker( doodad_offset_u, spawn_v, "dat/model/bunker.s" )
@@ -765,22 +763,25 @@ function doodads_spawnRange( near, far )
 	end
 end
 
--- Spawn all entities that need to be spawned this frame
-function update_spawns( ship )
-	ship_pos = vtransform_getWorldPosition( ship.transform )
-	u,v = vcanyon_fromWorld( ship_pos )
-	local spawn_up_to = v + spawn_distance
-	local doodads_spawn_up_to = v + doodad_spawn_distance
-	--doodads_spawnRange( doodads_already_spawned, doodads_spawn_up_to )
-	entities_spawnRange( already_spawned, spawn_up_to )
-	already_spawned = spawn_up_to;
-	doodads_already_spawned = doodads_spawn_up_to
+function update_doodads( transform )
+	local spawn_up_to = v + doodad_spawn_distance
+	--doodads_spawnRange( doodads_spawned, spawn_up_to )
+	doodads_spawned = spawn_up_to
 end
 
-function update_despawns( ship ) 
-	ship_pos = vtransform_getWorldPosition( ship.transform )
-	u,v = vcanyon_fromWorld( ship_pos )
-	despawn_up_to = v - despawn_distance
+-- Spawn all entities that need to be spawned this frame
+function update_spawns( transform )
+	local pos = vtransform_getWorldPosition( transform )
+	local u,v = vcanyon_fromWorld( pos )
+	local spawn_up_to = v + spawn_distance
+	entities_spawnRange( entities_spawned, spawn_up_to )
+	entities_spawned = spawn_up_to;
+end
+
+function update_despawns( transform ) 
+	local pos = vtransform_getWorldPosition( transform )
+	local u,v = vcanyon_fromWorld( pos )
+	local despawn_up_to = v - despawn_distance
 
 	for unit in array.iterator( interceptors ) do
 		-- TODO remove them properly
@@ -788,7 +789,18 @@ function update_despawns( ship )
 			unit_pos = vtransform_getWorldPosition( unit.transform )
 			u,v = vcanyon_fromWorld( unit_pos )
 			if v < despawn_up_to then
-				vprint( "despawn" )
+				ship_delete( unit )
+				unit = nil
+			end
+		end
+	end
+
+	for unit in array.iterator( turrets ) do
+		-- TODO remove them properly
+		if unit.transform then
+			unit_pos = vtransform_getWorldPosition( unit.transform )
+			u,v = vcanyon_fromWorld( unit_pos )
+			if v < despawn_up_to then
 				ship_delete( unit )
 				unit = nil
 			end

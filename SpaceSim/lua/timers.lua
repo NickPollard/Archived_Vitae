@@ -1,12 +1,15 @@
-local timers = { timers = { count = 0} }
+local timers = { 
+	timers = { count = 0 }
+}
 
 function timers.add( timer )
-	timers.timers.count = timers.timers.count + 1
-	timers.timers[timers.timers.count] = timer
+	--timers.timers.count = timers.timers.count + 1
+	--timers.timers[timers.timers.count] = timer
+	array.add( timers.timers, timer )
 end
 
 function timers.create( time, action )
-	timer = {
+	local timer = {
 		time = time,
 		action = action,
 	}
