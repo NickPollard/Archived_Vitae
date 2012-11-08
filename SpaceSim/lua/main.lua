@@ -411,6 +411,8 @@ function restart()
 	local no_velocity = Vector( 0.0, 0.0, player_ship.speed, 0.0 )
 	vphysic_setVelocity( player_ship.physic, no_velocity )
 
+	player_ship.target_roll = library.rolling_average.create( 5 )
+
 	chasecam = vchasecam_follow( engine, player_ship.camera_transform )
 	flycam = vflycam( engine )
 	vscene_setCamera( chasecam )
@@ -555,21 +557,23 @@ function playership_tick( ship, dt )
 
 	local input_yaw = 0.0
 	local input_pitch = 0.0
-	input_yaw, input_pitch = ship.steering_input()
+	local input_yaw, input_pitch = ship.steering_input()
 
 	-- set to -1.0 to invert
-	invert_pitch = 1.0
-	pitch = invert_pitch * input_pitch * pitch_per_second * dt;
-	yaw = input_yaw * yaw_per_second * dt;
+	local invert_pitch = 1.0
+	local pitch = invert_pitch * input_pitch * pitch_per_second * dt;
+	local yaw = input_yaw * yaw_per_second * dt;
 
 	ship.yaw = ship.yaw + yaw
 	ship.pitch = ship.pitch + pitch
-	target_roll = yaw * -60.0;
-	max_roll = 1.0
-	max_roll_delta = 2.0 * dt
-	delta = target_roll - ship.roll
-	roll_delta = clamp( -max_roll_delta, max_roll_delta, delta )
-	roll = ship.roll + roll_delta
+	library.rolling_average.add( ship.target_roll, yaw * -60.0 )
+	local target_roll = library.rolling_average.sample( ship.target_roll )
+
+	local max_roll = 1.0
+	local max_roll_delta = 2.0 * dt
+	local delta = target_roll - ship.roll
+	local roll_delta = clamp( -max_roll_delta, max_roll_delta, delta )
+	local roll = ship.roll + roll_delta
 	ship.roll = clamp( -max_roll, max_roll, roll )
 	
 	vtransform_eulerAngles( ship.transform, ship.yaw, ship.pitch, ship.roll )

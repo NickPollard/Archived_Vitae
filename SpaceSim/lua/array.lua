@@ -125,26 +125,11 @@ function array.zip( a, b, func )
 	return results
 end
 
-function array.zipTest()
-	vprint( "Zip test" )
-	local a = array.new()
-	local b = array.new()
-	array.add( a, 1 )
-	array.add( a, 2 )
-	array.add( a, 3 )
-	array.add( b, 2 )
-	array.add( b, 4 )
-	array.add( b, 6 )
-	vprint( "Zip test 1" )
-	local results = array.zip( a, b, function ( first, second )
-			return first + second
-		end )
-	
-	vprint( "Zip test 2" )
-	for i,n in ipairs( results ) do
-		vprint( "[" .. i .. "] " .. n )
-	end
-	vprint( "Zip test 3" )
+function array.sum( arr )
+	return array.foldr( arr, function( a, b )
+		return a + b
+	end,
+	0 )
 end
 
 return array
