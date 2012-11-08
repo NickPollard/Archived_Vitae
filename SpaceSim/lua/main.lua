@@ -12,7 +12,7 @@ C and only controlled remotely by Lua
 ]]--
 
 -- Debug settings
-	debug_spawning_enabled = true
+	debug_spawning_enabled = false
 
 -- Load Modules
 	package.path = "./SpaceSim/lua/?.lua"
@@ -251,6 +251,7 @@ function playership_create()
 	p.speed = 0.0
 	p.cooldown = 0.0
 	p.yaw = 0
+	p.target_yaw = 0
 	p.pitch = 0
 	p.roll = 0
 	p.camera_transform = vcreateTransform()
@@ -562,15 +563,23 @@ function playership_tick( ship, dt )
 	-- set to -1.0 to invert
 	local invert_pitch = 1.0
 	local pitch = invert_pitch * input_pitch * pitch_per_second * dt;
-	local yaw = input_yaw * yaw_per_second * dt;
+	local yaw_delta = input_yaw * yaw_per_second * dt;
 
-	ship.yaw = ship.yaw + yaw
+	-- yaw
+	ship.target_yaw = ship.target_yaw + yaw_delta
+	local target_yaw_delta = ship.target_yaw - ship.yaw
+	local max_yaw_delta = 2.0 * math.abs( ship.roll ) * dt
+	local yaw_delta = clamp( -max_yaw_delta, max_yaw_delta, target_yaw_delta )
+	ship.yaw = ship.yaw + yaw_delta
+
+	-- pitch
 	ship.pitch = ship.pitch + pitch
-	library.rolling_average.add( ship.target_roll, yaw * -60.0 )
-	local target_roll = library.rolling_average.sample( ship.target_roll )
 
-	local max_roll = 1.0
-	local max_roll_delta = 2.0 * dt
+	-- roll
+	library.rolling_average.add( ship.target_roll, target_yaw_delta * -60.0 )
+	local target_roll = library.rolling_average.sample( ship.target_roll )
+	local max_roll = 1.5
+	local max_roll_delta = 4.0 * dt
 	local delta = target_roll - ship.roll
 	local roll_delta = clamp( -max_roll_delta, max_roll_delta, delta )
 	local roll = ship.roll + roll_delta
