@@ -158,8 +158,6 @@ void test_aabb_calculate( ) {
 }
 
 void modelInstance_calculateBoundingBox( modelInstance* instance ) {
-	instance->bb.min = Vector( 0.0, 0.0, 0.0, 1.0 );
-	instance->bb.max = Vector( 0.0, 0.0, 0.0, 1.0 );
 	model* m = model_fromInstance( instance );
 	instance->bb = aabb_calculate( m->obb, instance->trans->world );
 #if 0
