@@ -787,7 +787,7 @@ void test_heightField() {
 
 
 
-
+// TODO - make a body pool to save on mem_alloc
 body* body_create( shape* s, transform* t ) {
 	body* b = mem_alloc( sizeof( body ));
 	memset( b, 0, sizeof( body ));
