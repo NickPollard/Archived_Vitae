@@ -594,6 +594,11 @@ bool heightField_contains( heightField* h, float x, float z ) {
 		//printf( "AABB does not contain point.\n" );
 		return false;
 	}
+	
+	return true;
+
+#if 0
+
 	vector point = Vector( x, 0.f, z, 1.f );
 	//heightfield_drawWireframe( h, NULL, color_green );
 	//vector_printf( "Testing heightfield against point: ", &point );
@@ -636,6 +641,7 @@ bool heightField_contains( heightField* h, float x, float z ) {
 			}
 		}
 	}
+#endif
 	return false;
 }
 
