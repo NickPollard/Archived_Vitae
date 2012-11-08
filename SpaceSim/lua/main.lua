@@ -12,7 +12,7 @@ C and only controlled remotely by Lua
 ]]--
 
 -- Debug settings
-	debug_spawning_enabled = false
+	debug_spawning_enabled = true
 
 -- Load Modules
 	package.path = "./SpaceSim/lua/?.lua"
@@ -568,7 +568,7 @@ function playership_tick( ship, dt )
 	-- yaw
 	ship.target_yaw = ship.target_yaw + yaw_delta
 	local target_yaw_delta = ship.target_yaw - ship.yaw
-	local max_yaw_delta = 2.0 * math.abs( ship.roll ) * dt
+	local max_yaw_delta = 2.0 * math.abs( ship.roll ) * 1.3 * dt
 	local yaw_delta = clamp( -max_yaw_delta, max_yaw_delta, target_yaw_delta )
 	ship.yaw = ship.yaw + yaw_delta
 
@@ -576,11 +576,11 @@ function playership_tick( ship, dt )
 	ship.pitch = ship.pitch + pitch
 
 	-- roll
-	library.rolling_average.add( ship.target_roll, target_yaw_delta * -60.0 )
+	library.rolling_average.add( ship.target_roll, target_yaw_delta * -45.0 )
 	local target_roll = library.rolling_average.sample( ship.target_roll )
 	local max_roll = 1.5
-	local max_roll_delta = 4.0 * dt
 	local delta = target_roll - ship.roll
+	local max_roll_delta = math.min( 4.0 * dt, math.abs( delta / 2 ))
 	local roll_delta = clamp( -max_roll_delta, max_roll_delta, delta )
 	local roll = ship.roll + roll_delta
 	ship.roll = clamp( -max_roll, max_roll, roll )
@@ -588,7 +588,9 @@ function playership_tick( ship, dt )
 	vtransform_eulerAngles( ship.transform, ship.yaw, ship.pitch, ship.roll )
 	-- Camera transform shares ship position and yaw, pitch; but not roll
 	vtransform_setWorldSpaceByTransform( ship.camera_transform, ship.transform )
-	vtransform_eulerAngles( ship.camera_transform, ship.yaw, ship.pitch, 0.0 )
+	local camera_roll_scale = 0.1
+	local camera_roll = ship.roll * camera_roll_scale
+	vtransform_eulerAngles( ship.camera_transform, ship.yaw, ship.pitch, camera_roll )
 
 	-- throttle
 	width = 100
