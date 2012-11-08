@@ -22,8 +22,11 @@ chasecam* chasecam_create() {
 
 // Calculate the position as the offset from the chase target
 vector chasecam_targetPosition( chasecam* c ) {
-	vector offset = Vector( 0.f, 8.f, -15.f, 1.f );
-	vector position = matrix_vecMul( c->target->world, &offset );
+	vector offset = Vector( 0.f, 8.f, -35.f, 1.f );
+	//vector position = matrix_vecMul( c->target->world, &offset );
+	matrix m;
+	matrix_fromRotationTranslation( m, c->rotation, *matrix_getTranslation( c->target->world ));
+	vector position = matrix_vecMul( m, &offset );
 	return position;
 }
 

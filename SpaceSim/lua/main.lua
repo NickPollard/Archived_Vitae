@@ -588,6 +588,8 @@ function playership_tick( ship, dt )
 	vtransform_eulerAngles( ship.transform, ship.yaw, ship.pitch, ship.roll )
 	-- Camera transform shares ship position and yaw, pitch; but not roll
 	vtransform_setWorldSpaceByTransform( ship.camera_transform, ship.transform )
+	local camera_target_position = vtransformVector( ship.transform, Vector( 0.0, 0.0, 20.0, 1.0 ))
+	vtransform_setWorldPosition( ship.camera_transform, camera_target_position )
 	local camera_roll_scale = 0.1
 	local camera_roll = ship.roll * camera_roll_scale
 	vtransform_eulerAngles( ship.camera_transform, ship.yaw, ship.pitch, camera_roll )
