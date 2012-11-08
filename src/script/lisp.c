@@ -493,7 +493,7 @@ void* exec( context* c, term* func, term* args);
    */
 
 term* _eval( term* expr, void* _context ) {
-#ifdef DEBUG
+#ifdef DEBUG_LISP_STACK
 	const int kDebugStackLength = 1024;
 	char debug_expr[kDebugStackLength];
 	streamWriter stackStream;
@@ -538,7 +538,7 @@ term* _eval( term* expr, void* _context ) {
 			}
 		}
 	term_deref( expr );
-#ifdef DEBUG
+#ifdef DEBUG_LISP_STACK
 	debug_lisp_stack_pop();
 #endif
 	term_validate( result );

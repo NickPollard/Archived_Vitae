@@ -3,6 +3,7 @@
 
 #define DEBUG_PARSE 0
 #define DEBUG_CONTEXT 0
+//#define DEBUG_LISP_STACK
 
 #if DEBUG_PARSE
 #define PARSE_PRINT( ... ) printf( __VA_ARGS__ )
