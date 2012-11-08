@@ -3,6 +3,8 @@
 #include "maths/maths.h"
 #include "render/vgl.h"
 
+//#define DEBUG_PARTICLE_LIVENESS_TEST
+
 #define kMaxParticles 128
 #define kMaxParticleVerts (kMaxParticles * 6)
 
@@ -78,7 +80,9 @@ void property_addf( property* p, float time, float value );
 void property_addfv( property* p, float time, float* values );
 void property_addv( property* p, float time, vector value );
 
+#ifdef DEBUG_PARTICLE_LIVENESS_TEST
 void particleEmitter_assertActive( particleEmitter* e );
+#endif // DEBUG_PARTICLE_LIVENESS_TEST
 
 // *** Test
 

@@ -100,7 +100,9 @@ void particleEmitter_tick( void* data, float dt, engine* eng ) {
 		return;
 	}
 
+#ifdef DEBUG_PARTICLE_LIVENESS_TEST
 	particleEmitter_assertActive( e );
+#endif // DEBUG_PARTICLE_LIVENESS_TEST
 
 	// Update existing particles
 	vector delta;
@@ -208,7 +210,9 @@ void particleEmitter_render( void* data ) {
 	if ( p->destroyed )
 		return;
 
+#ifdef DEBUG_PARTICLE_LIVENESS_TEST
 	particleEmitter_assertActive( p );
+#endif // DEBUG_PARTICLE_LIVENESS_TEST
 		
 	// reset modelview matrix so we can billboard
 	// particle_quad() will manually apply the modelview
@@ -433,7 +437,9 @@ void particleEmitter_delete( particleEmitter* e ) {
 	mem_free( e );
 }
 
+#ifdef DEBUG_PARTICLE_LIVENESS_TEST
 void particleEmitter_assertActive( particleEmitter* e ) {
 	int found = array_find( (void**)active_particles, active_particle_count, (void*)e );
 	vAssert( found != -1 )
 }
+#endif // DEBUG_PARTICLE_LIVENESS_TEST

@@ -29,7 +29,9 @@ void physic_delete( physic* p ) {
 void physic_tick( void* data, float dt, engine* eng ) {
 	physic* p = data;
 	
+#ifdef DEBUG_PHYSIC_LIVENESS_TEST
 	physic_assertActive( p );
+#endif // DEBUG_PHYSIC_LIVENESS_TEST
 	vAssert( p->trans );
 
 	// If requested to delete
@@ -45,7 +47,9 @@ void physic_tick( void* data, float dt, engine* eng ) {
 	transform_setWorldSpacePosition( p->trans, &position );
 }
 
+#ifdef DEBUG_PHYSIC_LIVENESS_TEST
 void physic_assertActive( physic* p ) {
 	int found = array_find( (void**)active_physics, active_physic_count, (void*)p );
 	vAssert( found != -1 );
 }
+#endif // DEBUG_PHYSIC_LIVENESS_TEST
