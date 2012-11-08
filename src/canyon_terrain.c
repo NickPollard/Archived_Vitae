@@ -461,6 +461,32 @@ void initialiseDefaultElementBuffer( int count, unsigned short* buffer ) {
 void canyonTerrainBlock_createBuffers( canyonTerrainBlock* b ) {
 	b->element_count = canyonTerrainBlock_triangleCount( b ) * 3;
 	vAssert( b->element_count > 0 );
+
+	int max_element_count = ( b->terrain->u_samples_per_block ) * ( b->terrain->v_samples_per_block ) * 6;
+	vAssert( b->element_count <= max_element_count );
+
+	if ( !b->element_buffer ) {
+	   	b->element_buffer = mem_alloc( sizeof( unsigned short ) * max_element_count );
+	}
+
+	if ( !b->vertex_buffer ) {
+#if CANYON_TERRAIN_INDEXED
+		int max_vert_count = ( b->terrain->u_samples_per_block + 1 ) * ( b->terrain->v_samples_per_block + 1 );
+		b->vertex_buffer = mem_alloc( sizeof( vertex ) * max_vert_count );
+		memset( b->vertex_buffer, 0, sizeof( vertex ) * max_vert_count );
+#else
+		// Element Buffer
+		// TODO - couldn't this be one static buffer?
+		initialiseDefaultElementBuffer( max_element_count, b->element_buffer );
+		// Vertex Buffer
+		b->vertex_buffer = mem_alloc( sizeof( vertex ) * max_element_count );
+		memset( b->vertex_buffer, 0, sizeof( vertex ) * max_element_count );
+#endif // CANYON_TERRAIN_INDEXED
+	}
+
+	/*
+	b->element_count = canyonTerrainBlock_triangleCount( b ) * 3;
+	vAssert( b->element_count > 0 );
 	
 	if ( b->element_buffer ) {
 		mem_free( b->element_buffer );
@@ -481,6 +507,7 @@ void canyonTerrainBlock_createBuffers( canyonTerrainBlock* b ) {
 	b->vertex_buffer = mem_alloc( sizeof( vertex ) * b->element_count );
 	memset( b->vertex_buffer, 0, sizeof( vertex ) * b->element_count );
 #endif // CANYON_TERRAIN_INDEXED
+*/
 }
 
 void canyonTerrainBlock_calculateBuffers( canyonTerrainBlock* b ) {
