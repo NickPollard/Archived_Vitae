@@ -56,4 +56,8 @@ function library.modf( value, mod )
 	return value - m * mod
 end
 
+function library.roundf( value, mod ) 
+	return value - library.modf( value, mod )
+end
+
 return library

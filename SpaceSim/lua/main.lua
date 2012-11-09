@@ -11,6 +11,8 @@ C and only controlled remotely by Lua
 
 ]]--
 
+	two_pi = 2.0 * math.pi
+
 -- Debug settings
 	debug_spawning_enabled = true
 
@@ -452,8 +454,13 @@ function splash_intro()
 	end )
 end
 
+function test()
+end
+
 function start()
 	loadParticles()
+
+	test()
 
 	restart()
 end
@@ -554,6 +561,27 @@ function lerp( a, b, k )
 	return a + ( b - a ) * k
 end
 
+function ship_barrelRoll( ship )
+	local barrel_roll_delta = 2 * math.pi
+	ship.barrel_roll = true
+	ship.barrel_roll_time = 0.8
+	ship.barrel_roll_target = library.roundf( ship.roll + barrel_roll_delta + math.pi, 2.0 * math.pi )
+end
+
+function ship_rollFromYawRate( ship, yaw_delta )
+	local max_allowed_roll = 1.5
+	local last_roll = library.rolling_average.sample( ship.target_roll ) or 0.0
+	local offset = math.floor(( last_roll + math.pi ) / two_pi ) * two_pi
+	local yaw_to_roll = -45.0
+	return clamp( -max_allowed_roll, max_allowed_roll, yaw_delta * yaw_to_roll ) + offset
+end
+
+function ship_rollDeltaFromTarget( target, current )
+	local target_delta = target - current
+	local max_roll_delta = math.min( 4.0 * dt, math.abs( target_delta / 2.0 ))
+	return clamp( -max_roll_delta, max_roll_delta, target_delta )
+end
+
 function playership_tick( ship, dt )
 	yaw_per_second = 1.5 
 	pitch_per_second = 1.5
@@ -575,23 +603,17 @@ function playership_tick( ship, dt )
 	local strafe = 0.0
 	local strafe_speed = -1000.0
 
-	local barrel_roll_delta = 2 * math.pi
 	if ship.barrel_roll then
 		ship.barrel_roll_time = ship.barrel_roll_time - dt
 		strafe = strafe_speed * dt
-		library.rolling_average.add( ship.target_roll, ship.barrel_roll_target )
 
-		local target_roll = library.rolling_average.sample( ship.target_roll )
-		local max_roll = 10000.0
-		local delta = target_roll - ship.roll
-		local max_roll_delta = math.min( 4.0 * dt, math.abs( delta / 2 ))
-		local roll_delta = clamp( -max_roll_delta, max_roll_delta, delta )
-		local roll = ship.roll + roll_delta
-		ship.roll = clamp( -max_roll, max_roll, roll )
+		library.rolling_average.add( ship.target_roll, ship.barrel_roll_target )
+		local roll_delta = ship_rollDeltaFromTarget( library.rolling_average.sample( ship.target_roll ), ship.roll )
+		ship.roll = ship.roll + roll_delta
 
 		local roll_offset = library.modf( ship.roll + math.pi, 2 * math.pi ) - math.pi
 		vprint( "roll offset " .. roll_offset )
-		if ship.barrel_roll_time < 0.0 and math.abs( roll_offset ) < 0.2 then
+		if ship.barrel_roll_time < 0.0 and math.abs( roll_offset ) < 0.4 then
 			ship.barrel_roll = false
 			ship.barrel_roll_time = 3.0
 		end
@@ -605,26 +627,14 @@ function playership_tick( ship, dt )
 		ship.yaw = ship.yaw + yaw_delta
 
 		-- roll
-		local max_roll = 1.5
-		local last_roll = library.rolling_average.sample( ship.target_roll ) or 0.0
-		vprint( "Last roll " .. last_roll )
-		local diff = math.floor(( last_roll + math.pi ) / ( 2.0 * math.pi ))
-		vprint( "diff " .. diff )
-		local target_roll = (target_yaw_delta * -45.0)
-		target_roll = clamp( -max_roll, max_roll, target_roll ) + diff * 2.0 * math.pi
+		local target_roll = ship_rollFromYawRate( ship, target_yaw_delta )
 		library.rolling_average.add( ship.target_roll, target_roll )
-		target_roll = library.rolling_average.sample( ship.target_roll )
-		local delta = target_roll - ship.roll
-		local max_roll_delta = math.min( 4.0 * dt, math.abs( delta / 2 ))
-		local roll_delta = clamp( -max_roll_delta, max_roll_delta, delta )
-		local roll = ship.roll + roll_delta
-		ship.roll = roll --clamp( -max_roll, max_roll, roll )
+		local roll_delta = ship_rollDeltaFromTarget( library.rolling_average.sample( ship.target_roll ), ship.roll )
+		ship.roll = ship.roll + roll_delta
 
 		ship.barrel_roll_time = ship.barrel_roll_time - dt
 		if ship.barrel_roll_time < 0.0 then
-			ship.barrel_roll = true
-			ship.barrel_roll_time = 1.0
-			ship.barrel_roll_target = ship.roll + barrel_roll_delta
+			ship_barrelRoll( ship )
 		end
 	end
 	
