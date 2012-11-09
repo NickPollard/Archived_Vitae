@@ -346,6 +346,9 @@ function setup_controls()
 		local w = 1280 - 720
 		local h = 720
 		player_ship.fire_trigger = vcreateTouchPad( input, x, y, w, h )
+
+		player_ship.roll_left = vcreateTouchPad( input, 0, 720 - 150, 150, 150 )
+		player_ship.roll_right = vcreateTouchPad( input, 1280 - 150, 720 - 150, 150, 150 )
 	else
 		player_ship.steering_input = steering_input_keyboard
 	end
@@ -561,11 +564,17 @@ function lerp( a, b, k )
 	return a + ( b - a ) * k
 end
 
-function ship_barrelRoll( ship )
-	local barrel_roll_delta = 2 * math.pi
+function ship_barrelRoll( ship, multiplier )
+	local barrel_roll_delta = 2 * math.pi * multiplier
 	ship.barrel_roll = true
 	ship.barrel_roll_time = 0.8
+	ship.barrel_roll_multiplier = multiplier
 	ship.barrel_roll_target = library.roundf( ship.roll + barrel_roll_delta + math.pi, 2.0 * math.pi )
+end
+
+function ship_barrelRollActive( ship ) 
+	local roll_offset = library.modf( ship.roll + math.pi, 2 * math.pi ) - math.pi
+	return not ( ship.barrel_roll_time < 0.0 and math.abs( roll_offset ) < 0.4 )
 end
 
 function ship_rollFromYawRate( ship, yaw_delta )
@@ -583,11 +592,9 @@ function ship_rollDeltaFromTarget( target, current )
 end
 
 function playership_tick( ship, dt )
-	yaw_per_second = 1.5 
-	pitch_per_second = 1.5
+	local yaw_per_second = 1.5 
+	local pitch_per_second = 1.5
 
-	local input_yaw = 0.0
-	local input_pitch = 0.0
 	local input_yaw, input_pitch = ship.steering_input()
 
 	-- set to -1.0 to invert
@@ -598,27 +605,30 @@ function playership_tick( ship, dt )
 	-- pitch
 	ship.pitch = ship.pitch + pitch
 
-
-	--ship.yaw = 0.0
 	local strafe = 0.0
 	local strafe_speed = -1000.0
 
 	if ship.barrel_roll then
-		ship.barrel_roll_time = ship.barrel_roll_time - dt
-		strafe = strafe_speed * dt
+		-- strafe
+		strafe = strafe_speed * dt * ship.barrel_roll_multiplier
 
+		-- roll
 		library.rolling_average.add( ship.target_roll, ship.barrel_roll_target )
 		local roll_delta = ship_rollDeltaFromTarget( library.rolling_average.sample( ship.target_roll ), ship.roll )
 		ship.roll = ship.roll + roll_delta
 
-		local roll_offset = library.modf( ship.roll + math.pi, 2 * math.pi ) - math.pi
-		vprint( "roll offset " .. roll_offset )
-		if ship.barrel_roll_time < 0.0 and math.abs( roll_offset ) < 0.4 then
-			ship.barrel_roll = false
-			ship.barrel_roll_time = 3.0
-		end
+		ship.barrel_roll_time = ship.barrel_roll_time - dt
+		ship.barrel_roll = ship_barrelRollActive( ship )
 	else
-
+		local barrel_roll_left = vtouchPadTouched( ship.roll_left )
+		local barrel_roll_right = vtouchPadTouched( ship.roll_right )
+		if barrel_roll_left then
+			vprint( "Roll left!" )
+			ship_barrelRoll( ship, 1.0 )
+		elseif barrel_roll_right then
+			vprint( "Roll right!" )
+			ship_barrelRoll( ship, -1.0 )
+		end
 		-- yaw
 		ship.target_yaw = ship.target_yaw + yaw_delta
 		local target_yaw_delta = ship.target_yaw - ship.yaw
@@ -631,11 +641,6 @@ function playership_tick( ship, dt )
 		library.rolling_average.add( ship.target_roll, target_roll )
 		local roll_delta = ship_rollDeltaFromTarget( library.rolling_average.sample( ship.target_roll ), ship.roll )
 		ship.roll = ship.roll + roll_delta
-
-		ship.barrel_roll_time = ship.barrel_roll_time - dt
-		if ship.barrel_roll_time < 0.0 then
-			ship_barrelRoll( ship )
-		end
 	end
 	
 	vtransform_eulerAngles( ship.transform, ship.yaw, ship.pitch, ship.roll )
