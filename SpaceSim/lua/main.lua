@@ -255,7 +255,7 @@ function playership_create()
 	p.pitch = 0
 	p.roll = 0
 	p.barrel_roll = false
-	p.barrel_roll_time = 1.0
+	p.barrel_roll_time = 5.0
 	p.camera_transform = vcreateTransform()
 	
 	-- Init Collision
@@ -567,49 +567,64 @@ function playership_tick( ship, dt )
 	local pitch = invert_pitch * input_pitch * pitch_per_second * dt;
 	local yaw_delta = input_yaw * yaw_per_second * dt;
 
---[[
-	-- yaw
-	ship.target_yaw = ship.target_yaw + yaw_delta
-	local target_yaw_delta = ship.target_yaw - ship.yaw
-	local max_yaw_delta = 2.0 * math.abs( ship.roll ) * 1.3 * dt
-	local yaw_delta = clamp( -max_yaw_delta, max_yaw_delta, target_yaw_delta )
-	ship.yaw = ship.yaw + yaw_delta
-
-	--]]
 	-- pitch
 	ship.pitch = ship.pitch + pitch
 
---[[
-	-- roll
-	library.rolling_average.add( ship.target_roll, target_yaw_delta * -45.0 )
-	local target_roll = library.rolling_average.sample( ship.target_roll )
-	local max_roll = 1.5
-	local delta = target_roll - ship.roll
-	local max_roll_delta = math.min( 4.0 * dt, math.abs( delta / 2 ))
-	local roll_delta = clamp( -max_roll_delta, max_roll_delta, delta )
-	local roll = ship.roll + roll_delta
-	ship.roll = clamp( -max_roll, max_roll, roll )
-	--]]
 
-	ship.yaw = 0.0
+	--ship.yaw = 0.0
 	local strafe = 0.0
-	local strafe_speed = -2000.0
+	local strafe_speed = -1000.0
 
+	local barrel_roll_delta = 2 * math.pi
 	if ship.barrel_roll then
-		local barrel_roll_delta = 2 * math.pi
-		ship.roll = ship.roll + barrel_roll_delta * dt
 		ship.barrel_roll_time = ship.barrel_roll_time - dt
 		strafe = strafe_speed * dt
-		if ship.barrel_roll_time < 0.0 then
+		library.rolling_average.add( ship.target_roll, ship.barrel_roll_target )
+
+		local target_roll = library.rolling_average.sample( ship.target_roll )
+		local max_roll = 10000.0
+		local delta = target_roll - ship.roll
+		local max_roll_delta = math.min( 4.0 * dt, math.abs( delta / 2 ))
+		local roll_delta = clamp( -max_roll_delta, max_roll_delta, delta )
+		local roll = ship.roll + roll_delta
+		ship.roll = clamp( -max_roll, max_roll, roll )
+
+		local roll_offset = library.modf( ship.roll + math.pi, 2 * math.pi ) - math.pi
+		vprint( "roll offset " .. roll_offset )
+		if ship.barrel_roll_time < 0.0 and math.abs( roll_offset ) < 0.2 then
 			ship.barrel_roll = false
-			ship.barrel_roll_time = 1.0
+			ship.barrel_roll_time = 3.0
 		end
 	else
-		ship.roll = 0.0
+
+		-- yaw
+		ship.target_yaw = ship.target_yaw + yaw_delta
+		local target_yaw_delta = ship.target_yaw - ship.yaw
+		local max_yaw_delta = 2.0 * math.abs( ship.roll ) * 1.3 * dt
+		local yaw_delta = clamp( -max_yaw_delta, max_yaw_delta, target_yaw_delta )
+		ship.yaw = ship.yaw + yaw_delta
+
+		-- roll
+		local max_roll = 1.5
+		local last_roll = library.rolling_average.sample( ship.target_roll ) or 0.0
+		vprint( "Last roll " .. last_roll )
+		local diff = math.floor(( last_roll + math.pi ) / ( 2.0 * math.pi ))
+		vprint( "diff " .. diff )
+		local target_roll = (target_yaw_delta * -45.0)
+		target_roll = clamp( -max_roll, max_roll, target_roll ) + diff * 2.0 * math.pi
+		library.rolling_average.add( ship.target_roll, target_roll )
+		target_roll = library.rolling_average.sample( ship.target_roll )
+		local delta = target_roll - ship.roll
+		local max_roll_delta = math.min( 4.0 * dt, math.abs( delta / 2 ))
+		local roll_delta = clamp( -max_roll_delta, max_roll_delta, delta )
+		local roll = ship.roll + roll_delta
+		ship.roll = roll --clamp( -max_roll, max_roll, roll )
+
 		ship.barrel_roll_time = ship.barrel_roll_time - dt
 		if ship.barrel_roll_time < 0.0 then
 			ship.barrel_roll = true
 			ship.barrel_roll_time = 1.0
+			ship.barrel_roll_target = ship.roll + barrel_roll_delta
 		end
 	end
 	
@@ -630,7 +645,6 @@ function playership_tick( ship, dt )
 	playership_weaponsTick( ship, dt )
 
 	-- Physics
-	vprint( "Strafe " .. strafe )
 	local forward_v = vtransformVector( ship.transform, Vector( 0.0, 0.0, ship.speed, 0.0 ))
 	local strafe_v = vtransformVector( ship.camera_transform, Vector( strafe, 0.0, 0.0, 0.0 ))
 	local world_v = vvector_add( forward_v, strafe_v )

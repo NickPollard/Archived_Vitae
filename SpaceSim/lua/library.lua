@@ -42,4 +42,18 @@ function library.rolling_average.sample( rolling )
 	end
 end
 
+function library.rolling_average.last( rolling )
+	if rolling.arr.count > 0 then
+		vprint( "rolling_average.last " .. rolling.arr[rolling.arr.count] )
+		return rolling.arr[rolling.arr.count]
+	else
+		return nil
+	end
+end
+
+function library.modf( value, mod ) 
+	local m = math.floor( value / mod )
+	return value - m * mod
+end
+
 return library
