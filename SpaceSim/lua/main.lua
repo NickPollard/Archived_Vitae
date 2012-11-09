@@ -151,13 +151,13 @@ function create_projectile( source, offset, model, speed )
 	projectile.tick = nil
 
 	-- Position it at the correct muzzle position and rotation
-	muzzle_world_pos = vtransformVector( source.transform, offset )
+	local muzzle_world_pos = vtransformVector( source.transform, offset )
 	vtransform_setWorldSpaceByTransform( projectile.transform, source.transform )
 	vtransform_setWorldPosition( projectile.transform, muzzle_world_pos )
 
 	-- Apply initial velocity
-	source_velocity = Vector( 0.0, 0.0, speed, 0.0 )
-	world_v = vtransformVector( source.transform, source_velocity )
+	local source_velocity = Vector( 0.0, 0.0, speed, 0.0 )
+	local world_v = vtransformVector( source.transform, source_velocity )
 	vphysic_setVelocity( projectile.physic, world_v );
 
 	-- Store the projectile so it doesn't get garbage collected
@@ -254,6 +254,8 @@ function playership_create()
 	p.target_yaw = 0
 	p.pitch = 0
 	p.roll = 0
+	p.barrel_roll = false
+	p.barrel_roll_time = 1.0
 	p.camera_transform = vcreateTransform()
 	
 	-- Init Collision
@@ -565,6 +567,7 @@ function playership_tick( ship, dt )
 	local pitch = invert_pitch * input_pitch * pitch_per_second * dt;
 	local yaw_delta = input_yaw * yaw_per_second * dt;
 
+--[[
 	-- yaw
 	ship.target_yaw = ship.target_yaw + yaw_delta
 	local target_yaw_delta = ship.target_yaw - ship.yaw
@@ -572,9 +575,11 @@ function playership_tick( ship, dt )
 	local yaw_delta = clamp( -max_yaw_delta, max_yaw_delta, target_yaw_delta )
 	ship.yaw = ship.yaw + yaw_delta
 
+	--]]
 	-- pitch
 	ship.pitch = ship.pitch + pitch
 
+--[[
 	-- roll
 	library.rolling_average.add( ship.target_roll, target_yaw_delta * -45.0 )
 	local target_roll = library.rolling_average.sample( ship.target_roll )
@@ -584,13 +589,36 @@ function playership_tick( ship, dt )
 	local roll_delta = clamp( -max_roll_delta, max_roll_delta, delta )
 	local roll = ship.roll + roll_delta
 	ship.roll = clamp( -max_roll, max_roll, roll )
+	--]]
+
+	ship.yaw = 0.0
+	local strafe = 0.0
+	local strafe_speed = -2000.0
+
+	if ship.barrel_roll then
+		local barrel_roll_delta = 2 * math.pi
+		ship.roll = ship.roll + barrel_roll_delta * dt
+		ship.barrel_roll_time = ship.barrel_roll_time - dt
+		strafe = strafe_speed * dt
+		if ship.barrel_roll_time < 0.0 then
+			ship.barrel_roll = false
+			ship.barrel_roll_time = 1.0
+		end
+	else
+		ship.roll = 0.0
+		ship.barrel_roll_time = ship.barrel_roll_time - dt
+		if ship.barrel_roll_time < 0.0 then
+			ship.barrel_roll = true
+			ship.barrel_roll_time = 1.0
+		end
+	end
 	
 	vtransform_eulerAngles( ship.transform, ship.yaw, ship.pitch, ship.roll )
 	-- Camera transform shares ship position and yaw, pitch; but not roll
 	vtransform_setWorldSpaceByTransform( ship.camera_transform, ship.transform )
 	local camera_target_position = vtransformVector( ship.transform, Vector( 0.0, 0.0, 20.0, 1.0 ))
 	vtransform_setWorldPosition( ship.camera_transform, camera_target_position )
-	local camera_roll_scale = 0.1
+	local camera_roll_scale = 0.0
 	local camera_roll = ship.roll * camera_roll_scale
 	vtransform_eulerAngles( ship.camera_transform, ship.yaw, ship.pitch, camera_roll )
 
@@ -602,7 +630,11 @@ function playership_tick( ship, dt )
 	playership_weaponsTick( ship, dt )
 
 	-- Physics
-	world_v = vtransformVector( ship.transform, Vector( 0.0, 0.0, ship.speed, 0.0 ))
+	vprint( "Strafe " .. strafe )
+	local forward_v = vtransformVector( ship.transform, Vector( 0.0, 0.0, ship.speed, 0.0 ))
+	local strafe_v = vtransformVector( ship.camera_transform, Vector( strafe, 0.0, 0.0, 0.0 ))
+	local world_v = vvector_add( forward_v, strafe_v )
+
 	if ship.physic then
 		vphysic_setVelocity( ship.physic, world_v )
 	end

@@ -526,6 +526,7 @@ int LUA_transform_eulerAngles( lua_State* l ) {
 	matrix m;
 	matrix_fromEuler( m, &angles );
 	matrix_copyRotation( t->local, m );
+	transform_concatenate( t );
 	return 0;
 }
 
