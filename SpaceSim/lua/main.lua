@@ -56,6 +56,7 @@ C and only controlled remotely by Lua
 	player_bullet_speed		= 250.0;
 	enemy_bullet_speed		= 150.0;
 	homing_missile_speed	= 50.0;
+	barrel_roll_duration	= 0.8
 
 -- Create a spacesim Game object
 -- A gameobject has a visual representation (model), a physical entity for velocity and momentum (physic)
@@ -567,7 +568,7 @@ end
 function ship_barrelRoll( ship, multiplier )
 	local barrel_roll_delta = 2 * math.pi * multiplier
 	ship.barrel_roll = true
-	ship.barrel_roll_time = 0.8
+	ship.barrel_roll_time = barrel_roll_duration
 	ship.barrel_roll_multiplier = multiplier
 	ship.barrel_roll_target = library.roundf( ship.roll + barrel_roll_delta + math.pi, 2.0 * math.pi )
 end
@@ -606,7 +607,7 @@ function playership_tick( ship, dt )
 	ship.pitch = ship.pitch + pitch
 
 	local strafe = 0.0
-	local strafe_speed = -1000.0
+	local strafe_speed = -500.0 + ( -500.0 * ( ship.barrel_roll_time / barrel_roll_duration ))
 
 	if ship.barrel_roll then
 		-- strafe
