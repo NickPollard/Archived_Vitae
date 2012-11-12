@@ -324,7 +324,7 @@ void terrain_worldSpaceFromCanyon( float u, float v, float* x, float* z ) {
 	*z = position.coord.z;
 }
 
-const float new_base_radius = 20.f;
+const float new_base_radius = 40.f;
 const float new_canyon_width = 20.f;
 const float new_canyon_height = 40.f;
 

@@ -277,7 +277,7 @@ canyonTerrain* canyonTerrain_create( canyon* c, int u_blocks, int v_blocks, int 
 	t->v_samples_per_block = v_samples;
 	t->u_radius = u_radius;
 	t->v_radius = v_radius;
-	t->lod_interval_u = 2;
+	t->lod_interval_u = 3;
 	t->lod_interval_v = 2;
 
 	canyonTerrain_createBlocks( t );
