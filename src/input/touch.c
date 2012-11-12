@@ -5,6 +5,7 @@
 #include "engine.h"
 #include "input.h"
 #include "maths/maths.h"
+#include "maths/vector.h"
 #include "mem/allocator.h"
 
 #ifdef TOUCH
@@ -197,6 +198,45 @@ void input_touchTick( input* in, float dt ) {
 	touchPanel_tick( &in->touch, in, dt );
 }
 
+typedef struct gesture_s {
+	float	distance;
+	float	duration;
+	vector	direction;
+	float	angle_allowed;
+} gesture;
+
+#define kMaxGestureFramesHistory 30
+
+bool gestureRecogniser( gesture* target, gesture* candidate ) {
+	bool performed = candidate->distance >= target->distance &&
+					candidate->duration <= target->duration &&
+					Dot( &candidate->direction, &target->direction ) < target->angle_allowed;
+	return performed;
+}
+
+gesture gestureCandidate( touchHistory ) {
+	gesture g;
+	vector travel = vector_sub( last_frame.pos, first_frame.pos );
+	g->distance = vector_length( travel );
+	g->direction = normalized( travel );
+	return g;
+}
+
+touchHistory touchPad_touchHistory() {
+
+}
+
+bool input_gesturePerformed( touchPad* p, gesture* g ) {
+	bool performed = false;
+	for ( int i = 0; i < kMaxGestureFramesHistory; ++i ) {
+		touchHistory = touchPad_touchHistory( p, i )
+		gesture candidate = gestureCandidate( touchHistory );
+		performed |= gestureRecogniser( g, &candidate );
+		if ( candidate.duration > target->duration )
+			break;
+	}
+	return performed;
+}
 
 // ***************
 // Touch Panels

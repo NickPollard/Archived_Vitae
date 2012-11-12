@@ -7,9 +7,9 @@
 // *** General input defines
 #define INPUT_DATA_FRAMES 2
 
-#ifdef ANDROID
+//#ifdef ANDROID
 #define TOUCH
-#endif
+//#endif
 
 #ifdef TOUCH
 #include "input/touch.h"
