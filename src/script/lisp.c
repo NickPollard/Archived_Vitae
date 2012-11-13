@@ -668,7 +668,6 @@ void attr_##OBJECT##_##PARAM ( term* object_term, term* attr ) { \
 	OBJECT* o = object_term->data; \
 	lisp_assert( o ); \
 	o->PARAM = *(vector*)( attr->data ); \
-	vector_printf( "Loaded vector param " #PARAM "\n", (vector*)( attr->data ) ); \
 }
 
 void attr_particle_setSize( term* definition_term, term* size_attr );

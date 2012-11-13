@@ -88,7 +88,7 @@ struct zip_file* vfile_openApk( const char* path, const char* mode ) {
 	char asset_path[kVfileMaxPathLength];
 	vfile_assetPath( asset_path, path );
 
-	printf( "VFILE: Opening file from apk: \"%s\"\n", asset_path );
+	//printf( "VFILE: Opening file from apk: \"%s\"\n", asset_path );
 
 	struct zip_file* file = zip_fopen( apk_archive, asset_path, 0x0 /* Flags */ );
 	if ( !file ) {
