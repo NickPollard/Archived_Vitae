@@ -220,12 +220,14 @@ lua_State* vlua_create( engine* e, const char* filename ) {
 	const char* buffer = vfile_contents( filename, &length );
 	if ( luaL_loadbuffer( l, buffer, length, filename )) {
 		printf("Error: Failed loading lua from file %s!\n", filename );
+		printf( "%s\n", lua_tostring( l, -1 ));
 		vAssert( 0 );
 	}
 
 	int err = lua_pcall( l, 0, 0, 0 );
 	if ( err != 0 ) {
 		printf( "LUA ERROR: ErrorNum: %d.\n", err );
+		printf( "%s\n", lua_tostring( l, -1 ));
 		vAssert( 0 );
 	}
 
