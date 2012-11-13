@@ -56,7 +56,7 @@ C and only controlled remotely by Lua
 	player_bullet_speed		= 250.0;
 	enemy_bullet_speed		= 150.0;
 	homing_missile_speed	= 50.0;
-	barrel_roll_duration	= 0.8
+	aileron_roll_duration	= 0.8
 
 -- Create a spacesim Game object
 -- A gameobject has a visual representation (model), a physical entity for velocity and momentum (physic)
@@ -257,8 +257,8 @@ function playership_create()
 	p.target_yaw = 0
 	p.pitch = 0
 	p.roll = 0
-	p.barrel_roll = false
-	p.barrel_roll_time = 5.0
+	p.aileron_roll = false
+	p.aileron_roll_time = 5.0
 	p.camera_transform = vcreateTransform()
 	
 	-- Init Collision
@@ -565,17 +565,17 @@ function lerp( a, b, k )
 	return a + ( b - a ) * k
 end
 
-function ship_barrelRoll( ship, multiplier )
-	local barrel_roll_delta = 2 * math.pi * multiplier
-	ship.barrel_roll = true
-	ship.barrel_roll_time = barrel_roll_duration
-	ship.barrel_roll_multiplier = multiplier
-	ship.barrel_roll_target = library.roundf( ship.roll + barrel_roll_delta + math.pi, 2.0 * math.pi )
+function ship_aileronRoll( ship, multiplier )
+	local aileron_roll_delta = 2 * math.pi * multiplier
+	ship.aileron_roll = true
+	ship.aileron_roll_time = aileron_roll_duration
+	ship.aileron_roll_multiplier = multiplier
+	ship.aileron_roll_target = library.roundf( ship.roll + aileron_roll_delta + math.pi, 2.0 * math.pi )
 end
 
-function ship_barrelRollActive( ship ) 
+function ship_aileronRollActive( ship ) 
 	local roll_offset = library.modf( ship.roll + math.pi, 2 * math.pi ) - math.pi
-	return not ( ship.barrel_roll_time < 0.0 and math.abs( roll_offset ) < 0.4 )
+	return not ( ship.aileron_roll_time < 0.0 and math.abs( roll_offset ) < 0.4 )
 end
 
 function ship_rollFromYawRate( ship, yaw_delta )
@@ -607,28 +607,33 @@ function playership_tick( ship, dt )
 	ship.pitch = ship.pitch + pitch
 
 	local strafe = 0.0
-	local strafe_speed = -500.0 + ( -500.0 * ( ship.barrel_roll_time / barrel_roll_duration ))
+	local strafe_speed = -500.0 + ( -500.0 * ( ship.aileron_roll_time / aileron_roll_duration ))
 
-	if ship.barrel_roll then
+	if ship.aileron_roll then
 		-- strafe
-		strafe = strafe_speed * dt * ship.barrel_roll_multiplier
+		strafe = strafe_speed * dt * ship.aileron_roll_multiplier
 
 		-- roll
-		library.rolling_average.add( ship.target_roll, ship.barrel_roll_target )
+		library.rolling_average.add( ship.target_roll, ship.aileron_roll_target )
 		local roll_delta = ship_rollDeltaFromTarget( library.rolling_average.sample( ship.target_roll ), ship.roll )
 		ship.roll = ship.roll + roll_delta
 
-		ship.barrel_roll_time = ship.barrel_roll_time - dt
-		ship.barrel_roll = ship_barrelRollActive( ship )
+		ship.aileron_roll_time = ship.aileron_roll_time - dt
+		ship.aileron_roll = ship_aileronRollActive( ship )
 	else
-		local barrel_roll_left = vtouchPadTouched( ship.roll_left )
-		local barrel_roll_right = vtouchPadTouched( ship.roll_right )
-		if barrel_roll_left then
+		--local aileron_roll_left = vtouchPadTouched( ship.roll_left )
+		--local aileron_roll_right = vtouchPadTouched( ship.roll_right )
+		--local swipe_left = { min_travel = { 100.0, 0.0, 0.0 }, max_duration = 0.3, min_speed = { 200.0, 0.0, 0.0 } }
+		local swipe_left = { direction = { 1.0, 0.0, 0.0 }, min_distance = 100.0, max_duration = 0.3, angle_allowance = 0.1 }
+		aileron_swipe_left = vtouchGesture_create( player_ship.joypad, swipe_left )
+		local aileron_roll_left = vtouchGesture( aileron_swipe_left )
+		
+		if aileron_roll_left then
 			vprint( "Roll left!" )
-			ship_barrelRoll( ship, 1.0 )
-		elseif barrel_roll_right then
+			ship_aileronRoll( ship, 1.0 )
+		elseif aileron_roll_right then
 			vprint( "Roll right!" )
-			ship_barrelRoll( ship, -1.0 )
+			ship_aileronRoll( ship, -1.0 )
 		end
 		-- yaw
 		ship.target_yaw = ship.target_yaw + yaw_delta
