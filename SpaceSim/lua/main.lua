@@ -56,6 +56,8 @@ C and only controlled remotely by Lua
 	player_bullet_speed		= 250.0;
 	enemy_bullet_speed		= 150.0;
 	homing_missile_speed	= 50.0;
+	max_allowed_roll		= 1.5
+	camera_roll_scale		= 0.1
 	aileron_roll_duration	= 0.8
 	aileron_swipe 			= { 
 		distance = 150.0,
@@ -592,6 +594,7 @@ function ship_aileronRoll( ship, multiplier )
 	ship.aileron_roll_time = aileron_roll_duration
 	ship.aileron_roll_multiplier = multiplier
 	ship.aileron_roll_target = library.roundf( ship.roll + aileron_roll_delta + math.pi, 2.0 * math.pi )
+	ship.aileron_roll_amount = ship.aileron_roll_target - ship.roll
 	-- preserve heading from when we enter the roll
 	ship.target_yaw = ship.yaw
 end
@@ -602,7 +605,6 @@ function ship_aileronRollActive( ship )
 end
 
 function ship_rollFromYawRate( ship, yaw_delta )
-	local max_allowed_roll = 1.5
 	local last_roll = library.rolling_average.sample( ship.target_roll ) or 0.0
 	local offset = math.floor(( last_roll + math.pi ) / two_pi ) * two_pi
 	local yaw_to_roll = -45.0
@@ -613,6 +615,12 @@ function ship_rollDeltaFromTarget( target, current )
 	local target_delta = target - current
 	local max_roll_delta = math.min( 4.0 * dt, math.abs( target_delta / 2.0 ))
 	return clamp( -max_roll_delta, max_roll_delta, target_delta )
+end
+
+-- Distorted sin curve for quicker attack and longer decay
+-- sin ( (pi-x)^2 / pi )
+function ship_strafeRate( ratio )
+	return clamp( 0.0, 1.0, math.sin( math.pi + ratio*ratio / math.pi - 2.0 * ratio ))
 end
 
 function playership_tick( ship, dt )
@@ -630,7 +638,6 @@ function playership_tick( ship, dt )
 	ship.pitch = ship.pitch + pitch
 
 	local strafe = 0.0
-	local strafe_speed = -500.0 + ( -500.0 * ( ship.aileron_roll_time / aileron_roll_duration ))
 
 	if not ship.aileron_roll then
 		local aileron_roll_left = vgesture_performed( player_ship.joypad, player_ship.aileron_swipe_left )
@@ -643,17 +650,23 @@ function playership_tick( ship, dt )
 		end
 	end
 
+	local camera_roll = 0.0
 	if ship.aileron_roll then
 		-- strafe
+		local roll_rate = ship_strafeRate( ship.aileron_roll_time / aileron_roll_duration )
+		local strafe_speed = -1500.0 * roll_rate
 		strafe = strafe_speed * dt * ship.aileron_roll_multiplier
 
 		-- roll
 		library.rolling_average.add( ship.target_roll, ship.aileron_roll_target )
-		local roll_delta = ship_rollDeltaFromTarget( library.rolling_average.sample( ship.target_roll ), ship.roll )
+		--local roll_delta = ship_rollDeltaFromTarget( library.rolling_average.sample( ship.target_roll ), ship.roll )
+		local integral_total = 1.8 -- This is such a fudge - should be integral [0->1] of sin( pi^2 - x^2 / pi ) ( which is 1.58605 )
+		local roll_delta = roll_rate * dt * ship.aileron_roll_amount * integral_total
 		ship.roll = ship.roll + roll_delta
 
 		ship.aileron_roll_time = ship.aileron_roll_time - dt
 		ship.aileron_roll = ship_aileronRollActive( ship )
+		camera_roll = max_allowed_roll * camera_roll_scale * ship.aileron_roll_multiplier
 	else
 
 		-- yaw
@@ -668,6 +681,8 @@ function playership_tick( ship, dt )
 		library.rolling_average.add( ship.target_roll, target_roll )
 		local roll_delta = ship_rollDeltaFromTarget( library.rolling_average.sample( ship.target_roll ), ship.roll )
 		ship.roll = ship.roll + roll_delta
+		local roll_offset = library.modf( ship.roll + math.pi, 2 * math.pi ) - math.pi
+		camera_roll = roll_offset * camera_roll_scale
 	end
 	
 	vtransform_eulerAngles( ship.transform, ship.yaw, ship.pitch, ship.roll )
@@ -675,8 +690,6 @@ function playership_tick( ship, dt )
 	vtransform_setWorldSpaceByTransform( ship.camera_transform, ship.transform )
 	local camera_target_position = vtransformVector( ship.transform, Vector( 0.0, 0.0, 20.0, 1.0 ))
 	vtransform_setWorldPosition( ship.camera_transform, camera_target_position )
-	local camera_roll_scale = 0.0
-	local camera_roll = ship.roll * camera_roll_scale
 	vtransform_eulerAngles( ship.camera_transform, ship.yaw, ship.pitch, camera_roll )
 
 	-- throttle

@@ -418,6 +418,7 @@ int LUA_touchPadTouched( lua_State* l ) {
 }
 
 int LUA_createGesture( lua_State* l ) {
+	(void)l;
 	return 0;
 }
 
