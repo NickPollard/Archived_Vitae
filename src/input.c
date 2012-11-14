@@ -18,12 +18,13 @@
 int input_bindCount = 0;
 int input_keybinds[INPUT_MAX_KEYBINDS];
 
-input* input_create() {
+input* input_create( frame_timer* t ) {
 	input* in = mem_alloc( sizeof( input ));
 	memset( in, 0, sizeof( input));
 	in->active = 0;
 	memset( in->data, 0, sizeof( input_data ) * INPUT_DATA_FRAMES );
 	memcpy( in->keybinds, input_keybinds, INPUT_MAX_KEYBINDS ); // init the keybinds to defaults
+	in->timer = t;
 #ifdef TOUCH
 	touchPanel_init( &in->touch );
 	touchPanel_init( &in->data[0].touch );

@@ -3,6 +3,7 @@
 
 #include "input/keyboard.h"
 #include "input/mouse.h"
+#include "vtime.h"
 
 // *** General input defines
 #define INPUT_DATA_FRAMES 2
@@ -36,10 +37,11 @@ struct input_s {
 #endif // TOUCH
 	int w;
 	int h;
+	frame_timer* timer;
 };
 
 // Constructor
-input* input_create();
+input* input_create( frame_timer* t );
 
 // tick the input, recording this frames input data from devices
 void input_tick( input* in, float dt );

@@ -215,7 +215,7 @@ engine* engine_create() {
 	e->timer = mem_alloc(sizeof(frame_timer));
 	e->callbacks = luaInterface_create();
 	e->onTick = luaInterface_addCallback(e->callbacks, "onTick");
-	e->input = input_create();
+	e->input = input_create( e->timer );
 	e->tickers = NULL;
 	e->inputs = NULL;
 	e->renders = NULL;

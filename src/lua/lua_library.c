@@ -371,6 +371,26 @@ int LUA_touchPadTouched( lua_State* l ) {
 	lua_pushnumber( l, y );
 	return 3;
 }
+
+int LUA_createGesture( lua_State* l ) {
+	printf( "Gesture create!" );
+	float distance = lua_tonumber( l, 1 );
+	float duration = lua_tonumber( l, 2 );
+	vector* direction = lua_toptr( l, 3 );
+	float angle_tolerance = lua_tonumber( l, 4 );
+	gesture* g = gesture_create( distance, duration, *direction, angle_tolerance );
+	lua_pushptr( l, g );
+	return 1;
+}
+
+int LUA_gesture_performed( lua_State* l ) {
+	touchPad* pad = lua_toptr( l, 1 );
+	gesture* g = lua_toptr( l, 2 );
+	bool performed = input_gesturePerformed( pad, g );
+	lua_pushboolean( l, performed );
+	return 1;
+}
+
 #else
 int LUA_touchHeld( lua_State* l ) {
 	lua_pushboolean( l, false );
@@ -395,6 +415,15 @@ int LUA_touchPadTouched( lua_State* l ) {
 	lua_pushnumber( l, -1 );
 	lua_pushnumber( l, -1 );
 	return 3;
+}
+
+int LUA_createGesture( lua_State* l ) {
+	return 0;
+}
+
+int LUA_gesture_performed( lua_State* l ) {
+	lua_pushboolean( l, false );
+	return 1;
 }
 #endif // TOUCH
 
@@ -868,7 +897,8 @@ void luaLibrary_import( lua_State* l ) {
 	lua_registerFunction( l, LUA_createTouchPad, "vcreateTouchPad" );
 	lua_registerFunction( l, LUA_touchPadTouched, "vtouchPadTouched" );
 	lua_registerFunction( l, LUA_touchPadDragged, "vtouchPadDragged" );
-
+	lua_registerFunction( l, LUA_createGesture, "vgesture_create" );
+	lua_registerFunction( l, LUA_gesture_performed, "vgesture_performed" );
 	// *** Scene
 	lua_registerFunction( l, LUA_createModelInstance, "vcreateModelInstance" );
 	lua_registerFunction( l, LUA_modelPreload, "vmodel_preload" );

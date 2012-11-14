@@ -127,6 +127,8 @@ void input_touchTick( input* in, float dt ) {
 		We use both of these to construct the new frame
 		Pending touches take precedence, everything else is filled in from the old
 	   */
+	
+	float time = timer_getTimeSeconds( in->timer );
 
 	// Copy the old inputs into our new frame
 	// Anything with an invalid UID is ignored
@@ -143,6 +145,7 @@ void input_touchTick( input* in, float dt ) {
 			*new = *old;
 			new->drag_x = 0.f;
 			new->drag_y = 0.f;
+			new->time = time;
 			++new;
 			++active_touches;
 		}
@@ -166,6 +169,7 @@ void input_touchTick( input* in, float dt ) {
 			vAssert( active_touches < kMaxMultiTouch );
 			touch* new = &in->data[in->active].touch.touches[active_touches];
 			*new = *pending;
+			new->time = time;
 			++active_touches;
 			//printf( "New touch received\n" );
 		}
@@ -176,6 +180,7 @@ void input_touchTick( input* in, float dt ) {
 			*old = *pending;
 			old->drag_x = drag_x;
 			old->drag_y = drag_y;
+			old->time = time;
 			//printf( "Old touch update received\n" );
 		}
 	}
@@ -198,43 +203,80 @@ void input_touchTick( input* in, float dt ) {
 	touchPanel_tick( &in->touch, in, dt );
 }
 
-typedef struct gesture_s {
-	float	distance;
-	float	duration;
-	vector	direction;
-	float	angle_allowed;
-} gesture;
+typedef struct touchHistory_s {
+	int	count;
+	touch* data;
+} touchHistory;
 
-#define kMaxGestureFramesHistory 30
+gesture* gesture_create( float distance, float duration, vector direction, float angle_tolerance ) {
+	gesture* g = mem_alloc( sizeof( gesture ));
+	memset( g, 0, sizeof( gesture ));
+	g->distance = distance;
+	g->duration = duration;
+	g->direction = direction;
+	g->angle_tolerance = angle_tolerance;
+	return g;
+}
 
 bool gestureRecogniser( gesture* target, gesture* candidate ) {
 	bool performed = candidate->distance >= target->distance &&
 					candidate->duration <= target->duration &&
-					Dot( &candidate->direction, &target->direction ) < target->angle_allowed;
+					Dot( &candidate->direction, &target->direction ) < target->angle_tolerance;
 	return performed;
 }
 
-gesture gestureCandidate( touchHistory ) {
+touch touchHistory_firstFrame( touchHistory h ) {
+	touch t = h.data[h.count - 1];
+	return t;
+}
+
+touch touchHistory_lastFrame( touchHistory h ) {
+	touch t = h.data[0];
+	return t;
+}
+
+gesture gestureCandidate( touchHistory h ) {
 	gesture g;
-	vector travel = vector_sub( last_frame.pos, first_frame.pos );
-	g->distance = vector_length( travel );
-	g->direction = normalized( travel );
+	touch last_frame = touchHistory_lastFrame( h );
+	touch first_frame = touchHistory_firstFrame( h );
+	printf( "GestureCandidate: First frame time %.2f, last frame time %.2f\n", first_frame.time, last_frame.time );
+	vector first_pos = Vector( first_frame.x, first_frame.y, 0.f, 1.f );
+	vector last_pos = Vector( last_frame.x, last_frame.y, 0.f, 1.f );
+	vector travel = vector_sub( last_pos, first_pos );
+	g.distance = vector_length( &travel );
+	g.direction = normalized( travel );
+	g.duration = last_frame.time - first_frame.time;
+	printf( "Gesture candidate: distance %.2f, duration %.2f, direction.", g.distance, g.duration );
+	vector_print( &g.direction );
+	printf( "\n" );
 	return g;
 }
 
-touchHistory touchPad_touchHistory() {
-
+touchHistory touchPad_touchHistory( touchPad* p, int touch, int history_frames ) {
+	touchHistory h;
+	h.count = history_frames;
+	h.data = p->touch_history[ touch ];
+	return h;
 }
 
 bool input_gesturePerformed( touchPad* p, gesture* g ) {
 	bool performed = false;
-	for ( int i = 0; i < kMaxGestureFramesHistory; ++i ) {
-		touchHistory = touchPad_touchHistory( p, i )
-		gesture candidate = gestureCandidate( touchHistory );
-		performed |= gestureRecogniser( g, &candidate );
-		if ( candidate.duration > target->duration )
-			break;
+	for ( int touch = 0; touch < kMaxMultiTouch; ++touch ) {
+		if ( p->touches[touch].uid != kInvalidTouchUid ) {
+			printf( "Calculating touch history for UID %d\n", p->touches[touch].uid );
+			for ( int i = 1; i < kMaxTouchFramesHistory; ++i ) {
+				if ( p->touch_history[touch][i].uid == kInvalidTouchUid ) {
+					break;
+				}
+				touchHistory history = touchPad_touchHistory( p, touch, i );
+				gesture candidate = gestureCandidate( history );
+				performed |= gestureRecogniser( g, &candidate );
+				if ( candidate.duration > g->duration )
+					goto found;
+			}
+		}
 	}
+found:
 	return performed;
 }
 
@@ -265,6 +307,10 @@ touchPad* touchPad_create( int x, int y, int w, int h ) {
 
 	for ( int i = 0; i < kMaxMultiTouch; ++i ) {
 		p->touches[i].uid = kInvalidTouchUid;
+		for ( int j = 0; j < kMaxTouchFramesHistory; ++j ) {
+			p->touch_history[i][j].uid = kInvalidTouchUid;
+			p->touch_history[i][j].time = 0.f;
+		}
 	}
 
 	return p;
@@ -279,9 +325,26 @@ void touchPanel_removeTouchPad( touchPanel* panel, touchPad* pad ) {
 	array_remove( (void**)panel->touch_pad, &panel->touch_pad_count, pad );
 }
 
-void touchPad_tick( touchPad* p, input* in, float dt ) {
-	(void)p; (void)in; (void)dt;
+int touchPad_findHistoryIndexWithUID( touchPad* p, int uid ) {
+	for ( int i = 0; i < kMaxMultiTouch; ++i ) {
+		if ( p->touch_history[i][1].uid == uid )
+			return i;
+	}
+	return -1;
+}
 
+void touchPad_tick( touchPad* p, input* in, float dt ) {
+	(void)dt;
+
+	// Update History
+	// Push all frames back one
+	for ( int i = 0; i < kMaxMultiTouch; ++i ) {
+		for ( int j = kMaxTouchFramesHistory - 1; j > 0; --j ) {
+			p->touch_history[i][j] = p->touch_history[i][j - 1];
+		}
+	}
+
+	// Grab touches for this frame
 	int count = 0;
 	touch* local_touch = &p->touches[0];
 	for ( int i = 0; i < kMaxMultiTouch; ++i ) {
@@ -296,6 +359,37 @@ void touchPad_tick( touchPad* p, input* in, float dt ) {
 		}
 	}
 	//printf( "touchpad has %d touches.\n", count );
+
+	// Init new history to defaults
+	touch new_history[kMaxMultiTouch][kMaxTouchFramesHistory];
+	memset( new_history, 0, sizeof( touch ) * kMaxMultiTouch * kMaxTouchFramesHistory );
+	for ( int i = 0; i < kMaxMultiTouch; ++i ) {
+		for ( int j = 0; j < kMaxTouchFramesHistory; ++j ) {
+			new_history[i][j].uid = kInvalidTouchUid;
+		}
+	}
+
+	// Try to sync up history with current touches, by UID
+	for ( int i = 0; i < count; ++i ) {
+		int uid = p->touches[i].uid;
+		int history_index = touchPad_findHistoryIndexWithUID( p, uid );
+		if ( history_index != -1 ) {
+			memcpy( new_history[i], p->touch_history[history_index], sizeof( touch ) * kMaxTouchFramesHistory );
+		}
+		else {
+			// Mark as invalid
+			for ( int j = 0; j < kMaxTouchFramesHistory; ++j ) {
+				new_history[i][j].uid = kInvalidTouchUid;
+				new_history[i][j].time = 0.f;
+			}
+		}
+		new_history[i][0] = p->touches[i];
+	}
+
+	// Copy new histories back over old
+	for ( int i = 0; i < kMaxMultiTouch; ++i ) {
+		memcpy( p->touch_history[i], new_history[i], sizeof( touch ) * kMaxTouchFramesHistory );
+	}
 
 	// Blank out unused ones
 	while ( local_touch < &p->touches[kMaxMultiTouch] ) {

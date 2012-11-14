@@ -1,6 +1,8 @@
 // touch.h
 #pragma once
 
+#include "maths/vector.h"
+
 /*
 	Touch
 
@@ -14,10 +16,11 @@ enum touchAction {
 	kTouchUnknown
 };
 
-#define kMaxMultiTouch 16
-#define kMaxTouchPads 16
-#define kInvalidTouchUid -1
-#define kInvalidIndex -1
+#define kMaxMultiTouch 16				// The max number of touches we will track at once
+#define kMaxTouchPads 16				// The max nunmber of touch pads we can process at once
+#define kInvalidTouchUid -1				// Indicates invalid or uninitialized
+#define kInvalidIndex -1				// Indicates invalid or uninitialized
+#define kMaxTouchFramesHistory 30		// The number of historical touch frames we keep for gesture analysis
 
 // A touch stimulus, there will be one for each current touch in a multi-touch environment
 typedef struct touch_s {
@@ -29,6 +32,7 @@ typedef struct touch_s {
 	bool pressed;
 	bool released;
 	bool held;
+	float time;
 } touch;
 
 // An input area on a touchPanel that we want to track input for
@@ -40,21 +44,23 @@ typedef struct touchPad_s {
 	bool active;
 	int		touch_count;
 	touch	touches[kMaxMultiTouch];
+	touch	touch_history[kMaxMultiTouch][kMaxTouchFramesHistory];
 } touchPad;
 
 // A touch input device, i.e. a touch screen on a phone or tablet
 typedef struct touchPanel_s {
 	int		touch_count;
 	touch	touches[kMaxMultiTouch];
-	/*
-	bool	touched;
-	int32_t x;
-	int32_t y;
-	*/
-	int touch_pad_count;
-	touchPad** touch_pad;
+	int			touch_pad_count;
+	touchPad** 	touch_pad;
 } touchPanel;
 
+typedef struct gesture_s {
+	float	distance;
+	float	duration;
+	vector	direction;
+	float	angle_tolerance;
+} gesture;
 
 // *** Touch
 void input_registerTouch( input* in, int uid, int x, int y, enum touchAction action );
@@ -74,3 +80,7 @@ touchPad* touchPanel_addTouchPad( touchPanel* panel, touchPad* pad );
 touchPad* touchPad_create( int x, int y, int w, int h );
 bool touchPad_touched( touchPad* p, int* x, int* y );
 bool touchPad_dragged( touchPad* p, int* x, int* y );
+
+// *** Gestures
+gesture* gesture_create( float distance, float duration, vector direction, float angle_tolerance );
+bool input_gesturePerformed( touchPad* p, gesture* g );

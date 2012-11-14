@@ -350,6 +350,12 @@ function setup_controls()
 
 		player_ship.roll_left = vcreateTouchPad( input, 0, 720 - 150, 150, 150 )
 		player_ship.roll_right = vcreateTouchPad( input, 1280 - 150, 720 - 150, 150, 150 )
+
+		local swipe_left = { direction = Vector( 1.0, 0.0, 0.0, 1.0 ), distance = 200.0, duration = 0.3, angle_tolerance = 0.1 }
+		local swipe_right = { direction = Vector( -1.0, 0.0, 0.0, 1.0 ), distance = 200.0, duration = 0.3, angle_tolerance = 0.1 }
+		player_ship.aileron_swipe_left = vgesture_create( swipe_left.distance, swipe_left.duration, swipe_left.direction, swipe_left.angle_tolerance )
+		player_ship.aileron_swipe_right = vgesture_create( swipe_right.distance, swipe_right.duration, swipe_right.direction, swipe_right.angle_tolerance )
+		vprint( "Swipe!" )
 	else
 		player_ship.steering_input = steering_input_keyboard
 	end
@@ -623,10 +629,8 @@ function playership_tick( ship, dt )
 	else
 		--local aileron_roll_left = vtouchPadTouched( ship.roll_left )
 		--local aileron_roll_right = vtouchPadTouched( ship.roll_right )
-		--local swipe_left = { min_travel = { 100.0, 0.0, 0.0 }, max_duration = 0.3, min_speed = { 200.0, 0.0, 0.0 } }
-		local swipe_left = { direction = { 1.0, 0.0, 0.0 }, min_distance = 100.0, max_duration = 0.3, angle_allowance = 0.1 }
-		aileron_swipe_left = vtouchGesture_create( player_ship.joypad, swipe_left )
-		local aileron_roll_left = vtouchGesture( aileron_swipe_left )
+		local aileron_roll_left = vgesture_performed( player_ship.joypad, player_ship.aileron_swipe_left )
+		local aileron_roll_right = vgesture_performed( player_ship.joypad, player_ship.aileron_swipe_right )
 		
 		if aileron_roll_left then
 			vprint( "Roll left!" )
