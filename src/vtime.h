@@ -10,7 +10,8 @@
 typedef struct timeval time_v;
 
 typedef struct {
-	unsigned long long oldTime;
+	unsigned long long old_time;
+	unsigned long long game_start;
 	float fps;
 } frame_timer;
 
@@ -36,5 +37,6 @@ float timer_getDelta(frame_timer* timer);
 
 // Get the time in seconds
 float timer_getTimeSeconds();
+float timer_getGameTimeSeconds(frame_timer* t);
 
 #endif // __TIME_H__

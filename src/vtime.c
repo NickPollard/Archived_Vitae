@@ -35,7 +35,8 @@ void deterministic_seedRandSeq( long int seed, randSeq* r ) {
 void timer_init(frame_timer* timer) {
 	time_v t;
 	gettimeofday(&t, NULL);
-	timer->oldTime = t.tv_sec * SecToUSec + t.tv_usec;
+	timer->old_time = t.tv_sec * SecToUSec + t.tv_usec;
+	timer->game_start = timer->old_time;
 	timer->fps = 0.f;
 }
 
@@ -44,8 +45,8 @@ float timer_getDelta(frame_timer* timer) {
 	gettimeofday(&t, NULL);
 
 	unsigned long long newTime = t.tv_sec * SecToUSec + t.tv_usec;
-	float delta = (float)(newTime - timer->oldTime) * uSecToSec;
-	timer->oldTime = newTime;
+	float delta = (float)(newTime - timer->old_time) * uSecToSec;
+	timer->old_time = newTime;
 
 	float fps = 1.f/delta;
 	timer->fps = timer->fps * 0.9f + fps * 0.1f;
@@ -56,5 +57,10 @@ float timer_getDelta(frame_timer* timer) {
 
 // Get the time in seconds
 float timer_getTimeSeconds(frame_timer* t) {
-	return ((float)t->oldTime) * uSecToSec;
+	return ((float)t->old_time) * uSecToSec;
+}
+
+// Get the time in seconds
+float timer_getGameTimeSeconds(frame_timer* t) {
+	return ((float)( t->old_time - t->game_start )) * uSecToSec;
 }

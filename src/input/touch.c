@@ -128,7 +128,7 @@ void input_touchTick( input* in, float dt ) {
 		Pending touches take precedence, everything else is filled in from the old
 	   */
 	
-	float time = timer_getTimeSeconds( in->timer );
+	float time = timer_getGameTimeSeconds( in->timer );
 
 	// Copy the old inputs into our new frame
 	// Anything with an invalid UID is ignored
@@ -219,9 +219,11 @@ gesture* gesture_create( float distance, float duration, vector direction, float
 }
 
 bool gestureRecogniser( gesture* target, gesture* candidate ) {
+	//printf( "Recogniser gesture: distance %.2f, duration %.2f, tolerance %.2f\n", target->distance, target->duration, target->angle_tolerance );
+	//vector_printf( "Direction: ", &target->direction );
 	bool performed = candidate->distance >= target->distance &&
 					candidate->duration <= target->duration &&
-					Dot( &candidate->direction, &target->direction ) < target->angle_tolerance;
+					Dot( &candidate->direction, &target->direction ) > ( 1.f - target->angle_tolerance );
 	return performed;
 }
 
@@ -239,16 +241,16 @@ gesture gestureCandidate( touchHistory h ) {
 	gesture g;
 	touch last_frame = touchHistory_lastFrame( h );
 	touch first_frame = touchHistory_firstFrame( h );
-	printf( "GestureCandidate: First frame time %.2f, last frame time %.2f\n", first_frame.time, last_frame.time );
+	//printf( "GestureCandidate: First frame time %.2f, last frame time %.2f\n", first_frame.time, last_frame.time );
 	vector first_pos = Vector( first_frame.x, first_frame.y, 0.f, 1.f );
 	vector last_pos = Vector( last_frame.x, last_frame.y, 0.f, 1.f );
 	vector travel = vector_sub( last_pos, first_pos );
 	g.distance = vector_length( &travel );
 	g.direction = normalized( travel );
 	g.duration = last_frame.time - first_frame.time;
-	printf( "Gesture candidate: distance %.2f, duration %.2f, direction.", g.distance, g.duration );
-	vector_print( &g.direction );
-	printf( "\n" );
+	//printf( "Gesture candidate: distance %.2f, duration %.2f, direction.", g.distance, g.duration );
+	//vector_print( &g.direction );
+	//printf( "\n" );
 	return g;
 }
 
@@ -263,7 +265,7 @@ bool input_gesturePerformed( touchPad* p, gesture* g ) {
 	bool performed = false;
 	for ( int touch = 0; touch < kMaxMultiTouch; ++touch ) {
 		if ( p->touches[touch].uid != kInvalidTouchUid ) {
-			printf( "Calculating touch history for UID %d\n", p->touches[touch].uid );
+			//printf( "Calculating touch history for UID %d\n", p->touches[touch].uid );
 			for ( int i = 1; i < kMaxTouchFramesHistory; ++i ) {
 				if ( p->touch_history[touch][i].uid == kInvalidTouchUid ) {
 					break;
@@ -366,6 +368,7 @@ void touchPad_tick( touchPad* p, input* in, float dt ) {
 	for ( int i = 0; i < kMaxMultiTouch; ++i ) {
 		for ( int j = 0; j < kMaxTouchFramesHistory; ++j ) {
 			new_history[i][j].uid = kInvalidTouchUid;
+			new_history[i][j].time = 0.f;
 		}
 	}
 

@@ -57,6 +57,16 @@ C and only controlled remotely by Lua
 	enemy_bullet_speed		= 150.0;
 	homing_missile_speed	= 50.0;
 	aileron_roll_duration	= 0.8
+	aileron_swipe 			= { 
+		distance = 150.0,
+		duration = 0.2,
+		angle_tolerance = 0.1 
+	}
+	missile_swipe 			= { 
+		distance = 150.0,
+		duration = 0.2,
+		angle_tolerance = 0.1
+	}
 
 -- Create a spacesim Game object
 -- A gameobject has a visual representation (model), a physical entity for velocity and momentum (physic)
@@ -351,11 +361,12 @@ function setup_controls()
 		player_ship.roll_left = vcreateTouchPad( input, 0, 720 - 150, 150, 150 )
 		player_ship.roll_right = vcreateTouchPad( input, 1280 - 150, 720 - 150, 150, 150 )
 
-		local swipe_left = { direction = Vector( 1.0, 0.0, 0.0, 1.0 ), distance = 200.0, duration = 0.3, angle_tolerance = 0.1 }
-		local swipe_right = { direction = Vector( -1.0, 0.0, 0.0, 1.0 ), distance = 200.0, duration = 0.3, angle_tolerance = 0.1 }
-		player_ship.aileron_swipe_left = vgesture_create( swipe_left.distance, swipe_left.duration, swipe_left.direction, swipe_left.angle_tolerance )
-		player_ship.aileron_swipe_right = vgesture_create( swipe_right.distance, swipe_right.duration, swipe_right.direction, swipe_right.angle_tolerance )
-		vprint( "Swipe!" )
+		local swipe_left = { direction = Vector( -1.0, 0.0, 0.0, 0.0 ) }
+		local swipe_right = { direction = Vector( 1.0, 0.0, 0.0, 0.0 ) }
+		player_ship.aileron_swipe_left = vgesture_create( aileron_swipe.distance, aileron_swipe.duration, swipe_left.direction, aileron_swipe.angle_tolerance )
+		player_ship.aileron_swipe_right = vgesture_create( aileron_swipe.distance, aileron_swipe.duration, swipe_right.direction, aileron_swipe.angle_tolerance )
+		local missile_swipe_direction = Vector( 0.0, 1.0, 0.0, 0.0 )
+		player_ship.missile_swipe = vgesture_create( missile_swipe.distance, missile_swipe.duration, missile_swipe_direction, missile_swipe.angle_tolerance )
 	else
 		player_ship.steering_input = steering_input_keyboard
 	end
@@ -560,6 +571,10 @@ function playership_weaponsTick( ship, dt )
 	if fired then
 		player_fire( ship )
 	end
+	local missile_fired = vgesture_performed( player_ship.fire_trigger, player_ship.missile_swipe )
+	if missile_fired then
+		vprint( "Missile!" )
+	end
 	ship.cooldown = ship.cooldown - dt
 end
 
@@ -577,6 +592,8 @@ function ship_aileronRoll( ship, multiplier )
 	ship.aileron_roll_time = aileron_roll_duration
 	ship.aileron_roll_multiplier = multiplier
 	ship.aileron_roll_target = library.roundf( ship.roll + aileron_roll_delta + math.pi, 2.0 * math.pi )
+	-- preserve heading from when we enter the roll
+	ship.target_yaw = ship.yaw
 end
 
 function ship_aileronRollActive( ship ) 
@@ -615,6 +632,17 @@ function playership_tick( ship, dt )
 	local strafe = 0.0
 	local strafe_speed = -500.0 + ( -500.0 * ( ship.aileron_roll_time / aileron_roll_duration ))
 
+	if not ship.aileron_roll then
+		local aileron_roll_left = vgesture_performed( player_ship.joypad, player_ship.aileron_swipe_left )
+		local aileron_roll_right = vgesture_performed( player_ship.joypad, player_ship.aileron_swipe_right )
+		
+		if aileron_roll_left then
+			ship_aileronRoll( ship, 1.0 )
+		elseif aileron_roll_right then
+			ship_aileronRoll( ship, -1.0 )
+		end
+	end
+
 	if ship.aileron_roll then
 		-- strafe
 		strafe = strafe_speed * dt * ship.aileron_roll_multiplier
@@ -627,23 +655,12 @@ function playership_tick( ship, dt )
 		ship.aileron_roll_time = ship.aileron_roll_time - dt
 		ship.aileron_roll = ship_aileronRollActive( ship )
 	else
-		--local aileron_roll_left = vtouchPadTouched( ship.roll_left )
-		--local aileron_roll_right = vtouchPadTouched( ship.roll_right )
-		local aileron_roll_left = vgesture_performed( player_ship.joypad, player_ship.aileron_swipe_left )
-		local aileron_roll_right = vgesture_performed( player_ship.joypad, player_ship.aileron_swipe_right )
-		
-		if aileron_roll_left then
-			vprint( "Roll left!" )
-			ship_aileronRoll( ship, 1.0 )
-		elseif aileron_roll_right then
-			vprint( "Roll right!" )
-			ship_aileronRoll( ship, -1.0 )
-		end
+
 		-- yaw
 		ship.target_yaw = ship.target_yaw + yaw_delta
 		local target_yaw_delta = ship.target_yaw - ship.yaw
 		local max_yaw_delta = 2.0 * math.abs( ship.roll ) * 1.3 * dt
-		local yaw_delta = clamp( -max_yaw_delta, max_yaw_delta, target_yaw_delta )
+		yaw_delta = clamp( -max_yaw_delta, max_yaw_delta, target_yaw_delta )
 		ship.yaw = ship.yaw + yaw_delta
 
 		-- roll

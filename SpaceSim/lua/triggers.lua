@@ -17,7 +17,6 @@ end
 function triggers.tick( dt )
 	for trigger in array.iterator( triggers.triggers ) do
 		if trigger.trigger() then
-			vprint( "Trigger!" )
 			trigger.action()
 			trigger.triggered = true
 		end

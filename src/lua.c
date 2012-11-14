@@ -224,17 +224,17 @@ lua_State* vlua_create( engine* e, const char* filename ) {
 		vAssert( 0 );
 	}
 
+	luaLibrary_import( l );
+
+	lua_setConstant_ptr( l, "engine", e );
+	lua_setConstant_ptr( l, "input", e->input );
+
 	int err = lua_pcall( l, 0, 0, 0 );
 	if ( err != 0 ) {
 		printf( "LUA ERROR: ErrorNum: %d.\n", err );
 		printf( "%s\n", lua_tostring( l, -1 ));
 		vAssert( 0 );
 	}
-
-	luaLibrary_import( l );
-
-	lua_setConstant_ptr( l, "engine", e );
-	lua_setConstant_ptr( l, "input", e->input );
 
 	// *** Always call init
 	LUA_CALL( l, "init" );
