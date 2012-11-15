@@ -3,7 +3,7 @@
 #include "maths/vector.h"
 
 #define kZoneLength 2000.f
-#define kNumZones	4
+#define kNumZones	16
 #define kZoneBlendDistance 400.f
 
 // Texture

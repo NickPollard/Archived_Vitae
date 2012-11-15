@@ -146,7 +146,7 @@ void canyonZone_load( canyon* c, const char* filename ) {
 	term_takeRef( t );
 	term* zone = t;
 	int zone_count = list_length( t );
-	vAssert( zone_count < kNumZones );
+	//vAssert( zone_count < kNumZones );
 	int i = 0;
 	while ( zone ) { 
 		c->zones[i] = *(canyonZone*)( head( zone )->data );
