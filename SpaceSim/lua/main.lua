@@ -33,8 +33,6 @@ C and only controlled remotely by Lua
 
 -- player_ship - the actual ship entity flying around
 	player_ship = nil
-	player_ship_initial_speed = 30.0
-	player_ship_acceleration = 1.0
 
 -- Collision
 	collision_layer_player	= 1
@@ -53,12 +51,19 @@ C and only controlled remotely by Lua
 	interceptors	= { count = 0 }
 
 -- Settings
-	player_bullet_speed		= 250.0;
-	enemy_bullet_speed		= 150.0;
-	homing_missile_speed	= 50.0;
+	-- Weapons
+	player_bullet_speed		= 250.0
+	enemy_bullet_speed		= 150.0
+	homing_missile_speed	= 50.0
+	player_gun_cooldown		= 0.15
+	player_missile_cooldown	= 1.0
+	-- Flight
+	player_ship_initial_speed = 30.0
+	player_ship_acceleration = 1.0
 	max_allowed_roll		= 1.5
 	camera_roll_scale		= 0.1
 	aileron_roll_duration	= 0.8
+	-- Controls
 	aileron_swipe 			= { 
 		distance = 150.0,
 		duration = 0.2,
@@ -120,7 +125,6 @@ function gameobject_delete( g )
 end
 
 projectile_model = "dat/model/missile.s"
-player_gun_cooldown = 0.15
 
 function player_fire( ship )
 	if ship.cooldown <= 0.0 then
@@ -130,6 +134,19 @@ function player_fire( ship )
 		fire_missile( ship, muzzle_position, player_gunfire )
 		ship.cooldown = player_gun_cooldown
 	end
+end
+
+function player_fire_missile_swarm( ship )
+	vprint( "Missile swarm!" )
+	player_fire_missile( ship )
+	inTime( 0.1, function () player_fire_missile( ship ) end )
+	inTime( 0.2, function () player_fire_missile( ship ) end )
+	inTime( 0.3, function () player_fire_missile( ship ) end )
+end
+
+function player_fire_missile( ship )
+	muzzle_position = Vector( 0.0, 0.0, 0.0, 1.0 );
+	fire_missile( ship, muzzle_position, player_missile )
 end
 
 function missile_destroy( missile )
@@ -183,12 +200,21 @@ end
 
 player_gunfire = { 
 	model = "dat/model/missile.s",
+ 	particle = "dat/script/lisp/bullet.s",
 	speed = 250.0,
+	collisionType = "player"
+}
+
+player_missile = { 
+	model = "dat/model/missile.s",
+ 	particle = "dat/script/lisp/missile_particle.s",
+	speed = 100.0,
 	collisionType = "player"
 }
 
 enemy_gunfire = { 
 	model = "dat/model/missile.s",
+ 	particle = "dat/script/lisp/bullet.s",
 	speed = 150.0,
 	collisionType = "enemy"
 }
@@ -202,7 +228,8 @@ function fire_missile( source, offset, bullet_type )
 	end
 	vbody_registerCollisionCallback( projectile.body, missile_collisionHandler )
 	inTime( 2.0, function () missile_destroy( projectile ) end )
-	projectile.glow = vparticle_create( engine, projectile.transform, "dat/script/lisp/bullet.s" )
+	projectile.glow = vparticle_create( engine, projectile.transform, bullet_type.particle )
+	return projectile
 end
 
 homing_missile_turn_angle_per_second = math.pi / 2
@@ -265,6 +292,7 @@ function playership_create()
 	local p = gameobject_create( "dat/model/ship_hd.s" )
 	p.speed = 0.0
 	p.cooldown = 0.0
+	p.missile_cooldown = 0.0
 	p.yaw = 0
 	p.target_yaw = 0
 	p.pitch = 0
@@ -575,9 +603,17 @@ function playership_weaponsTick( ship, dt )
 	end
 	local missile_fired = vgesture_performed( player_ship.fire_trigger, player_ship.missile_swipe )
 	if missile_fired then
-		vprint( "Missile!" )
+		if ship.missile_cooldown <= 0.0 then
+			if ship.aileron_roll then
+				player_fire_missile_swarm( ship )
+			else
+				player_fire_missile( ship )
+			end
+			ship.missile_cooldown = player_missile_cooldown
+		end
 	end
 	ship.cooldown = ship.cooldown - dt
+	ship.missile_cooldown = ship.missile_cooldown - dt
 end
 
 function clamp( min, max, value )
