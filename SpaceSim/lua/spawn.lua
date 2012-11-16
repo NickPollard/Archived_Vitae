@@ -21,8 +21,8 @@ function spawn.spawnSpacePositions( spawn_space )
 	return positions
 end
 
-function spawn.availablePositions( spawn_space, current_positions )
-	local positions = spawn.spawnSpacePositions( spawn_space )
+function spawn.availablePositions( positions, current_positions )
+	vprint( "availablePositions" )
 	local available_positions = array.filter( positions,
 		function ( position )
 			return not array.contains( current_positions, 
@@ -34,22 +34,38 @@ function spawn.availablePositions( spawn_space, current_positions )
 end
 
 function spawn.positionerTurret( spawn_space, current_positions )
+	vprint( "positionerTurret" )
 	-- Pick the most central floor space
-	local ranked_positions = array.rank( spawn.availablePositions( spawn_space, current_positions ),
+	local ranked_positions = array.rank( spawn_space.available_positions,
 		function( position )
 			return - math.abs( position.x ) - ( position.y ) * spawn_space.width
 		end )
 	array.add( current_positions, ranked_positions[1] )
+
+	vprint( "positionerTurret 1" )
+	-- Update current positions
+	local this_position = array.new()
+	array.add( this_position, ranked_positions[1] )
+	spawn_space.available_positions = spawn.availablePositions( spawn_space.available_positions, this_position )
+
+	vprint( "positionerTurret 2" )
 	return current_positions
 end
 
 function spawn.positionerInterceptor( spawn_space, current_positions )
+	vprint( "positionerInterceptor" )
 	-- Pick the most tall central space
-	local ranked_positions = array.rank( spawn.availablePositions( spawn_space, current_positions ),
+	local ranked_positions = array.rank( spawn_space.available_positions,
 		function( position )
 			return - math.abs( position.x ) + ( position.y ) * spawn_space.width
 		end )
 	array.add( current_positions, ranked_positions[1] )
+
+	-- Update current positions
+	local this_position = array.new()
+	array.add( this_position, ranked_positions[1] )
+	spawn_space.available_positions = spawn.availablePositions( spawn_space.available_positions, this_position )
+
 	return current_positions
 end
 
@@ -57,10 +73,18 @@ function spawn.positionerDefault( spawn_space, current_positions )
 	local u_delta = 20.0
 	local new_position = { u = current_positions[current_positions.count].u + u_delta, v = spawn_space.v }
 	array.add( current_positions, new_position )
+
+	-- Update current positions
+	local this_position = array.new()
+	array.add( this_position, new_position )
+	spawn_space.available_positions = spawn.availablePositions( spawn_space.available_positions, this_position )
+
 	return current_positions
 end
 
 function spawn.positionsForGroup( v, spawn_space, spawn_group_positioners )
+	vprint( "positionsForGroup" )
+	spawn_space.available_positions = spawn.spawnSpacePositions( spawn_space )
 	local current_positions = array.new()
 	local spawn_positions = array.foldl( spawn_group_positioners,
 					function ( positioner, positions )
@@ -81,9 +105,9 @@ function spawn.spawnGroup( spawn_group, v )
 			return position
 		end )
 
-	array.zip( spawn_group.spawners, world_positions, function ( func, arg )
-			func( arg )
-		end )
+	array.zip( spawn_group.spawners, world_positions,	function ( func, arg )
+															func( arg )
+														end )
 end
 
 function spawn.spawnTurret( u, v )
