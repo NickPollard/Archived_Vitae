@@ -161,11 +161,12 @@ end
 
 function spawn.generateSpawnGroupForDifficulty( difficulty )
 	-- For now, assume difficulty is number of units to spawn
+	local count = math.min( difficulty, 16 )
 	local group = {}
-	group.spawners = { count = difficulty }
-	group.positioners = { count = difficulty }
+	group.spawners = { count = count }
+	group.positioners = { count = count }
 	local i = 1
-	while i <= difficulty do
+	while i <= count do
 		group.spawners[i], group.positioners[i] = spawn.randomEnemy()
 		i = i + 1
 	end

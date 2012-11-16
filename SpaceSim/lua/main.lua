@@ -886,7 +886,6 @@ end
 
 function spawn_bunker( u, v, model )
 	-- Try varying the v
-	vprint( "spawn bunker 1" )
 	local highest = { x = 0, y = -10000, z = 0 }
 	local radius = 100.0
 	local step = radius / 5.0
@@ -911,15 +910,17 @@ function doodads_spawnRange( near, far )
 	while library.contains( spawn_v, near, far ) do
 		local doodad_offset_u = 100.0
 		--spawn_doodad( doodad_offset_u, spawn_v, "dat/model/bunker.s" )
-		spawn_bunker( doodad_offset_u, spawn_v, "dat/model/bunker.s" )
+		spawn_bunker( doodad_offset_u, spawn_v, "dat/model/depot.s" )
 		i = i + 1
 		spawn_v = i * spawn_interval
 	end
 end
 
 function update_doodads( transform )
+	local pos = vtransform_getWorldPosition( transform )
+	local u,v = vcanyon_fromWorld( pos )
 	local spawn_up_to = v + doodad_spawn_distance
-	--doodads_spawnRange( doodads_spawned, spawn_up_to )
+	doodads_spawnRange( doodads_spawned, spawn_up_to )
 	doodads_spawned = spawn_up_to
 end
 
