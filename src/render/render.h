@@ -26,6 +26,7 @@ typedef struct sceneParams_s sceneParams;
 	f( sky_color_top ) \
 	f( sky_color_bottom ) \
 	f( camera_space_sun_direction ) \
+	f( sun_color ) \
 	f( viewspace_up ) \
 	f( directional_light_direction )
 

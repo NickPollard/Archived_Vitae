@@ -16,7 +16,7 @@ uniform vec4 sky_color_top;
 uniform vec4 sky_color_bottom;
 uniform vec4 camera_space_sun_direction;
 
-const vec4 sun_color = vec4( 1.0, 0.5, 0.0, 1.0 );
+uniform vec4 sun_color;
 const vec4 cloud_color = vec4( 1.0, 1.0, 1.0, 1.0 );
 
 float sun_fog( vec4 local_sun_dir, vec4 fragment_position ) {
@@ -39,9 +39,7 @@ void main() {
 
 	// sunlight on fog
 	float fog_sun_factor = sun_fog( camera_space_sun_direction, frag_position );
-	//float fog_sun_factor = 1.0;
 	vec4 local_fog_color = fog_color + (sun_color * fog_sun_factor);
-	//vec4 local_fog_color = vec4( 1.0, 0.0, 0.0, 1.0 );
 	
 	gl_FragColor = mix( fragColor, local_fog_color, fog );
 }

@@ -17,6 +17,7 @@ struct canyonZone_s {
 	vector edge_color;
 	vector sky_color;
 	vector fog_color;
+	vector sun_color;
 };
 
 extern texture* canyonZone_lookup_texture;
@@ -43,4 +44,4 @@ vector canyonZone_edgeColorAtV( canyon* c, float v );
 canyonZone* canyonZone_create();
 void canyonZone_load( canyon* c, const char* filename );
 void canyonZone_tick( canyon* c, float dt );
-void canyonZone_skyFogBlend( canyonZone* a, canyonZone* b, float blend, vector* sky_color, vector* fog_color );
+void canyonZone_skyFogBlend( canyonZone* a, canyonZone* b, float blend, vector* sky_color, vector* fog_color, vector* sun_color );

@@ -173,6 +173,7 @@ vector scene_skyColor( scene* s, const vector* position ) {
 void scene_setSkyColor( scene* s, const vector* color ) {
 	s->sky_color = *color;
 }
+
 vector scene_fogColor( scene* s, const vector* position ) {
 	(void)position;	
 	return s->fog_color;
@@ -180,6 +181,15 @@ vector scene_fogColor( scene* s, const vector* position ) {
 
 void scene_setFogColor( scene* s, const vector* color ) {
 	s->fog_color = *color;
+}
+
+vector scene_sunColor( scene* s, const vector* position ) {
+	(void)position;	
+	return s->sun_color;
+}
+
+void scene_setSunColor( scene* s, const vector* color ) {
+	s->sun_color = *color;
 }
 
 // Make a scene

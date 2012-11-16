@@ -684,6 +684,7 @@ void attr_zone_cliffColor( term* zone_term, term* cliff_color_attr );
 void attr_zone_terrainColor( term* zone_term, term* terrain_color_attr );
 
 ATTR_FUNCTION_VECTOR( canyonZone, sky_color )
+ATTR_FUNCTION_VECTOR( canyonZone, sun_color )
 ATTR_FUNCTION_VECTOR( canyonZone, fog_color )
 
 //// Attribute functions /////////////////////////////////////////
@@ -1031,6 +1032,7 @@ void lisp_init() {
 	attributeFunction_set( "cliff_color", attr_zone_cliffColor );
 	attributeFunction_set( "terrain_color", attr_zone_terrainColor );
 	attributeFunction_set( "sky_color", attr_canyonZone_sky_color );
+	attributeFunction_set( "sun_color", attr_canyonZone_sun_color );
 	attributeFunction_set( "fog_color", attr_canyonZone_fog_color );
 
 	lisp_global_context = lisp_newContext();

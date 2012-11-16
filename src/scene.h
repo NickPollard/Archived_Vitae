@@ -39,6 +39,7 @@ struct scene_s {
 	GLfloat		ambient[4];
 	vector		fog_color;
 	vector		sky_color;
+	vector		sun_color;
 	camera*		cam;
 	dynamicFog*	fog;
 
@@ -93,6 +94,8 @@ vector		scene_skyColor( scene* s, const vector* position );
 void		scene_setSkyColor( scene* s, const vector* color );
 vector		scene_fogColor( scene* s, const vector* position );
 void		scene_setFogColor( scene* s, const vector* color );
+vector		scene_sunColor( scene* s, const vector* position );
+void		scene_setSunColor( scene* s, const vector* color );
 
 // Transform Access
 transform*	scene_transform( scene* s, int i );

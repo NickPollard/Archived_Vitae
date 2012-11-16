@@ -17,6 +17,7 @@ const int LIGHT_COUNT = 2;
 // Uniform
 uniform mat4 worldspace;
 uniform vec4 directional_light_direction;
+uniform vec4 sun_color;
 #ifdef POINT_LIGHTS
 uniform vec4 light_position[LIGHT_COUNT];
 uniform vec4 light_diffuse[LIGHT_COUNT];
@@ -31,7 +32,6 @@ const vec4 light_ambient = vec4( 0.4, 0.4, 0.4, 0.0 );
 // Directional Light
 const vec4 directional_light_diffuse = vec4( 1.0, 1.0, 0.8, 1.0 );
 const vec4 directional_light_specular = vec4( 0.5, 0.5, 0.5, 1.0 );
-const vec4 sun_color = vec4( 1.0, 0.5, 0.0, 0.0 );
 
 const float light_radius = 20.0;
 

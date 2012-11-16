@@ -116,9 +116,10 @@ void canyonZone_loadTextureForZone( canyon* c, int zone_index ) {
 	printf( "##### loading lookup texture: Zones %d and %d.\n", zone_type_index, other_index );
 }
 
-void canyonZone_skyFogBlend( canyonZone* a, canyonZone* b, float blend, vector* sky_color, vector* fog_color ) {
+void canyonZone_skyFogBlend( canyonZone* a, canyonZone* b, float blend, vector* sky_color, vector* fog_color, vector* sun_color ) {
 	*sky_color = vector_lerp( &a->sky_color, &b->sky_color, blend );
 	*fog_color = vector_lerp( &a->fog_color, &b->fog_color, blend );
+	*sun_color = vector_lerp( &a->sun_color, &b->sun_color, blend );
 }
 
 void canyonZone_tick( canyon* c, float dt ) {
