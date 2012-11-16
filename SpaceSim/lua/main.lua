@@ -58,11 +58,11 @@ C and only controlled remotely by Lua
 	player_gun_cooldown		= 0.15
 	player_missile_cooldown	= 1.0
 	-- Flight
-	player_ship_initial_speed = 30.0
-	player_ship_acceleration = 1.0
-	max_allowed_roll		= 1.5
-	camera_roll_scale		= 0.1
-	aileron_roll_duration	= 0.8
+	player_ship_initial_speed	= 80.0
+	player_ship_acceleration	= 0.0
+	max_allowed_roll			= 1.5
+	camera_roll_scale			= 0.1
+	aileron_roll_duration		= 0.8
 	-- Controls
 	aileron_swipe 			= { 
 		distance = 150.0,
@@ -853,7 +853,7 @@ end
 spawn_offset = 0.0
 spawn_interval = 300.0
 spawn_distance = 900.0
-doodad_spawn_distance = 3000.0
+doodad_spawn_distance = 1500.0
 despawn_distance = 100.0 -- how far behind to despawn units
 -- spawn tracking
 entities_spawned = 0.0
@@ -861,8 +861,8 @@ doodads_spawned = 0.0
 
 -- Spawn all entities in the given range
 function entities_spawnRange( near, far )
-	i = spawn_index( near ) + 1
-	spawn_v = i * spawn_interval
+	local i = spawn_index( near ) + 1
+	local spawn_v = i * spawn_interval
 	while library.contains( spawn_v, near, far ) do
 		local interceptor_offset_u = 20.0
 		spawn.spawnGroup( spawn.spawnGroupForIndex( i ), spawn_v )
@@ -899,16 +899,17 @@ function spawn_bunker( u, v, model )
 		end
 		i = i + step
 	end
-	local position = Vector( highest.x, highest.y, highest.z, 1.0 )
+	local x,y,z = vcanyon_position( u , v )
+	local position = Vector( x, y, z, 1.0 )
 	local doodad = gameobject_create( model )
 	vtransform_setWorldPosition( doodad.transform, position )
 end
 
 function doodads_spawnRange( near, far )
-	i = spawn_index( near ) + 1
-	spawn_v = i * spawn_interval
+	local i = spawn_index( near ) + 1
+	local spawn_v = i * spawn_interval
 	while library.contains( spawn_v, near, far ) do
-		local doodad_offset_u = 100.0
+		local doodad_offset_u = 130.0
 		--spawn_doodad( doodad_offset_u, spawn_v, "dat/model/bunker.s" )
 		spawn_bunker( doodad_offset_u, spawn_v, "dat/model/depot.s" )
 		i = i + 1
