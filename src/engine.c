@@ -154,9 +154,15 @@ void engine_tick( engine* e ) {
 	
 		lua_getglobal( e->lua, e->onTick->func );				
 		lua_pushnumber( e->lua, dt );
-		lua_pcall( e->lua,	/* args */			1,
+		int err = lua_pcall( e->lua,	/* args */			1,
 				/* returns */		0,
 				/* error handler */ 0);
+
+		if ( err != 0 ) {
+			printf( "LUA ERROR: ErrorNum: %d.\n", err );
+			printf( "%s\n", lua_tostring( e->lua, -1 ));
+			vAssert( 0 );
+		}
 	}
 
 	collision_tick( dt );
