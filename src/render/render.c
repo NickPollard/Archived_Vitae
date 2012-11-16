@@ -632,7 +632,7 @@ void render( scene* s ) {
 	render_validateMatrix( modelview );
 
 	viewspace_up = matrix_vecMul( modelview, &y_axis );
-	vector light_direction = Vector( 1.f, -0.5f, 1.f, 0.f );
+	vector light_direction = Vector( 1.f, -0.5f, 0.5f, 0.f );
 	// TODO this probably needs going per shader/draw batch
 	directional_light_direction = normalized( matrix_vecMul( modelview, &light_direction ));
 	

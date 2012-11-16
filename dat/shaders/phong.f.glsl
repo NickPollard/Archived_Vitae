@@ -9,13 +9,14 @@ precision mediump float;
 
 // Varying
 varying vec4 frag_position;
-varying vec4 frag_normal;
+varying vec4 cameraSpace_frag_normal;
 varying vec2 texcoord;
 varying float fog;
 const int LIGHT_COUNT = 2;
 
 // Uniform
 uniform mat4 worldspace;
+uniform vec4 directional_light_direction;
 #ifdef POINT_LIGHTS
 uniform vec4 light_position[LIGHT_COUNT];
 uniform vec4 light_diffuse[LIGHT_COUNT];
@@ -28,12 +29,10 @@ uniform vec4 camera_space_sun_direction;
 // Test Light values
 const vec4 light_ambient = vec4( 0.4, 0.4, 0.4, 0.0 );
 // Directional Light
-const vec4 directional_light_direction = vec4( 1.0, -0.5, 1.0, 0.0 );
 const vec4 directional_light_diffuse = vec4( 1.0, 1.0, 0.8, 1.0 );
 const vec4 directional_light_specular = vec4( 0.5, 0.5, 0.5, 1.0 );
 const vec4 sun_color = vec4( 1.0, 0.5, 0.0, 0.0 );
 
-const vec4 material_specular = vec4( 0.5, 0.5, 0.5, 1.0 );
 const float light_radius = 20.0;
 
 float sun_fog( vec4 local_sun_dir, vec4 fragment_position ) {
@@ -47,25 +46,22 @@ void main() {
 	// light-invariant calculations
 	vec4 view_direction = normalize( frag_position );
 
-	vec4 total_diffuse_color = light_ambient;
-	vec4 total_specular_color = vec4( 0.0, 0.0, 0.0, 0.0 );
+	vec4 total_light_color = light_ambient;
 
 	// Directional light
 	{
 #if 1
 		// Ambient + Diffuse
 		vec4 light_direction = normalize( worldspace * directional_light_direction );
-		float diffuse = max( 0.0, dot( -light_direction, frag_normal )) * 1.0;
-		vec4 diffuse_color = directional_light_diffuse * diffuse;
-		total_diffuse_color += diffuse_color;
+		float diffuse = max( 0.0, dot( -light_direction, cameraSpace_frag_normal )) * 1.0;
+		total_light_color += directional_light_diffuse * diffuse;
 
 		// Specular
-		vec4 spec_bounce = reflect( light_direction, frag_normal );
+		vec4 spec_bounce = reflect( light_direction, cameraSpace_frag_normal );
 		float spec = max( 0.0, dot( spec_bounce, -view_direction ));
 		float shininess = 10.0;
 		float specular = pow( spec, shininess );
-		vec4 specular_color = directional_light_specular * specular;
-		total_specular_color += specular_color;
+		total_light_color += directional_light_specular * pow( spec, shininess );
 #endif
 	}
 #ifdef POINT_LIGHTS	
@@ -76,12 +72,12 @@ void main() {
 		float light_distance = length( frag_position - cs_light_position );
 
 		// Ambient + Diffuse
-		float diffuse = max( 0.0, dot( -light_direction, frag_normal )) * max( 0.0, ( light_radius - light_distance ) / ( light_distance - 0.0 ) );
+		float diffuse = max( 0.0, dot( -light_direction, cameraSpace_frag_normal )) * max( 0.0, ( light_radius - light_distance ) / ( light_distance - 0.0 ) );
 		vec4 diffuse_color = light_diffuse[i] * diffuse;
 		total_diffuse_color += diffuse_color;
 
 		// Specular
-		vec4 spec_bounce = reflect( light_direction, frag_normal );
+		vec4 spec_bounce = reflect( light_direction, cameraSpace_frag_normal );
 		float spec = max( 0.0, dot( spec_bounce, -view_direction ));
 		float shininess = 10.0;
 		float specular = pow( spec, shininess );
@@ -91,8 +87,7 @@ void main() {
 #endif
 
 	vec4 material_diffuse = texture2D( tex, texcoord );
-	vec4 fragColor =	total_specular_color * material_specular + 
-						total_diffuse_color * material_diffuse;
+	vec4 fragColor =	total_light_color * material_diffuse;
 	
 	// sunlight on fog
 	float fog_sun_factor = sun_fog( camera_space_sun_direction, frag_position );

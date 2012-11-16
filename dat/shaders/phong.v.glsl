@@ -13,7 +13,7 @@ attribute vec4 color;
 
 // Varying
 varying vec4 frag_position;
-varying vec4 frag_normal;
+varying vec4 cameraSpace_frag_normal;
 varying vec2 texcoord;
 varying float fog;
 
@@ -39,13 +39,14 @@ float fog( vec4 world_position, vec4 cam_position ) {
 void main() {
 	gl_Position = projection * modelview * position;
 	frag_position = modelview * position;
-	frag_normal = modelview * normal;
+	cameraSpace_frag_normal = modelview * normal;
 	texcoord = uv.xy;
 	// TODO - need to get a proper world position, not model position
 	// This means we need the model matrix separate from the combined model-view
 	//fog = fog( position, frag_position );
 
 	// We can calculate fog per vertex as we know polys will be small for terrain
+	/*
 	float height = position.y;
 	float fog_far = 350.0;
 	float fog_near = 100.0;
@@ -55,4 +56,19 @@ void main() {
 	float distance = min( max_distance, frag_position.z );
 	float fog_max = 0.4;
 	fog = clamp( ( distance - fog_near ) / ( fog_far - fog_near ), 0.0, fog_max ) * height_factor;
+	*/
+
+	float height = position.y;
+	float fog_far = 350.0;
+	float fog_near = 100.0;
+	float fog_height = 160.0;
+	float height_factor = clamp( ( fog_height - height ) / fog_height, 0.0, 1.0 );
+	float max_distance = 350.0;
+	float distance = min( max_distance, frag_position.z );
+	float fog_max = 0.4;
+	float distant_fog_near = 600.0;
+	float distant_fog_far = 700.0;
+	float near_fog = clamp(( distance - fog_near ) / ( fog_far - fog_near ), 0.0, fog_max ) * height_factor;
+	float far_fog = clamp(( frag_position.z - distant_fog_near ) / ( distant_fog_far - distant_fog_near ), 0.0, 1.0 );
+	fog = max( near_fog, far_fog );
 }
