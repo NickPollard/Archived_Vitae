@@ -350,6 +350,7 @@ void render_buildShaders() {
 	resources.shader_filter		= shader_load( "dat/shaders/filter.v.glsl",			"dat/shaders/filter.f.glsl" );
 	resources.shader_debug		= shader_load( "dat/shaders/debug_lines.v.glsl",	"dat/shaders/debug_lines.f.glsl" );
 	resources.shader_debug_2d	= shader_load( "dat/shaders/debug_lines_2d.v.glsl",	"dat/shaders/debug_lines_2d.f.glsl" );
+	resources.shader_depth		= shader_load( "dat/shaders/depth_pass.v.glsl",		"dat/shaders/depth_pass.f.glsl" );
 
 #define GET_UNIFORM_LOCATION( var ) \
 	resources.uniforms.var = shader_findConstant( mhash( #var )); \
@@ -388,6 +389,7 @@ renderPass	render_pass[kMaxRenderPasses];
 renderPass renderPass_main;
 renderPass renderPass_alpha;
 renderPass renderPass_debug;
+renderPass renderPass_depth;
 
 sceneParams sceneParams_main;
 
@@ -802,9 +804,23 @@ void render_draw( window* w, engine* e ) {
 	(void)e;
 	render_set3D( w->width, w->height );
 	render_clear();
+	
+	memcpy( &renderPass_depth, &renderPass_main, sizeof( renderPass ));
+	for ( int i = 0; i < kCallBufferCount; ++i ) {
+		for ( int j = 0; j < kMaxDrawCalls; ++j ) {
+			renderPass_depth.call_buffer[i][j].vitae_shader = resources.shader_depth;
+		}
+	}
 
 	glEnable( GL_DEPTH_TEST );
 	glDisable( GL_BLEND );
+	glDepthMask( GL_TRUE );
+	glColorMask( GL_FALSE, GL_FALSE, GL_FALSE, GL_FALSE );
+	render_drawPass( &renderPass_depth );
+
+	glEnable( GL_DEPTH_TEST );
+	glDisable( GL_BLEND );
+	glColorMask( GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE );
 	render_drawPass( &renderPass_main );
 
 	glEnable( GL_DEPTH_TEST );

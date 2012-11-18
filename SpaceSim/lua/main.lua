@@ -15,6 +15,7 @@ C and only controlled remotely by Lua
 
 -- Debug settings
 	debug_spawning_enabled = true
+	debug_doodads_enabled = true
 
 -- Load Modules
 	package.path = "./SpaceSim/lua/?.lua"
@@ -786,7 +787,9 @@ function tick( dt )
 		update_despawns( player_ship.transform )
 	end
 
-	update_doodads( player_ship.transform )
+	if debug_doodads_enabled then
+		update_doodads( player_ship.transform )
+	end
 
 	tick_array( turrets, dt )
 	tick_array( interceptors, dt )

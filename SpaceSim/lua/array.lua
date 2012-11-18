@@ -42,8 +42,13 @@ function array.head( arr )
 	return arr[1]
 end
 
-function array.new()
+function array.new( ... )
+	local args = { ... }
 	local arr = { count = 0 }
+	for i,n in ipairs( args ) do
+		arr.count = arr.count + 1
+		arr[arr.count] = n
+	end
 	return arr
 end
 

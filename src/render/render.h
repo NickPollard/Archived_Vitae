@@ -82,6 +82,7 @@ typedef struct gl_resources_s {
 	shader* shader_filter;
 	shader* shader_debug;
 	shader* shader_debug_2d;
+	shader* shader_depth;
 } gl_resources;
 
 struct vertex_s {
