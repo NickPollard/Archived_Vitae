@@ -57,8 +57,10 @@ static void draw_frame( window* w ) {
 }
 
 void android_exit() {
+#ifdef ANDROID_PROFILING
 	// Cleanup the profiling library
-	//moncleanup();
+	moncleanup();
+#endif // ANDROID_PROFILING
 
 	exit( EXIT_SUCCESS );
 }
@@ -221,8 +223,10 @@ static int32_t handle_input(struct android_app* app, AInputEvent* event) {
 void android_init( struct android_app* app ) {
 	printf("Loading Vitae.\n");
 
+#ifdef ANDROID_PROFILING
 	// Initialise the profiling library
-	//monstartup("libvitae.so");
+	monstartup("libvitae.so");
+#endif // ANDROID_PROFILING
 
 	// *** Initialise Engine
 	// already created

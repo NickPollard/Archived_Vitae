@@ -140,7 +140,7 @@ void engine_tick( engine* e ) {
 	time += dt;
 	time = time / 10.f;
 
-	//printf( "TICK: frametime %.4fms (%.2f fps)\n", time, 1.f/time );
+	printf( "TICK: frametime %.4fms (%.2f fps)\n", time, 1.f/time );
 
 	debugdraw_preTick( dt );
 	lua_preTick( e->lua, dt );
@@ -165,13 +165,14 @@ void engine_tick( engine* e ) {
 		}
 	}
 
-	collision_tick( dt );
+	collision_processResults( dt );
+	collision_queueWorkerTick( dt );
 
 	engine_tickTickers( e, dt );
 	
 	// This happens last, as transform concatenation needs to take into account every other input
 	scene_tick( theScene, dt );
-
+	
 	//countVisibleParticleEmitters( e );
 	//countActiveParticleEmitters( e );
 
@@ -268,8 +269,10 @@ void engine_init(engine* e, int argc, char** argv) {
 	canyon_staticInit();
 	canyon_generateInitialPoints();
 
-	vthread worker_thread = vthread_create( worker_threadFunc, NULL );
-	(void)worker_thread;
+#define kNumWorkerThreads 2
+	for ( int i = 0; i < kNumWorkerThreads; ++i ) {
+		vthread_create( worker_threadFunc, NULL );
+	}
 
 	// TEST
 	test_engine_init( e );

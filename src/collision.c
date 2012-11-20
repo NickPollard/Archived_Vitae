@@ -6,8 +6,12 @@
 #include "model.h"
 #include "test.h"
 #include "transform.h"
+#include "worker.h"
 #include "maths/geometry.h"
 #include "render/debugdraw.h"
+
+bool collision_results_ready = false;
+bool collision_results_processed = true;
 
 collideFunc collide_funcs[kMaxShapeTypes][kMaxShapeTypes];
 
@@ -136,18 +140,53 @@ void collision_debugdraw() {
 // Check for any collisions this frame
 void collision_tick( float dt ) {
 	(void)dt;
-	// clear collision events
-	collision_clearEvents();
 
+	while ( !collision_results_processed ) {
+		//printf( "tick waiting.\n" );
+		vthread_yield();
+	}
+
+	collision_clearEvents();
 	collision_generateEvents();
 
-	collision_runCallbacks();
-
-	collision_removeDeadBodies();
+	collision_results_ready = true;
+	collision_results_processed = false;
 
 	//collision_debugdraw();
-
 	//printf( "Total collision bodies: %d.\n", body_count );
+}
+
+void collision_processResults( float dt ) {
+	(void)dt;
+
+	if ( collision_results_processed )
+		return;
+
+	while ( !collision_results_ready ) {
+		//printf( "process waiting.\n" );
+		vthread_yield();
+	}
+
+	collision_runCallbacks();
+	collision_removeDeadBodies();
+
+	collision_results_ready = false;
+	collision_results_processed = true;
+}
+
+void* collision_workerTick( void* args ) {
+	float dt = *(float*)args;
+	collision_tick( dt );
+	return NULL;
+}
+
+void collision_queueWorkerTick( float dt ) {
+	float* dtime = mem_alloc( sizeof( float ));
+	*dtime = dt;
+	worker_task collision_task;
+	collision_task.func = collision_workerTick;
+	collision_task.args = dtime;
+	worker_addTask( collision_task );
 }
 
 bool collisionFunc_SphereSphere( shape* a, shape* b, matrix matrix_a, matrix matrix_b ) {

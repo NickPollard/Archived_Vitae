@@ -83,6 +83,10 @@ void collision_removeBody( body* b );
 
 // Check for any collisions this frame
 void collision_tick( float dt );
+// Tick but on worker thread
+void collision_queueWorkerTick( float dt );
+// Tick just generates events, this calls callbacks and removes dead bodies
+void collision_processResults( float dt );
 
 // Did the body hit anything this frame
 bool body_collided( body* b );

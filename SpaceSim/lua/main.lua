@@ -180,7 +180,8 @@ end
 
 function create_projectile( source, offset, model, speed ) 
 	-- Create a new Projectile
-	--local projectile = gameobject_create( model )
+	local projectile = gameobject_create( model )
+	--[[
 	local projectile = {}
 	projectile.transform = vcreateTransform()
 	projectile.physic = vcreatePhysic()
@@ -190,6 +191,8 @@ function create_projectile( source, offset, model, speed )
 	v = Vector( 0.0, 0.0, 0.0, 0.0 )
 	vphysic_setVelocity( projectile.physic, v )
 	vphysic_activate( engine, projectile.physic )
+	--]]
+	
 	projectile.tick = nil
 
 	-- Position it at the correct muzzle position and rotation
@@ -217,7 +220,7 @@ player_gunfire = {
 
 player_missile = { 
 	model = "dat/model/missile.s",
- 	particle = "dat/script/lisp/missile_particle.s",
+ 	particle = "dat/script/lisp/red_bullet.s",
 	speed = 100.0,
 	collisionType = "player"
 }
@@ -232,11 +235,11 @@ enemy_gunfire = {
 function fire_missile( source, offset, bullet_type )
 	local projectile = create_projectile( source, offset, bullet_type.model, bullet_type.speed )
 	if bullet_type.collisionType == "player" then
-		--setCollision_playerBullet( projectile )
+		setCollision_playerBullet( projectile )
 	elseif bullet_type.collisionType == "enemy" then
-		--setCollision_enemyBullet( projectile )
+		setCollision_enemyBullet( projectile )
 	end
-	--vbody_registerCollisionCallback( projectile.body, missile_collisionHandler )
+	vbody_registerCollisionCallback( projectile.body, missile_collisionHandler )
 	inTime( 2.0, function () missile_destroy( projectile ) end )
 	projectile.glow = vparticle_create( engine, projectile.transform, bullet_type.particle )
 	return projectile
