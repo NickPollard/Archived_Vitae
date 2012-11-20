@@ -273,7 +273,7 @@ GLuint texture_loadTGA( const char* filename ) {
 
 	// Set up sampling parameters, use defaults for now
 	// Bilinear interpolation, clamped
-	glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR );
+	glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR );
     glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR );
     glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_WRAP_S,     GL_REPEAT );
     glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_WRAP_T,     GL_REPEAT );
@@ -286,6 +286,8 @@ GLuint texture_loadTGA( const char* filename ) {
 					GL_RGBA,		// TGA uses BGR order internally
 					GL_UNSIGNED_BYTE,	// 8-bits per channel
 					img );
+
+	glGenerateMipmap( GL_TEXTURE_2D );
 
 	mem_free( img );	// OpenGL copies the data, so we can free this here
 
@@ -307,12 +309,12 @@ GLuint texture_loadBitmap( int w, int h, int stride, uint8_t* bitmap, GLuint wra
 
 	// Set up sampling parameters, use defaults for now
 	// Bilinear interpolation, clamped
-	glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR );
+	glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR );
     glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR );
 	// TODO - set this properly. For now force to clamp for loadBitmap, for the terrain lookup texture
     glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_WRAP_S,     wrap_s );
     glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_WRAP_T,     wrap_t );
-
+	
 	glTexImage2D( GL_TEXTURE_2D,
 		   			0,			// No Mipmaps for now
 					GL_RGBA,	// 3-channel, 8-bits per channel (32-bit stride)
@@ -321,6 +323,8 @@ GLuint texture_loadBitmap( int w, int h, int stride, uint8_t* bitmap, GLuint wra
 					GL_RGBA,		// 
 					GL_UNSIGNED_BYTE,	// 8-bits per channel
 					bitmap );
+
+	glGenerateMipmap( GL_TEXTURE_2D );
 
 	mem_free( bitmap );	// OpenGL copies the data, so we can free this here
 	return tex;
