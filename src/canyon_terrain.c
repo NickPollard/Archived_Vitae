@@ -15,7 +15,7 @@
 #define CANYON_TERRAIN_INDEXED 1
 #define TERRAIN_USE_WORKER_THREAD 1
 	
-const float texture_scale = 0.0325f;
+const float texture_scale = 0.0225f;
 
 texture* terrain_texture = 0;
 texture* terrain_texture_cliff = 0;
@@ -285,10 +285,10 @@ canyonTerrain* canyonTerrain_create( canyon* c, int u_blocks, int v_blocks, int 
 	t->trans = transform_create();
 
 	if ( !terrain_texture ) {
-		terrain_texture = texture_load( "dat/img/terrain/snow_2_rgba.tga" );
+		terrain_texture = texture_load( "dat/img/terrain/grass.tga" );
 	}
 	if ( !terrain_texture_cliff ) {
-		terrain_texture_cliff = texture_load( "dat/img/terrain/cliffs_2_rgba.tga" );
+		terrain_texture_cliff = texture_load( "dat/img/terrain/cliff_grass.tga" );
 	}
 
 	return t;
