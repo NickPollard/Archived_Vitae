@@ -12,6 +12,7 @@
 #include "model.h"
 #include "particle.h"
 #include "physic.h"
+#include "ribbon.h"
 #include "scene.h"
 #include "transform.h"
 #include "vtime.h"
@@ -621,6 +622,20 @@ int LUA_particle_destroy( lua_State* l ) {
 	return 0;
 }
 
+int LUA_ribbon_create( lua_State* l ) {
+	printf( "Create ribbon emitter!\n" );
+	engine* e = lua_toptr( l, 1 );
+	transform* t = lua_toptr( l, 2 );
+
+	ribbonEmitter* emitter = ribbonEmitter_create( );
+	emitter->trans = t;
+
+	engine_addRender( e, emitter, ribbonEmitter_render );
+	startTick( e, emitter, ribbonEmitter_tick );
+	
+	lua_pushptr( l, emitter );
+	return 1;
+}
 
 // Get the world X,Y,Z position of a point a given DISTANCE down the canyon
 int LUA_canyonPosition( lua_State* l ) {
@@ -936,6 +951,9 @@ void luaLibrary_import( lua_State* l ) {
 	// *** Particles
 	lua_registerFunction( l, LUA_particle_create, "vparticle_create" );
 	lua_registerFunction( l, LUA_particle_destroy, "vparticle_destroy" );
+	
+	// *** Ribbons
+	lua_registerFunction( l, LUA_ribbon_create, "vribbon_create" );
 
 	// *** Collision
 	lua_registerFunction( l, LUA_createbodySphere, "vcreateBodySphere" );

@@ -14,8 +14,8 @@ C and only controlled remotely by Lua
 	two_pi = 2.0 * math.pi
 
 -- Debug settings
-	debug_spawning_enabled = true
-	debug_doodads_enabled = true
+	debug_spawning_enabled	= true
+	debug_doodads_enabled	= true
 
 -- Load Modules
 	package.path = "./SpaceSim/lua/?.lua"
@@ -180,7 +180,16 @@ end
 
 function create_projectile( source, offset, model, speed ) 
 	-- Create a new Projectile
-	local projectile = gameobject_create( model )
+	--local projectile = gameobject_create( model )
+	local projectile = {}
+	projectile.transform = vcreateTransform()
+	projectile.physic = vcreatePhysic()
+	vphysic_setTransform( projectile.physic, projectile.transform )
+	--projectile.body = vcreateBodySphere( projectile )
+	--vbody_setTransform( projectile.body, projectile.transform )
+	v = Vector( 0.0, 0.0, 0.0, 0.0 )
+	vphysic_setVelocity( projectile.physic, v )
+	vphysic_activate( engine, projectile.physic )
 	projectile.tick = nil
 
 	-- Position it at the correct muzzle position and rotation
@@ -223,11 +232,11 @@ enemy_gunfire = {
 function fire_missile( source, offset, bullet_type )
 	local projectile = create_projectile( source, offset, bullet_type.model, bullet_type.speed )
 	if bullet_type.collisionType == "player" then
-		setCollision_playerBullet( projectile )
+		--setCollision_playerBullet( projectile )
 	elseif bullet_type.collisionType == "enemy" then
-		setCollision_enemyBullet( projectile )
+		--setCollision_enemyBullet( projectile )
 	end
-	vbody_registerCollisionCallback( projectile.body, missile_collisionHandler )
+	--vbody_registerCollisionCallback( projectile.body, missile_collisionHandler )
 	inTime( 2.0, function () missile_destroy( projectile ) end )
 	projectile.glow = vparticle_create( engine, projectile.transform, bullet_type.particle )
 	return projectile
@@ -338,6 +347,9 @@ function playership_addEngineGlows( p )
 	p.engine_glow_b = vparticle_create( engine, t_b, engine_glow )
 	p.engine_glow_c = vparticle_create( engine, t_c, engine_glow )
 	p.engine_glow_d = vparticle_create( engine, t_d, engine_glow )
+
+	p.engine_trail_ribbon = vribbon_create( engine, t_a )
+	p.engine_trail_ribbon = vribbon_create( engine, t_b )
 end
 
 starting = true

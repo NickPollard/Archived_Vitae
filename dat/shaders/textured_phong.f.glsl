@@ -40,6 +40,7 @@ float sun_fog( vec4 local_sun_dir, vec4 fragment_position ) {
 
 void main() {
 
+	/*
 	// light-invariant calculations
 	vec4 view_direction = normalize( frag_position );
 
@@ -85,7 +86,7 @@ void main() {
 	}
 //	gl_FragColor =	total_specular_color * material_specular + 
 //					total_diffuse_color * material_diffuse;
-
+*/
 
 	// sunlight on fog
 	float fog_sun_factor = sun_fog( camera_space_sun_direction, frag_position );

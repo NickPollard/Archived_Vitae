@@ -1,6 +1,7 @@
 // ribbon.h
 #pragma once
 #include "maths/vector.h"
+#include "render/vgl.h"
 
 #define kMaxRibbonPairs 32
 
@@ -9,8 +10,13 @@ typedef struct ribbonEmitter_s {
 	vector	begin;
 	vector	end;
 	vector	vertex_array[kMaxRibbonPairs][2];
-	int		vertex_count;
-	int		vertex_first;
+	int		pair_count;
+	int		pair_first;
+	texture*	diffuse;
+
+	// Render
+	vertex*		vertex_buffer;
+	GLushort*	element_buffer;
 } ribbonEmitter;
 
 ribbonEmitter* ribbonEmitter_create();

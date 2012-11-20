@@ -217,8 +217,6 @@ void particleEmitter_render( void* data ) {
 	// reset modelview matrix so we can billboard
 	// particle_quad() will manually apply the modelview
 	render_resetModelView();
-	// TEST
-	//transform_concatenate( p->trans );
 	matrix_mul( modelview, modelview, p->trans->world );
 
 	for ( int i = 0; i < p->count; i++ ) {
