@@ -238,6 +238,9 @@ void block_merge( heapAllocator* heap, block* first, block* second ) {
 	vAssert( first->free );								// Both must be empty
 	vAssert( second == (first->data + first->size) );	// Contiguous
 	vAssert( first->next == second );
+	if ( second->prev != first ) {
+		printf( "Second: 0x" xPTRf ", first: 0x" xPTRf ", second->prev: 0x" xPTRf "\n", (uintptr_t)second, (uintptr_t)first, (uintptr_t)second->prev );
+	}
 	vAssert( second->prev == first );
 
 	vAssert( !first->next || first->next == first->data + first->size );
