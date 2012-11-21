@@ -10,6 +10,8 @@
 #include "maths/geometry.h"
 #include "render/debugdraw.h"
 
+#define kDeadBodyQueueSize 128
+
 bool collision_results_ready = false;
 bool collision_results_processed = true;
 
@@ -48,9 +50,50 @@ void collision_addBody( body* b ) {
 int dead_body_count = 0;
 body* dead_bodies[kMaxDeadBodies];
 
+////
+
+typedef struct ringQueue_s {
+	int first;
+	int last;
+	int size;
+	void** items;
+} ringQueue;
+
+ringQueue* ringQueue_create( int size ) {
+	ringQueue* r = mem_alloc( sizeof( ringQueue ));
+	r->size = size;
+	r->first = 0;
+	r->last = 0;
+	r->items = mem_alloc( sizeof( void* ) * size );
+	return r;
+}
+
+int ringQueue_count( ringQueue* r ) {
+	int count = r->last - r->first + ( r->last < r->first ? r->size : 0 );
+	return count;
+}
+
+void* ringQueue_pop( ringQueue* r ) {
+	vAssert( ringQueue_count( r ) > 0 );
+	void* item = r->items[r->first];
+	r->first = ( r->first + 1 ) % r->size;
+
+	return item;
+}
+
+void ringQueue_push( ringQueue* r, void* item ) {
+	vAssert( ringQueue_count( r ) < r->size );
+	r->items[r->last] = item;
+	r->last = ( r->last + 1 ) % r->size;
+}
+
+////
+
+ringQueue* collision_dead_body_queue = NULL;
+
 void collision_removeBody( body* b ) {
-	vAssert( dead_body_count < kMaxDeadBodies );
-	dead_bodies[dead_body_count++] = b;
+	vAssert( ringQueue_count( collision_dead_body_queue ) < collision_dead_body_queue->size );
+	ringQueue_push( collision_dead_body_queue, b );
 	b->disabled = true;
 }
 
@@ -64,10 +107,9 @@ void collision_removeDeadBody( body*  b ) {
 }
 
 void collision_removeDeadBodies( ) {
-	for ( int i = 0; i < dead_body_count; ++i ) {
-		collision_removeDeadBody( dead_bodies[i] );
+	while ( ringQueue_count( collision_dead_body_queue ) > 0 ) {
+		collision_removeDeadBody( ringQueue_pop( collision_dead_body_queue ));
 	}
-	dead_body_count = 0;
 }
 
 void collision_callback( body* a, body* b ) {
@@ -850,6 +892,7 @@ void collision_init() {
 	body_count = 0;
 	collision_clearEvents();
 	collision_initCollisionFuncs();
+	collision_dead_body_queue = ringQueue_create( kDeadBodyQueueSize );
 }
 
 #if UNIT_TEST
