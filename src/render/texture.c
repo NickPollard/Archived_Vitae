@@ -12,6 +12,9 @@
 #include "system/string.h"
 #include "system/thread.h"
 
+#define RENDER_USE_MIPMAPPING
+#define RENDER_TEXTURE_LOAD_ASYNC
+
 // *** Forward Declarations
 uint8_t* read_tga( const char* file, int* w, int* h );
 void texture_requestMem( GLuint* tex, int w, int h, int stride, uint8_t* bitmap, GLuint wrap_s, GLuint wrap_t );
@@ -61,14 +64,18 @@ void texture_tick() {
 }
 
 void* texture_workerLoadFile( void* args ) {
-	GLuint* tex = ((void**)args)[0];
-	const char* filename = ((void**)args)[1];
-	textureProperties* properties = ((void**)args)[2];
+	void** arg_ptrs = args;
+	GLuint*				tex			= arg_ptrs[0];
+	const char*			filename	= arg_ptrs[1];
+	textureProperties*	properties	= arg_ptrs[2];
 	//printf( "Run worker task: Tex: " xPTRf ", filename: %s\n", (uintptr_t)tex, filename );
+
 	int w, h;
 	void* bitmap = read_tga( filename, &w, &h );
+
 	int stride = 4; // Currently we only support RGBA8
 	texture_requestMem( tex, w, h, stride, bitmap, properties->wrap_s, properties->wrap_t );
+
 	// Args were allocated when task was created, so we can safely free them here
 	mem_free( args );
 	return NULL;
@@ -148,25 +155,6 @@ texture* texture_nextEmpty() {
 // Get a texture matching a given filename
 // Pulls it from cache if existing, otherwise loads it asynchronously
 texture* texture_load( const char* filename ) {
-	/*
-	texture* t;
-	t = textureCache_find( filename );
-	if ( t ) {
-		return t;
-	}
-	else {
-		printf( "Loading Texture \"%s\".\n", filename );
-		t = texture_nextEmpty();
-		texture_init( t, filename );
-		textureCache_add( t, filename );
-		
-		textureProperties* properties = mem_alloc( sizeof( textureProperties ));
-		properties->wrap_s = GL_REPEAT;
-		properties->wrap_t = GL_REPEAT;
-		texture_requestFile( &t->gl_tex, filename, properties );
-	}
-	return t;
-	*/
 	textureProperties* properties = mem_alloc( sizeof( textureProperties ));
 	properties->wrap_s = GL_REPEAT;
 	properties->wrap_t = GL_REPEAT;
@@ -187,7 +175,15 @@ texture* texture_loadWithProperties( const char* filename, textureProperties* pr
 		t = texture_nextEmpty();
 		texture_init( t, filename );
 		textureCache_add( t, filename );
+#ifdef RENDER_TEXTURE_LOAD_ASYNC
 		texture_requestFile( &t->gl_tex, filename, properties );
+#else	
+		const void** args = mem_alloc( sizeof( void* ) * 3 );
+		args[0] = &t->gl_tex;
+		args[1] = filename;
+		args[2] = properties;
+		texture_workerLoadFile( args );
+#endif // RENDER_TEXTURE_LOAD_ASYNC
 	}
 	return t;
 }
@@ -273,7 +269,11 @@ GLuint texture_loadTGA( const char* filename ) {
 
 	// Set up sampling parameters, use defaults for now
 	// Bilinear interpolation, clamped
+#ifdef RENDER_USE_MIPMAPPING
 	glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR );
+#else
+	glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR );
+#endif // RENDER_USE_MIPMAPPING
     glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR );
     glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_WRAP_S,     GL_REPEAT );
     glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_WRAP_T,     GL_REPEAT );
@@ -287,7 +287,9 @@ GLuint texture_loadTGA( const char* filename ) {
 					GL_UNSIGNED_BYTE,	// 8-bits per channel
 					img );
 
+#ifdef RENDER_USE_MIPMAPPING
 	glGenerateMipmap( GL_TEXTURE_2D );
+#endif // RENDER_USE_MIPMAPPING
 
 	mem_free( img );	// OpenGL copies the data, so we can free this here
 
@@ -309,7 +311,11 @@ GLuint texture_loadBitmap( int w, int h, int stride, uint8_t* bitmap, GLuint wra
 
 	// Set up sampling parameters, use defaults for now
 	// Bilinear interpolation, clamped
+#ifdef RENDER_USE_MIPMAPPING
 	glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR );
+#else
+	glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR );
+#endif // RENDER_USE_MIPMAPPING
     glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR );
 	// TODO - set this properly. For now force to clamp for loadBitmap, for the terrain lookup texture
     glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_WRAP_S,     wrap_s );
@@ -324,7 +330,9 @@ GLuint texture_loadBitmap( int w, int h, int stride, uint8_t* bitmap, GLuint wra
 					GL_UNSIGNED_BYTE,	// 8-bits per channel
 					bitmap );
 
+#ifdef RENDER_USE_MIPMAPPING
 	glGenerateMipmap( GL_TEXTURE_2D );
+#endif // RENDER_USE_MIPMAPPING
 
 	mem_free( bitmap );	// OpenGL copies the data, so we can free this here
 	return tex;
