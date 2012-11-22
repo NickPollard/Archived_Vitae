@@ -32,8 +32,7 @@ void mem_free( void* ptr ) {
 
 // Initialise the memory subsystem
 void mem_init(int argc, char** argv) {
-	(void)argc;
-	(void)argv;
+	(void)argc; (void)argv;
 	static_heap = heap_create( static_heap_size );
 }
 
