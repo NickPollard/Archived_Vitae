@@ -5,6 +5,7 @@
 #include "mem/allocator.h"
 #include "system/hash.h"
 #include "system/string.h"
+#include "system/thread.h"
 #include <assert.h>
 #if defined(LINUX_X) || defined(ANDROID)
 #include <sys/stat.h>
@@ -13,6 +14,8 @@
 #include "zip.h"
 #include <jni.h>
 #endif // ANDROID
+
+vmutex file_mutex = kMutexInitialiser;
 
 void vfile_storeModifiedTime( const char* file );
 
@@ -103,20 +106,24 @@ struct zip_file* vfile_openApk( const char* path, const char* mode ) {
 // returns a pointer to that buffer
 // It its the caller's responsibility to free the buffer
 void* vfile_contentsApk( const char* path, int* length ) {
-    struct zip_file *f = vfile_openApk( path, "r" );
-    void *buffer;
+	void *buffer;
+	vmutex_lock( &file_mutex );
+	{
+		struct zip_file *f = vfile_openApk( path, "r" );
 
-	// We need to get the asset path so we can zip_stat the length
-	char asset_path[kVfileMaxPathLength];
-	vfile_assetPath( asset_path, path );
+		// We need to get the asset path so we can zip_stat the length
+		char asset_path[kVfileMaxPathLength];
+		vfile_assetPath( asset_path, path );
 
-	struct zip_stat stat;
-	zip_stat( apk_archive, asset_path, 0x0 /* flags */, &stat );
-	*length = (int)stat.size;
-    buffer = mem_alloc( *length+1 );
-    *length = zip_fread( f, buffer, *length );
-    zip_fclose( f );
-    ((char*)buffer)[*length] = '\0'; // TODO should I be doing this? Distinction between binary and ASCII?
+		struct zip_stat stat;
+		zip_stat( apk_archive, asset_path, 0x0 /* flags */, &stat );
+		*length = (int)stat.size;
+		buffer = mem_alloc( *length+1 );
+		*length = zip_fread( f, buffer, *length );
+		zip_fclose( f );
+		((char*)buffer)[*length] = '\0'; // TODO should I be doing this? Distinction between binary and ASCII?
+	}
+	vmutex_unlock( &file_mutex );
 
     return buffer;
 }
