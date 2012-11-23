@@ -6,6 +6,12 @@
 					  	 	 (attribute "fog_color"		(vector 0.0 0.4 0.3 1.0))
 					  	 	 (attribute "sun_color"		(vector 1.0 0.2 0.2 1.0))
 )))
+		(canyon_zone (quote ((attribute "terrain_color" (vector 1.0 1.0 1.0 1.0))
+					  	 	 (attribute "cliff_color"	(vector 1.0 1.0 1.0 1.0))
+					  	 	 (attribute "sky_color"		(vector 0.1 0.1 0.1 1.0))
+					  	 	 (attribute "fog_color"		(vector 0.4 0.25 0.15 1.0))
+					  	 	 (attribute "sun_color"		(vector 1.0 0.5 0.0 1.0))
+)))
 # Wasteland
 		(canyon_zone (quote ((attribute "terrain_color" (vector 0.2 0.25 0.2 1.0))
 					  	 	 (attribute "cliff_color"	(vector 0.1 0.1 0.1 1.0))

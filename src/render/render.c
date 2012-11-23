@@ -297,7 +297,7 @@ void render_createWindow( void* app, window* w ) {
     /* Here, the application chooses the configuration it desires. In this
      * sample, we have a very simplified selection process, where we pick
      * the first EGLConfig that matches our criteria */
-	printf( "EGL Choosing Config." );
+	printf( "EGL Choosing Config.\n" );
     eglChooseConfig( display, attribs, &config, 1, &numConfigs );
 	vAssert( result == EGL_TRUE );
 
@@ -317,7 +317,7 @@ void render_createWindow( void* app, window* w ) {
 	EGLNativeWindowType native_win = os_createWindow();
 #endif
 
-	printf( "EGL Creating Surface." );
+	printf( "EGL Creating Surface.\n" );
     surface = eglCreateWindowSurface( display, config, native_win, NULL );
 	if ( surface == EGL_NO_SURFACE ) {
 		printf( "Unable to create EGL surface (eglError: %d)\n", eglGetError() );
@@ -326,7 +326,7 @@ void render_createWindow( void* app, window* w ) {
 	result = eglBindAPI( RENDER_GL_API );
 	vAssert( result == EGL_TRUE );
   
-	printf( "EGL Creating Context." );
+	printf( "EGL Creating Context.\n" );
     context = eglCreateContext(display, config, NULL, context_attribs );
 
     result = eglMakeCurrent(display, surface, surface, context);
@@ -756,6 +756,18 @@ void render_drawBatch( drawCall* draw ) {
 		render_setUniform_texture( *resources.uniforms.tex,			draw->texture );
 		if ( *resources.uniforms.tex_b ) {
 			render_setUniform_texture( *resources.uniforms.tex_b,		draw->texture_b );
+		}
+		if ( *resources.uniforms.tex_c ) {
+			render_setUniform_texture( *resources.uniforms.tex_c,		draw->texture_c );
+		}
+		if ( *resources.uniforms.tex_d ) {
+			render_setUniform_texture( *resources.uniforms.tex_d,		draw->texture_d );
+		}
+		if ( *resources.uniforms.tex_normal ) {
+			render_setUniform_texture( *resources.uniforms.tex_normal,		draw->texture_normal );
+		}
+		if ( *resources.uniforms.tex_b_normal ) {
+			render_setUniform_texture( *resources.uniforms.tex_b_normal,	draw->texture_b_normal );
 		}
 		if ( *resources.uniforms.tex_lookup ) {
 			render_setUniform_texture( *resources.uniforms.tex_lookup,		draw->texture_lookup );

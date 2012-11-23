@@ -15,10 +15,15 @@
 #define CANYON_TERRAIN_INDEXED 1
 #define TERRAIN_USE_WORKER_THREAD 1
 	
-const float texture_scale = 0.0225f;
+const float texture_scale = 0.0325f;
 
 texture* terrain_texture = 0;
 texture* terrain_texture_cliff = 0;
+texture* normal_flat = 0;
+texture* cliff_normal = 0;
+
+texture* terrain_texture_2 = 0;
+texture* terrain_texture_cliff_2 = 0;
 
 
 // *** Forward declarations
@@ -113,7 +118,14 @@ void canyonTerrainBlock_render( canyonTerrainBlock* b ) {
 	if ( b->vertex_VBO && *b->vertex_VBO && terrain_texture && terrain_texture_cliff ) {
 		drawCall* draw = drawCall_create( &renderPass_main, resources.shader_terrain, b->element_count_render, b->element_buffer, b->vertex_buffer, terrain_texture->gl_tex, modelview );
 		draw->texture_b = terrain_texture_cliff->gl_tex;
+		draw->texture_c = terrain_texture_2->gl_tex;
+		draw->texture_d = terrain_texture_cliff_2->gl_tex;
 		draw->texture_lookup = b->canyon->canyonZone_lookup_texture->gl_tex;
+	
+		// TEST
+		draw->texture_normal = normal_flat->gl_tex;
+		draw->texture_b_normal = cliff_normal->gl_tex;
+
 		draw->vertex_VBO = *b->vertex_VBO;
 		draw->element_VBO = *b->element_VBO;
 	}
@@ -290,6 +302,20 @@ canyonTerrain* canyonTerrain_create( canyon* c, int u_blocks, int v_blocks, int 
 	if ( !terrain_texture_cliff ) {
 		terrain_texture_cliff = texture_load( "dat/img/terrain/cliff_grass.tga" );
 	}
+	if ( !normal_flat ) {
+		normal_flat = texture_load( "dat/img/normal_flat.tga" );
+	}
+	if ( !cliff_normal ) {
+		cliff_normal = texture_load( "dat/img/terrain/cliff_normal.tga" );
+	}
+
+	// Temp
+	if ( !terrain_texture_2 ) {
+		terrain_texture_2 = texture_load( "dat/img/terrain/ground_industrial.tga" );
+	}
+	if ( !terrain_texture_cliff_2 ) {
+		terrain_texture_cliff_2 = texture_load( "dat/img/terrain/cliff_industrial.tga" );
+	}
 
 	return t;
 }
@@ -378,7 +404,11 @@ void canyonTerrainBlock_generateVertices( canyonTerrainBlock* b, vector* verts, 
 			vertex vert;
 			vert.position = verts[i];
 			vert.normal = normals[i];
-			vert.uv = Vector( vert.position.coord.x * texture_scale, vert.position.coord.z * texture_scale, 0.f, 0.f );
+
+			float u_pos, v_pos;
+			canyonTerrainBlock_positionsFromUV( b, u, v, &u_pos, &v_pos );
+
+			vert.uv = Vector( vert.position.coord.x * texture_scale, vert.position.coord.z * texture_scale, v_pos * texture_scale, vert.position.coord.y * texture_scale );
 			canyonTerrainBlock_fillTrianglesForVertex( b, verts, b->vertex_buffer, u, v, &vert );
 		}
 	}
@@ -580,7 +610,7 @@ void canyonTerrainBlock_calculateBuffers( canyonTerrainBlock* b ) {
 				vAssert( buffer_index < canyonTerrainBlock_renderVertCount( b ));
 				vAssert( buffer_index >= 0 );
 				b->vertex_buffer[buffer_index].position = verts[i];
-				b->vertex_buffer[buffer_index].uv = Vector( verts[i].coord.x * texture_scale, verts[i].coord.z * texture_scale, 0.f, 0.f );
+				b->vertex_buffer[buffer_index].uv = Vector( verts[i].coord.x * texture_scale, verts[i].coord.z * texture_scale, v * texture_scale, verts[i].coord.y * texture_scale );
 				b->vertex_buffer[buffer_index].color = Vector( canyonZone_terrainBlend( v ), 0.f, 0.f, 1.f );
 			}
 #endif // CANYON_TERRAIN_INDEXED

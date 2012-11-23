@@ -11,12 +11,14 @@ attribute vec4 color;
 // Varying
 varying vec4 frag_position;
 varying vec4 cameraSpace_frag_normal;
+varying vec4 frag_normal;
 varying vec2 texcoord;
+varying vec2 cliff_texcoord;
 varying vec4 vert_color;
 varying float fog;
 varying vec4 local_fog_color;
 varying float cliff;
-varying float specular;
+//varying float specular;
 
 // Uniform
 uniform	mat4 projection;
@@ -36,7 +38,9 @@ void main() {
 #if 1
 	frag_position = modelview * position;
 	cameraSpace_frag_normal = modelview * normal;
+	frag_normal = normal;
 	texcoord = uv.xy;
+	cliff_texcoord = uv.zw;
 
 	vert_color = vec4( color.xyz, 1.0 );
 	
@@ -70,7 +74,7 @@ void main() {
 
 	// lighting
 	// Specular
-	vec4 spec_bounce = reflect( directional_light_direction, cameraSpace_frag_normal );
-	specular = max( 0.0, dot( spec_bounce, -view_direction ));
+	//vec4 spec_bounce = reflect( directional_light_direction, cameraSpace_frag_normal );
+	//specular = max( 0.0, dot( spec_bounce, -view_direction ));
 #endif
 }
