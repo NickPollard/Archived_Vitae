@@ -1,6 +1,6 @@
 //#version 110
 #ifdef GL_ES
-precision mediump float;
+precision highp float;
 #endif
 // Attributes
 attribute vec4 position;

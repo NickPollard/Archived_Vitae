@@ -1,5 +1,5 @@
 #ifdef GL_ES
-precision mediump float;
+precision highp float;
 #endif
 //#version 110
 
@@ -33,7 +33,7 @@ uniform mat4 modelview;
 vec4 light_ambient = vec4( 0.3, 0.3, 0.4, 1.0 );
 // Directional Light
 vec4 directional_light_diffuse = vec4( 1.0, 1.0, 0.8, 1.0 );
-vec4 directional_light_specular = vec4( 0.5, 0.5, 0.5, 1.0 );
+vec4 directional_light_specular = vec4( 1.0, 1.0, 1.0, 1.0 );
 
 float diffuse_warp( float diffuse ) {
 	//return diffuse * 0.5 + 0.5;
@@ -46,7 +46,7 @@ void main() {
 	vec4 total_light_color = light_ambient;
 	vec4 view_direction = normalize( frag_position );
 
-	/*
+#if 1
 	vec4 texture_normal = texture2D( tex_normal, texcoord );
 	vec4 texture_b_normal = texture2D( tex_b_normal, texcoord );
 	float x = texture_normal.x - 0.5 * 2.0; 
@@ -63,8 +63,9 @@ void main() {
 	vec4 tangent = vec4( cross( binormal.xyz, frag_normal.xyz ), 0.0 );
 	mat4 tangent_space = mat4( tangent, binormal, frag_normal, vec4( 0.0, 0.0, 0.0, 1.0 ) );
 	vec4 normal = modelview * tangent_space * imagespace_normal;
-	*/
+#else
 	 vec4 normal = cameraSpace_frag_normal;
+#endif
 
 	// Directional light
 	{
