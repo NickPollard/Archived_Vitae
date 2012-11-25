@@ -16,6 +16,7 @@
 #define TERRAIN_USE_WORKER_THREAD 1
 	
 const float texture_scale = 0.0325f;
+const float texture_repeat = 10.f;
 
 texture* terrain_texture = 0;
 texture* terrain_texture_cliff = 0;
@@ -94,6 +95,20 @@ void boundsIntersection( int intersection[2][2], int a[2][2], int b[2][2] ) {
 	intersection[1][1] = min( a[1][1], b[1][1] );
 }
 
+// Ping-pong the float back and forth so alternate texture_repeat sections are reversed
+// Used to stop our UV coordinates getting so big that floating point rounding issues cause
+// aliasing in the texture
+float canyon_uvMapped( float f ) {
+	return f;
+	/*
+	float v = fmodf( f, texture_repeat );
+	int i = (int)floorf( f / texture_repeat ) % 2;
+	if ( i == 1 ) {
+		v = texture_repeat - v;
+	}
+	return v;
+	*/
+}
 
 // ***
 
@@ -317,6 +332,13 @@ canyonTerrain* canyonTerrain_create( canyon* c, int u_blocks, int v_blocks, int 
 		terrain_texture_cliff_2 = texture_load( "dat/img/terrain/cliff_industrial.tga" );
 	}
 
+
+	// TEST
+	for ( float f = 0.f; f < 40.f; f += 0.8f ) {
+		printf( "f: %.2f, mapped %.2f\n", f, canyon_uvMapped( f ) );
+	}
+	//vAssert( 0 );
+
 	return t;
 }
 
@@ -408,7 +430,10 @@ void canyonTerrainBlock_generateVertices( canyonTerrainBlock* b, vector* verts, 
 			float u_pos, v_pos;
 			canyonTerrainBlock_positionsFromUV( b, u, v, &u_pos, &v_pos );
 
-			vert.uv = Vector( vert.position.coord.x * texture_scale, vert.position.coord.z * texture_scale, v_pos * texture_scale, vert.position.coord.y * texture_scale );
+			vert.uv = Vector( canyon_uvMapped( vert.position.coord.x * texture_scale ),
+				   	canyon_uvMapped( vert.position.coord.z * texture_scale ),
+				   	canyon_uvMapped( v_pos * texture_scale ),
+				   	vert.position.coord.y * texture_scale );
 			canyonTerrainBlock_fillTrianglesForVertex( b, verts, b->vertex_buffer, u, v, &vert );
 		}
 	}
@@ -610,7 +635,10 @@ void canyonTerrainBlock_calculateBuffers( canyonTerrainBlock* b ) {
 				vAssert( buffer_index < canyonTerrainBlock_renderVertCount( b ));
 				vAssert( buffer_index >= 0 );
 				b->vertex_buffer[buffer_index].position = verts[i];
-				b->vertex_buffer[buffer_index].uv = Vector( verts[i].coord.x * texture_scale, verts[i].coord.z * texture_scale, v * texture_scale, verts[i].coord.y * texture_scale );
+				b->vertex_buffer[buffer_index].uv = Vector( canyon_uvMapped( verts[i].coord.x * texture_scale ),
+					   										canyon_uvMapped( verts[i].coord.z * texture_scale ),
+														    canyon_uvMapped( v * texture_scale ),
+														   	verts[i].coord.y * texture_scale );
 				b->vertex_buffer[buffer_index].color = Vector( canyonZone_terrainBlend( v ), 0.f, 0.f, 1.f );
 			}
 #endif // CANYON_TERRAIN_INDEXED
