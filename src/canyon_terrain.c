@@ -871,19 +871,26 @@ float terrain_mountainHeight( float x, float z ) {
 	float u, v;
 	terrain_canyonSpaceFromWorld( x, z, &u, &v );
 
-	const float mountain_gradient_scale = 0.01f;
-	float canyon_height_scale = ( max( 0.0, fabsf( u ) - canyon_base_radius )) * mountain_gradient_scale;
+	const float mountain_gradient_scale = 0.00001f;
+	const float offset = ( max( 0.0, fabsf( u ) - canyon_base_radius ));
+	const float canyon_height_scale = offset * offset * mountain_gradient_scale;
 
 	const float scale_m_x = 40.f;
 	const float scale_m_z = 40.f;
-	const float mountain_height = 40.f * canyon_height_scale;
+	const float mountain_height = 20.f * canyon_height_scale;
 	return (1.0f + terrain_mountainFunc( x / scale_m_x ) * terrain_mountainFunc( z / scale_m_z )) * 0.5f * mountain_height;
 }
 
 float terrain_detailHeight( float u, float v ) {
+	/*
 	return	0.5 * sinf( u ) * sinf( v ) +
 			sinf( u / 3.f ) * sinf( v / 3.f ) +
 			5 * sinf( u / 10.f ) * sinf( v / 10.f ) * sinf( u / 10.f ) * sinf( v / 10.f );
+			*/
+	return 3.f * ( sinf( u / 23.f ) * sinf( v / 23.f ) * sinf( u / 23.f ) * sinf( v / 23.f ) +
+			sinf( u / 17.f ) * sinf( v / 17.f ) +
+		   sinf( u / 13.f ) * sinf( v / 13.f ));
+
 }
 
 // The procedural function

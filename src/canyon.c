@@ -334,10 +334,15 @@ float terrain_newCanyonHeight( float x, float z ) {
 	terrain_canyonSpaceFromWorld( x, z, &u, &v );
 
 	u = ( u < 0.f ) ? fminf( u + canyon_base_radius, 0.f ) : fmaxf( u - canyon_base_radius, 0.f );
+
+	const float incline_scale = 0.0005f;
+	const float flat_radius = 20.f;
+	const float offset = max( 0.0, fabsf( u ) - canyon_base_radius ) - flat_radius;
+   	const float incline = offset * offset	* incline_scale;
 	
 	// Turn the canyon-space U into a height
 	float mask = cos( fclamp( u / canyon_width, -PI/2.f, PI/2.f ));
-	return (1.f - fclamp( powf( u / canyon_width, 4.f ), 0.f, 1.f )) * mask * canyon_height;
+	return (1.f - fclamp( powf( u / canyon_width, 4.f ), 0.f, 1.f )) * mask * canyon_height - incline;
 }
 
 vector terrain_newCanyonPoint( vector current, vector previous ) {
@@ -350,8 +355,8 @@ vector terrain_newCanyonPoint( vector current, vector previous ) {
 	//float previous_angle = PI / 2.f;
 	const float max_angle_delta = PI / 8.f;
 
-	float min_angle = fmaxf( 0.f, previous_angle - max_angle_delta );
-	float max_angle = fminf( PI, previous_angle + max_angle_delta );
+	float min_angle = fmaxf( PI * 0.25f, previous_angle - max_angle_delta );
+	float max_angle = fminf( PI * 0.75f, previous_angle + max_angle_delta );
 	//float angle = frand( min_angle, max_angle );
 	float angle = deterministic_frand( &canyon_random_seed, min_angle, max_angle );
 	vector offset = Vector( cosf( angle ) * kCanyonSegmentLength, 0.f, sinf( angle ) * kCanyonSegmentLength, 0.f );

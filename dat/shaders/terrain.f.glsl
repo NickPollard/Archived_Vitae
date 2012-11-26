@@ -30,10 +30,10 @@ uniform vec4 directional_light_direction;
 uniform mat4 modelview;
 
 // Test Light values
-vec4 light_ambient = vec4( 0.3, 0.3, 0.4, 1.0 );
+vec4 light_ambient = vec4( 0.2, 0.2, 0.3, 1.0 );
 // Directional Light
 vec4 directional_light_diffuse = vec4( 1.0, 1.0, 0.8, 1.0 );
-vec4 directional_light_specular = vec4( 0.4, 0.4, 0.4, 1.0 );
+vec4 directional_light_specular = vec4( 0.0, 0.0, 0.0, 1.0 );
 
 float diffuse_warp( float diffuse ) {
 	//return diffuse * 0.5 + 0.5;
@@ -90,8 +90,11 @@ void main() {
 	vec4 cliff_color_2 = texture2D( tex_d, cliff_texcoord );
 	vec4 tex_color_2 = mix( ground_color_2, cliff_color_2, cliff );
 
-	//vec4 fragColor = total_light_color * texture2D( tex_lookup, vec2( vert_color.x, cliff )) * tex_color;
+	vec4 grey = vec4( 0.5, 0.5, 0.5, 1.0 );
+	vec4 black = vec4( 0.0, 0.0, 0.0, 1.0 );
+
 	vec4 fragColor = total_light_color * mix( tex_color, tex_color_2, vert_color.x );
+	//vec4 fragColor = total_light_color * grey;
 
 	gl_FragColor = mix( fragColor, local_fog_color, fog );
 	gl_FragColor.w = 1.0;

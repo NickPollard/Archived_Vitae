@@ -14,8 +14,8 @@ C and only controlled remotely by Lua
 	two_pi = 2.0 * math.pi
 
 -- Debug settings
-	debug_spawning_enabled	= false
-	debug_doodads_enabled	= false
+	debug_spawning_enabled	= true
+	debug_doodads_enabled	= true
 
 -- Load Modules
 	package.path = "./SpaceSim/lua/?.lua"
@@ -59,7 +59,7 @@ C and only controlled remotely by Lua
 	player_gun_cooldown		= 0.15
 	player_missile_cooldown	= 1.0
 	-- Flight
-	player_ship_initial_speed	= 30.0
+	player_ship_initial_speed	= 80.0
 	player_ship_acceleration	= 1.0
 	max_allowed_roll			= 1.5
 	camera_roll_scale			= 0.1

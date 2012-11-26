@@ -80,7 +80,7 @@ void test_engine_init( engine* e ) {
 		canyonZone_load( c, "dat/script/lisp/canyon_zones.s" );
 		startTick( e, c, canyon_tick );
 		
-		canyonTerrain* t = canyonTerrain_create( c, 7, 9, 40, 40, 480.f, 960.f );
+		canyonTerrain* t = canyonTerrain_create( c, 7, 9, 40, 40, 640.f, 960.f );
 		canyonTerrain_setLodIntervals( t, 1, 3 );
 		startTick( e, (void*)t, canyonTerrain_tick );
 		engine_addRender( e, (void*)t, canyonTerrain_render );

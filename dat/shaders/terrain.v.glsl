@@ -47,8 +47,8 @@ void main() {
 	vec4 view_direction = normalize( frag_position );
 
 	// We can calculate fog per vertex as we know polys will be small for terrain
-	float fog_far = 350.0;
-	float fog_near = 100.0;
+	float fog_far = 450.0;
+	float fog_near = 200.0;
 	float fog_height = 160.0;
 	float height_factor = clamp( ( fog_height - position.y ) / fog_height, 0.0, 1.0 );
 	float fog_max = 0.4;
