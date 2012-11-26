@@ -862,12 +862,22 @@ void canyonTerrain_tick( void* data, float dt, engine* eng ) {
 	canyonTerrain_updateBlocks( t );
 }
 
+float terrain_mountainFunc( float x ) {
+	return cosf( x - 0.5 * sinf( 2 * x ));
+}
+
 // Returns a value between 0.f and height_m
-float terrain_mountainHeight( float u, float v ) {
-	float scale_m_u = 40.f;
-	float scale_m_v = 40.f;
-	float height_m = 40.f;
-	return (1.0f + sinf( u / scale_m_u ) * sinf( v / scale_m_v )) * 0.5f * height_m;
+float terrain_mountainHeight( float x, float z ) {
+	float u, v;
+	terrain_canyonSpaceFromWorld( x, z, &u, &v );
+
+	const float mountain_gradient_scale = 0.01f;
+	float canyon_height_scale = ( max( 0.0, fabsf( u ) - canyon_base_radius )) * mountain_gradient_scale;
+
+	const float scale_m_x = 40.f;
+	const float scale_m_z = 40.f;
+	const float mountain_height = 40.f * canyon_height_scale;
+	return (1.0f + terrain_mountainFunc( x / scale_m_x ) * terrain_mountainFunc( z / scale_m_z )) * 0.5f * mountain_height;
 }
 
 float terrain_detailHeight( float u, float v ) {

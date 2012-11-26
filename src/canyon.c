@@ -29,6 +29,10 @@
    but at index M, and the last element will be (M + Size - 1) % Size
    */
 
+const float canyon_base_radius = 40.f;
+const float canyon_width = 20.f;
+const float canyon_height = 40.f;
+
 // *** Forward declarations
 vector terrain_newCanyonPoint( vector current, vector previous );
 
@@ -324,20 +328,16 @@ void terrain_worldSpaceFromCanyon( float u, float v, float* x, float* z ) {
 	*z = position.coord.z;
 }
 
-const float new_base_radius = 40.f;
-const float new_canyon_width = 20.f;
-const float new_canyon_height = 40.f;
-
 // Sample the canyon height (Y) at a given world X and Z
 float terrain_newCanyonHeight( float x, float z ) {
 	float u, v;
 	terrain_canyonSpaceFromWorld( x, z, &u, &v );
 
-	u = ( u < 0.f ) ? fminf( u + new_base_radius, 0.f ) : fmaxf( u - new_base_radius, 0.f );
+	u = ( u < 0.f ) ? fminf( u + canyon_base_radius, 0.f ) : fmaxf( u - canyon_base_radius, 0.f );
 	
 	// Turn the canyon-space U into a height
-	float mask = cos( fclamp( u / new_canyon_width, -PI/2.f, PI/2.f ));
-	return (1.f - fclamp( powf( u / new_canyon_width, 4.f ), 0.f, 1.f )) * mask * new_canyon_height;
+	float mask = cos( fclamp( u / canyon_width, -PI/2.f, PI/2.f ));
+	return (1.f - fclamp( powf( u / canyon_width, 4.f ), 0.f, 1.f )) * mask * canyon_height;
 }
 
 vector terrain_newCanyonPoint( vector current, vector previous ) {

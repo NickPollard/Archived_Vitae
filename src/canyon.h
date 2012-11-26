@@ -37,6 +37,10 @@ struct canyon_s {
 	scene*		scene;
 };
 
+extern const float canyon_base_radius;
+extern const float canyon_width;
+extern const float canyon_height;
+
 // Canyon functions
 void terrain_debugDraw( window* w );
 void canyon_generateInitialPoints();
