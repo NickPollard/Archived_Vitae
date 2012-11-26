@@ -185,7 +185,6 @@ void engine_tick( engine* e ) {
 	canyon_seekForWorldPosition( theCanyonTerrain->sample_point );
 	zone_sample_point = theCanyonTerrain->sample_point;
 	PROFILE_END( PROFILE_ENGINE_TICK );
-
 }
 
 // Handle a key press from the user
@@ -417,6 +416,12 @@ void engine_run(engine* e) {
 		window_open = xwindow_main.open;
 #endif // LINUX_X
 		e->running = e->running && window_open;
+
+		// Make sure we don't have too many tasks outstanding - ideally this should never get this high
+		// Prevents an eventual overflow assertion
+		while ( worker_task_count > 400 ) {
+			vthread_yield();
+		}
 
 #if PROFILE_ENABLE
 		profile_newFrame();
