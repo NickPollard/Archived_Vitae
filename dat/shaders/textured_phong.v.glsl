@@ -31,8 +31,8 @@ void main() {
 	// We can calculate fog per vertex as we know polys will be small for terrain
 	// TODO Change for this shader, move to fragment?
 	float height = position.y;
-	float fog_far = 350.0;
-	float fog_near = 100.0;
+	float fog_far = 450.0;
+	float fog_near = 200.0;
 	float fog_height = 160.0;
 	float height_factor = clamp( ( fog_height - height ) / fog_height, 0.0, 1.0 );
 	float max_distance = 350.0;

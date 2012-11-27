@@ -14,7 +14,7 @@ C and only controlled remotely by Lua
 	two_pi = 2.0 * math.pi
 
 -- Debug settings
-	debug_spawning_enabled	= true
+	debug_spawning_enabled	= false
 	debug_doodads_enabled	= true
 
 -- Load Modules
@@ -59,7 +59,7 @@ C and only controlled remotely by Lua
 	player_gun_cooldown		= 0.15
 	player_missile_cooldown	= 1.0
 	-- Flight
-	player_ship_initial_speed	= 80.0
+	player_ship_initial_speed	= 30.0
 	player_ship_acceleration	= 1.0
 	max_allowed_roll			= 1.5
 	camera_roll_scale			= 0.1
@@ -921,6 +921,7 @@ function spawn_bunker( u, v, model )
 	local position = Vector( x, y, z, 1.0 )
 	local doodad = gameobject_create( model )
 	vtransform_setWorldPosition( doodad.transform, position )
+	return doodad
 end
 
 function doodads_spawnRange( near, far )
@@ -928,8 +929,7 @@ function doodads_spawnRange( near, far )
 	local spawn_v = i * spawn_interval
 	while library.contains( spawn_v, near, far ) do
 		local doodad_offset_u = 130.0
-		--spawn_doodad( doodad_offset_u, spawn_v, "dat/model/bunker.s" )
-		spawn_bunker( doodad_offset_u, spawn_v, "dat/model/depot.s" )
+		local doodad = spawn_bunker( doodad_offset_u, spawn_v, "dat/model/borehole.s" )
 		i = i + 1
 		spawn_v = i * spawn_interval
 	end

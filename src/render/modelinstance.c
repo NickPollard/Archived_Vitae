@@ -32,6 +32,7 @@ void modelInstance_delete( modelInstance* t ) {
 void modelInstance_createSubTransforms( modelInstance* instance ) {
 	model* m = model_fromInstance( instance );
 	for ( int i = 0; i < m->transform_count; i++ ) {
+		printf( "Adding model sub transform.\n" );
 		instance->transforms[i] = transform_create();
 		matrix_cpy( instance->transforms[i]->local, m->transforms[i]->local );
 	}
@@ -41,6 +42,7 @@ void modelInstance_createSubTransforms( modelInstance* instance ) {
 void modelInstance_createSubEmitters( modelInstance* instance ) {
 	model* m = model_fromInstance( instance );
 	for ( int i = 0; i < m->emitter_count; i++ ) {
+		printf( "Adding model particle emitter.\n" );
 		instance->emitters[i] = particleEmitter_create();
 
 		// TEST setup particle stuff
@@ -51,6 +53,7 @@ void modelInstance_createSubEmitters( modelInstance* instance ) {
 		// Take parent transform if in model
 		// This is stored as an index rather than a pointer
 		uintptr_t transform_index = (uintptr_t)m->emitters[i]->trans;
+		printf( "transform_index = %d.\n", (int)transform_index );
 #define NULL_INDEX UINTPTR_MAX
 		if ( transform_index == NULL_INDEX )
 			instance->emitters[i]->trans = NULL;

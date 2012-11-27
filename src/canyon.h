@@ -44,7 +44,7 @@ extern const float canyon_height;
 // Canyon functions
 void terrain_debugDraw( window* w );
 void canyon_generateInitialPoints();
-float terrain_newCanyonHeight( float x, float z );
+float terrain_canyonHeight( float x, float z );
 void canyon_staticInit();
 void canyon_seekForWorldPosition( vector position );
 // For colouring

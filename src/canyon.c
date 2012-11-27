@@ -329,13 +329,13 @@ void terrain_worldSpaceFromCanyon( float u, float v, float* x, float* z ) {
 }
 
 // Sample the canyon height (Y) at a given world X and Z
-float terrain_newCanyonHeight( float x, float z ) {
+float terrain_canyonHeight( float x, float z ) {
 	float u, v;
 	terrain_canyonSpaceFromWorld( x, z, &u, &v );
 
 	u = ( u < 0.f ) ? fminf( u + canyon_base_radius, 0.f ) : fmaxf( u - canyon_base_radius, 0.f );
 
-	const float incline_scale = 0.0005f;
+	const float incline_scale = 0.0004f;
 	const float flat_radius = 20.f;
 	const float offset = max( 0.0, fabsf( u ) - canyon_base_radius ) - flat_radius;
    	const float incline = offset * offset	* incline_scale;

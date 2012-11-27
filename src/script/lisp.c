@@ -196,17 +196,17 @@ term* head( term* list ) {
 	}
 
 term* tail( term* list ) {
-	assert( list );
-	assert( isType( list, typeList ));
+	lisp_assert( list );
+	lisp_assert( isType( list, typeList ));
 	// If there is a tail, it must be a list
-	assert( !list->tail || isType( list->tail, typeList ));
+	lisp_assert( !list->tail || isType( list->tail, typeList ));
 	return list->tail;
 	}
 
 /*
    List Constructors
    */
-term* _cons( void* head, term* tail ) {
+term* cons( void* head, term* tail ) {
 	term* t = term_create( typeList, head );
 	t->tail = tail;
 	if ( tail )
@@ -216,9 +216,9 @@ term* _cons( void* head, term* tail ) {
 
 term* _append( term* list, term* appendee ) {
 	if ( tail( list ))
-		return _cons( head( list ), _append( tail( list ), appendee ));
+		return cons( head( list ), _append( tail( list ), appendee ));
 	else
-		return _cons( head( list ), _cons( appendee, NULL ));	
+		return cons( head( list ), cons( appendee, NULL ));	
 }
 
 // Get the next interesting lisp token
@@ -308,7 +308,7 @@ term* lisp_parse_exprList( inputStream* stream ) {
 		return NULL;
 
 	term* t = lisp_parse( stream );
-	term* list = _cons( t, lisp_parse_exprList( stream ) );
+	term* list = cons( t, lisp_parse_exprList( stream ) );
 	return list;
 }
 
@@ -469,7 +469,7 @@ term* fmap_1( fmap_func f, void* arg, term* expr ) {
 	if ( !expr )
 		return NULL;
 	vAssert( isType( expr, typeList ));
-	return _cons( f( head( expr ), arg ),
+	return cons( f( head( expr ), arg ),
 		   			fmap_1( f, arg, tail( expr )));
 }
 
@@ -494,12 +494,11 @@ void* exec( context* c, term* func, term* args);
 
 term* _eval( term* expr, void* _context ) {
 #ifdef DEBUG_LISP_STACK
-	const int kDebugStackLength = 1024;
+	const int kDebugStackLength = 2048;
 	char debug_expr[kDebugStackLength];
 	streamWriter stackStream;
 	stackStream.write_head = stackStream.string = debug_expr;
 	stackStream.end = stackStream.string + kDebugStackLength;
-	sprintf( debug_expr, "Test" );
 	term_debugStreamPrint( &stackStream, expr );
 	debug_lisp_stack_push( debug_expr );
 #endif
@@ -682,6 +681,9 @@ void attr_mesh_diffuseTexture( term* mesh_term, term* texture_attr );
 
 void attr_zone_cliffColor( term* zone_term, term* cliff_color_attr );
 void attr_zone_terrainColor( term* zone_term, term* terrain_color_attr );
+
+void attr_transform_translation( term* zone_term, term* terrain_color_attr );
+void attr_transform_particle( term* trans_term, term* particle_attr );
 
 ATTR_FUNCTION_VECTOR( canyonZone, sky_color )
 ATTR_FUNCTION_VECTOR( canyonZone, sun_color )
@@ -933,10 +935,11 @@ term* lisp_func_object_process( context *c, term* raw_args ) {
 	term_takeRef( args );
 	lisp_assert( list_length( args ) == 2 );
 	lisp_assert( isType( head( tail( args )), typeList ));
-	lisp_assert( isType( head( args ), typeObject ));
+	//lisp_assert( isType( head( args ), typeObject ));
 
 	// Alias args
 	term* ret = head( args );
+	term_takeRef( ret );
 	term* func = head( tail( args ));
 
 	// Apply the particular object processing function to the object we're folding
@@ -949,7 +952,7 @@ term* lisp_func_object_process( context *c, term* raw_args ) {
 #endif // DEBUG_PARSE
 
 	// Eval the function
-	_eval( list, c);
+	_eval( list, c );
 
 	// Cleanup
 	term_deref( args );
@@ -961,11 +964,16 @@ term* lisp_func_quote( context* c, term* raw_args ) {
 	return head( raw_args );
 	}
 
+term* lisp_func_always_quote( context* c, term* raw_args ) {
+	(void)c;
+	return cons( term_create( typeAtom, "always_quote" ), raw_args );
+	}
+
 term* list_copy( term* list ) {
 	if ( tail( list ))
-		return _cons( list->head, list_copy( list->tail ));
+		return cons( list->head, list_copy( list->tail ));
 	else
-		return _cons( list->head, NULL );
+		return cons( list->head, NULL );
 }
 
 term* lisp_func_tail( context* c, term* raw_args ) {
@@ -1034,11 +1042,51 @@ void lisp_init() {
 	attributeFunction_set( "sky_color", attr_canyonZone_sky_color );
 	attributeFunction_set( "sun_color", attr_canyonZone_sun_color );
 	attributeFunction_set( "fog_color", attr_canyonZone_fog_color );
+	
+	attributeFunction_set( "translation", attr_transform_translation );
+	attributeFunction_set( "particle", attr_transform_particle );
 
 	lisp_global_context = lisp_newContext();
 }
 
 #define NO_PARENT NULL
+
+term* first( term* t ) {
+	return head( t );
+}
+
+term* second( term* t ) {
+	return head( tail( t ));
+}
+
+term* third( term* t ) {
+	return head( tail( tail( t )));
+}
+
+void model_addSubElement( term* element_term, void* model_arg ) {
+	printf( "MODEL - adding sub element.\n" );
+	term_debugPrint( element_term );
+	printf( "\n" );
+	// For now, assume transform
+	// it has two children - the transform, and a list of children
+	lisp_assert( isType( element_term, typeList ));
+	term* trans = second( element_term );
+	transform* t = trans->data;
+	model* m = model_arg;
+	model_addTransform( m, t );
+	// Add all the transform's children (Assume particles for now)
+	term* children = third( element_term );
+	if ( children ) {
+		lisp_assert( isType( children, typeList ));
+		while ( children ) {
+			particleEmitter* p = head( children )->data;
+			model_addParticleEmitter( m, p );
+			// Fix up particle trans into an index that can be unpacked later
+			p->trans = (void*)(uintptr_t)model_transformIndex( m, p->trans );
+			children = tail( children );
+		}
+	}
+}
 
 /*
 	( model ( mesh ( filename ... )))
@@ -1056,6 +1104,14 @@ term* lisp_func_model( context* c, term* raw_args ) {
 	assert( isType( head( args ), typeObject )); // Looking for a mesh
 	model* m = model_createModel( 1 ); // default to one mesh
 	m->meshes[0] = head( args )->data;
+
+	// Process other model elements, e.g. transforms and particles
+	term* sub_element = tail( args );
+	while ( sub_element && head( sub_element )) {
+		model_addSubElement( head( sub_element ), m );
+		sub_element = tail( sub_element );
+	}
+
 	term* ret = term_create( typeObject, m );
 
 	m->obb = obb_calculate( m->meshes[0]->vert_count, m->meshes[0]->verts );
@@ -1137,18 +1193,13 @@ term* lisp_func_canyonZone_create( context* c, term* raw_args ) {
 	return ret;
 }
 
-// PLACEHOLDER
 term* lisp_func_transform( context* c, term* raw_args ) {
-	(void)c;
-	assert( isType( raw_args, typeList ));
-	/*
-	term* args = fmap_1( _eval, c, raw_args );
-	term_takeRef( args );
-	assert( isType( args, typeList ));
-	assert( isType( head( args ), typeObject )); // Looking for a mesh
-	*/
-	//term_deref( args );	
-	return &lisp_false;
+	(void)c; (void)raw_args;
+	transform* t = transform_create();
+	term* term_transform = term_create( typeObject, t );
+	term* pair = cons( term_transform, NULL );
+	term* quote = cons( term_create( typeAtom, "always_quote" ), pair );
+	return quote;
 }
 
 void lisp_assertArgs_1( term* t, enum termType type ) {
@@ -1158,7 +1209,11 @@ void lisp_assertArgs_1( term* t, enum termType type ) {
 }
 
 attributeSetter attributeFunction( const char* name ) {
-	return *(void**)map_find( attrFuncMap, mhash(name));
+	void** func_ptr = map_find( attrFuncMap, mhash(name));
+	if ( !func_ptr )
+		printf( "ERROR: Cannot find lisp Attribute Function \"%s\"\n", name );
+	vAssert( func_ptr );
+	return *func_ptr;
 }
 
 // (attribute name value)
@@ -1290,12 +1345,55 @@ void attr_zone_cliffColor( term* zone_term, term* cliff_color_attr ) {
 	zone->cliff_color = *(vector*)( cliff_color_attr->data );
 }
 
-
 void attr_zone_terrainColor( term* zone_term, term* terrain_color_attr ) {
 	lisp_assert( isType( terrain_color_attr, typeVector ));
 	canyonZone* zone = zone_term->data;
 	lisp_assert( zone );
 	zone->terrain_color = *(vector*)( terrain_color_attr->data );
+}
+
+void attr_transform_translation( term* trans_term, term* translation_attr ) {
+	(void)trans_term; (void)translation_attr;
+	//printf( "Attr_transform_translation - trans_term 0x" xPTRf "\n", (uintptr_t)trans_term );
+	lisp_assert( isType( translation_attr, typeVector ));
+	lisp_assert( isType( trans_term, typeList ));
+	transform* t = head( tail( trans_term ))->data;
+	lisp_assert( t );
+	transform_setLocalTranslation( t, translation_attr->data );
+}
+
+void attr_transform_particle( term* trans_term, term* particle_attr ) {
+	printf( "attr_transform_particle\n" );
+	term_debugPrint( trans_term );
+	printf( "\n" );
+	lisp_assert( isType( particle_attr, typeObject ));
+	lisp_assert( isType( trans_term, typeList ));
+	transform* t = head( tail( trans_term ))->data;
+	lisp_assert( t );
+	particleEmitter* p = particle_attr->data;
+	p->trans = t;
+
+	term* child_list = trans_term->tail->tail;
+	if ( !child_list ) {
+		trans_term->tail->tail = term_create( typeList, NULL );
+		child_list = trans_term->tail->tail;
+	}
+	child_list->head = cons( term_create( typeObject, p ), child_list->head );
+
+}
+
+term* lisp_func_particle_load( context* c, term* raw_args ) {
+	lisp_assert( isType( raw_args, typeList ));
+	term* args = fmap_1( _eval, c, raw_args );
+	lisp_assert( list_length( args ) == 1 );
+	lisp_assert( isType( head( args ), typeString ));
+	term_takeRef( args );
+	const char* particle_file = head( args )->data;
+	particleEmitterDef* def = particle_loadAsset( particle_file );
+	particleEmitter* particle = particle_newEmitter( def );
+	term* particle_term = term_create( typeObject, particle );
+	term_deref( args );
+	return particle_term;
 }
 
 // (particle_create)
@@ -1396,6 +1494,7 @@ void lisp_initContext( context* c ) {
 	define_cfunction( c, "vector", lisp_func_vector );
 	define_cfunction( c, "color", lisp_func_color );
 	define_cfunction( c, "quote", lisp_func_quote );
+	define_cfunction( c, "always_quote", lisp_func_always_quote );
 
 	define_cfunction( c, "length", lisp_func_length );
 
@@ -1412,7 +1511,8 @@ void lisp_initContext( context* c ) {
 	define_cfunction( c, "meshLoadFile", lisp_func_mesh_loadFile );
 	define_cfunction( c, "canyon_zone_create", lisp_func_canyonZone_create );
 
-	define_cfunction( c, "transform", lisp_func_transform );
+	define_cfunction( c, "create_transform", lisp_func_transform );
+	define_cfunction( c, "particleLoad", lisp_func_particle_load );
 	define_cfunction( c, "mesh_create", lisp_func_mesh_create );
 	define_cfunction( c, "filename", lisp_func_filename );
 	define_cfunction( c, "property_create", lisp_func_property_create );
@@ -1421,9 +1521,11 @@ void lisp_initContext( context* c ) {
 	define_cfunction( c, "attribute", lisp_func_attribute );
 	define_cfunction( c, "particle_emitter_definition_create", lisp_func_particle_emitter_definition_create );
 
+
 	// load the default vlisp library
 	lisp_eval_file( c, "dat/script/lisp/vliblisp.s" );
 	lisp_eval_file( c, "dat/script/lisp/particle.s" );
+	lisp_eval_file( c, "dat/script/lisp/model.s" );
 	lisp_eval_file( c, "dat/script/lisp/canyon.s" );
 	// just load the definitions in the file
 }

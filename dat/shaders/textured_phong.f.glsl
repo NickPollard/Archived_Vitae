@@ -28,7 +28,7 @@ const vec4 light_ambient = vec4( 0.2, 0.2, 0.2, 0.0 );
 const vec4 directional_light_direction = vec4( 1.0, 1.0, 1.0, 0.0 );
 const vec4 directional_light_diffuse = vec4( 0.5, 0.5, 0.3, 1.0 );
 const vec4 directional_light_specular = vec4( 0.5, 0.5, 0.3, 1.0 );
-const vec4 sun_color = vec4( 1.0, 0.5, 0.0, 0.0 );
+uniform vec4 sun_color;
 
 const vec4 material_diffuse = vec4( 1.0, 1.0, 1.0, 1.0 );
 const vec4 material_specular = vec4( 0.0, 0.0, 0.0, 1.0 );
@@ -88,14 +88,17 @@ void main() {
 //					total_diffuse_color * material_diffuse;
 */
 
-	// sunlight on fog
-	float fog_sun_factor = sun_fog( camera_space_sun_direction, frag_position );
-	vec4 local_fog_color = fog_color + (sun_color * fog_sun_factor);
 
 	vec4 fragColor = texture2D( tex, texcoord ) * frag_color;
+	
+	// sunlight on fog
+	float fog_sun_factor = sun_fog( camera_space_sun_direction, frag_position );
+	vec4 local_fog_color = vec4( ( fog_color + (sun_color * fog_sun_factor)).xyz, fragColor.w );
 
-	local_fog_color.w = frag_color.w;
+	//local_fog_color.w = frag_color.w;
 
-	gl_FragColor = mix( fragColor, local_fog_color, 0.0 );
+	gl_FragColor = mix( fragColor, local_fog_color, fog );
+	//gl_FragColor = local_fog_color;
+
 	
 }

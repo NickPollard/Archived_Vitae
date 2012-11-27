@@ -242,6 +242,16 @@ int model_transformIndex( model* m, transform* ptr ) {
 	return -1;
 }
 
+void model_addTransform( model* m, transform* t ) {
+	printf( "MODEL - adding transform\n" );
+	m->transforms[m->transform_count++] = t;
+}
+
+void model_addParticleEmitter( model* m, particleEmitter* p ) {
+	printf( "MODEL - adding particle emitter\n" );
+	m->emitters[m->emitter_count++] = p;
+}
+
 obb obb_calculate( int vert_count, vector* verts ) {
 	//printf( "obb calculate!\n" );
 	vAssert( vert_count > 1 );

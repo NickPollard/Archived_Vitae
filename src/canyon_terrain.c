@@ -872,12 +872,13 @@ float terrain_mountainHeight( float x, float z ) {
 	terrain_canyonSpaceFromWorld( x, z, &u, &v );
 
 	const float mountain_gradient_scale = 0.00001f;
+	const float base_mountain_scale = 2.f;
 	const float offset = ( max( 0.0, fabsf( u ) - canyon_base_radius ));
-	const float canyon_height_scale = offset * offset * mountain_gradient_scale;
+	const float canyon_height_scale = offset * offset * mountain_gradient_scale + base_mountain_scale;
 
 	const float scale_m_x = 40.f;
 	const float scale_m_z = 40.f;
-	const float mountain_height = 20.f * canyon_height_scale;
+	const float mountain_height = 10.f * canyon_height_scale;
 	return (1.0f + terrain_mountainFunc( x / scale_m_x ) * terrain_mountainFunc( z / scale_m_z )) * 0.5f * mountain_height;
 }
 
@@ -897,7 +898,7 @@ float terrain_detailHeight( float u, float v ) {
 float canyonTerrain_sample( float u, float v ) {
 	float mountains = terrain_mountainHeight( u, v );
 	float detail = terrain_detailHeight( u, v );
-	float canyon = terrain_newCanyonHeight( u, v );
+	float canyon = terrain_canyonHeight( u, v );
 	return mountains + detail - canyon;
 }
 

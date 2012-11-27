@@ -8,6 +8,8 @@ typedef struct worker_task_s {
 	void* args;
 } worker_task;
 
+extern int worker_task_count;
+
 void* worker_threadFunc( void* args );
 
 void worker_addTask( worker_task t );

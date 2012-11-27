@@ -148,13 +148,12 @@ void scene_free( scene* s ) {
 	mem_free( s );
 }
 
+
+
 // Initialise a scene with some test data
 scene* test_scene_init( engine* e ) { 
-	// Test Misc scene setup
-	(void)e;
-	scene* s = scene_create();
+	scene* s = scene_create( e );
 	scene_setAmbient( s, 0.2f, 0.2f, 0.2f, 1.f );
-
 	return s;
 }
 
@@ -193,7 +192,7 @@ void scene_setSunColor( scene* s, const vector* color ) {
 }
 
 // Make a scene
-scene* scene_create() {
+scene* scene_create( engine* e ) {
 	scene* s = mem_alloc( sizeof( scene ));
 	memset( s, 0, sizeof( scene ));
 	s->model_count = s->light_count = s->transform_count = 0;
@@ -203,6 +202,7 @@ scene* scene_create() {
 	memset( s->transforms, 0, sizeof( transform* ) * MAX_TRANSFORMS );
 	s->emitters =		mem_alloc( sizeof( particleEmitter* ) * MAX_EMITTERS );
 	s->fog_color = Vector( 0.f, 1.f, 0.f, 1.f );
+	s->eng = e;
 	return s;
 }
 
@@ -387,7 +387,7 @@ scene* scene_loadFile( const char* filename ) {
 
 scene* scene_load( sceneData* data ) {
 	// create scene
-	scene* s = scene_create();
+	scene* s = scene_create( NULL );
 	scene_setAmbient( s, 0.2f, 0.2f, 0.2f, 1.f );
 
 	printf( "Loading %d transforms.\n", data->transform_count );
