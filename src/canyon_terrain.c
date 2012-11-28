@@ -130,11 +130,14 @@ void canyonTerrainBlock_render( canyonTerrainBlock* b ) {
 		b->element_VBO_alt = NULL;
 	}
 
+	int zone = b->canyon->current_zone;
+	int first = zone % 2;
+	int second = 1 - first;
 	if ( b->vertex_VBO && *b->vertex_VBO && terrain_texture && terrain_texture_cliff ) {
-		drawCall* draw = drawCall_create( &renderPass_main, resources.shader_terrain, b->element_count_render, b->element_buffer, b->vertex_buffer, terrain_texture->gl_tex, modelview );
-		draw->texture_b = terrain_texture_cliff->gl_tex;
-		draw->texture_c = terrain_texture_2->gl_tex;
-		draw->texture_d = terrain_texture_cliff_2->gl_tex;
+		drawCall* draw = drawCall_create( &renderPass_main, resources.shader_terrain, b->element_count_render, b->element_buffer, b->vertex_buffer, b->canyon->zones[zone+first].texture_ground->gl_tex, modelview );
+		draw->texture_b = b->canyon->zones[zone+first].texture_cliff->gl_tex;
+		draw->texture_c = b->canyon->zones[zone+second].texture_ground->gl_tex;
+		draw->texture_d = b->canyon->zones[zone+second].texture_cliff->gl_tex;
 		draw->texture_lookup = b->canyon->canyonZone_lookup_texture->gl_tex;
 	
 		// TEST
@@ -744,6 +747,7 @@ void canyonTerrainBlock_generate( canyonTerrainBlock* b ) {
 }
 
 void* canyonTerrain_workerGenerateBlock( void* args ) {
+	//printf( "Worker generate terrain block.\n" );
 	canyonTerrainBlock* b = args;
 	if ( b->pending ) {
 		canyonTerrainBlock_generate( b );

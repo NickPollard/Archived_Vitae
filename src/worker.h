@@ -13,4 +13,4 @@ extern int worker_task_count;
 void* worker_threadFunc( void* args );
 
 void worker_addTask( worker_task t );
-worker_task worker_nextTask();
+void worker_addImmediateTask( worker_task t );

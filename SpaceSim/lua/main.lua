@@ -59,7 +59,7 @@ C and only controlled remotely by Lua
 	player_gun_cooldown		= 0.15
 	player_missile_cooldown	= 1.0
 	-- Flight
-	player_ship_initial_speed	= 50.0
+	player_ship_initial_speed	= 80.0
 	player_ship_acceleration	= 1.0
 	max_allowed_roll			= 1.5
 	camera_roll_scale			= 0.1

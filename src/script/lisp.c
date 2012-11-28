@@ -681,6 +681,8 @@ void attr_mesh_diffuseTexture( term* mesh_term, term* texture_attr );
 
 void attr_zone_cliffColor( term* zone_term, term* cliff_color_attr );
 void attr_zone_terrainColor( term* zone_term, term* terrain_color_attr );
+void attr_canyonZone_ground_texture( term* zone_term, term* tex_filename );
+void attr_canyonZone_cliff_texture( term* zone_term, term* tex_filename );
 
 void attr_transform_translation( term* zone_term, term* terrain_color_attr );
 void attr_transform_particle( term* trans_term, term* particle_attr );
@@ -1042,6 +1044,8 @@ void lisp_init() {
 	attributeFunction_set( "sky_color", attr_canyonZone_sky_color );
 	attributeFunction_set( "sun_color", attr_canyonZone_sun_color );
 	attributeFunction_set( "fog_color", attr_canyonZone_fog_color );
+	attributeFunction_set( "ground_texture", attr_canyonZone_ground_texture );
+	attributeFunction_set( "cliff_texture", attr_canyonZone_cliff_texture );
 	
 	attributeFunction_set( "translation", attr_transform_translation );
 	attributeFunction_set( "particle", attr_transform_particle );
@@ -1350,6 +1354,20 @@ void attr_zone_terrainColor( term* zone_term, term* terrain_color_attr ) {
 	canyonZone* zone = zone_term->data;
 	lisp_assert( zone );
 	zone->terrain_color = *(vector*)( terrain_color_attr->data );
+}
+
+void attr_canyonZone_ground_texture( term* zone_term, term* tex_filename ) {
+	lisp_assert( isType( tex_filename, typeString ));
+	canyonZone* zone = zone_term->data;
+	lisp_assert( zone );
+	zone->texture_ground = texture_load( tex_filename->string );
+}
+
+void attr_canyonZone_cliff_texture( term* zone_term, term* tex_filename ) {
+	lisp_assert( isType( tex_filename, typeString ));
+	canyonZone* zone = zone_term->data;
+	lisp_assert( zone );
+	zone->texture_cliff = texture_load( tex_filename->string );
 }
 
 void attr_transform_translation( term* trans_term, term* translation_attr ) {

@@ -35,6 +35,7 @@ float canyonZone_terrainBlend( float v ) {
 	float this = (float)(zone % 2);
 	float next = 1.f - this;
 	return lerp( this, next, canyonZone_blend( v ));
+	//return canyonZone_blend( v );
 }
 
 // Returns a blend value from x to x + 1.f, of how much we should blend to the next zone

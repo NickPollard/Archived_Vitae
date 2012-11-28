@@ -18,6 +18,8 @@ struct canyonZone_s {
 	vector sky_color;
 	vector fog_color;
 	vector sun_color;
+	texture*	texture_ground;
+	texture*	texture_cliff;
 };
 
 extern texture* canyonZone_lookup_texture;

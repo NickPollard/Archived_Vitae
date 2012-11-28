@@ -128,6 +128,9 @@ void countActiveParticleEmitters( engine* e ) {
 
 // tick - process a frame of game update
 void engine_tick( engine* e ) {
+
+	++e->frame_counter;
+
 	PROFILE_BEGIN( PROFILE_ENGINE_TICK );
 	float dt = timer_getDelta( e->timer );
 
@@ -165,8 +168,8 @@ void engine_tick( engine* e ) {
 		}
 	}
 
-	collision_processResults( dt );
-	collision_queueWorkerTick( dt );
+	collision_processResults( e->frame_counter, dt );
+	collision_queueWorkerTick( e->frame_counter+1, dt );
 
 	engine_tickTickers( e, dt );
 	
@@ -225,6 +228,7 @@ engine* engine_create() {
 	e->tickers = NULL;
 	e->inputs = NULL;
 	e->renders = NULL;
+	e->frame_counter = 0;
 	return e;
 }
 
@@ -420,7 +424,7 @@ void engine_run(engine* e) {
 		// Make sure we don't have too many tasks outstanding - ideally this should never get this high
 		// Prevents an eventual overflow assertion
 		while ( worker_task_count > 400 ) {
-			vthread_yield();
+			usleep( 2 );
 		}
 
 #if PROFILE_ENABLE

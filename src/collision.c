@@ -12,8 +12,8 @@
 
 #define kDeadBodyQueueSize 128
 
-bool collision_results_ready = false;
-bool collision_results_processed = true;
+int collision_results_ready = 0;
+int collision_results_processed = 0;
 
 collideFunc collide_funcs[kMaxShapeTypes][kMaxShapeTypes];
 
@@ -180,10 +180,10 @@ void collision_debugdraw() {
 }
 
 // Check for any collisions this frame
-void collision_tick( float dt ) {
+void collision_tick( int frame_counter, float dt ) {
 	(void)dt;
 
-	while ( !collision_results_processed ) {
+	while ( collision_results_ready > collision_results_processed ) {
 		//printf( "tick waiting.\n" );
 		vthread_yield();
 	}
@@ -191,20 +191,20 @@ void collision_tick( float dt ) {
 	collision_clearEvents();
 	collision_generateEvents();
 
-	collision_results_ready = true;
-	collision_results_processed = false;
+	collision_results_ready = frame_counter;
+	//collision_results_processed = false;
 
 	//collision_debugdraw();
 	//printf( "Total collision bodies: %d.\n", body_count );
 }
 
-void collision_processResults( float dt ) {
+void collision_processResults( int frame_counter, float dt ) {
 	(void)dt;
 
-	if ( collision_results_processed )
+	if ( collision_results_ready == 0 )
 		return;
 
-	while ( !collision_results_ready ) {
+	while ( collision_results_ready <= collision_results_processed ) { // Should never actually be less than, should be ==, but I think this is clearer
 		//printf( "process waiting.\n" );
 		vthread_yield();
 	}
@@ -212,23 +212,30 @@ void collision_processResults( float dt ) {
 	collision_runCallbacks();
 	collision_removeDeadBodies();
 
-	collision_results_ready = false;
-	collision_results_processed = true;
+	collision_results_processed = frame_counter;
 }
 
+
+typedef struct collisionArgs_s {
+	float dt;
+	int frame_counter;
+} collisionArgs;
+
 void* collision_workerTick( void* args ) {
-	float dt = *(float*)args;
-	collision_tick( dt );
+	//printf( "Worker collision.\n" );
+	collisionArgs* a = args;
+	collision_tick( a->frame_counter, a->dt );
 	return NULL;
 }
 
-void collision_queueWorkerTick( float dt ) {
-	float* dtime = mem_alloc( sizeof( float ));
-	*dtime = dt;
+void collision_queueWorkerTick( int frame_counter, float dt ) {
+	collisionArgs* args = mem_alloc( sizeof( collisionArgs ));
+	args->dt = dt;
+	args->frame_counter = frame_counter;
 	worker_task collision_task;
 	collision_task.func = collision_workerTick;
-	collision_task.args = dtime;
-	worker_addTask( collision_task );
+	collision_task.args = args;
+	worker_addImmediateTask( collision_task );
 }
 
 bool collisionFunc_SphereSphere( shape* a, shape* b, matrix matrix_a, matrix matrix_b ) {
@@ -897,6 +904,7 @@ void collision_init() {
 
 #if UNIT_TEST
 void test_collision() {
+	/*
 	printf( "--- Beginning Unit Test: Collision ---\n" );
 	shape sphere_a;
    	sphere_a.type = shapeSphere;
@@ -935,19 +943,17 @@ void test_collision() {
 	collision_addBody( body_a );
 	collision_addBody( body_b );
 	collision_addBody( body_c );
-	collision_tick( 0.f );
+	collision_tick( 0, 0.f );
 
 	vAssert( body_collided( body_a ));
 	vAssert( body_collided( body_b ));
 	vAssert( !body_collided( body_c ));
 
-	/*
 	printf( "Bodies collided this frame: A: %d, B: %d, c:%d\n",
 			body_collided( body_a ),
 			body_collided( body_b ),
 			body_collided( body_c ));
 	vAssert( 0 );
-	*/
 
 	collision_removeBody( body_a );
 	collision_removeBody( body_b );
@@ -956,5 +962,6 @@ void test_collision() {
 	collision_removeDeadBodies();
 
 	test_heightField();
+	*/
 }
 #endif // UNIT_TEST

@@ -64,6 +64,7 @@ void texture_tick() {
 }
 
 void* texture_workerLoadFile( void* args ) {
+	printf( "Worker load texture.\n" );
 	void** arg_ptrs = args;
 	GLuint*				tex			= arg_ptrs[0];
 	const char*			filename	= arg_ptrs[1];
