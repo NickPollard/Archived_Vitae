@@ -883,14 +883,14 @@ float terrain_mountainHeight( float x, float z ) {
 }
 
 float terrain_detailHeight( float u, float v ) {
-	/*
 	return	0.5 * sinf( u ) * sinf( v ) +
 			sinf( u / 3.f ) * sinf( v / 3.f ) +
 			5 * sinf( u / 10.f ) * sinf( v / 10.f ) * sinf( u / 10.f ) * sinf( v / 10.f );
-			*/
+	/*
 	return 3.f * ( sinf( u / 23.f ) * sinf( v / 23.f ) * sinf( u / 23.f ) * sinf( v / 23.f ) +
 			sinf( u / 17.f ) * sinf( v / 17.f ) +
 		   sinf( u / 13.f ) * sinf( v / 13.f ));
+		   */
 
 }
 

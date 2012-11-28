@@ -100,7 +100,7 @@ void lisp_assert( bool b ) {
 	vAssert( b );
 }
 
-#define kMaxLispTerms 4096
+#define kMaxLispTerms 5120
 term lisp_terms[kMaxLispTerms];
 term* first_free_term = NULL;
 
