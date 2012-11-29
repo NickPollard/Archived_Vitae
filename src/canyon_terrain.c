@@ -133,11 +133,13 @@ void canyonTerrainBlock_render( canyonTerrainBlock* b ) {
 	int zone = b->canyon->current_zone;
 	int first = zone % 2;
 	int second = 1 - first;
+	first = ( zone + first ) % b->canyon->zone_count;
+	second = ( zone + second ) % b->canyon->zone_count;
 	if ( b->vertex_VBO && *b->vertex_VBO && terrain_texture && terrain_texture_cliff ) {
-		drawCall* draw = drawCall_create( &renderPass_main, resources.shader_terrain, b->element_count_render, b->element_buffer, b->vertex_buffer, b->canyon->zones[zone+first].texture_ground->gl_tex, modelview );
-		draw->texture_b = b->canyon->zones[zone+first].texture_cliff->gl_tex;
-		draw->texture_c = b->canyon->zones[zone+second].texture_ground->gl_tex;
-		draw->texture_d = b->canyon->zones[zone+second].texture_cliff->gl_tex;
+		drawCall* draw = drawCall_create( &renderPass_main, resources.shader_terrain, b->element_count_render, b->element_buffer, b->vertex_buffer, b->canyon->zones[first].texture_ground->gl_tex, modelview );
+		draw->texture_b = b->canyon->zones[first].texture_cliff->gl_tex;
+		draw->texture_c = b->canyon->zones[second].texture_ground->gl_tex;
+		draw->texture_d = b->canyon->zones[second].texture_cliff->gl_tex;
 		draw->texture_lookup = b->canyon->canyonZone_lookup_texture->gl_tex;
 	
 		// TEST
