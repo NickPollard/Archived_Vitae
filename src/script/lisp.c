@@ -389,7 +389,10 @@ term* eval_list( term* list, context* c ) {
 
 term* lisp_eval_file( context* c, const char* filename ) {
 	term* t = lisp_parse_file( filename );
-	return eval_list( t, c );
+	term_takeRef( t );
+	term* e = eval_list( t, c );
+	term_deref( t );
+	return e;
 }
 
 void list_delete( term* t ) {
@@ -1759,7 +1762,6 @@ term* lisp_func_defMacro( context* c, term* raw_args ) {
 void lisp_initContext( context* c ) {
 	(void)c;
 	// Every lisp context needs this in order to pull in other functions, including the libraries
-	/*
 	define_cfunction( c, "defun", lisp_func_defun );
 	define_cfunction( c, "defmacro", lisp_func_defMacro );
 
@@ -1781,12 +1783,10 @@ void lisp_initContext( context* c ) {
 	define_cfunction( c, "always_quote", lisp_func_always_quote );
 
 	define_cfunction( c, "length", lisp_func_length );
-*/
 	define_cfunction( c, "+", lisp_func_add );
 	define_cfunction( c, "-", lisp_func_sub );
 	define_cfunction( c, "*", lisp_func_mul );
 	define_cfunction( c, "/", lisp_func_div );
-	/*
 
 	define_cfunction( c, "object_process", lisp_func_object_process );
 
@@ -1817,7 +1817,6 @@ void lisp_initContext( context* c ) {
 	lisp_eval_file( c, "dat/script/lisp/particle.s" );
 	lisp_eval_file( c, "dat/script/lisp/model.s" );
 	lisp_eval_file( c, "dat/script/lisp/canyon.s" );
-	*/
 	// just load the definitions in the file
 }
 
@@ -1858,6 +1857,13 @@ void test_lisp() {
 
 	//////// Tear down the context to measure free terms, then rebuild it
 	context_delete( c );
+	{
+		int total = kMaxLispTerms;
+		int free = term_countFree();
+		int used = total - free;
+		printf( "There are %d terms in use ( %d free, %d total )\n", used, free, total );
+		term_dumpUsed();
+	}
 	vAssert( kMaxLispTerms - term_countFree() == 0 );
 	c = lisp_newContext();
 	hello = term_create( typeString, "Hello World" );
@@ -2031,18 +2037,6 @@ void test_lisp() {
 	(void)p;
 	vAssert( p->stride == 4 );
 
-	context_delete( c );
-	printf( "Lisp heap storing " dPTRf " bytes in " dPTRf " allocations.\n", lisp_heap->total_allocated, lisp_heap->allocations );
-	printf( "Context heap storing " dPTRf " bytes in " dPTRf " allocations.\n", context_heap->total_allocated, context_heap->allocations );
-	{
-		int total = kMaxLispTerms;
-		int free = term_countFree();
-		int used = total - free;
-		printf( "There are %d terms in use ( %d free, %d total )\n", used, free, total );
-		term_dumpUsed();
-	}
-	vAssert( 0 );
-
 	//heap_dumpUsedBlocks( lisp_heap );
 	{
 		term* t = eval( lisp_parse_string( "(property (quote ((0.0 1.0) (0.3 2.0) (0.6 2.0) (2.0 4.0))))" ), c );
@@ -2066,11 +2060,16 @@ void test_lisp() {
 	}
 
 	context_delete( c );
-
 	printf( "Lisp heap storing " dPTRf " bytes in " dPTRf " allocations.\n", lisp_heap->total_allocated, lisp_heap->allocations );
 	printf( "Context heap storing " dPTRf " bytes in " dPTRf " allocations.\n", context_heap->total_allocated, context_heap->allocations );
-	assert( 0 );
-
+	{
+		int total = kMaxLispTerms;
+		int free = term_countFree();
+		int used = total - free;
+		printf( "There are %d terms in use ( %d free, %d total )\n", used, free, total );
+		term_dumpUsed();
+	}
+	vAssert( 0 );
 }
 
 /*
