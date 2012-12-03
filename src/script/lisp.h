@@ -20,7 +20,7 @@
 
 
 /*
-   types of list term
+   types of lisp term
    all terms aside from LIST and ATOM are considered to be value terms
    */
 enum termType {
@@ -31,6 +31,7 @@ enum termType {
 	typeInt,
 	typeVector,
 	typeIntrinsic,
+	typeMacro,
 	typeObject,
 	typeFalse,		// Special FALSE datatype
 	typeTrue		// Special TRUE datatype
@@ -68,7 +69,7 @@ typedef struct context_s {
 extern context* lisp_global_context;
 
 // Evaluate a lisp expression
-term* _eval( term* expr, void* _context );
+term* eval( term* expr, void* _context );
 
 // Return a new lisp execution context
 context* lisp_newContext();

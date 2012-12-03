@@ -212,8 +212,8 @@ function create_projectile( source, offset, model, speed )
 end
 
 player_gunfire = { 
-	model = "dat/model/missile.s",
- 	particle = "dat/script/lisp/bullet.s",
+	model = "dat/model/bullet_player.s",
+ 	particle = "dat/vfx/particles/bullet.s",
 	speed = 250.0,
 	collisionType = "player"
 }
@@ -227,7 +227,7 @@ player_missile = {
 
 enemy_gunfire = { 
 	model = "dat/model/missile.s",
- 	particle = "dat/script/lisp/bullet.s",
+ 	particle = "dat/vfx/particles/bullet.s",
 	speed = 150.0,
 	collisionType = "enemy"
 }
@@ -241,7 +241,7 @@ function fire_missile( source, offset, bullet_type )
 	end
 	vbody_registerCollisionCallback( projectile.body, missile_collisionHandler )
 	inTime( 2.0, function () missile_destroy( projectile ) end )
-	projectile.glow = vparticle_create( engine, projectile.transform, bullet_type.particle )
+	--projectile.glow = vparticle_create( engine, projectile.transform, bullet_type.particle )
 	return projectile
 end
 
@@ -502,7 +502,7 @@ function loadParticles( )
 	vparticle_destroy( particle )
 	particle = vparticle_create( engine, t, "dat/script/lisp/explosion_c.s" )
 	vparticle_destroy( particle )
-	particle = vparticle_create( engine, t, "dat/script/lisp/bullet.s" )
+	particle = vparticle_create( engine, t, "dat/vfx/particles/bullet.s" )
 	vparticle_destroy( particle )
 	vmodel_preload( projectile_model )
 end

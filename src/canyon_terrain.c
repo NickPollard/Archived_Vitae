@@ -339,9 +339,11 @@ canyonTerrain* canyonTerrain_create( canyon* c, int u_blocks, int v_blocks, int 
 
 
 	// TEST
+	/*
 	for ( float f = 0.f; f < 40.f; f += 0.8f ) {
 		printf( "f: %.2f, mapped %.2f\n", f, canyon_uvMapped( f ) );
 	}
+	*/
 	//vAssert( 0 );
 
 	return t;

@@ -243,12 +243,12 @@ int model_transformIndex( model* m, transform* ptr ) {
 }
 
 void model_addTransform( model* m, transform* t ) {
-	printf( "MODEL - adding transform\n" );
+	//printf( "MODEL - adding transform\n" );
 	m->transforms[m->transform_count++] = t;
 }
 
 void model_addParticleEmitter( model* m, particleEmitter* p ) {
-	printf( "MODEL - adding particle emitter\n" );
+	//printf( "MODEL - adding particle emitter\n" );
 	m->emitters[m->emitter_count++] = p;
 }
 
