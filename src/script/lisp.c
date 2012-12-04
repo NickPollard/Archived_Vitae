@@ -41,34 +41,6 @@ map* attrFuncMap = NULL;
 
 void term_debugPrint( term* t );
 
-bool isType( term* t, enum termType type ) {
-	return t->type == type;
-	}
-
-bool isValue( term* t ) {
-	return !isType( t, typeList ) && !isType( t, typeAtom );
-	}
-
-void term_delete( term* t );
-
-void term_takeRef( term* t ) {
-	++(t->refcount);
-	}
-
-void term_deref( term* t ) {
-	--(t->refcount);
-
-	printf( "Term_deref: " );
-	term_debugPrint( t );
-	printf( "(Refcount %d) ", t->refcount );
-	printf( "(0x" xPTRf ")\n", (uintptr_t)t );
-
-	vAssert( t->refcount >= 0 );
-	if ( t->refcount == 0 ) {
-		term_delete( t );
-	}
-}
-
 #ifdef MEM_STACK_TRACE
 static const char* kLispTermAllocString = "lisp.c:term_create()";
 static const char* kLispValueAllocString = "lisp.c:value_create()";
@@ -86,6 +58,43 @@ void debug_lisp_stack_dump() {
 	printf( "######################################################\n" );
 }
 
+void lisp_assert( bool b ) {
+	if ( !b ) {
+		debug_lisp_stack_dump();
+	}
+	vAssert( b );
+}
+
+bool isType( term* t, enum termType type ) {
+	return t->type == type;
+	}
+
+bool isValue( term* t ) {
+	return !isType( t, typeList ) && !isType( t, typeAtom );
+	}
+
+void term_delete( term* t );
+
+void term_takeRef( term* t ) {
+	++(t->refcount);
+	}
+
+void term_deref( term* t ) {
+	--(t->refcount);
+
+#ifdef DEBUG_LISP_VERBOSE
+	printf( "Term_deref: " );
+	term_debugPrint( t );
+	printf( "(Refcount %d) ", t->refcount );
+	printf( "(0x" xPTRf ")\n", (uintptr_t)t );
+#endif  // DEBUG_LISP_VERBOSE
+
+	lisp_assert( t->refcount >= 0 );
+	if ( t->refcount == 0 ) {
+		term_delete( t );
+	}
+}
+
 void debug_lisp_stack_push( const char* str ) {
 	vAssert( debug_lisp_stack_ptr < kDebugLispStackDepth );
 	debug_lisp_stack[debug_lisp_stack_ptr] = string_createCopy( str );
@@ -99,14 +108,7 @@ void debug_lisp_stack_pop( ) {
 	mem_free( (char*)debug_lisp_stack[debug_lisp_stack_ptr] );
 }
 
-void lisp_assert( bool b ) {
-	if ( !b ) {
-		debug_lisp_stack_dump();
-	}
-	vAssert( b );
-}
-
-#define kMaxLispTerms 12000
+#define kMaxLispTerms 24000
 term lisp_terms[kMaxLispTerms];
 term* first_free_term = NULL;
 
@@ -166,8 +168,10 @@ term* term_create( enum termType type, void* value ) {
 	mem_pushStack( kLispTermAllocString );
 	term* t = term_new();
 
+#ifdef DEBUG_LISP_VERBOSE
 	printf( "Creating term: " );
 	printf( " (0x" xPTRf ")\n", (uintptr_t)t );
+#endif // DEBUB_LISP_iVERBOSE
 
 	mem_popStack();
 	t->type = type;
@@ -185,9 +189,12 @@ term* term_copy( term* t ) {
 }
 
 void term_delete( term* t ) {
+#ifdef DEBUG_LISP_VERBOSE
 	printf( "Deleting term: " );
 	term_debugPrint( t );
 	printf( " (0x" xPTRf ")\n", (uintptr_t)t );
+#endif // DEBUB_LISP_iVERBOSE
+
 	if ( isType( t, typeList )) {
 		// If, not assert, as it could be the empty list
 		if( t->head )
@@ -479,6 +486,9 @@ void term_debugStreamPrint( streamWriter* s, term* t ) {
 	if ( !t )
 		return;
 
+	if ( ( s->end - s->write_head ) < 64 )
+		return;
+
 	if ( isType( t, typeList )) {
 		stream_printf( s, "(" );
 		term* tmp = t;
@@ -583,31 +593,35 @@ term* eval( term* expr, void* _context ) {
 		// TODO - need to check for intrinsic here
 		// as if it's a special form, we might not want to eval all (eg. if)
 		term* h = eval( head( expr ), _context );
+
+		// Force resolve atom into either a func, macro or intrinsic
+		while ( isType( h, typeAtom ))
+			h = eval( h, _context );
+
 		if ( isType( h, typeIntrinsic )) {
+				printf( "Running lisp Intrinsic\n" );
+				term_debugPrint( expr );
+				printf( "\n" );
 			result = exec( _context, h, tail( expr ));
 		}
 		// If it's a macro (the head evals to a list whos first element is typeMacro), then peel of the typeMacro
 		// term and just use the rest as the func to eval, but dont eval the args first
 		else if (isType( h, typeList ) && head( h ) && isType( head( h ), typeMacro )) {
-			result = execMacro( _context, tail( h ), tail( expr ));
-				printf( "Running lisp macro \"%s\"\n", head( expr )->string );
+			printf( "Running lisp macro \"%s\"\n", head( expr )->string );
+			term_debugPrint( expr );
+			printf( "\n" );
+			result = exec( _context, tail( h ), tail( expr ));
 		}
 		else {
-			/*
-			term* e = fmap_1( eval, _context, tail( expr ));
-			if ( e )
-				term_takeRef( e );
-				*/
-
+//#ifdef DEBUG_LISP_VERBOSE
 			if ( isType( head( expr ), typeAtom )) {
 				printf( "Running lisp function \"%s\"\n", head( expr )->string );
+				term_debugPrint( expr );
+				printf( "\n" );
 			}
+//#endif // DEBUG_LISP_VERBOSE
 
 			result = exec( _context, h, tail( expr ));
-			/*
-			if ( e )
-				term_deref( e );
-			*/
 		}
 	}
 	term_deref( expr );
@@ -632,9 +646,11 @@ void context_delete( context* c ) {
 	for ( int i = 0; i < c->lookup->count; ++i ) {
 		term* t = *(term**)(c->lookup->values + (i * c->lookup->stride));
 		if ( t ) {
+#ifdef DEBUG_LISP_VERBOSE
 			printf( "Dereffing context term: " );
 			term_debugPrint( t );
 			printf( " (0x" xPTRf ")\n", (uintptr_t)t );
+#endif // DEBUG_LISP_VERBOSE
 			term_deref( t );
 		}
 	}
@@ -689,9 +705,11 @@ void zip1( term* a_list, term* b_list, zip1_func func, void* arg ) {
 void define_arg( term* symbol, term* value, void* _context ) {
 	context* c = _context;
 	context_add( c, symbol->string, value );
+#ifdef DEBUG_LISP_VERBOSE
 	printf( "Defining arg \"%s\":\n", symbol->string );
 	term_debugPrint( value );
 	printf( "\n" );
+#endif // DEBUG_LISP_VERBOSE
 	}
 
 term* term_deepCopy( term* expr ) {
@@ -726,9 +744,12 @@ void arg_replace( term* expr, context* args ) {
 	if ( isType( expr, typeAtom )) {
 		term* lookup = context_lookup( args, mhash( expr->string ));
 		if ( lookup ) {
+#ifdef DEBUG_LISP_VERBOSE
 			printf( "Replacing argument \"%s\": ", expr->string );
 			term_debugPrint( lookup );
 			printf( "\n" );
+#endif // DEBUG_LISP_VERBOSE
+
 			term* new_expr = term_deepCopy( lookup );
 			expr->tail = new_expr->tail;
 			expr->head = new_expr->head;
@@ -740,6 +761,7 @@ void arg_replace( term* expr, context* args ) {
 					term_takeRef( expr->tail );
 			}
 			term_delete( new_expr );
+			term_validate( expr );
 			//expr->refcount = 1;
 		}
 	}
@@ -1000,8 +1022,11 @@ term* lisp_func_length( context* c, term* raw_args ) {
 	}
 
 term* lisp_func_list( context* c, term* raw_args ) {
-	printf( "lisp_func_list\n" );
 	term* args = fmap_1( eval, c, raw_args );
+	term_validate( args );
+	printf( "lisp_func_list: " );
+	term_debugPrint( args );
+	printf( "\n" );
 	return args;
 	}
 
@@ -1068,13 +1093,23 @@ term* lisp_func_if( context* c, term* args ) {
 		term* result_then = second( args );
 		term* result_else = third( args );
 
+		printf( "lisp func if: " );
+		term_debugPrint( cond );
+		printf ( "\n -- > \n" );
+
 		term* first = eval( cond, c );
+
+		term_debugPrint( first );
+		printf( "\n" );
+
 		term_takeRef( first );
 		term* ret;
 		if ( isTrue( first )) {
+			printf( "lisp_func if: true\n" );
 			ret = eval( result_then, c );
 			}
 		else {
+			printf( "lisp_func if: false\n" );
 			ret = eval( result_else, c );
 			}
 		term_deref( first );
@@ -1177,10 +1212,9 @@ term* list_copy( term* list ) {
 }
 
 term* lisp_func_tail( context* c, term* raw_args ) {
-	printf( "lisp_func_tail\n" );
-	term_debugPrint( raw_args );
-	printf ( "\n" );
+	term_validate( raw_args );
 	term* args = fmap_1( eval, c, raw_args );
+	term_validate( args );
 	term_takeRef( args );
 	term* list = head( args );
 	//lisp_assert( isType( list, typeList ));
@@ -1198,9 +1232,6 @@ term* lisp_func_tail( context* c, term* raw_args ) {
 }
 
 term* lisp_func_head( context* c, term* raw_args ) {
-	printf( "lisp_func_head\n" );
-	term_debugPrint( raw_args );
-	printf ( "\n" );
 	term* args = fmap_1( eval, c, raw_args );
 	term_takeRef( args );
 	term* list = head( args );
@@ -1337,7 +1368,7 @@ term* lisp_func_createModel( context* c, term* raw_args ) {
 		term_takeRef( args );
 	}
 	
-	model* m = model_createModel( 1 ); // default to one mesh
+	model* m = model_createModel( 0 ); // default to zero meshes
 	term* ret = term_create( typeObject, m );
 	
 	if ( args ) {
@@ -1452,6 +1483,9 @@ term* lisp_func_add_transform_to_model( context* c, term* raw_args ) {
 term* lisp_func_lambda( context* c, term* raw_args ) {
 	(void)c; (void)raw_args;
 	printf( "Lisp_func_lambda\n" );
+	term_debugPrint( raw_args );
+	printf( "\n" );
+	term_validate( raw_args );
 	// Should be quoted?
 	return raw_args;
 }
@@ -2069,7 +2103,7 @@ void test_lisp() {
 		printf( "There are %d terms in use ( %d free, %d total )\n", used, free, total );
 		term_dumpUsed();
 	}
-	vAssert( 0 );
+	//vAssert( 0 );
 }
 
 /*
